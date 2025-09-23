@@ -1,11 +1,11 @@
 import React from "react";
 import "../assets/css/LogoLoader.css"
-
+import penLogo from '../assets/images/pen_logo.png'
 const LogoLoader = () => {
   return (
     <div className="logo-loader">
       <img
-        src="/assets/images/pen_logo.png"
+        src={penLogo}
         alt="Loading..."
         className="rotating-logo"
       />

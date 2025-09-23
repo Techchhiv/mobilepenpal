@@ -5,6 +5,7 @@ import API, { setAuthToken } from "../helper/api"; // ⬅️ import setAuthToken
 import { useAuth } from "../context/AuthContext";
 import cover from "../assets/images/cover.jpg";
 import penLogo from '../assets/images/pen_logo.png'
+import  coverPen from '../assets/images/coverPen.png'
 
 const SignInLayer = () => {
   const [email, setEmail] = useState("");
@@ -61,7 +62,7 @@ const SignInLayer = () => {
     <section className="auth bg-base d-flex flex-wrap">
       <div className="auth-left d-lg-block d-none">
         <div className="d-flex align-items-center flex-column h-100 justify-content-center">
-          <img src={cover} alt="auth" />
+          <img src={coverPen} alt="auth" />
         </div>
       </div>
 
