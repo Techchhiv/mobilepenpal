@@ -5,7 +5,7 @@ const LogoLoader = () => {
   return (
     <div className="logo-loader">
       <img
-        src="/assets/images/logoCar.png"
+        src="/assets/images/pen_logo.png"
         alt="Loading..."
         className="rotating-logo"
       />

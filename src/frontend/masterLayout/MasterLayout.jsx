@@ -423,7 +423,7 @@ const MasterLayout = ({ children }) => {
               <Col md={4}>
                 <h5 className="fw-bold">Our Promise</h5>
                 <p>លក់ឡានគ្រប់ប្រភេទដែលមានគុណភាពខ្ពស់</p>
-                <img src="assets/images/logoCar.png" alt="Flower" style={{ height: "180px" }} />
+                <img src="assets/images/pen_logo.png" alt="Flower" style={{ height: "180px" }} />
               </Col>
             </Row>
 
