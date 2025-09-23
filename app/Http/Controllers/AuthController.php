@@ -3,11 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\School;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Schema; // 👈 add this
+use Illuminate\Support\Facades\Schema;
 
 class AuthController extends Controller
 {
@@ -45,54 +46,54 @@ class AuthController extends Controller
         }
     }
 
-  public function login(Request $request)
-{
-    try {
-        $data = $request->validate([
-            'email'    => ['required','email'],
-            'password' => ['required','min:6'],
-        ]);
+    public function login(Request $request)
+    {
+        try {
+            $data = $request->validate([
+                'email'      => ['required','email'],
+                'password'   => ['required','min:6'],
+                'school_key' => ['nullable','string'], // ✅ school key optional
+            ]);
 
-        $user = User::where('email', $data['email'])->first();
+            // if school_key is provided → restrict login to that school
+            $school = null;
+            if (!empty($data['school_key'])) {
+                $school = School::where('school_key', $data['school_key'])->first();
+                if (!$school) {
+                    return response()->json(['message' => 'Invalid school key'], 404);
+                }
 
-        if (!$user || !Hash::check($data['password'], $user->password)) {
-            return response()->json(['message' => 'Invalid credentials'], 422);
+                $user = User::where('email', $data['email'])
+                    ->where('school_id', $school->id)
+                    ->first();
+            } else {
+                // super admin login (no school key)
+                $user = User::where('email', $data['email'])->first();
+            }
+
+            if (!$user || !Hash::check($data['password'], $user->password)) {
+                return response()->json(['message' => 'Invalid credentials'], 422);
+            }
+
+            // Abilities & permissions
+            [$abilities, $permissionsPayload] = $this->abilitiesAndPerms($user);
+
+            $token = $user->createToken('spa', $abilities)->plainTextToken;
+
+            $payload = $user->load('roles')->toArray();
+            $payload['permissions'] = $permissionsPayload;
+
+            return response()->json([
+                'token'     => $token,
+                'user'      => $payload,
+                'abilities' => $abilities,
+                'school'    => $school, // include school info if applicable
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('LOGIN_ERROR', ['msg' => $e->getMessage()]);
+            return response()->json(['message' => 'Server error during login.'], 500);
         }
-
-        // Default abilities
-        $abilities = [];
-        $permissionsPayload = collect();
-
-        // Only touch Spatie if tables exist
-        $spatieOk = Schema::hasTable('permissions')
-            && Schema::hasTable('roles')
-            && Schema::hasTable('model_has_roles')
-            && Schema::hasTable('role_has_permissions');
-
-        if ($spatieOk) {
-            $abilities = $user->hasRole('super-admin')
-                ? ['*']
-                : $user->getAllPermissions()->pluck('name')->toArray();
-
-            $permissionsPayload = $user->getAllPermissions()->pluck('name');
-        }
-
-        // If Sanctum table missing, this line will still throw → migrate
-        $token = $user->createToken('spa', $abilities)->plainTextToken;
-
-        $payload = $user->load('roles')->toArray();
-        $payload['permissions'] = $permissionsPayload;
-
-        return response()->json([
-            'token'     => $token,
-            'user'      => $payload,
-            'abilities' => $abilities,
-        ]);
-    } catch (\Throwable $e) {
-        Log::error('LOGIN_ERROR', ['msg' => $e->getMessage()]);
-        return response()->json(['message' => 'Server error during login.'], 500);
     }
-}
 
     public function me(Request $request)
     {
@@ -117,7 +118,6 @@ class AuthController extends Controller
      */
     private function abilitiesAndPerms(User $user): array
     {
-        // If Spatie tables don’t exist yet, avoid querying them.
         $spatieTablesExist = Schema::hasTable('permissions')
             && Schema::hasTable('roles')
             && Schema::hasTable('model_has_roles')
@@ -128,7 +128,6 @@ class AuthController extends Controller
             $abilities = $isSuper ? ['*'] : $user->getAllPermissions()->pluck('name')->toArray();
             $permissionsPayload = $user->getAllPermissions()->pluck('name');
         } else {
-            // Safe defaults until migrations are in place
             $abilities = [];
             $permissionsPayload = collect();
         }

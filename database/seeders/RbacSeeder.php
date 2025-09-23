@@ -21,12 +21,6 @@ class RbacSeeder extends Seeder
             // Console
             'console.view',
 
-            // Category (demo from old code)
-            'category.view','category.create','category.update','category.delete',
-
-            // Products (demo from old code)
-            'products.view','products.create','products.update','products.delete',
-
             // User / Role / Permission management
             'users.manage','roles.manage','permissions.manage',
 
