@@ -4,11 +4,11 @@ import { Routes, Route, Outlet, Navigate, useParams } from "react-router-dom";
 import RouteScrollToTop from "./helper/RouteScrollToTop";
 import Gate from "./components/router/Gate";
 
-// Public
+// ---------- Public Pages ----------
 import Frontend from "./frontend";
 import ImageToWord from "./frontend/page/imageToWord";
-import ProductDetail from "./frontend/page/ProductDetail"; // detail page (by slug)
-import Product from "./frontend/page/Product";              // category listing
+import ProductDetail from "./frontend/page/ProductDetail";
+import Product from "./frontend/page/Product";
 import Cart from "./frontend/page/Cart";
 import Favorite from "./frontend/page/FavoritePage";
 import SignInPage from "./pages/SignInPage";
@@ -16,17 +16,20 @@ import SignUpPage from "./pages/SignUpPage";
 import OAuthSuccess from "./helper/OAuthSuccess";
 import AccessDeniedPage from "./pages/AccessDeniedPage";
 
-// Admin
+// ---------- Admin Pages ----------
 import HomePageOne from "./pages/HomePageOne";
-import TableDataPage from "./pages/TableDataPage";
-import Category from "./pages/Category";
-import EditProduct from "./pages/EditProdcut";
 import AdminUsersPage from "./pages/admin/AdminUsersPage";
 import AdminRolesPage from "./pages/admin/AdminRolesPage";
 import AdminPermissionsPage from "./pages/admin/AdminPermissionsPage";
-import AddBlogPage from "./pages/AddBlogPage";
+import ManageClientsPage from "./pages/admin/ManageClientsPage";
 
-// legacy redirect: /product-detail/:slug  -> /product/:slug
+// ---------- School Pages ----------
+import SchoolLayout from "./pages/school/masterLayout/SchoolLayout";
+import ManageTeacher from "./pages/school/page/ManageTeacher";
+import SchoolDashboard from "./pages/school/page/SchoolDashboard";
+// later: import ManageStudents, StudentPerformance, etc.
+
+// ---------- Utils ----------
 const LegacyProductRedirect = () => {
   const { slug } = useParams();
   return <Navigate to={`/product/${slug}`} replace />;
@@ -37,15 +40,13 @@ export default function App() {
     <>
       <RouteScrollToTop />
       <Routes>
-        {/* Public storefront landing */}
-        <Route path="/Frontend" element={<Frontend />} />
-        <Route path="/image_world" element={<ImageToWord />} />
+        {/* ---------- Public Routes ---------- */}
+        <Route path="/frontend" element={<Frontend />} />
+        <Route path="/image-world" element={<ImageToWord />} />
 
-        {/* ✅ Product detail by slug */}
+        {/* Product routes */}
         <Route path="/product/:slug" element={<ProductDetail />} />
         <Route path="/product-detail/:slug" element={<LegacyProductRedirect />} />
-
-        {/* ✅ Category listing by slug */}
         <Route path="/category/:slug" element={<Product />} />
 
         {/* Misc public */}
@@ -56,7 +57,7 @@ export default function App() {
         <Route path="/oauth-success" element={<OAuthSuccess />} />
         <Route path="/access-denied" element={<AccessDeniedPage />} />
 
-        {/* Admin (gated) */}
+        {/* ---------- Admin Routes (Protected) ---------- */}
         <Route
           element={
             <Gate
@@ -65,26 +66,45 @@ export default function App() {
                 "users.manage",
                 "roles.manage",
                 "permissions.manage",
-                "products.manage",
-                "categories.manage",
               ]}
             >
               <Outlet />
             </Gate>
           }
         >
-          <Route path="/" element={<HomePageOne />} />
-          <Route path="/table-data" element={<TableDataPage />} />
-          <Route path="/add-blog" element={<AddBlogPage />} />
-          <Route path="/category" element={<Category />} />
-          <Route path="/edit-product/:id" element={<EditProduct />} />
+          <Route path="/admin" element={<HomePageOne />} />
           <Route path="/admin/users" element={<AdminUsersPage />} />
           <Route path="/admin/roles" element={<AdminRolesPage />} />
           <Route path="/admin/permissions" element={<AdminPermissionsPage />} />
+          <Route path="/admin/schools" element={<ManageClientsPage />} />
         </Route>
 
-        {/* Fallback */}
-        <Route path="*" element={<Frontend />} />
+        {/* ---------- School Routes (Protected) ---------- */}
+        <Route
+          element={
+            <Gate
+              roles={["school-admin", "teacher", "parent"]}
+              anyPerm={[
+                "teachers.view",
+                "students.view",
+                "school.dashboard.view",
+              ]}
+            >
+                <Outlet />
+             
+            </Gate>
+          }
+        >
+          <Route path="/school" element={<Navigate to="/school/dashboard" replace />} />
+          <Route path="/school/dashboard" element={<SchoolDashboard />} />
+          <Route path="/school/teachers" element={<ManageTeacher />} />
+          {/* Add more later: */}
+          {/* <Route path="/school/students" element={<ManageStudents />} /> */}
+          {/* <Route path="/school/performance" element={<StudentPerformance />} /> */}
+        </Route>
+
+        {/* ---------- Fallback ---------- */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </>
   );

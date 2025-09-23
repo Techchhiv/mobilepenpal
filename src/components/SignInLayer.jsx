@@ -1,15 +1,15 @@
 import { Icon } from "@iconify/react";
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import API, { setAuthToken } from "../helper/api"; // ⬅️ import setAuthToken
+import API, { setAuthToken } from "../helper/api";
 import { useAuth } from "../context/AuthContext";
-import cover from "../assets/images/cover.jpg";
-import penLogo from '../assets/images/pen_logo.png'
-import  coverPen from '../assets/images/coverPen.png'
+import penLogo from "../assets/images/pen_logo.png";
+import coverPen from "../assets/images/coverPen.png";
 
 const SignInLayer = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [schoolKey, setSchoolKey] = useState(""); // ✅ NEW
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -17,46 +17,56 @@ const SignInLayer = () => {
   const { isAuthenticated, login } = useAuth();
 
   useEffect(() => {
-    if (isAuthenticated) navigate("/");
+    if (isAuthenticated) navigate("/admin");
   }, [isAuthenticated, navigate]);
 
-  // 🚫 No CSRF cookie fetch in token mode
+const handleLogin = async (e) => {
+  e.preventDefault();
+  setError("");
+  setSubmitting(true);
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setError("");
-    setSubmitting(true);
+  try {
+    const payload = { email: email.trim(), password };
+    if (schoolKey.trim()) payload.school_key = schoolKey.trim();
 
-    try {
-      // baseURL already includes /api; using "/login" is correct
-      const { data } = await API.post("/login", {
-        email: email.trim(),
-        password,
-      });
-      // { token, user, abilities }
-      setAuthToken(data.token); // ⬅️ puts Bearer on axios + saves to localStorage
+    const { data } = await API.post("/login", payload);
+    setAuthToken(data.token);
 
-      // If your AuthContext.login accepts (user, token), pass both; otherwise just user.
-      if (login.length >= 2) {
-        login(data.user, data.token, data.abilities);
-      } else {
-        login(data.user);
-      }
-
-      navigate("/");
-    } catch (err) {
-      const status = err?.response?.status;
-      let msg =
-        err?.response?.data?.message ||
-        err?.message ||
-        "Login failed. Please try again.";
-      if (status === 422) msg = "Invalid email or password.";
-      setError(msg);
-      console.error("Login error:", err);
-    } finally {
-      setSubmitting(false);
+    // Save user to context
+    if (login.length >= 2) {
+      login(data.user, data.token, data.abilities);
+    } else {
+      login(data.user);
     }
-  };
+
+    // ✅ Role-based redirect
+    const roles = (data.user.roles || []).map((r) => r.name);
+
+    if (roles.includes("super-admin") || roles.includes("team-admin")) {
+      navigate("/admin/dashboard");
+    } else if (
+      roles.includes("school-admin") ||
+      roles.includes("teacher") ||
+      roles.includes("parent")
+    ) {
+      navigate("/school");
+    } else {
+      navigate("/admin"); // fallback
+    }
+  } catch (err) {
+    const status = err?.response?.status;
+    let msg =
+      err?.response?.data?.message ||
+      err?.message ||
+      "Login failed. Please try again.";
+    if (status === 422) msg = "Invalid credentials.";
+    setError(msg);
+    console.error("Login error:", err);
+  } finally {
+    setSubmitting(false);
+  }
+};
+
 
   return (
     <section className="auth bg-base d-flex flex-wrap">
@@ -110,6 +120,21 @@ const SignInLayer = () => {
                   required
                 />
               </div>
+            </div>
+
+            {/* ✅ NEW School Key input */}
+            <div className="icon-field mb-20">
+              <span className="icon top-50 translate-middle-y">
+                <Icon icon="mdi:school-outline" />
+              </span>
+              <input
+                type="text"
+                className="form-control h-56-px bg-neutral-50 radius-12"
+                placeholder="School Key (required for School Admins)"
+                value={schoolKey}
+                onChange={(e) => setSchoolKey(e.target.value)}
+                required={false}
+              />
             </div>
 
             <div className="d-flex justify-content-between gap-2">

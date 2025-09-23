@@ -83,26 +83,42 @@ const MasterLayout = ({ children }) => {
           <ul className="sidebar-menu" id="sidebar-menu">
             <li className="sidebar-menu-group-title">Application</li>
 
-            {showProducts && (
-              <li>
-                <NavLink to="/table-data" className={({ isActive }) => isActive ? "active-page" : ""}>
-                  <Icon icon="fe:vector" className="menu-icon" />
-                  <span>Product</span>
-                </NavLink>
-              </li>
-            )}
+       
 
-            {showCategories && (
-              <li>
-                <NavLink to="/category" className={({ isActive }) => isActive ? "active-page" : ""}>
-                  <Icon icon="fe:vector" className="menu-icon" />
-                  <span>Category</span>
-                </NavLink>
-              </li>
-            )}
+            {/* Manage Client (Schools) */}
+            <li>
+              <NavLink to="/admin/schools" className={({ isActive }) => (isActive ? "active-page" : "")}>
+                <Icon icon="mdi:account-multiple" className="menu-icon" />
+                <span>Manage Client</span>
+              </NavLink>
+            </li>
 
-            {/* ACCESS CONTROL (users icon, collapsible) */}
-            {showAccess && (
+            {/* Payments */}
+            <li>
+              <NavLink to="/admin/payments" className={({ isActive }) => (isActive ? "active-page" : "")}>
+                <Icon icon="mdi:credit-card" className="menu-icon" />
+                <span>Payments</span>
+              </NavLink>
+            </li>
+
+            {/* Analytics */}
+            <li>
+              <NavLink to="/admin/analytics" className={({ isActive }) => (isActive ? "active-page" : "")}>
+                <Icon icon="mdi:chart-line" className="menu-icon" />
+                <span>Analytics</span>
+              </NavLink>
+            </li>
+
+            {/* Reports */}
+            <li>
+              <NavLink to="/admin/reports" className={({ isActive }) => (isActive ? "active-page" : "")}>
+                <Icon icon="mdi:file-chart" className="menu-icon" />
+                <span>Manage Report</span>
+              </NavLink>
+            </li>
+
+            {/* Manage Users */}
+              {showAccess && (
               <li className={`dropdown ${openDropdownKey === "access" ? "open" : ""}`}>
                 {/* use an <a> styled like the other links */}
                 <a
@@ -114,7 +130,7 @@ const MasterLayout = ({ children }) => {
                   }}
                 >
                   <Icon icon="flowbite:users-group-outline" className="menu-icon" />
-                  <span>Access Control</span>
+                  <span>Manage user</span>
                   <Icon
                     icon={openDropdownKey === "access" ? "mdi:chevron-up" : "mdi:chevron-down"}
                     className="caret ms-auto"
@@ -153,8 +169,8 @@ const MasterLayout = ({ children }) => {
                 </ul>
               </li>
             )}
-
           </ul>
+
         </div>
       </aside>
 
