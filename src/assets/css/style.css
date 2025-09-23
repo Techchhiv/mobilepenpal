@@ -1,0 +1,67 @@
+/* CARD — kill any accidental padding */
+.product-card{
+  padding:0 !important;          /* <- critical */
+  border-radius:12px;
+  overflow:hidden;
+  background:#fff;
+  transition:box-shadow .2s ease;
+}
+.product-card:hover{ box-shadow:0 10px 22px rgba(0,0,0,.07); }
+
+/* Make the top link behave like a block so the image can be full width */
+.product-card > a{ display:block; }
+
+/* IMAGE AREA (full-bleed) */
+.product-card .img-wrap{
+  position:relative;
+  margin:0 !important;           /* <- prevent stray margins */
+  width:100%;
+  background:#f3f4f6;
+  overflow:hidden;
+  aspect-ratio:16/9;             /* adjust if you prefer 4/3 */
+  border-bottom:1px solid rgba(0,0,0,.05);
+}
+@supports not (aspect-ratio:16/9){
+  .product-card .img-wrap::before{
+    content:"";
+    display:block;
+    padding-top:56.25%;          /* 9/16 */
+  }
+}
+.product-card .img-wrap{ min-height:230px; }
+
+.product-card .img-wrap img{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  display:block;
+  object-fit:cover;
+  object-position:center;
+  transition:transform .35s ease;
+}
+.product-card:hover .img-wrap img{ transform:scale(1.03); }
+
+/* Portrait auto-fix (optional) */
+.product-card .img-wrap.is-portrait img{
+  object-fit:contain;
+  background:#f3f4f6;
+}
+
+/* Fav button stays on top of the image */
+.product-card .fav-btn{
+  position:absolute; top:10px; right:10px;
+  width:38px; height:38px; border-radius:9999px;
+  border:0; background:#fff; display:grid; place-items:center;
+  box-shadow:0 2px 8px rgba(0,0,0,.15);
+}
+
+/* Body padding lives only here, not on the whole card */
+.product-card .body{ padding:12px 16px; }
+
+.product-title{ line-height:1.2; }
+.price-chip{
+  background:#ffe7e7; color:#ff3b30; border-radius:10px;
+  font-weight:700; padding:4px 10px; display:inline-block; min-width:72px;
+  text-align:center;
+}

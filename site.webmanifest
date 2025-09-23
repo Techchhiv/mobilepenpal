@@ -1,0 +1,12 @@
+{
+  "name": "សម្បត្តិ ផ្សារឡាន",
+  "short_name": "ផ្សារឡាន",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": [
+    { "src": "/favicon1-01.png", "sizes": "32x32", "type": "image/png" },
+    { "src": "/favicon1-02.png", "sizes": "16x16", "type": "image/png" }
+  ]
+}
