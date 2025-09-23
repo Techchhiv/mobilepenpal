@@ -1,0 +1,52 @@
+
+
+  GET|HEAD        / ........................................................................................................................................ 
+  POST            _ignition/execute-solution ................................. ignition.executeSolution › Spatie\LaravelIgnition › ExecuteSolutionController
+  GET|HEAD        _ignition/health-check ............................................. ignition.healthCheck › Spatie\LaravelIgnition › HealthCheckController
+  POST            _ignition/update-config .......................................... ignition.updateConfig › Spatie\LaravelIgnition › UpdateConfigController
+  POST            api/auth/google ................................................................................. GoogleAuthController@firebaseGoogleLogin
+  GET|HEAD        api/categories ............................................................................... categories.index › CategoryController@index
+  POST            api/categories ............................................................................... categories.store › CategoryController@store
+  GET|HEAD        api/categories/{category} ...................................................................... categories.show › CategoryController@show
+  PUT|PATCH       api/categories/{category} .................................................................. categories.update › CategoryController@update
+  DELETE          api/categories/{category} ................................................................ categories.destroy › CategoryController@destroy
+  POST            api/login ........................................................................................................... AuthController@login
+  POST            api/logout ......................................................................................................... AuthController@logout
+  GET|HEAD        api/orders ......................................................................................... orders.index › OrdersController@index
+  POST            api/orders ......................................................................................... orders.store › OrdersController@store
+  GET|HEAD        api/orders/{order} ................................................................................... orders.show › OrdersController@show
+  PUT|PATCH       api/orders/{order} ............................................................................... orders.update › OrdersController@update
+  DELETE          api/orders/{order} ............................................................................. orders.destroy › OrdersController@destroy
+  GET|HEAD        api/productDetailByProduct/{id} ................................................................. ProductController@productDetailByProduct
+  GET|HEAD        api/products .................................................................................... products.index › ProductController@index
+  POST            api/products .................................................................................... products.store › ProductController@store
+  GET|HEAD        api/products/{product} ............................................................................ products.show › ProductController@show
+  PUT|PATCH       api/products/{product} ........................................................................ products.update › ProductController@update
+  DELETE          api/products/{product} ...................................................................... products.destroy › ProductController@destroy
+  GET|HEAD        api/productsByCategory/{categoryId} ................................................................... ProductController@filterByCategory
+  POST            api/register ..................................................................................................... AuthController@register
+  GET|HEAD        api/user ................................................................................................................................. 
+  GET|HEAD        confirm-password .............................................................. password.confirm › Auth\ConfirmablePasswordController@show
+  POST            confirm-password ................................................................................ Auth\ConfirmablePasswordController@store
+  GET|HEAD        dashboard ...................................................................................................................... dashboard
+  POST            email/verification-notification ................................... verification.send › Auth\EmailVerificationNotificationController@store
+  GET|HEAD        forgot-password ............................................................... password.request › Auth\PasswordResetLinkController@create
+  POST            forgot-password .................................................................. password.email › Auth\PasswordResetLinkController@store
+  GET|HEAD        login ................................................................................. login › Auth\AuthenticatedSessionController@create
+  POST            login .......................................................................................... Auth\AuthenticatedSessionController@store
+  POST            logout .............................................................................. logout › Auth\AuthenticatedSessionController@destroy
+  PUT             password ................................................................................ password.update › Auth\PasswordController@update
+  GET|HEAD        profile ............................................................................................ profile.edit › ProfileController@edit
+  PATCH           profile ........................................................................................ profile.update › ProfileController@update
+  DELETE          profile ...................................................................................... profile.destroy › ProfileController@destroy
+  GET|HEAD        register ................................................................................. register › Auth\RegisteredUserController@create
+  POST            register ............................................................................................. Auth\RegisteredUserController@store
+  POST            reset-password ......................................................................... password.store › Auth\NewPasswordController@store
+  GET|HEAD        reset-password/{token} ................................................................ password.reset › Auth\NewPasswordController@create
+  GET|HEAD        sanctum/csrf-cookie .................................................... sanctum.csrf-cookie › Laravel\Sanctum › CsrfCookieController@show
+  GET|HEAD        verify-email ................................................................ verification.notice › Auth\EmailVerificationPromptController
+  GET|HEAD        verify-email/{id}/{hash} ................................................................ verification.verify › Auth\VerifyEmailController
+  GET|HEAD        {any} .................................................................................................................................... 
+
+                                                                                                                                         Showing [47] routes
+
