@@ -45,10 +45,7 @@ export default function App() {
         <Route path="/image-world" element={<ImageToWord />} />
 
         {/* Product routes */}
-        <Route path="/product/:slug" element={<ProductDetail />} />
-        <Route path="/product-detail/:slug" element={<LegacyProductRedirect />} />
-        <Route path="/category/:slug" element={<Product />} />
-
+     
         {/* Misc public */}
         <Route path="/cart" element={<Cart />} />
         <Route path="/favorite" element={<Favorite />} />
@@ -104,7 +101,7 @@ export default function App() {
         </Route>
 
         {/* ---------- Fallback ---------- */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<Navigate to="/#" replace />} />
       </Routes>
     </>
   );

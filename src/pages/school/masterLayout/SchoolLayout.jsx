@@ -3,8 +3,8 @@ import React, { useState } from "react";
 import { Icon } from "@iconify/react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import ThemeToggleButton from "../../../helper/ThemeToggleButton";
-import { useAuth } from "../../../context/AuthContext";
 import API from "../../../helper/api";
+import { useAuth } from "../../../context/AuthContext";
 import penLogo from "../../../assets/images/pen_logo.png";
 
 export default function SchoolLayout({ children }) {

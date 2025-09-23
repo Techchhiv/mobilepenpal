@@ -74,7 +74,7 @@ const MasterLayout = ({ children }) => {
         </button>
 
         <div>
-          <Link to="/" className="sidebar-logo">
+          <Link to="/admin" className="sidebar-logo">
             <h6>Khmer Penpal</h6>
           </Link>
         </div>

@@ -16,9 +16,13 @@ const SignInLayer = () => {
   const navigate = useNavigate();
   const { isAuthenticated, login } = useAuth();
 
-  useEffect(() => {
-    if (isAuthenticated) navigate("/admin");
-  }, [isAuthenticated, navigate]);
+// Only redirect if logged in and already on /sign-in
+useEffect(() => {
+  if (isAuthenticated && window.location.pathname === "/sign-in") {
+    navigate("/admin"); // or maybe navigate(user.defaultDashboard)
+  }
+}, [isAuthenticated, navigate]);
+
 
 const handleLogin = async (e) => {
   e.preventDefault();
@@ -43,7 +47,7 @@ const handleLogin = async (e) => {
     const roles = (data.user.roles || []).map((r) => r.name);
 
     if (roles.includes("super-admin") || roles.includes("team-admin")) {
-      navigate("/admin/dashboard");
+      navigate("/admin");
     } else if (
       roles.includes("school-admin") ||
       roles.includes("teacher") ||
@@ -79,7 +83,7 @@ const handleLogin = async (e) => {
       <div className="auth-right py-32 px-24 d-flex flex-column justify-content-center">
         <div className="max-w-464-px mx-auto w-100">
           <div>
-            <Link to="/" className="mb-40 max-w-290-px d-block">
+            <Link to="/#" className="mb-40 max-w-290-px d-block">
               <img src={penLogo} alt="logo" />
             </Link>
             <h4 className="mb-12">Sign In to your Account</h4>
