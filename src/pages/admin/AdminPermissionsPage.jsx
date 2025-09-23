@@ -16,8 +16,18 @@ function PermissionModal({ open, onClose, onSubmit, initial, saving }) {
   if (!open) return null;
 
   return (
-    <div className="modal-backdrop show" style={{ display: "block" }}>
-      <div className="modal d-block" tabIndex={-1} role="dialog" onClick={onClose}>
+    <>
+      {/* Backdrop */}
+      <div className="modal-backdrop fade show"></div>
+
+      {/* Modal */}
+      <div
+        className="modal fade show d-block"
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        onClick={onClose}
+      >
         <div
           className="modal-dialog modal-dialog-centered"
           role="document"
@@ -25,7 +35,9 @@ function PermissionModal({ open, onClose, onSubmit, initial, saving }) {
         >
           <div className="modal-content">
             <div className="modal-header">
-              <h6 className="modal-title">{isEdit ? "Edit Permission" : "Add Permission"}</h6>
+              <h6 className="modal-title">
+                {isEdit ? "Edit Permission" : "Add Permission"}
+              </h6>
               <button type="button" className="btn-close" onClick={onClose} />
             </div>
 
@@ -46,25 +58,39 @@ function PermissionModal({ open, onClose, onSubmit, initial, saving }) {
                   minLength={2}
                 />
                 <small className="text-muted d-block mt-1">
-                  Use a consistent naming pattern like <code>resource.action</code>.
+                  Use a consistent naming pattern like{" "}
+                  <code>resource.action</code>.
                 </small>
               </div>
 
               <div className="modal-footer">
-                <button type="button" className="btn btn-light" onClick={onClose}>
+                <button
+                  type="button"
+                  className="btn btn-light"
+                  onClick={onClose}
+                >
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-primary" disabled={saving}>
-                  {saving ? "Saving…" : isEdit ? "Save Changes" : "Create Permission"}
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={saving}
+                >
+                  {saving
+                    ? "Saving…"
+                    : isEdit
+                    ? "Save Changes"
+                    : "Create Permission"}
                 </button>
               </div>
             </form>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
+
 
 export default function AdminPermissionsPage() {
   const [perms, setPerms] = useState([]);      // [{id, name}]
