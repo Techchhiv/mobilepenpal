@@ -40,9 +40,13 @@ function UserFormModal({
   if (!open) return null;
 
   return (
-    <div className="modal-backdrop show" style={{ display: "block" }}>
+    <>
+      {/* Backdrop */}
+      <div className="modal-backdrop fade show"></div>
+
+      {/* Modal */}
       <div
-        className="modal d-block"
+        className="modal fade show d-block"
         tabIndex={-1}
         role="dialog"
         aria-modal="true"
@@ -58,6 +62,7 @@ function UserFormModal({
               <h6 className="modal-title">{isEdit ? "Edit User" : "Add User"}</h6>
               <button type="button" className="btn-close" onClick={onClose} />
             </div>
+
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -72,6 +77,7 @@ function UserFormModal({
             >
               <div className="modal-body">
                 <div className="row g-3">
+                  {/* Name */}
                   <div className="col-12 col-md-6">
                     <label className="form-label">Name</label>
                     <input
@@ -81,6 +87,8 @@ function UserFormModal({
                       required
                     />
                   </div>
+
+                  {/* Email */}
                   <div className="col-12 col-md-6">
                     <label className="form-label">Email</label>
                     <input
@@ -92,6 +100,7 @@ function UserFormModal({
                     />
                   </div>
 
+                  {/* Password */}
                   <div className="col-12">
                     <label className="form-label">
                       {isEdit ? "Password (leave empty to keep)" : "Password"}
@@ -107,9 +116,13 @@ function UserFormModal({
                     />
                   </div>
 
+                  {/* Roles */}
                   <div className="col-12">
                     <label className="form-label">Roles</label>
-                    <div className="border rounded-3 p-2" style={{ maxHeight: 220, overflow: "auto" }}>
+                    <div
+                      className="border rounded-3 p-2"
+                      style={{ maxHeight: 220, overflow: "auto" }}
+                    >
                       <div className="row g-2">
                         {allRoles.map((r) => (
                           <div key={r.id || r.name} className="col-12 col-sm-6">
@@ -134,20 +147,33 @@ function UserFormModal({
               </div>
 
               <div className="modal-footer">
-                <button type="button" className="btn btn-light" onClick={onClose}>
+                <button
+                  type="button"
+                  className="btn btn-light"
+                  onClick={onClose}
+                >
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-primary" disabled={saving}>
-                  {saving ? "Saving…" : isEdit ? "Save Changes" : "Create User"}
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={saving}
+                >
+                  {saving
+                    ? "Saving…"
+                    : isEdit
+                    ? "Save Changes"
+                    : "Create User"}
                 </button>
               </div>
             </form>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
+
 
 const AdminUsersPage = () => {
   const [rows, setRows] = useState([]);
