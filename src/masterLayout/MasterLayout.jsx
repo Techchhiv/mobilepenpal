@@ -5,6 +5,7 @@ import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import ThemeToggleButton from "../helper/ThemeToggleButton";
 import { useAuth } from "../context/AuthContext";
 import API from "../helper/api";
+import penLogo from '../assets/images/pen_logo.png'
 
 const MasterLayout = ({ children }) => {
   const {
@@ -189,7 +190,7 @@ const MasterLayout = ({ children }) => {
                 {/* Profile dropdown */}
                 <div className="dropdown">
                   <button className="d-flex justify-content-center align-items-center rounded-circle" type="button" data-bs-toggle="dropdown">
-                    <img src="assets/images/pen_logo.png" alt="user" className="w-40-px h-40-px object-fit-cover rounded-circle" />
+                    <img src={penLogo} alt="user" className="w-40-px h-40-px object-fit-cover rounded-circle" />
                   </button>
                   <div className="dropdown-menu to-top dropdown-menu-sm">
                     <div className="py-12 px-16 radius-8 bg-primary-50 mb-16 d-flex align-items-center justify-content-between gap-2">
