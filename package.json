@@ -88,6 +88,7 @@
     "@iconify/react": "^5.0.2",
     "postcss-preset-env": "^10.1.6",
     "sass": "^1.71.1",
-    "webpack": "^5.90.3"
+    "webpack": "^5.101.3",
+    "webpack-dev-server": "^4.15.2"
   }
 }
