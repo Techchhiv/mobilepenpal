@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import API, { setAuthToken } from "../helper/api"; // ⬅️ import setAuthToken
 import { useAuth } from "../context/AuthContext";
 import cover from "../assets/images/cover.jpg";
+import penLogo from '../assets/images/pen_logo.png'
 
 const SignInLayer = () => {
   const [email, setEmail] = useState("");
@@ -68,7 +69,7 @@ const SignInLayer = () => {
         <div className="max-w-464-px mx-auto w-100">
           <div>
             <Link to="/" className="mb-40 max-w-290-px d-block">
-              <img src="assets/images/pen_logo.png" alt="logo" />
+              <img src={penLogo} alt="logo" />
             </Link>
             <h4 className="mb-12">Sign In to your Account</h4>
             <p className="mb-32 text-secondary-light text-lg">
