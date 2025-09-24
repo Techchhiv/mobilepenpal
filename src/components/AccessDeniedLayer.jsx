@@ -6,10 +6,10 @@ const AccessDeniedLayer = () => {
     <div className='custom-bg'>
       <div className='container container--xl'>
         <div className='d-flex align-items-center justify-content-between py-24'>
-          <Link to='/' className=''>
+          <Link to='/sign-in' className=''>
             <img src='assets/images/logo.png' alt='' />
           </Link>
-          <Link to='/' className='btn btn-outline-primary-600 text-sm'>
+          <Link to='/sign-in' className='btn btn-outline-primary-600 text-sm'>
             {" "}
             Go To Home{" "}
           </Link>
@@ -26,7 +26,7 @@ const AccessDeniedLayer = () => {
               much trouble, contact your site executive to demand access.
             </p>
             <Link
-              to='/'
+              to='/sign-in'
               className='btn btn-primary-600 px-32 py-16 flex-shrink-0 d-inline-flex align-items-center justify-content-center gap-8 mt-28'
             >
               <i className='ri-home-4-line' /> Go Back To Home

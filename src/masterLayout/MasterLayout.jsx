@@ -1,54 +1,36 @@
-// src/layout/MasterLayout.jsx
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Icon } from "@iconify/react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
-import ThemeToggleButton from "../helper/ThemeToggleButton";
 import { useAuth } from "../context/AuthContext";
+import { hasRole, hasPermission } from "../utils/permissions";
+import ThemeToggleButton from "../helper/ThemeToggleButton";
 import API from "../helper/api";
-import penLogo from '../assets/images/pen_logo.png'
+import penLogo from "../assets/images/pen_logo.png";
 
 const MasterLayout = ({ children }) => {
-  const {
-    user,
-    loading,
-    logout,
-    isSuperAdmin,
-    hasPermission,
-    hasAnyPermission,
-  } = useAuth();
-
+  const { user, loading, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  // helpers
-  const hasRole = (role) => Boolean(user?.roles?.some?.((r) => r?.name === role));
-  const can = (perm) => isSuperAdmin || hasPermission(perm);
-  const canAny = (perms = []) => isSuperAdmin || hasAnyPermission(perms);
-
-  // visibility (use .view to show menus, manage group to show Access Control)
-  const showProducts = can("products.view") || hasRole("admin");
-  const showCategories = can("category.view") || hasRole("admin");
-  const showAccess = canAny(["users.manage", "roles.manage", "permissions.manage"]) || hasRole("admin");
-
-  // ui state
   const [sidebarActive, setSidebarActive] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
-  const [openDropdownKey, setOpenDropdownKey] = useState(null); // "access" | "settings" | null
+  const [openDropdownKey, setOpenDropdownKey] = useState(null);
 
-  // auto-open correct dropdown by route
+  // Use show... variables for each menu item based on roles and permissions
+  const showManageClients = hasRole(user?.roles, "manage_clients Admin") || hasPermission(user?.permissions, "menu.manage_clients");
+
+  const showPayments = hasRole(user?.roles, "Payment Admin") || hasPermission(user?.permissions, "menu.payments");
+  const showAnalytics = hasPermission(user?.permissions, "menu.analytics");
+  const showReports = hasPermission(user?.permissions, "menu.reports");
+  const showManageUsers = hasRole(user?.roles, "admin") || hasPermission(user?.permissions, "users.manage");
+  const showRoles = hasRole(user?.roles, "admin") || hasPermission(user?.permissions, "roles.manage");
+  const showPermissions = hasRole(user?.roles, "admin") || hasPermission(user?.permissions, "permissions.manage");
+
   useEffect(() => {
     const p = location.pathname;
     if (p.startsWith("/admin/users") || p.startsWith("/admin/roles") || p.startsWith("/admin/permissions")) {
       setOpenDropdownKey("access");
-    } else if (
-      p.startsWith("/company") ||
-      p.startsWith("/notification") ||
-      p.startsWith("/notification-alert") ||
-      p.startsWith("/theme") ||
-      p.startsWith("/currencies") ||
-      p.startsWith("/language") ||
-      p.startsWith("/payment-gateway")
-    ) {
+    } else if (p.startsWith("/company") || p.startsWith("/notification") || p.startsWith("/notification-alert") || p.startsWith("/theme") || p.startsWith("/currencies") || p.startsWith("/language") || p.startsWith("/payment-gateway")) {
       setOpenDropdownKey("settings");
     } else {
       setOpenDropdownKey(null);
@@ -56,9 +38,7 @@ const MasterLayout = ({ children }) => {
   }, [location.pathname]);
 
   const handleLogout = async () => {
-    try { await API.post("/logout"); } catch { }
     logout();
-    navigate("/sign-in", { replace: true });
   };
 
   if (loading) return <div>Loading...</div>;
@@ -66,9 +46,7 @@ const MasterLayout = ({ children }) => {
   return (
     <section className={mobileMenu ? "overlay active" : "overlay"}>
       {/* Sidebar */}
-      <aside className={
-        sidebarActive ? "sidebar active" : mobileMenu ? "sidebar sidebar-open" : "sidebar"
-      }>
+      <aside className={sidebarActive ? "sidebar active" : "sidebar"}>
         <button onClick={() => setMobileMenu(false)} type="button" className="sidebar-close-btn">
           <Icon icon="radix-icons:cross-2" />
         </button>
@@ -83,22 +61,20 @@ const MasterLayout = ({ children }) => {
           <ul className="sidebar-menu" id="sidebar-menu">
             <li className="sidebar-menu-group-title">Application</li>
 
-
-
-            {/* Manage Client (Schools) */}
-            {can("menu.manage_clients") && (
+            {/* Manage Clients */}
+            {showManageClients && (
               <li>
-                <NavLink to="/admin/schools" className={({ isActive }) => (isActive ? "active-page" : "")}>
+                <NavLink to="/admin/schools">
                   <Icon icon="mdi:account-multiple" className="menu-icon" />
-                  <span>Manage Client</span>
+                  <span>Manage Clients</span>
                 </NavLink>
               </li>
             )}
 
             {/* Payments */}
-            {can("menu.payments") && (
+            {showPayments && (
               <li>
-                <NavLink to="/admin/payments" className={({ isActive }) => (isActive ? "active-page" : "")}>
+                <NavLink to="/admin/payments">
                   <Icon icon="mdi:credit-card" className="menu-icon" />
                   <span>Payments</span>
                 </NavLink>
@@ -106,9 +82,9 @@ const MasterLayout = ({ children }) => {
             )}
 
             {/* Analytics */}
-            {can("menu.analytics") && (
+            {showAnalytics && (
               <li>
-                <NavLink to="/admin/analytics" className={({ isActive }) => (isActive ? "active-page" : "")}>
+                <NavLink to="/admin/analytics">
                   <Icon icon="mdi:chart-line" className="menu-icon" />
                   <span>Analytics</span>
                 </NavLink>
@@ -116,62 +92,52 @@ const MasterLayout = ({ children }) => {
             )}
 
             {/* Reports */}
-            {can("menu.reports") && (
+            {showReports && (
               <li>
-                <NavLink to="/admin/reports" className={({ isActive }) => (isActive ? "active-page" : "")}>
+                <NavLink to="/admin/reports">
                   <Icon icon="mdi:file-chart" className="menu-icon" />
                   <span>Manage Report</span>
                 </NavLink>
               </li>
             )}
 
-
             {/* Manage Users */}
-            {showAccess && (
+            {showManageUsers && (
               <li className={`dropdown ${openDropdownKey === "access" ? "open" : ""}`}>
-                {/* use an <a> styled like the other links */}
                 <a
                   href="#access"
                   className={`menu-trigger ${openDropdownKey === "access" ? "active-page" : ""}`}
                   onClick={(e) => {
                     e.preventDefault();
-                    setOpenDropdownKey(prev => (prev === "access" ? null : "access"));
+                    setOpenDropdownKey((prev) => (prev === "access" ? null : "access"));
                   }}
                 >
                   <Icon icon="flowbite:users-group-outline" className="menu-icon" />
-                  <span>Manage user</span>
-                  <Icon
-                    icon={openDropdownKey === "access" ? "mdi:chevron-up" : "mdi:chevron-down"}
-                    className="caret ms-auto"
-                  />
+                  <span>Manage Users</span>
+                  <Icon icon={openDropdownKey === "access" ? "mdi:chevron-up" : "mdi:chevron-down"} className="caret ms-auto" />
                 </a>
-
-                <ul
-                  className="sidebar-submenu"
-                  style={{
-                    maxHeight: openDropdownKey === "access" ? "600px" : "0px",
-                    overflow: "hidden",
-                    transition: "max-height .25s ease",
-                  }}
-                >
-                  {(isSuperAdmin || hasRole("admin") || can("users.manage")) && (
+                <ul className="sidebar-submenu" style={{ maxHeight: openDropdownKey === "access" ? "600px" : "0px", overflow: "hidden", transition: "max-height .25s ease" }}>
+                  {showManageUsers && (
                     <li>
                       <NavLink to="/admin/users" className={({ isActive }) => (isActive ? "active-page" : "")}>
-                        <i className="ri-circle-fill circle-icon text-primary-600 w-auto" /> Users
+                        <i className="ri-circle-fill circle-icon text-primary-600 w-auto" />
+                        Users
                       </NavLink>
                     </li>
                   )}
-                  {(isSuperAdmin || hasRole("admin") || can("roles.manage")) && (
+                  {showRoles && (
                     <li>
                       <NavLink to="/admin/roles" className={({ isActive }) => (isActive ? "active-page" : "")}>
-                        <i className="ri-circle-fill circle-icon text-warning-main w-auto" /> Roles
+                        <i className="ri-circle-fill circle-icon text-warning-main w-auto" />
+                        Roles
                       </NavLink>
                     </li>
                   )}
-                  {(isSuperAdmin || hasRole("admin") || can("permissions.manage")) && (
+                  {showPermissions && (
                     <li>
                       <NavLink to="/admin/permissions" className={({ isActive }) => (isActive ? "active-page" : "")}>
-                        <i className="ri-circle-fill circle-icon text-info-main w-auto" /> Permissions
+                        <i className="ri-circle-fill circle-icon text-info-main w-auto" />
+                        Permissions
                       </NavLink>
                     </li>
                   )}
@@ -179,39 +145,34 @@ const MasterLayout = ({ children }) => {
               </li>
             )}
           </ul>
-
         </div>
       </aside>
 
-      {/* Main */}
+      {/* Main Content */}
       <main className={sidebarActive ? "dashboard-main active" : "dashboard-main"}>
         <div className="navbar-header">
           <div className="row align-items-center justify-content-between">
             <div className="col-auto">
               <div className="d-flex flex-wrap align-items-center gap-4">
-                <button type="button" className="sidebar-toggle" onClick={() => setSidebarActive(s => !s)}>
+                <button type="button" className="sidebar-toggle" onClick={() => setSidebarActive((s) => !s)}>
                   {sidebarActive ? (
                     <Icon icon="iconoir:arrow-right" className="icon text-2xl non-active" />
                   ) : (
                     <Icon icon="heroicons:bars-3-solid" className="icon text-2xl non-active" />
                   )}
                 </button>
-
                 <button onClick={() => setMobileMenu(true)} type="button" className="sidebar-mobile-toggle">
                   <Icon icon="heroicons:bars-3-solid" className="icon" />
                 </button>
-
                 <form className="navbar-search">
                   <input type="text" name="search" placeholder="Search" />
                   <Icon icon="ion:search-outline" className="icon" />
                 </form>
               </div>
             </div>
-
             <div className="col-auto">
               <div className="d-flex flex-wrap align-items-center gap-3">
                 <ThemeToggleButton />
-
                 {/* Profile dropdown */}
                 <div className="dropdown">
                   <button className="d-flex justify-content-center align-items-center rounded-circle" type="button" data-bs-toggle="dropdown">
@@ -220,18 +181,13 @@ const MasterLayout = ({ children }) => {
                   <div className="dropdown-menu to-top dropdown-menu-sm">
                     <div className="py-12 px-16 radius-8 bg-primary-50 mb-16 d-flex align-items-center justify-content-between gap-2">
                       <div>
-                        <h6 className="text-lg text-primary-light fw-semibold mb-2">
-                          {user?.name ?? "User"}
-                        </h6>
-                        <span className="text-secondary-light fw-medium text-sm">
-                          {user?.email ?? ""}
-                        </span>
+                        <h6 className="text-lg text-primary-light fw-semibold mb-2">{user?.name ?? "User"}</h6>
+                        <span className="text-secondary-light fw-medium text-sm">{user?.email ?? ""}</span>
                       </div>
                       <button type="button" className="hover-text-danger">
                         <Icon icon="radix-icons:cross-1" className="icon text-xl" />
                       </button>
                     </div>
-
                     <ul className="to-top-list">
                       <li>
                         <Link className="dropdown-item text-black px-0 py-8 hover-bg-transparent hover-text-primary d-flex align-items-center gap-3" to="/view-profile">
@@ -246,11 +202,7 @@ const MasterLayout = ({ children }) => {
                         </Link>
                       </li>
                       <li>
-                        <button
-                          className="dropdown-item text-black px-0 py-8 hover-bg-transparent hover-text-danger d-flex align-items-center gap-3 w-100 text-start"
-                          onClick={handleLogout}
-                          type="button"
-                        >
+                        <button className="dropdown-item text-black px-0 py-8 hover-bg-transparent hover-text-danger d-flex align-items-center gap-3 w-100 text-start" onClick={handleLogout} type="button">
                           <Icon icon="lucide:power" className="icon text-xl" />
                           Log Out
                         </button>
@@ -258,7 +210,6 @@ const MasterLayout = ({ children }) => {
                     </ul>
                   </div>
                 </div>
-                {/* Profile dropdown end */}
               </div>
             </div>
           </div>

@@ -1,14 +1,16 @@
+// src/pages/SchoolSignInLayer.jsx
 import { Icon } from "@iconify/react";
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import API, { setAuthToken } from "../helper/api";
-import { useAuth } from "../context/AuthContext";
-import penLogo from "../assets/images/pen_logo.png";
-import coverPen from "../assets/images/coverPen.png";
+import API, { setAuthToken } from "../../../helper/api";
+import { useAuth } from "../../../context/AuthContext";
+import penLogo from "../../../assets/images/pen_logo.png";
+import coverPen from "../../../assets/images/coverPen.png";
 
-const AdminSignInLayer = () => {
+const SchoolSignInLayer = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [schoolKey, setSchoolKey] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -16,8 +18,8 @@ const AdminSignInLayer = () => {
   const { isAuthenticated, login } = useAuth();
 
   useEffect(() => {
-    if (isAuthenticated && window.location.pathname === "/sign-in-admin") {
-      navigate("/admin");
+    if (isAuthenticated && window.location.pathname === "/sign-in-school") {
+      navigate("/school");
     }
   }, [isAuthenticated, navigate]);
 
@@ -27,30 +29,30 @@ const AdminSignInLayer = () => {
     setSubmitting(true);
 
     try {
-      const payload = { email: email.trim(), password };
+      const payload = { email: email.trim(), password, school_key: schoolKey.trim() };
 
-      // Make API call to login
       const { data } = await API.post("/login", payload);
       setAuthToken(data.token);
 
-      // Login user
-      login(data.user, data.token, data.abilities);  // Simplified login handling
-
-      // Retrieve user roles and permissions
-      const roles = (data.user.roles || []).map((r) => r.name);
-      const permissions = data.user.permissions || [];
-
-      // Check the user's roles and permissions to determine redirection
-      if (roles.includes("super-admin") || roles.includes("team-admin")) {
-        navigate("/admin"); // Redirect to admin dashboard
-      } else if (roles.includes("Payment Admin") || permissions.includes("menu.payments")) {
-        navigate("/admin/payments"); // Redirect to payments page
-      } else if (roles.includes("manage_clients Admin") || permissions.includes("menu.manage_clients")) {
-        navigate("/admin/schools"); // Redirect to manage clients page
-      } else if (permissions.includes("menu.reports")) {
-        navigate("/admin/reports"); // Redirect to reports page
+      if (login.length >= 2) {
+        login(data.user, data.token, data.abilities);
       } else {
-        navigate("/admin"); // Fallback if no role/permission match
+        login(data.user);
+      }
+
+      // Redirect based on roles
+      const roles = (data.user.roles || []).map((r) => r.name);
+
+      if (roles.includes("super-admin") || roles.includes("team-admin")) {
+        navigate("/admin");
+      } else if (
+        roles.includes("school-admin") ||
+        roles.includes("teacher") ||
+        roles.includes("parent")
+      ) {
+        navigate("/school");
+      } else {
+        navigate("/admin"); // fallback if the user has no roles
       }
     } catch (err) {
       const status = err?.response?.status;
@@ -58,7 +60,6 @@ const AdminSignInLayer = () => {
         err?.response?.data?.message ||
         err?.message ||
         "Login failed. Please try again.";
-
       if (status === 422) msg = "Invalid credentials.";
       setError(msg);
       console.error("Login error:", err);
@@ -81,7 +82,7 @@ const AdminSignInLayer = () => {
             <Link to="/" className="mb-40 max-w-290-px d-block">
               <img src={penLogo} alt="logo" />
             </Link>
-            <h4 className="mb-12">Sign In to your Account</h4>
+            <h4 className="mb-12">Sign In to your School Account</h4>
             <p className="mb-32 text-secondary-light text-lg">
               Welcome back! Please enter your details.
             </p>
@@ -121,6 +122,20 @@ const AdminSignInLayer = () => {
               </div>
             </div>
 
+            <div className="icon-field mb-20">
+              <span className="icon top-50 translate-middle-y">
+                <Icon icon="mdi:school-outline" />
+              </span>
+              <input
+                type="text"
+                className="form-control h-56-px bg-neutral-50 radius-12"
+                placeholder="School Key"
+                value={schoolKey}
+                onChange={(e) => setSchoolKey(e.target.value)}
+                required
+              />
+            </div>
+
             <button
               type="submit"
               disabled={submitting}
@@ -135,11 +150,12 @@ const AdminSignInLayer = () => {
               </p>
             )}
           </form>
+
           {/* Link to Admin Login */}
           <div className="mt-4 text-center">
             <p>
-              <span>School Login?</span>{" "}
-              <Link to="/sign-in-school" className="text-primary">
+              <span>Admin Login?</span>{" "}
+              <Link to="/sign-in-admin" className="text-primary">
                 Click here
               </Link>
             </p>
@@ -150,4 +166,4 @@ const AdminSignInLayer = () => {
   );
 };
 
-export default AdminSignInLayer;
+export default SchoolSignInLayer;

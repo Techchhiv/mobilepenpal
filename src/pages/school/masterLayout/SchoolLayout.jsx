@@ -1,4 +1,3 @@
-// src/layout/SchoolLayout.jsx
 import React, { useState } from "react";
 import { Icon } from "@iconify/react";
 import { Link, NavLink, useNavigate, useLocation } from "react-router-dom";
@@ -10,7 +9,6 @@ import penLogo from "../../../assets/images/pen_logo.png";
 export default function SchoolLayout({ children }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-
   const location = useLocation();
 
   const [sidebarActive, setSidebarActive] = useState(false);
@@ -23,10 +21,8 @@ export default function SchoolLayout({ children }) {
     logout();
 
     // force replace so no fallback
-    navigate("/sign-in", { replace: true });
+    navigate("/sign-in-school", { replace: true }); // Redirect to School Login
   };
-
-
 
   return (
     <section className={mobileMenu ? "overlay active" : "overlay"}>

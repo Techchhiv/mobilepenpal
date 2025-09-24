@@ -1,24 +1,36 @@
-// src/router/Gate.jsx
-import { Navigate, useLocation } from "react-router-dom";
+// src/components/router/Gate.js
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import LoadingSpinner from "../LoadingSpinner";
+import { hasRole, hasAnyPermission, hasAllPermissions, isSuperAdmin } from "../../utils/permissions";
 
-export default function Gate({ children, roles = [], anyPerm = [], allPerm = [] }) {
-  const { loading, isAuthenticated, user, isSuperAdmin } = useAuth();
+export default function Gate({ roles = [], anyPerm = [], allPerm = [] }) {
+  const { loading, isAuthenticated, user } = useAuth();
   const location = useLocation();
 
   if (loading) return <LoadingSpinner />;
-  if (!isAuthenticated) return <Navigate to="/sign-in" replace state={{ from: location }} />;
 
-  const hasRole = (r) => (user?.roles || []).some(x => x.name === r);
-  const can     = (p) => isSuperAdmin || (user?.permissions || []).includes(p);
+  // If user is not authenticated, redirect to sign-in page
+  if (!isAuthenticated) {
+    return <Navigate to="/sign-in-admin" replace state={{ from: location }} />;
+  }
 
-  const roleOK   = roles.length === 0 || roles.some(hasRole) || isSuperAdmin;
-  const anyOK    = anyPerm.length === 0 || anyPerm.some(can);
-  const allOK    = allPerm.length === 0 || allPerm.every(can);
+  const userRoles = (user?.roles || []).map((r) => r.name);
+  const userPerms = user?.permissions || [];
 
-  if (!(roleOK && anyOK && allOK)) return <Navigate to="/sign-in" replace />;
+  // Use helper functions for role and permission checks
+  const roleOK = isSuperAdmin(userRoles) || roles.length === 0 || roles.some((role) => hasRole(userRoles, role));
+  const anyOK = isSuperAdmin(userRoles) || anyPerm.length === 0 || hasAnyPermission(userPerms, anyPerm);
+  const allOK = isSuperAdmin(userRoles) || allPerm.length === 0 || hasAllPermissions(userPerms, allPerm);
 
-  return children;
+  if (!(roleOK && anyOK && allOK)) {
+    // Redirect to sign-in page based on role
+    if (roles.includes("school-admin")) {
+      return <Navigate to="/sign-in-school" replace state={{ from: location }} />;
+    }
+    // Fallback to sign-in-admin if not school-admin
+    return <Navigate to="/sign-in-admin" replace state={{ from: location }} />;
+  }
+
+  return <Outlet />;
 }
-

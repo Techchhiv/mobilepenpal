@@ -1,16 +1,9 @@
-// src/App.jsx
 import React from "react";
 import { Routes, Route, Outlet, Navigate, useParams } from "react-router-dom";
 import RouteScrollToTop from "./helper/RouteScrollToTop";
 import Gate from "./components/router/Gate";
 
 // ---------- Public Pages ----------
-import Frontend from "./frontend";
-import ImageToWord from "./frontend/page/imageToWord";
-import ProductDetail from "./frontend/page/ProductDetail";
-import Product from "./frontend/page/Product";
-import Cart from "./frontend/page/Cart";
-import Favorite from "./frontend/page/FavoritePage";
 import SignInPage from "./pages/SignInPage";
 import SignUpPage from "./pages/SignUpPage";
 import OAuthSuccess from "./helper/OAuthSuccess";
@@ -22,20 +15,14 @@ import AdminUsersPage from "./pages/admin/AdminUsersPage";
 import AdminRolesPage from "./pages/admin/AdminRolesPage";
 import AdminPermissionsPage from "./pages/admin/AdminPermissionsPage";
 import ManageClientsPage from "./pages/admin/ManageClientsPage";
+import ManagePaymentsPage from "./pages/admin/ManagePaymentsPage";
+import SchoolPayments from "./pages/admin/SchoolPayments";
 
 // ---------- School Pages ----------
-import SchoolLayout from "./pages/school/masterLayout/SchoolLayout";
-import ManageTeacher from "./pages/school/page/ManageTeacher";
+import SchoolSignInLayer from "./pages/school/page/SchoolSignin";
 import SchoolDashboard from "./pages/school/page/SchoolDashboard";
-import SchoolPayments from "./pages/admin/SchoolPayments";
-import ManagePaymentsPage from "./pages/admin/ManagePaymentsPage";
-// later: import ManageStudents, StudentPerformance, etc.
+import ManageTeacher from "./pages/school/page/ManageTeacher";
 
-// ---------- Utils ----------
-const LegacyProductRedirect = () => {
-  const { slug } = useParams();
-  return <Navigate to={`/product/${slug}`} replace />;
-};
 
 export default function App() {
   return (
@@ -43,69 +30,71 @@ export default function App() {
       <RouteScrollToTop />
       <Routes>
         {/* ---------- Public Routes ---------- */}
-        <Route path="/frontend" element={<Frontend />} />
-        <Route path="/image-world" element={<ImageToWord />} />
-
-        {/* Product routes */}
-
-        {/* Misc public */}
-        <Route path="/cart" element={<Cart />} />
-        <Route path="/favorite" element={<Favorite />} />
-        <Route path="/sign-in" element={<SignInPage />} />
+        <Route path="/sign-in-admin" element={<SignInPage />} />
+        <Route path="/sign-in-school" element={<SchoolSignInLayer />} />
         <Route path="/sign-up" element={<SignUpPage />} />
         <Route path="/oauth-success" element={<OAuthSuccess />} />
         <Route path="/access-denied" element={<AccessDeniedPage />} />
 
-        {/* ---------- Admin Routes (Protected) ---------- */}
+        {/* ---------- Admin Routes ---------- */}
         <Route
           element={
-            <Gate
-              roles={["admin", "super-admin"]}
-              anyPerm={[
-                "users.manage",
-                "roles.manage",
-                "permissions.manage",
-                "menu.manage_clients",
-                "menu.payments",
-                "menu.analytics",
-                "menu.reports",
-              ]}
-            >
-              <Outlet />
-            </Gate>
+            <Gate roles={["admin", "super-admin"]} anyPerm={["console.view"]} />
           }
         >
           <Route path="/admin" element={<HomePageOne />} />
-          <Route path="/admin/users" element={<AdminUsersPage />} />
-          <Route path="/admin/roles" element={<AdminRolesPage />} />
-          <Route path="/admin/permissions" element={<AdminPermissionsPage />} />
+        </Route>
+
+        {/* ---------- Manage Clients ---------- */}
+        <Route
+          element={
+            <Gate
+              roles={["manage_clients Admin"]}
+              anyPerm={["manage_clients.manage"]}
+            />
+          }
+        >
           <Route path="/admin/schools" element={<ManageClientsPage />} />
+        </Route>
+
+        {/* ---------- Payments ---------- */}
+        <Route
+          element={
+            <Gate
+              roles={["Payment Admin"]}
+              anyPerm={["payments.manage"]}
+            />
+          }
+        >
           <Route path="/admin/payments" element={<ManagePaymentsPage />} />
           <Route path="/admin/schools/:schoolId/payments" element={<SchoolPayments />} />
         </Route>
 
-        {/* ---------- School Routes (Protected) ---------- */}
+        {/* ---------- Users / Roles / Permissions ---------- */}
+        <Route
+          element={
+            <Gate
+              roles={["admin", "super-admin"]}
+              anyPerm={["users.manage", "roles.manage", "permissions.manage"]}
+            />
+          }
+        >
+          <Route path="/admin/users" element={<AdminUsersPage />} />
+          <Route path="/admin/roles" element={<AdminRolesPage />} />
+          <Route path="/admin/permissions" element={<AdminPermissionsPage />} />
+        </Route>
+
+        {/* ---------- School Routes ---------- */}
         <Route
           element={
             <Gate
               roles={["school-admin", "teacher", "parent"]}
-              anyPerm={[
-                "teachers.view",
-                "students.view",
-                "school.dashboard.view",
-              ]}
-            >
-              <Outlet />
-
-            </Gate>
+              anyPerm={["school.dashboard.view"]}
+            />
           }
         >
-          <Route path="/school" element={<Navigate to="/school/dashboard" replace />} />
-          <Route path="/school/dashboard" element={<SchoolDashboard />} />
+          <Route path="/school" element={<SchoolDashboard />} />
           <Route path="/school/teachers" element={<ManageTeacher />} />
-          {/* Add more later: */}
-          {/* <Route path="/school/students" element={<ManageStudents />} /> */}
-          {/* <Route path="/school/performance" element={<StudentPerformance />} /> */}
         </Route>
 
         {/* ---------- Fallback ---------- */}
