@@ -62,6 +62,14 @@ class RbacSeeder extends Seeder
 
             // School Dashboard
             'school.dashboard.view',
+
+            // ----------------------------
+            // NEW → Menus
+            // ----------------------------
+            'menu.manage_clients',   // Manage Client menu
+            'menu.payments',         // Payments menu
+            'menu.analytics',        // Analytics menu
+            'menu.reports',          // Manage Report menu
         ];
 
         // ----------------------------
@@ -93,6 +101,9 @@ class RbacSeeder extends Seeder
             'enrollments.create','enrollments.update','enrollments.disable',
             'classrooms.view','classrooms.create','classrooms.update','classrooms.delete','classrooms.enable_disable',
             'school.dashboard.view',
+            // (optional) if school-admins should see analytics or payments:
+            'menu.analytics',
+            'menu.reports',
         ];
         $school->syncPermissions(Permission::whereIn('name', $schoolAdminPerms)->get());
 

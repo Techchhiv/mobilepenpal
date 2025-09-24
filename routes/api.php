@@ -2,13 +2,21 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\{
-    AuthController, GoogleAuthController, CategoryController, ProductController,
-    ProductShareController, OrdersController, AdminUserController,
-    AdminRoleController, AdminPermissionController,
-    SchoolController
+    AuthController,
+    GoogleAuthController,
+    CategoryController,
+    ProductController,
+    ProductShareController,
+    OrdersController,
+    AdminUserController,
+    AdminRoleController,
+    AdminPermissionController,
+    SchoolController,
+    SubscriptionController
 };
 
 /* Public */
+
 Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:20,1');
 Route::post('/login',    [AuthController::class, 'login'])->middleware('throttle:30,1');
 
@@ -23,14 +31,14 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::apiResource('orders', OrdersController::class);
 
-    Route::prefix('admin')->middleware(['auth:api','role:super-admin,api'])->group(function () {
+    Route::prefix('admin')->middleware(['auth:api', 'role:super-admin,api'])->group(function () {
         Route::get('/schools/generate-key', [SchoolController::class, 'generateKey']); // ✅ new
+        Route::get('/schools/{school}/subscriptions', [SubscriptionController::class, 'index']);
+        Route::post('/schools/{school}/subscriptions', [SubscriptionController::class, 'store']);
 
         Route::apiResource('users', AdminUserController::class);
         Route::apiResource('schools', SchoolController::class);
-        Route::apiResource('roles', AdminRoleController::class)->only(['index','store','update','destroy']);
-        Route::apiResource('permissions', AdminPermissionController::class)->only(['index','store','update','destroy']);
-
-       
+        Route::apiResource('roles', AdminRoleController::class)->only(['index', 'store', 'update', 'destroy']);
+        Route::apiResource('permissions', AdminPermissionController::class)->only(['index', 'store', 'update', 'destroy']);
     });
 });

@@ -27,4 +27,8 @@ class School extends Model
     {
         return $this->hasMany(User::class);
     }
+    public function subscriptions()
+    {
+        return $this->hasMany(Subscription::class);
+    }
 }
