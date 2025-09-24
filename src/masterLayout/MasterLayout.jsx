@@ -83,42 +83,51 @@ const MasterLayout = ({ children }) => {
           <ul className="sidebar-menu" id="sidebar-menu">
             <li className="sidebar-menu-group-title">Application</li>
 
-       
+
 
             {/* Manage Client (Schools) */}
-            <li>
-              <NavLink to="/admin/schools" className={({ isActive }) => (isActive ? "active-page" : "")}>
-                <Icon icon="mdi:account-multiple" className="menu-icon" />
-                <span>Manage Client</span>
-              </NavLink>
-            </li>
+            {can("menu.manage_clients") && (
+              <li>
+                <NavLink to="/admin/schools" className={({ isActive }) => (isActive ? "active-page" : "")}>
+                  <Icon icon="mdi:account-multiple" className="menu-icon" />
+                  <span>Manage Client</span>
+                </NavLink>
+              </li>
+            )}
 
             {/* Payments */}
-            <li>
-              <NavLink to="/admin/payments" className={({ isActive }) => (isActive ? "active-page" : "")}>
-                <Icon icon="mdi:credit-card" className="menu-icon" />
-                <span>Payments</span>
-              </NavLink>
-            </li>
+            {can("menu.payments") && (
+              <li>
+                <NavLink to="/admin/payments" className={({ isActive }) => (isActive ? "active-page" : "")}>
+                  <Icon icon="mdi:credit-card" className="menu-icon" />
+                  <span>Payments</span>
+                </NavLink>
+              </li>
+            )}
 
             {/* Analytics */}
-            <li>
-              <NavLink to="/admin/analytics" className={({ isActive }) => (isActive ? "active-page" : "")}>
-                <Icon icon="mdi:chart-line" className="menu-icon" />
-                <span>Analytics</span>
-              </NavLink>
-            </li>
+            {can("menu.analytics") && (
+              <li>
+                <NavLink to="/admin/analytics" className={({ isActive }) => (isActive ? "active-page" : "")}>
+                  <Icon icon="mdi:chart-line" className="menu-icon" />
+                  <span>Analytics</span>
+                </NavLink>
+              </li>
+            )}
 
             {/* Reports */}
-            <li>
-              <NavLink to="/admin/reports" className={({ isActive }) => (isActive ? "active-page" : "")}>
-                <Icon icon="mdi:file-chart" className="menu-icon" />
-                <span>Manage Report</span>
-              </NavLink>
-            </li>
+            {can("menu.reports") && (
+              <li>
+                <NavLink to="/admin/reports" className={({ isActive }) => (isActive ? "active-page" : "")}>
+                  <Icon icon="mdi:file-chart" className="menu-icon" />
+                  <span>Manage Report</span>
+                </NavLink>
+              </li>
+            )}
+
 
             {/* Manage Users */}
-              {showAccess && (
+            {showAccess && (
               <li className={`dropdown ${openDropdownKey === "access" ? "open" : ""}`}>
                 {/* use an <a> styled like the other links */}
                 <a

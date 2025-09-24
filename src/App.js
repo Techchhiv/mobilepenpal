@@ -27,6 +27,8 @@ import ManageClientsPage from "./pages/admin/ManageClientsPage";
 import SchoolLayout from "./pages/school/masterLayout/SchoolLayout";
 import ManageTeacher from "./pages/school/page/ManageTeacher";
 import SchoolDashboard from "./pages/school/page/SchoolDashboard";
+import SchoolPayments from "./pages/admin/SchoolPayments";
+import ManagePaymentsPage from "./pages/admin/ManagePaymentsPage";
 // later: import ManageStudents, StudentPerformance, etc.
 
 // ---------- Utils ----------
@@ -45,7 +47,7 @@ export default function App() {
         <Route path="/image-world" element={<ImageToWord />} />
 
         {/* Product routes */}
-     
+
         {/* Misc public */}
         <Route path="/cart" element={<Cart />} />
         <Route path="/favorite" element={<Favorite />} />
@@ -63,6 +65,10 @@ export default function App() {
                 "users.manage",
                 "roles.manage",
                 "permissions.manage",
+                "menu.manage_clients",
+                "menu.payments",
+                "menu.analytics",
+                "menu.reports",
               ]}
             >
               <Outlet />
@@ -74,6 +80,8 @@ export default function App() {
           <Route path="/admin/roles" element={<AdminRolesPage />} />
           <Route path="/admin/permissions" element={<AdminPermissionsPage />} />
           <Route path="/admin/schools" element={<ManageClientsPage />} />
+          <Route path="/admin/payments" element={<ManagePaymentsPage />} />
+          <Route path="/admin/schools/:schoolId/payments" element={<SchoolPayments />} />
         </Route>
 
         {/* ---------- School Routes (Protected) ---------- */}
@@ -87,8 +95,8 @@ export default function App() {
                 "school.dashboard.view",
               ]}
             >
-                <Outlet />
-             
+              <Outlet />
+
             </Gate>
           }
         >
