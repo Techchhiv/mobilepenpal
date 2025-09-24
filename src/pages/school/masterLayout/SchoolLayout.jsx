@@ -11,7 +11,7 @@ export default function SchoolLayout({ children }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
-    const location = useLocation();
+  const location = useLocation();
 
   const [sidebarActive, setSidebarActive] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
@@ -19,10 +19,13 @@ export default function SchoolLayout({ children }) {
   const handleLogout = async () => {
     try {
       await API.post("/logout");
-    } catch {}
+    } catch { }
     logout();
+
+    // force replace so no fallback
     navigate("/sign-in", { replace: true });
   };
+
 
 
   return (
@@ -33,8 +36,8 @@ export default function SchoolLayout({ children }) {
           sidebarActive
             ? "sidebar active"
             : mobileMenu
-            ? "sidebar sidebar-open"
-            : "sidebar"
+              ? "sidebar sidebar-open"
+              : "sidebar"
         }
       >
         <button

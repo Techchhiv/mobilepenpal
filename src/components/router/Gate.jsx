@@ -17,7 +17,7 @@ export default function Gate({ children, roles = [], anyPerm = [], allPerm = [] 
   const anyOK    = anyPerm.length === 0 || anyPerm.some(can);
   const allOK    = allPerm.length === 0 || allPerm.every(can);
 
-  if (!(roleOK && anyOK && allOK)) return <Navigate to="/" replace />;
+  if (!(roleOK && anyOK && allOK)) return <Navigate to="/sign-in" replace />;
 
   return children;
 }

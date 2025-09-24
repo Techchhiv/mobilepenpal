@@ -23,8 +23,8 @@ function deriveAuth(userObj) {
 }
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser]     = useState(null);
-  const [token, setToken]   = useState(() => localStorage.getItem("token")); // ← NEW
+  const [user, setUser] = useState(null);
+  const [token, setToken] = useState(() => localStorage.getItem("token")); // ← NEW
   const [loading, setLoading] = useState(true);
 
   // Keep Axios Authorization header in sync with token
@@ -66,11 +66,13 @@ export const AuthProvider = ({ children }) => {
     if (newToken) setToken(newToken);
   }, []);
 
-  const logout = useCallback(async () => {
+  const logout = useCallback(async (navigate) => {
     try { await API.post("/logout"); } catch (e) { /* no-op */ }
     setUser(null);
     setToken(null);
+    if (navigate) navigate("/sign-in", { replace: true }); // force redirect
   }, []);
+
 
   const derived = useMemo(() => deriveAuth(user || {}), [user]);
 
