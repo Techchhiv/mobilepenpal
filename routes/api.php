@@ -21,7 +21,6 @@ Route::post('/register', [AuthController::class, 'register'])->middleware('throt
 Route::post('/login',    [AuthController::class, 'login'])->middleware('throttle:30,1');
 
 
-
 Route::get('/auth/google/redirect', [GoogleAuthController::class, 'redirectToGoogle']);
 Route::get('/auth/google/callback', [GoogleAuthController::class, 'handleGoogleCallback']);
 Route::post('/logout', [AuthController::class, 'logout']);

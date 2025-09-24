@@ -21,15 +21,30 @@ class RbacSeeder extends Seeder
             // Console
             'console.view',
 
-            // User / Role / Permission management
+            // Management shortcuts (full access to module)
             'users.manage','roles.manage','permissions.manage',
+            'manage_clients.manage','payments.manage','analytics.manage','reports.manage',
 
-            // ----------------------------
-            // New requirements
-            // ----------------------------
+            // Roles
+            'roles.view','roles.create','roles.update','roles.delete','roles.enable_disable',
+
+            // Permissions
+            'permissions.view','permissions.create','permissions.update','permissions.delete','permissions.enable_disable',
+
+            // Manage Clients (Schools)
+            'manage_clients.view','manage_clients.create','manage_clients.update','manage_clients.delete','manage_clients.enable_disable',
+
+            // Payments
+            'payments.view','payments.create','payments.update','payments.delete','payments.enable_disable',
+
+            // Analytics
+            'analytics.view','analytics.create','analytics.update','analytics.delete','analytics.enable_disable',
+
+            // Reports
+            'reports.view','reports.create','reports.update','reports.delete','reports.enable_disable',
 
             // User Management
-            'users.view','users.create','users.update','users.delete','users.enable_disable','users.assign_children',
+            'users.view','users.create','users.update','users.delete','users.enable_disable',
 
             // School Management
             'schools.view','schools.create','schools.update','schools.delete','schools.enable_disable',
@@ -64,12 +79,12 @@ class RbacSeeder extends Seeder
             'school.dashboard.view',
 
             // ----------------------------
-            // NEW → Menus
+            // Menu Permissions
             // ----------------------------
-            'menu.manage_clients',   // Manage Client menu
-            'menu.payments',         // Payments menu
-            'menu.analytics',        // Analytics menu
-            'menu.reports',          // Manage Report menu
+            'menu.manage_clients',
+            'menu.payments',
+            'menu.analytics',
+            'menu.reports',
         ];
 
         // ----------------------------
@@ -82,9 +97,11 @@ class RbacSeeder extends Seeder
         // ----------------------------
         // Create Roles
         // ----------------------------
-        $super  = Role::firstOrCreate(['name' => 'super-admin',  'guard_name' => 'api']);
-        $school = Role::firstOrCreate(['name' => 'school-admin', 'guard_name' => 'api']);
-        $cust   = Role::firstOrCreate(['name' => 'customer',     'guard_name' => 'api']);
+        $super   = Role::firstOrCreate(['name' => 'super-admin',     'guard_name' => 'api']);
+        $school  = Role::firstOrCreate(['name' => 'school-admin',    'guard_name' => 'api']);
+        $cust    = Role::firstOrCreate(['name' => 'customer',        'guard_name' => 'api']);
+        $payment = Role::firstOrCreate(['name' => 'payment-manager', 'guard_name' => 'api']);
+        $client  = Role::firstOrCreate(['name' => 'client-manager',  'guard_name' => 'api']);
 
         // ----------------------------
         // Assign Permissions
@@ -101,12 +118,26 @@ class RbacSeeder extends Seeder
             'enrollments.create','enrollments.update','enrollments.disable',
             'classrooms.view','classrooms.create','classrooms.update','classrooms.delete','classrooms.enable_disable',
             'school.dashboard.view',
-            // (optional) if school-admins should see analytics or payments:
+
+            // menu access
             'menu.analytics',
             'menu.reports',
         ];
         $school->syncPermissions(Permission::whereIn('name', $schoolAdminPerms)->get());
 
+        // Payment Manager
+        $payment->syncPermissions([
+            'payments.view','payments.create','payments.update','payments.delete','payments.enable_disable',
+            'menu.payments',
+        ]);
+
+        // Client Manager
+        $client->syncPermissions([
+            'manage_clients.view','manage_clients.create','manage_clients.update','manage_clients.delete','manage_clients.enable_disable',
+            'menu.manage_clients',
+        ]);
+
+   
         // Customer → no management perms
         $cust->syncPermissions([]);
 

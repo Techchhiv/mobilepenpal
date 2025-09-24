@@ -17,11 +17,7 @@ return new class extends Migration {
             $table->timestamps();
         });
 
-        Schema::table('users', function (Blueprint $table) {
-            if (!Schema::hasColumn('users', 'school_id')) {
-                $table->foreignId('school_id')->nullable()->constrained()->cascadeOnDelete();
-            }
-        });
+       
     }
 
     public function down(): void
