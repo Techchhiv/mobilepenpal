@@ -15,8 +15,10 @@ class User extends Authenticatable
 
     protected $guard_name = 'api'; // ✅ match Spatie + routes
 
-    protected $fillable = ['name','email','password','google_id'];
+    protected $fillable = ['name','email','password','google_id','school_id'];
     protected $hidden = ['password','remember_token'];
     protected $casts  = ['email_verified_at' => 'datetime'];
+
+    
 
 }

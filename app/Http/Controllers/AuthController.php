@@ -16,8 +16,8 @@ class AuthController extends Controller
     {
         try {
             $data = $request->validate([
-                'name'     => ['required','string','max:255'],
-                'email'    => ['required','email','max:255','unique:users,email'],
+                'name'     => ['required', 'string', 'max:255'],
+                'email'    => ['required', 'email', 'max:255', 'unique:users,email'],
                 'password' => ['required', Password::min(8)],
             ]);
 
@@ -46,54 +46,60 @@ class AuthController extends Controller
         }
     }
 
-    public function login(Request $request)
-    {
-        try {
-            $data = $request->validate([
-                'email'      => ['required','email'],
-                'password'   => ['required','min:6'],
-                'school_key' => ['nullable','string'], // ✅ school key optional
-            ]);
+  public function login(Request $request)
+{
+    try {
+        $data = $request->validate([
+            'email'      => ['required','email'],
+            'password'   => ['required','min:6'],
+            'school_key' => ['nullable','string'], // optional at first, we'll enforce below
+        ]);
 
-            // if school_key is provided → restrict login to that school
-            $school = null;
-            if (!empty($data['school_key'])) {
-                $school = School::where('school_key', $data['school_key'])->first();
-                if (!$school) {
-                    return response()->json(['message' => 'Invalid school key'], 404);
-                }
+        // First find the user by email
+        $user = User::where('email', $data['email'])->first();
 
-                $user = User::where('email', $data['email'])
-                    ->where('school_id', $school->id)
-                    ->first();
-            } else {
-                // super admin login (no school key)
-                $user = User::where('email', $data['email'])->first();
-            }
-
-            if (!$user || !Hash::check($data['password'], $user->password)) {
-                return response()->json(['message' => 'Invalid credentials'], 422);
-            }
-
-            // Abilities & permissions
-            [$abilities, $permissionsPayload] = $this->abilitiesAndPerms($user);
-
-            $token = $user->createToken('spa', $abilities)->plainTextToken;
-
-            $payload = $user->load('roles')->toArray();
-            $payload['permissions'] = $permissionsPayload;
-
-            return response()->json([
-                'token'     => $token,
-                'user'      => $payload,
-                'abilities' => $abilities,
-                'school'    => $school, // include school info if applicable
-            ]);
-        } catch (\Throwable $e) {
-            Log::error('LOGIN_ERROR', ['msg' => $e->getMessage()]);
-            return response()->json(['message' => 'Server error during login.'], 500);
+        if (!$user || !Hash::check($data['password'], $user->password)) {
+            return response()->json(['message' => 'Invalid credentials'], 422);
         }
+
+        // Roles
+        $roles = $user->roles->pluck('name')->toArray();
+
+        // If user is school-based → require a valid school_key
+        if (collect($roles)->intersect(['school-admin','teacher','parent'])->isNotEmpty()) {
+            if (empty($data['school_key'])) {
+                return response()->json(['message' => 'School key is required for school accounts'], 422);
+            }
+
+            $school = School::where('school_key', $data['school_key'])->first();
+            if (!$school) {
+                return response()->json(['message' => 'Invalid school key'], 404);
+            }
+
+            if ($user->school_id !== $school->id) {
+                return response()->json(['message' => 'This user does not belong to that school'], 403);
+            }
+        }
+
+        // Abilities & permissions
+        [$abilities, $permissionsPayload] = $this->abilitiesAndPerms($user);
+        $token = $user->createToken('spa', $abilities)->plainTextToken;
+
+        $payload = $user->load('roles')->toArray();
+        $payload['permissions'] = $permissionsPayload;
+
+        return response()->json([
+            'token'     => $token,
+            'user'      => $payload,
+            'abilities' => $abilities,
+        ]);
+    } catch (\Throwable $e) {
+        \Log::error('LOGIN_ERROR', ['msg' => $e->getMessage()]);
+        return response()->json(['message' => 'Server error during login.'], 500);
     }
+}
+
+
 
     public function me(Request $request)
     {

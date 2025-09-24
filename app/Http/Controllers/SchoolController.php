@@ -78,29 +78,30 @@ public function store(Request $request)
     /**
      * Update school info.
      */
-    public function update(Request $request, School $school)
-    {
-        $request->validate([
-            'school_name'  => 'sometimes|required|string|max:255|unique:schools,name,' . $school->id,
-            'is_active'    => 'boolean',
-        ]);
+  public function update(Request $request, School $school)
+{
+    $request->validate([
+        'name'  => 'sometimes|required|string|max:255|unique:schools,name,' . $school->id,
+        'is_active' => 'boolean',
+    ]);
 
-        if ($request->has('school_name')) {
-            $school->name = $request->school_name;
-            $school->slug = Str::slug($request->school_name);
-        }
-
-        if ($request->has('is_active')) {
-            $school->is_active = $request->boolean('is_active');
-        }
-
-        $school->save();
-
-        return response()->json([
-            'message' => 'School updated',
-            'school'  => $school,
-        ]);
+    if ($request->has('name')) {
+        $school->name = $request->name;
+        $school->slug = Str::slug($request->name);
     }
+
+    if ($request->has('is_active')) {
+        $school->is_active = $request->boolean('is_active');
+    }
+
+    $school->save();
+
+    return response()->json([
+        'message' => 'School updated',
+        'school'  => $school,
+    ]);
+}
+
 
     /**
      * Delete a school (and its users).
