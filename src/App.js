@@ -44,7 +44,7 @@ export default function App() {
         {/* ---------- Users / Roles / Permissions (Super Admin / Admin only) ---------- */}
         <Route
           element={
-            <Gate anyPerm={["users.manage", "roles.manage", "permissions.manage"]}/>}>
+            <Gate anyPerm={["users.manage", "roles.manage", "permissions.manage"]} />}>
           <Route path="/admin/users" element={<AdminUsersPage />} />
           <Route path="/admin/roles" element={<AdminRolesPage />} />
           <Route path="/admin/permissions" element={<AdminPermissionsPage />} />
@@ -66,24 +66,17 @@ export default function App() {
           <Route path="/admin/schools/:schoolId/payments" element={<SchoolPayments />} />
         </Route>
 
-        {/* ---------- School Routes ---------- */}
-        <Route
-          element={
-            <Gate
 
-              anyPerm={["school.dashboard.view"]}
-            />
-          }
-        >
-          <Route path="/school" element={<SchoolDashboard />} />
-          <Route path="/school/teachers" element={<ManageTeacher />} />
+
+        <Route path="/school" element={<Gate anyPerm={["school.dashboard.view"]}><SchoolDashboard /></Gate>} />
+
+        {/* ---------- School Routes ---------- */}
+        <Route element={<Gate anyPerm={["users.manage", "roles.manage", "permissions.manage"]} />}>
           <Route path="/school/users" element={<SchoolUsersPage />} />
           <Route path="/school/roles" element={<SchoolRolesPage />} />
-          <Route
-            path="/school/permissions"
-            element={<SchoolPermissionsPage />}
-          />
+          <Route path="/school/permissions" element={<SchoolPermissionsPage />} />
         </Route>
+
 
         {/* ---------- Fallback ---------- */}
         <Route path="*" element={<Navigate to="/sign-in-admin" replace />} />

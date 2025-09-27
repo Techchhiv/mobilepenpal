@@ -6,18 +6,11 @@ import { Link } from "react-router-dom";
 import API from "../../../helper/api";
 import SchoolLayout from "../masterLayout/SchoolLayout";
 
-// Small helper: accept [] or {data:[]}
+// Helper to normalize response
 const normalizeList = (payload) =>
   Array.isArray(payload) ? payload : Array.isArray(payload?.data) ? payload.data : [];
 
-function UserFormModal({
-  open,
-  onClose,
-  onSubmit,
-  allRoles,
-  initial, // {id?, name, email, roles:[]}
-  saving,
-}) {
+function UserFormModal({ open, onClose, onSubmit, allRoles, initial, saving }) {
   const isEdit = Boolean(initial?.id);
   const [name, setName] = useState(initial?.name || "");
   const [email, setEmail] = useState(initial?.email || "");
@@ -40,22 +33,9 @@ function UserFormModal({
 
   return (
     <>
-      {/* Backdrop */}
       <div className="modal-backdrop fade show"></div>
-
-      {/* Modal */}
-      <div
-        className="modal fade show d-block"
-        tabIndex={-1}
-        role="dialog"
-        aria-modal="true"
-        onClick={onClose}
-      >
-        <div
-          className="modal-dialog modal-lg modal-dialog-centered"
-          role="document"
-          onClick={(e) => e.stopPropagation()}
-        >
+      <div className="modal fade show d-block" tabIndex={-1} role="dialog" aria-modal="true" onClick={onClose}>
+        <div className="modal-dialog modal-lg modal-dialog-centered" role="document" onClick={(e) => e.stopPropagation()}>
           <div className="modal-content">
             <div className="modal-header">
               <h6 className="modal-title">{isEdit ? "Edit User" : "Add User"}</h6>
@@ -69,41 +49,25 @@ function UserFormModal({
                   id: initial?.id,
                   name,
                   email,
-                  password: password || undefined, // omit if empty on edit
+                  password: password || undefined,
                   roles,
                 });
               }}
             >
               <div className="modal-body">
                 <div className="row g-3">
-                  {/* Name */}
                   <div className="col-12 col-md-6">
                     <label className="form-label">Name</label>
-                    <input
-                      className="form-control"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      required
-                    />
+                    <input className="form-control" value={name} onChange={(e) => setName(e.target.value)} required />
                   </div>
 
-                  {/* Email */}
                   <div className="col-12 col-md-6">
                     <label className="form-label">Email</label>
-                    <input
-                      type="email"
-                      className="form-control"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                    />
+                    <input type="email" className="form-control" value={email} onChange={(e) => setEmail(e.target.value)} required />
                   </div>
 
-                  {/* Password */}
                   <div className="col-12">
-                    <label className="form-label">
-                      {isEdit ? "Password (leave empty to keep)" : "Password"}
-                    </label>
+                    <label className="form-label">{isEdit ? "Password (leave empty to keep)" : "Password"}</label>
                     <input
                       type="password"
                       className="form-control"
@@ -115,30 +79,19 @@ function UserFormModal({
                     />
                   </div>
 
-                  {/* Roles */}
                   <div className="col-12">
                     <label className="form-label">Roles</label>
-                    <div
-                      className="border rounded-3 p-2"
-                      style={{ maxHeight: 220, overflow: "auto" }}
-                    >
+                    <div className="border rounded-3 p-2" style={{ maxHeight: 220, overflow: "auto" }}>
                       <div className="row g-2">
                         {allRoles.map((r) => (
                           <div key={r.id || r.name} className="col-12 col-sm-6">
                             <label className="form-check d-flex align-items-center gap-2">
-                              <input
-                                type="checkbox"
-                                className="form-check-input"
-                                checked={roles.includes(r.name)}
-                                onChange={() => toggleRole(r.name)}
-                              />
+                              <input type="checkbox" className="form-check-input" checked={roles.includes(r.name)} onChange={() => toggleRole(r.name)} />
                               <span className="form-check-label">{r.name}</span>
                             </label>
                           </div>
                         ))}
-                        {!allRoles.length && (
-                          <div className="text-muted small px-2">No roles</div>
-                        )}
+                        {!allRoles.length && <div className="text-muted small px-2">No roles available for this school</div>}
                       </div>
                     </div>
                   </div>
@@ -146,23 +99,9 @@ function UserFormModal({
               </div>
 
               <div className="modal-footer">
-                <button
-                  type="button"
-                  className="btn btn-light"
-                  onClick={onClose}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  disabled={saving}
-                >
-                  {saving
-                    ? "Saving…"
-                    : isEdit
-                    ? "Save Changes"
-                    : "Create User"}
+                <button type="button" className="btn btn-light" onClick={onClose}>Cancel</button>
+                <button type="submit" className="btn btn-primary" disabled={saving}>
+                  {saving ? "Saving…" : isEdit ? "Save Changes" : "Create User"}
                 </button>
               </div>
             </form>
@@ -173,28 +112,25 @@ function UserFormModal({
   );
 }
 
-
 const SchoolUsersPage = () => {
   const [rows, setRows] = useState([]);
   const [allRoles, setAllRoles] = useState([]);
   const [message, setMessage] = useState("");
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(true);
-
-  // modal state
   const [modalOpen, setModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [editing, setEditing] = useState(null); // null | {id,name,email,roles:[]}
+  const [editing, setEditing] = useState(null);
 
   const flash = (txt, isErr = false) => {
     (isErr ? setErr : setMessage)(txt);
     setTimeout(() => (isErr ? setErr("") : setMessage("")), 2500);
   };
 
+  // Fetch only users/roles for this school
   const fetchUsers = async () => {
     const { data } = await API.get("/school/users");
-    const list = normalizeList(data);
-    return list.map((u) => ({
+    return normalizeList(data).map((u) => ({
       id: u.id,
       name: u.name,
       email: u.email,
@@ -205,8 +141,7 @@ const SchoolUsersPage = () => {
 
   const fetchRoles = async () => {
     const { data } = await API.get("/school/roles");
-    const list = normalizeList(data);
-    return list.map((r) => ({ id: r.id, name: r.name }));
+    return normalizeList(data).map((r) => ({ id: r.id, name: r.name }));
   };
 
   const load = async () => {
@@ -217,9 +152,8 @@ const SchoolUsersPage = () => {
       setRows(users);
       setAllRoles(roles);
     } catch (e) {
-      console.error("school users load failed:", e?.response?.data || e);
-      setRows([]);
-      setErr(e?.response?.data?.message || e.message || "Failed to load users.");
+      console.error("Load failed:", e?.response?.data || e);
+      flash(e?.response?.data?.message || "Failed to load users/roles", true);
     } finally {
       setLoading(false);
     }
@@ -227,26 +161,15 @@ const SchoolUsersPage = () => {
 
   useEffect(() => { load(); }, []);
 
-  // Init / re-init DataTable (only when rows change)
+  // DataTable init
   useEffect(() => {
     if (!rows.length) return;
-    const table = $("#usersTable").DataTable({
-      destroy: true,
-      pageLength: 10,
-    });
+    const table = $("#usersTable").DataTable({ destroy: true, pageLength: 10 });
     return () => table.destroy(true);
   }, [rows]);
 
   const openCreate = () => { setEditing(null); setModalOpen(true); };
-  const openEdit = (u) => {
-    setEditing({
-      id: u.id,
-      name: u.name,
-      email: u.email,
-      roles: u.roles || [],
-    });
-    setModalOpen(true);
-  };
+  const openEdit = (u) => setEditing({ id: u.id, name: u.name, email: u.email, roles: u.roles || [] }) || setModalOpen(true);
 
   const handleSubmit = async (payload) => {
     setSaving(true);
@@ -283,11 +206,11 @@ const SchoolUsersPage = () => {
       const res = await API.delete(`/school/users/${id}`);
       if (res.status === 204 || res.status === 200) {
         setRows((prev) => prev.filter((u) => u.id !== id));
-        flash("User deleted successfully.");
+        flash("User deleted successfully");
       }
     } catch (e) {
       console.error(e);
-      flash(e?.response?.data?.message || "Failed to delete user.", true);
+      flash(e?.response?.data?.message || "Failed to delete user", true);
     }
   };
 
@@ -297,125 +220,47 @@ const SchoolUsersPage = () => {
     <SchoolLayout>
       <div className="card basic-data-table">
         <div className="card-header d-flex align-items-center justify-content-between">
-          <div className="d-flex align-items-center gap-2">
-            <button
-              type="button"
-              className="btn btn-primary-600 radius-3 px-20 py-11"
-              onClick={openCreate}
-            >
-              <Icon icon="lucide:plus" className="me-1" />
-              Add User
-            </button>
-            {message && <span className="text-success fw-semibold">{message}</span>}
-            {err && <span className="text-danger">{err}</span>}
-          </div>
-
-          {/* Quick legend */}
-          <div className="d-none d-sm-flex align-items-center gap-3 text-muted">
-            <small className="d-inline-flex align-items-center gap-1">
-              <span className="badge bg-primary-light text-primary-600">A</span> school-ish
-            </small>
-            <small className="d-inline-flex align-items-center gap-1">
-              <span className="badge bg-neutral-200">U</span> User
-            </small>
-          </div>
+          <button className="btn btn-primary" onClick={openCreate}>
+            <Icon icon="lucide:plus" /> Add User
+          </button>
+          {message && <span className="text-success">{message}</span>}
+          {err && <span className="text-danger">{err}</span>}
         </div>
 
         <div className="card-body">
           <div className="table-responsive">
-            <table
-              className="table bordered-table mb-0"
-              id="usersTable"
-              data-page-length={10}
-            >
+            <table className="table" id="usersTable">
               <thead>
                 <tr>
-                  <th scope="col" style={{ width: 80 }}>
-                    <div className="form-check style-check d-flex align-items-center">
-                      <label className="form-check-label">S.L</label>
-                    </div>
-                  </th>
-                  <th scope="col">Name</th>
-                  <th scope="col">Email</th>
-                  <th scope="col">Roles</th>
-                  <th scope="col">Created</th>
-                  <th scope="col" style={{ width: 140 }}>Action</th>
+                  <th>#</th>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Roles</th>
+                  <th>Created</th>
+                  <th>Action</th>
                 </tr>
               </thead>
-
               <tbody>
-                {rows.map((u, index) => (
+                {rows.map((u, i) => (
                   <tr key={u.id}>
-                    <td>
-                      <div className="form-check style-check d-flex align-items-center">
-                        <input className="form-check-input" type="checkbox" />
-                        <label className="form-check-label">{index + 1}</label>
-                      </div>
-                    </td>
-
-                    <td>
-                      <div className="d-flex align-items-center">
-                        <Link to={`/school/users/${u.id}`} className="text-primary-600">
-                          {u.name}
-                        </Link>
-                      </div>
-                    </td>
-
-                    <td>
-                      <div className="d-flex align-items-center">
-                        <h6 className="text-md mb-0 fw-medium flex-grow-1">{u.email}</h6>
-                      </div>
-                    </td>
-
-                    <td className="text-truncate" style={{ maxWidth: 260 }}>
-                      {(u.roles || []).join(", ") || "-"}
-                    </td>
-
+                    <td>{i + 1}</td>
+                    <td><Link to={`/school/users/${u.id}`}>{u.name}</Link></td>
+                    <td>{u.email}</td>
+                    <td>{(u.roles || []).join(", ")}</td>
                     <td>{u.created_at ? new Date(u.created_at).toLocaleDateString() : "-"}</td>
-
                     <td>
-                      <button
-                        onClick={() => openEdit(u)}
-                        className="w-32-px h-32-px me-8 bg-success-focus text-success-main rounded-circle d-inline-flex align-items-center justify-content-center border-0"
-                        title="Edit"
-                        type="button"
-                      >
-                        <Icon icon="lucide:edit" />
-                      </button>
-
-                      <button
-                        onClick={() => deleteUser(u.id)}
-                        className="w-32-px h-32-px me-8 bg-danger-focus text-danger-main rounded-circle d-inline-flex align-items-center justify-content-center border-0"
-                        title="Delete"
-                        type="button"
-                      >
-                        <Icon icon="mingcute:delete-2-line" />
-                      </button>
-
-                      <Link
-                        to={`/school/users/${u.id}`}
-                        className="w-32-px h-32-px bg-primary-light text-primary-600 rounded-circle d-inline-flex align-items-center justify-content-center"
-                        title="View"
-                      >
-                        <Icon icon="iconamoon:eye-light" />
-                      </Link>
+                      <button onClick={() => openEdit(u)} className="btn btn-sm btn-success">Edit</button>
+                      <button onClick={() => deleteUser(u.id)} className="btn btn-sm btn-danger">Delete</button>
                     </td>
                   </tr>
                 ))}
-                {!rows.length && (
-                  <tr>
-                    <td colSpan={6} className="text-center text-muted py-4">
-                      No users found.
-                    </td>
-                  </tr>
-                )}
+                {!rows.length && <tr><td colSpan={6} className="text-center">No users found.</td></tr>}
               </tbody>
             </table>
           </div>
         </div>
       </div>
 
-      {/* Create / Edit Modal */}
       <UserFormModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}

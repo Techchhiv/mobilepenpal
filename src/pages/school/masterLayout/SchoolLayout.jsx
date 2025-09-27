@@ -8,7 +8,7 @@ import { useAuth } from "../../../context/AuthContext";
 import penLogo from "../../../assets/images/pen_logo.png";
 
 const SchoolLayout = ({ children }) => {
-  const { user, loading, logout, hasPermission, isSuperAdmin } = useAuth();
+  const { user, loading, logout, hasPermission,isSchoolAdmin } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -16,11 +16,10 @@ const SchoolLayout = ({ children }) => {
   const [mobileMenu, setMobileMenu] = useState(false);
   const [openDropdownKey, setOpenDropdownKey] = useState(null);
 
-  // Determine roles & permissions
-  const isSchoolAdmin = user?.roles?.some((r) => r.name === "school-admin");
-  const showManageUsers = isSchoolAdmin && hasPermission("users.manage");
-  const showRoles = isSchoolAdmin && hasPermission("roles.manage");
-  const showPermissions = isSchoolAdmin && hasPermission("permissions.manage");
+  const showManageUsers = hasPermission("users.manage");
+  const showRoles = hasPermission("roles.manage");
+  const showPermissions = hasPermission("permissions.manage");
+
 
   // Open dropdown based on route
   useEffect(() => {
@@ -68,7 +67,7 @@ const SchoolLayout = ({ children }) => {
 
         <div>
           <Link to="/school" className="sidebar-logo">
-            <h6>{user?.name ?? "User"}</h6>
+            <h6> {user?.name ?? "User"}</h6>
           </Link>
         </div>
 
@@ -111,9 +110,8 @@ const SchoolLayout = ({ children }) => {
               <li className={`dropdown ${openDropdownKey === "access" ? "open" : ""}`}>
                 <a
                   href="#access"
-                  className={`menu-trigger ${
-                    openDropdownKey === "access" ? "active-page" : ""
-                  }`}
+                  className={`menu-trigger ${openDropdownKey === "access" ? "active-page" : ""
+                    }`}
                   onClick={(e) => {
                     e.preventDefault();
                     setOpenDropdownKey((prev) => (prev === "access" ? null : "access"));

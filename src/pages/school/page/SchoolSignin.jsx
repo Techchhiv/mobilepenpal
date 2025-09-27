@@ -1,4 +1,3 @@
-// src/pages/SchoolSignInLayer.jsx
 import { Icon } from "@iconify/react";
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -18,8 +17,11 @@ const SchoolSignInLayer = () => {
   const { isAuthenticated, login } = useAuth();
 
   useEffect(() => {
-    if (isAuthenticated && window.location.pathname === "/sign-in-school") {
-      navigate("/school");
+    if (isAuthenticated) {
+      const user = JSON.parse(localStorage.getItem("user"));
+      if (user?.roles?.some(r => r.name === "school-admin")) {
+        navigate("/school", { replace: true });
+      }
     }
   }, [isAuthenticated, navigate]);
 
@@ -30,37 +32,27 @@ const SchoolSignInLayer = () => {
 
     try {
       const payload = { email: email.trim(), password, school_key: schoolKey.trim() };
-
       const { data } = await API.post("/login", payload);
-      setAuthToken(data.token);
 
-      if (login.length >= 2) {
-        login(data.user, data.token, data.abilities);
-      } else {
-        login(data.user);
-      }
+      setAuthToken(data.token);
+      login(data.user, data.token, data.abilities);
 
       // Redirect based on roles
-      const roles = (data.user.roles || []).map((r) => r.name);
+      // Redirect based on roles
+      const roles = (data.user.roles || []).map(r => r.name);
 
       if (roles.includes("super-admin") || roles.includes("team-admin")) {
-        navigate("/admin");
-      } else if (
-        roles.includes("school-admin") ||
-        roles.includes("teacher") ||
-        roles.includes("parent")
-      ) {
-        navigate("/school");
+        navigate("/admin", { replace: true });
+      } else if (roles.includes("school-admin") || roles.includes("teacher") || roles.includes("parent")) {
+        navigate("/school", { replace: true });
       } else {
-        navigate("/admin"); // fallback if the user has no roles
+        navigate("/sign-in-school", { replace: true }); // fallback
       }
+
     } catch (err) {
       const status = err?.response?.status;
-      let msg =
-        err?.response?.data?.message ||
-        err?.message ||
-        "Login failed. Please try again.";
-      if (status === 422) msg = "Invalid credentials.";
+      let msg = err?.response?.data?.message || err?.message || "Login failed. Please try again.";
+      if (status === 422) msg = "Invalid credentials or school key.";
       setError(msg);
       console.error("Login error:", err);
     } finally {
@@ -78,27 +70,23 @@ const SchoolSignInLayer = () => {
 
       <div className="auth-right py-32 px-24 d-flex flex-column justify-content-center">
         <div className="max-w-464-px mx-auto w-100">
-          <div>
-            <Link to="/" className="mb-40 max-w-290-px d-block">
-              <img src={penLogo} alt="logo" />
-            </Link>
-            <h4 className="mb-12">Sign In to your School Account</h4>
-            <p className="mb-32 text-secondary-light text-lg">
-              Welcome back! Please enter your details.
-            </p>
-          </div>
+          <Link to="/" className="mb-40 max-w-290-px d-block">
+            <img src={penLogo} alt="logo" />
+          </Link>
+          <h4 className="mb-12">Sign In to your School Account</h4>
+          <p className="mb-32 text-secondary-light text-lg">
+            Welcome back! Please enter your details.
+          </p>
 
           <form onSubmit={handleLogin}>
             <div className="icon-field mb-16">
-              <span className="icon top-50 translate-middle-y">
-                <Icon icon="mage:email" />
-              </span>
+              <span className="icon top-50 translate-middle-y"><Icon icon="mage:email" /></span>
               <input
                 type="email"
                 className="form-control h-56-px bg-neutral-50 radius-12"
                 placeholder="Email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={e => setEmail(e.target.value)}
                 autoComplete="username"
                 required
               />
@@ -106,16 +94,13 @@ const SchoolSignInLayer = () => {
 
             <div className="position-relative mb-20">
               <div className="icon-field">
-                <span className="icon top-50 translate-middle-y">
-                  <Icon icon="solar:lock-password-outline" />
-                </span>
+                <span className="icon top-50 translate-middle-y"><Icon icon="solar:lock-password-outline" /></span>
                 <input
                   type="password"
                   className="form-control h-56-px bg-neutral-50 radius-12"
-                  id="your-password"
                   placeholder="Password"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={e => setPassword(e.target.value)}
                   autoComplete="current-password"
                   required
                 />
@@ -123,15 +108,13 @@ const SchoolSignInLayer = () => {
             </div>
 
             <div className="icon-field mb-20">
-              <span className="icon top-50 translate-middle-y">
-                <Icon icon="mdi:school-outline" />
-              </span>
+              <span className="icon top-50 translate-middle-y"><Icon icon="mdi:school-outline" /></span>
               <input
                 type="text"
                 className="form-control h-56-px bg-neutral-50 radius-12"
                 placeholder="School Key"
                 value={schoolKey}
-                onChange={(e) => setSchoolKey(e.target.value)}
+                onChange={e => setSchoolKey(e.target.value)}
                 required
               />
             </div>
@@ -144,20 +127,13 @@ const SchoolSignInLayer = () => {
               {submitting ? "Signing in..." : "Sign In"}
             </button>
 
-            {error && (
-              <p className="mt-12" style={{ color: "red" }}>
-                {error}
-              </p>
-            )}
+            {error && <p className="mt-12 text-danger">{error}</p>}
           </form>
 
-          {/* Link to Admin Login */}
           <div className="mt-4 text-center">
             <p>
               <span>Admin Login?</span>{" "}
-              <Link to="/sign-in-admin" className="text-primary">
-                Click here
-              </Link>
+              <Link to="/sign-in-admin" className="text-primary">Click here</Link>
             </p>
           </div>
         </div>
