@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\School;
+use App\Models\Teacher;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Support\Facades\Hash;
@@ -144,6 +145,37 @@ private function abilitiesAndPerms(User $user): array
     } else {
         return [[], []];
     }
+}
+
+
+
+public function teacherLogin(Request $request)
+{
+    $request->validate([
+        'teacher_id' => 'required|string',
+        'password'   => 'required|string',
+        'school_key' => 'required|string',
+    ]);
+
+    // Find teacher by teacher_id
+    $teacher = Teacher::where('teacher_id', $request->teacher_id)
+                      ->where('school_key', $request->school_key)
+                      ->first();
+
+    if (!$teacher || !Hash::check($request->password, $teacher->password)) {
+        return response()->json([
+            'message' => 'Invalid credentials or school key.'
+        ], 422);
+    }
+
+    // Generate token (assuming using Laravel Passport or Sanctum)
+    $token = $teacher->createToken('teacher-token')->plainTextToken;
+
+    return response()->json([
+        'teacher' => $teacher,
+        'token'   => $token,
+        'abilities' => ['school.access'] // optional abilities
+    ]);
 }
 
 }

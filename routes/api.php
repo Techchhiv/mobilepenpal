@@ -22,6 +22,8 @@ use App\Http\Controllers\{
 
 Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:20,1');
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:30,1');
+Route::post('/teacher/login', [AuthController::class, 'teacherLogin']);
+
 
 Route::get('/auth/google/redirect', [GoogleAuthController::class, 'redirectToGoogle']);
 Route::get('/auth/google/callback', [GoogleAuthController::class, 'handleGoogleCallback']);
@@ -66,7 +68,6 @@ Route::middleware('auth:api')->group(function () {
 Route::prefix('school')->middleware('auth:api')->group(function() {
 
     // School dashboard (any school-admin)
-    Route::middleware('permission:school.dashboard.view')->get('/', [SchoolDashboardController::class, 'index']);
 
     // Manage teachers (school-admin only)
     Route::middleware('permission:teachers.view|teachers.create|teachers.update|teachers.delete')->group(function() {
