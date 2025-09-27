@@ -123,22 +123,27 @@ class AuthController extends Controller
     /**
      * Build abilities + permissions safely (works even if Spatie tables not migrated yet).
      */
-    private function abilitiesAndPerms(User $user): array
-    {
-        $spatieTablesExist = Schema::hasTable('permissions')
-            && Schema::hasTable('roles')
-            && Schema::hasTable('model_has_roles')
-            && Schema::hasTable('role_has_permissions');
+private function abilitiesAndPerms(User $user): array
+{
+    $spatieTablesExist = Schema::hasTable('permissions')
+        && Schema::hasTable('roles')
+        && Schema::hasTable('model_has_roles')
+        && Schema::hasTable('role_has_permissions');
 
-        if ($spatieTablesExist) {
-            $isSuper = $user->hasRole('super-admin');
-            $abilities = $isSuper ? ['*'] : $user->getAllPermissions()->pluck('name')->toArray();
-            $permissionsPayload = $user->getAllPermissions()->pluck('name');
-        } else {
-            $abilities = [];
-            $permissionsPayload = collect();
-        }
+    if ($spatieTablesExist) {
+        $isSuper = $user->hasRole('super-admin');
 
-        return [$abilities, $permissionsPayload];
+        $permissions = $user->getAllPermissions()
+            ->pluck('name')         // just the names
+            ->map(fn($p) => strtolower(str_replace(' ', '-', $p))) // normalize
+            ->toArray();
+
+        $abilities = $isSuper ? ['*'] : $permissions;
+
+        return [$abilities, $permissions];
+    } else {
+        return [[], []];
     }
+}
+
 }
