@@ -77,6 +77,10 @@ export default function App() {
           <Route path="/school/permissions" element={<SchoolPermissionsPage />} />
         </Route>
 
+        <Route element={<Gate anyPerm={["teachers.view"]} />}>
+          <Route path="/school/teachers" element={<ManageTeacher />} />
+        </Route>
+
 
         {/* ---------- Fallback ---------- */}
         <Route path="*" element={<Navigate to="/access-denied" replace />} />

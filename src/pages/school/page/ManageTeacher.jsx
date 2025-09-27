@@ -32,17 +32,23 @@ function ManageTeacher() {
 
   const flash = (text, isError = false) => {
     (isError ? setErr : setMsg)(text);
-    setTimeout(() => (isError ? setErr("") : setMsg("")), 2500);
+    setTimeout(() => (isError ? setErr("") : setMsg("")), 3000);
   };
 
   const createTeacher = async (e) => {
     e.preventDefault();
     try {
-      await API.post("/school/teachers", { name, email });
+      const res = await API.post("/school/teachers", { name, email });
       setName("");
       setEmail("");
       await load();
       flash("Teacher added");
+
+      // show credentials in alert (optional)
+      const t = res.data;
+      alert(
+        `Teacher Created!\n\nTeacher ID: ${t.teacher_id}\nSchool Key: ${t.school_key}\nPassword: ${t.plain_password}`
+      );
     } catch (e) {
       flash(e?.response?.data?.message || "Create failed", true);
     }
@@ -62,7 +68,7 @@ function ManageTeacher() {
   return (
     <SchoolLayout>
       <div className="row g-4">
-        {/* Add Teacher */}
+        {/* Add Teacher Form */}
         <div className="col-12 col-xl-4">
           <div className="card h-100">
             <div className="card-header">
@@ -94,6 +100,7 @@ function ManageTeacher() {
                 <button className="btn btn-primary">
                   <Icon icon="lucide:plus" className="me-1" /> Add Teacher
                 </button>
+
                 {msg && <span className="text-success">{msg}</span>}
                 {err && <span className="text-danger">{err}</span>}
               </form>
@@ -106,9 +113,7 @@ function ManageTeacher() {
           <div className="card h-100">
             <div className="card-header d-flex justify-content-between align-items-center">
               <h6 className="mb-0">Teachers</h6>
-              <span className="badge bg-neutral-200 text-neutral-800">
-                {teachers.length}
-              </span>
+              <span className="badge bg-neutral-200 text-neutral-800">{teachers.length}</span>
             </div>
             <div className="card-body">
               {loading ? (
@@ -118,18 +123,24 @@ function ManageTeacher() {
                   <table className="table table-bordered">
                     <thead>
                       <tr>
-                        <th style={{ width: 70 }}>ID</th>
+                        <th>ID</th>
+                        <th>Teacher ID</th>
+                        <th>School Key</th>
                         <th>Name</th>
                         <th>Email</th>
-                        <th style={{ width: 120 }}>Actions</th>
+                        <th>Password</th>
+                        <th>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
                       {teachers.map((t) => (
                         <tr key={t.id}>
                           <td>{t.id}</td>
+                          <td>{t.teacher_id}</td>
+                          <td>{t.school_key}</td>
                           <td>{t.name}</td>
                           <td>{t.email}</td>
+                          <td>******</td>
                           <td>
                             <button
                               className="btn btn-sm btn-danger"
@@ -142,7 +153,7 @@ function ManageTeacher() {
                       ))}
                       {!teachers.length && (
                         <tr>
-                          <td colSpan={4} className="text-center text-muted py-4">
+                          <td colSpan={7} className="text-center text-muted py-4">
                             No teachers found
                           </td>
                         </tr>

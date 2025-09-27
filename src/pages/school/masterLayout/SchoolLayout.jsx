@@ -19,6 +19,7 @@ const SchoolLayout = ({ children }) => {
   const showManageUsers = hasPermission("users.manage");
   const showRoles = hasPermission("roles.manage");
   const showPermissions = hasPermission("permissions.manage");
+  const showTeacher = hasPermission("teachers.view");
 
 
   // Open dropdown based on route
@@ -75,7 +76,8 @@ const SchoolLayout = ({ children }) => {
           <ul className="sidebar-menu">
             <li className="sidebar-menu-group-title">School Dashboard</li>
 
-            <li>
+           {showTeacher && (
+             <li>
               <NavLink
                 to="/school/teachers"
                 className={({ isActive }) => (isActive ? "active-page" : "")}
@@ -84,6 +86,7 @@ const SchoolLayout = ({ children }) => {
                 <span>Manage Teachers</span>
               </NavLink>
             </li>
+           )}
 
             <li>
               <NavLink
