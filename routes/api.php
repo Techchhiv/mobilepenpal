@@ -34,9 +34,17 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/schools/generate-key', [SchoolController::class, 'generateKey']); // ✅ new
         Route::get('/schools/{school}/subscriptions', [SubscriptionController::class, 'index']);
         Route::post('/schools/{school}/subscriptions', [SubscriptionController::class, 'store']);
+        Route::apiResource('schools', SchoolController::class)->only(['index', 'store', 'update', 'destroy']);
 
-        Route::apiResource('users', AdminUserController::class);
-        Route::apiResource('schools', SchoolController::class);
+
+
+
+
+
+
+
+
+        Route::apiResource('users', AdminUserController::class)->only(['index', 'store', 'update', 'destroy']);
         Route::apiResource('roles', AdminRoleController::class)->only(['index', 'store', 'update', 'destroy']);
         Route::apiResource('permissions', AdminPermissionController::class)->only(['index', 'store', 'update', 'destroy']);
     });
