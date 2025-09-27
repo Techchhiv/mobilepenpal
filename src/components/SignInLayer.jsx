@@ -1,6 +1,6 @@
 import { Icon } from "@iconify/react";
 import React, { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import API, { setAuthToken } from "../helper/api";
 import { useAuth } from "../context/AuthContext";
 import penLogo from "../assets/images/pen_logo.png";
@@ -13,13 +13,15 @@ const AdminSignInLayer = () => {
   const [submitting, setSubmitting] = useState(false);
 
   const navigate = useNavigate();
+  const location = useLocation();
   const { isAuthenticated, login } = useAuth();
 
   useEffect(() => {
-    if (isAuthenticated && window.location.pathname === "/sign-in-admin") {
-      navigate("/admin");
+    // Redirect only if authenticated and at /sign-in-admin
+    if (isAuthenticated && location.pathname === "/sign-in-admin") {
+      navigate("/admin", { replace: true });
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, location.pathname, navigate]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -28,40 +30,32 @@ const AdminSignInLayer = () => {
 
     try {
       const payload = { email: email.trim(), password };
-
-      // Make API call to login
       const { data } = await API.post("/login", payload);
       setAuthToken(data.token);
 
-      // Login user
-      login(data.user, data.token, data.abilities);  // Simplified login handling
+      login(data.user, data.token, data.abilities); // update AuthContext
 
-      // Retrieve user roles and permissions
-      const roles = (data.user.roles || []).map((r) => r.name);
-      const permissions = data.user.permissions || [];
+      // Dynamically determine redirect after login
+      const roles = (data.user.roles || []).map(r => r.name);
+      const perms = data.user.permissions || [];
 
-      // Check the user's roles and permissions to determine redirection
+      // SUPER ADMIN first
       if (roles.includes("super-admin") || roles.includes("team-admin")) {
-        navigate("/admin"); // Redirect to admin dashboard
-      } else if (roles.includes("Payment Admin") || permissions.includes("menu.payments")) {
-        navigate("/admin/payments"); // Redirect to payments page
-      } else if (roles.includes("manage_clients Admin") || permissions.includes("menu.manage_clients")) {
-        navigate("/admin/schools"); // Redirect to manage clients page
-      } else if (permissions.includes("menu.reports")) {
-        navigate("/admin/reports"); // Redirect to reports page
+        navigate("/admin");
+      } else if (roles.includes("Payment Admin") || perms.includes("menu.payments")) {
+        navigate("/admin/payments");
+      } else if (roles.includes("client-manager") || perms.includes("menu.manage_clients")) {
+        navigate("/admin/schools");
+      } else if (perms.includes("menu.reports")) {
+        navigate("/admin/reports");
       } else {
-        navigate("/admin"); // Fallback if no role/permission match
+        navigate("/admin");
       }
     } catch (err) {
       const status = err?.response?.status;
-      let msg =
-        err?.response?.data?.message ||
-        err?.message ||
-        "Login failed. Please try again.";
-
+      let msg = err?.response?.data?.message || err?.message || "Login failed";
       if (status === 422) msg = "Invalid credentials.";
       setError(msg);
-      console.error("Login error:", err);
     } finally {
       setSubmitting(false);
     }
@@ -135,7 +129,7 @@ const AdminSignInLayer = () => {
               </p>
             )}
           </form>
-          {/* Link to Admin Login */}
+
           <div className="mt-4 text-center">
             <p>
               <span>School Login?</span>{" "}

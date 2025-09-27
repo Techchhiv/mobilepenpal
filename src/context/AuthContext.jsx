@@ -27,7 +27,6 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(() => localStorage.getItem("token"));
   const [loading, setLoading] = useState(true);
-
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -68,35 +67,32 @@ export const AuthProvider = ({ children }) => {
   const logout = useCallback(async () => {
     try {
       await API.post("/logout");
-    } catch (e) {
-      /* no-op */
-    }
+    } catch (e) {}
     setUser(null);
     setToken(null);
-    // Redirect based on user role
-    if (user?.roles?.some(r => r.name === "school-admin")) {
-      navigate("/sign-in-school", { replace: true });
-    } else {
-      navigate("/sign-in-admin", { replace: true });
-    }
-  }, [user, navigate]);
+    navigate("/sign-in-admin", { replace: true });
+  }, [navigate]);
 
   const derived = useMemo(() => deriveAuth(user || {}), [user]);
 
-  const value = {
-    user,
-    token,
-    loading,
-    isAuthenticated: !!user,
-    isSuperAdmin: derived.isSuperAdmin,
-    isSchoolAdmin: derived.isSchoolAdmin,
-    hasRole: derived.hasRole,
-    hasPermission: derived.hasPermission,
-    hasAnyPermission: derived.hasAnyPermission,
-    login,
-    logout,
-    setUser,
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        token,
+        loading,
+        isAuthenticated: !!user,
+        isSuperAdmin: derived.isSuperAdmin,
+        isSchoolAdmin: derived.isSchoolAdmin,
+        hasRole: derived.hasRole,
+        hasPermission: derived.hasPermission,
+        hasAnyPermission: derived.hasAnyPermission,
+        login,
+        logout,
+        setUser,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
 };

@@ -49,7 +49,7 @@ export default function App() {
         <Route
           element={
             <Gate
-              roles={["manage_clients Admin"]}
+              roles={["client-manager"]}
               anyPerm={["manage_clients.manage"]}
             />
           }
