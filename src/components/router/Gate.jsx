@@ -3,7 +3,7 @@ import { useAuth } from "../../context/AuthContext";
 import LoadingSpinner from "../LoadingSpinner";
 
 export default function Gate({ anyPerm = [], allPerm = [], children }) {
-  const { loading, isAuthenticated, user, isSuperAdmin, hasPermission, hasAnyPermission } = useAuth();
+  const { loading, isAuthenticated, user, isSuperAdmin, isSchoolAdmin, hasPermission, hasAnyPermission } = useAuth();
   const location = useLocation();
 
   if (loading) return <LoadingSpinner />;
@@ -11,23 +11,21 @@ export default function Gate({ anyPerm = [], allPerm = [], children }) {
   if (!isAuthenticated) {
     return <Navigate to="/sign-in-admin" replace state={{ from: location }} />;
   }
-console.log("User roles:", user?.roles);
-console.log("User permissions:", user?.permissions);
 
-  // If no permissions specified, allow any authenticated user
-  if (anyPerm.length === 0 && allPerm.length === 0) {
-    return children || <Outlet />;
+  if (isSuperAdmin) return children || <Outlet />;
+
+  // Check permissions
+  const anyOK = anyPerm.length === 0 || hasAnyPermission(anyPerm);
+  const allOK = allPerm.length === 0 || allPerm.every(hasPermission);
+
+  if (anyOK && allOK) return children || <Outlet />;
+
+  if (isSchoolAdmin) return <Navigate to="/school" replace />;
+
+  // Fallback for other roles (e.g., teacher, parent) → school dashboard
+  if (user?.roles?.some(r => ["teacher", "parent"].includes(r.name.toLowerCase()))) {
+    return <Navigate to="/school" replace />;
   }
 
-  const anyOK = isSuperAdmin || anyPerm.length === 0 || hasAnyPermission(anyPerm);
-  const allOK = isSuperAdmin || allPerm.length === 0 || allPerm.every(hasPermission);
-
-  if (!(anyOK && allOK)) {
-    if (user?.roles?.some(r => r.name.toLowerCase() === "school-admin")) {
-      return <Navigate to="/school" replace />;
-    }
-    return <Navigate to="/admin" replace />;
-  }
-
-  return children || <Outlet />;
+  return <Navigate to="/sign-in-admin" replace />;
 }

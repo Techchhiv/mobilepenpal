@@ -14,16 +14,17 @@ const SchoolSignInLayer = () => {
   const [submitting, setSubmitting] = useState(false);
 
   const navigate = useNavigate();
-  const { isAuthenticated, login } = useAuth();
+  const { isAuthenticated, login, user } = useAuth();
 
+  // Redirect if already logged in
   useEffect(() => {
     if (isAuthenticated) {
-      const user = JSON.parse(localStorage.getItem("user"));
-      if (user?.roles?.some(r => r.name === "school-admin")) {
+      const roles = (user?.roles || []).map(r => r.name.toLowerCase());
+      if (roles.includes("school-admin") || roles.includes("teacher") || roles.includes("parent")) {
         navigate("/school", { replace: true });
       }
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, user, navigate]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -37,16 +38,14 @@ const SchoolSignInLayer = () => {
       setAuthToken(data.token);
       login(data.user, data.token, data.abilities);
 
-      // Redirect based on roles
-      // Redirect based on roles
-      const roles = (data.user.roles || []).map(r => r.name);
+      const roles = (data.user.roles || []).map(r => r.name.toLowerCase());
 
-      if (roles.includes("super-admin") || roles.includes("team-admin")) {
-        navigate("/admin", { replace: true });
-      } else if (roles.includes("school-admin") || roles.includes("teacher") || roles.includes("parent")) {
+      if (roles.includes("school-admin") || roles.includes("teacher") || roles.includes("parent")) {
         navigate("/school", { replace: true });
+      } else if (roles.includes("super-admin") || roles.includes("team-admin")) {
+        navigate("/admin", { replace: true });
       } else {
-        navigate("/sign-in-school", { replace: true }); // fallback
+        navigate("/sign-in-school", { replace: true });
       }
 
     } catch (err) {
@@ -54,7 +53,7 @@ const SchoolSignInLayer = () => {
       let msg = err?.response?.data?.message || err?.message || "Login failed. Please try again.";
       if (status === 422) msg = "Invalid credentials or school key.";
       setError(msg);
-      console.error("Login error:", err);
+      console.error("School login error:", err);
     } finally {
       setSubmitting(false);
     }
@@ -74,9 +73,7 @@ const SchoolSignInLayer = () => {
             <img src={penLogo} alt="logo" />
           </Link>
           <h4 className="mb-12">Sign In to your School Account</h4>
-          <p className="mb-32 text-secondary-light text-lg">
-            Welcome back! Please enter your details.
-          </p>
+          <p className="mb-32 text-secondary-light text-lg">Welcome back! Please enter your details.</p>
 
           <form onSubmit={handleLogin}>
             <div className="icon-field mb-16">

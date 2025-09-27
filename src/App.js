@@ -68,7 +68,7 @@ export default function App() {
 
 
 
-        <Route path="/school" element={<Gate anyPerm={["school.dashboard.view"]}><SchoolDashboard /></Gate>} />
+        <Route path="/school" element={<Gate><SchoolDashboard /></Gate>} />
 
         {/* ---------- School Routes ---------- */}
         <Route element={<Gate anyPerm={["users.manage", "roles.manage", "permissions.manage"]} />}>
@@ -79,7 +79,7 @@ export default function App() {
 
 
         {/* ---------- Fallback ---------- */}
-        <Route path="*" element={<Navigate to="/sign-in-admin" replace />} />
+        <Route path="*" element={<Navigate to="/access-denied" replace />} />
       </Routes>
     </>
   );
