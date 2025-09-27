@@ -1,6 +1,6 @@
 import { Icon } from "@iconify/react";
 import React, { useState, useEffect } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import API, { setAuthToken } from "../helper/api";
 import { useAuth } from "../context/AuthContext";
 import penLogo from "../assets/images/pen_logo.png";
@@ -13,15 +13,14 @@ const AdminSignInLayer = () => {
   const [submitting, setSubmitting] = useState(false);
 
   const navigate = useNavigate();
-  const location = useLocation();
   const { isAuthenticated, login } = useAuth();
 
+  // Redirect if already logged in
   useEffect(() => {
-    // Redirect only if authenticated and at /sign-in-admin
-    if (isAuthenticated && location.pathname === "/sign-in-admin") {
+    if (isAuthenticated) {
       navigate("/admin", { replace: true });
     }
-  }, [isAuthenticated, location.pathname, navigate]);
+  }, [isAuthenticated, navigate]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -31,31 +30,34 @@ const AdminSignInLayer = () => {
     try {
       const payload = { email: email.trim(), password };
       const { data } = await API.post("/login", payload);
+
+      // Set token for subsequent requests
       setAuthToken(data.token);
 
-      login(data.user, data.token, data.abilities); // update AuthContext
+      // Save user + token in AuthContext
+      login(data.user, data.token);
 
-      // Dynamically determine redirect after login
+      // Determine redirect dynamically based on role/permissions
       const roles = (data.user.roles || []).map(r => r.name);
-      const perms = data.user.permissions || [];
+      const perms = (data.user.permissions || []).map(p => (typeof p === "string" ? p : p?.name));
 
-      // SUPER ADMIN first
-      if (roles.includes("super-admin") || roles.includes("team-admin")) {
+      if (roles.includes("super-admin")) {
         navigate("/admin");
-      } else if (roles.includes("Payment Admin") || perms.includes("menu.payments")) {
+      } else if (roles.includes("school-admin")) {
+        navigate("/admin"); // school-admin default dashboard
+      } else if (roles.includes("payment-manager") || perms.includes("menu.payments")) {
         navigate("/admin/payments");
       } else if (roles.includes("client-manager") || perms.includes("menu.manage_clients")) {
         navigate("/admin/schools");
-      } else if (perms.includes("menu.reports")) {
-        navigate("/admin/reports");
       } else {
-        navigate("/admin");
+        navigate("/admin"); // fallback
       }
     } catch (err) {
       const status = err?.response?.status;
-      let msg = err?.response?.data?.message || err?.message || "Login failed";
+      let msg = err?.response?.data?.message || err?.message || "Login failed. Please try again.";
       if (status === 422) msg = "Invalid credentials.";
       setError(msg);
+      console.error("Login error:", err);
     } finally {
       setSubmitting(false);
     }
@@ -71,15 +73,13 @@ const AdminSignInLayer = () => {
 
       <div className="auth-right py-32 px-24 d-flex flex-column justify-content-center">
         <div className="max-w-464-px mx-auto w-100">
-          <div>
-            <Link to="/" className="mb-40 max-w-290-px d-block">
-              <img src={penLogo} alt="logo" />
-            </Link>
-            <h4 className="mb-12">Sign In to your Account</h4>
-            <p className="mb-32 text-secondary-light text-lg">
-              Welcome back! Please enter your details.
-            </p>
-          </div>
+          <Link to="/" className="mb-40 max-w-290-px d-block">
+            <img src={penLogo} alt="logo" />
+          </Link>
+          <h4 className="mb-12">Sign In to your Account</h4>
+          <p className="mb-32 text-secondary-light text-lg">
+            Welcome back! Please enter your details.
+          </p>
 
           <form onSubmit={handleLogin}>
             <div className="icon-field mb-16">
@@ -105,7 +105,6 @@ const AdminSignInLayer = () => {
                 <input
                   type="password"
                   className="form-control h-56-px bg-neutral-50 radius-12"
-                  id="your-password"
                   placeholder="Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -123,11 +122,7 @@ const AdminSignInLayer = () => {
               {submitting ? "Signing in..." : "Sign In"}
             </button>
 
-            {error && (
-              <p className="mt-12" style={{ color: "red" }}>
-                {error}
-              </p>
-            )}
+            {error && <p className="mt-12 text-danger">{error}</p>}
           </form>
 
           <div className="mt-4 text-center">

@@ -9,25 +9,26 @@ import penLogo from "../assets/images/pen_logo.png";
 
 const MasterLayout = ({ children }) => {
   const { user, loading, logout, hasRole, hasPermission, isSuperAdmin } = useAuth();
-  const navigate = useNavigate();
   const location = useLocation();
 
   const [sidebarActive, setSidebarActive] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
   const [openDropdownKey, setOpenDropdownKey] = useState(null);
 
-  const showManageClients = isSuperAdmin || hasRole("manage_clients Admin") || hasPermission("menu.manage_clients");
-  const showPayments = isSuperAdmin || hasRole("Payment Admin") || hasPermission("menu.payments");
+  const showManageClients = isSuperAdmin || hasPermission("menu.manage_clients");
+  const showPayments = isSuperAdmin || hasPermission("menu.payments");
   const showAnalytics = isSuperAdmin || hasPermission("menu.analytics");
   const showReports = isSuperAdmin || hasPermission("menu.reports");
-  const showManageUsers = isSuperAdmin || hasRole("admin") || hasPermission("users.manage");
-  const showRoles = isSuperAdmin || hasRole("admin") || hasPermission("roles.manage");
-  const showPermissions = isSuperAdmin || hasRole("admin") || hasPermission("permissions.manage");
+  const showManageUsers = isSuperAdmin || hasPermission("users.manage");
+  const showRoles = isSuperAdmin || hasPermission("roles.manage");
+  const showPermissions = isSuperAdmin || hasPermission("permissions.manage");
 
   useEffect(() => {
     const p = location.pathname;
     if (p.startsWith("/admin/users") || p.startsWith("/admin/roles") || p.startsWith("/admin/permissions")) {
       setOpenDropdownKey("access");
+    } else if (p.startsWith("/admin/schools") || p.startsWith("/admin/payments")) {
+      setOpenDropdownKey("management");
     } else {
       setOpenDropdownKey(null);
     }
@@ -35,8 +36,9 @@ const MasterLayout = ({ children }) => {
 
   if (loading) return <div>Loading...</div>;
 
-  const handleLogout = async () => logout();
-
+  const handleLogout = async () => {
+    logout();
+  };
 
   return (
     <section className={mobileMenu ? "overlay active" : "overlay"}>
@@ -60,25 +62,113 @@ const MasterLayout = ({ children }) => {
           <ul className="sidebar-menu" id="sidebar-menu">
             <li className="sidebar-menu-group-title">Application</li>
 
-            {showManageClients && <li><NavLink to="/admin/schools"><Icon icon="mdi:account-multiple" /> Manage Clients</NavLink></li>}
-            {showPayments && <li><NavLink to="/admin/payments"><Icon icon="mdi:credit-card" /> Payments</NavLink></li>}
-            {showAnalytics && <li><NavLink to="/admin/analytics"><Icon icon="mdi:chart-line" /> Analytics</NavLink></li>}
-            {showReports && <li><NavLink to="/admin/reports"><Icon icon="mdi:file-chart" /> Reports</NavLink></li>}
-
-            {showManageUsers && (
-              <li className={`dropdown ${openDropdownKey === "access" ? "open" : ""}`}>
-                <a href="#access" onClick={e => { e.preventDefault(); setOpenDropdownKey(prev => prev === "access" ? null : "access"); }}>
-                  <Icon icon="flowbite:users-group-outline" /> Manage Users
-                  {/* <Icon icon={openDropdownKey === "access" ? "mdi:chevron-up" : "mdi:chevron-down"} /> */}
-                </a>
-                <ul style={{ maxHeight: openDropdownKey === "access" ? "600px" : "0px", overflow: "hidden", transition: "max-height .25s ease" }}>
-                  {showManageUsers && <li><NavLink to="/admin/users">Users</NavLink></li>}
-                  {showRoles && <li><NavLink to="/admin/roles">Roles</NavLink></li>}
-                  {showPermissions && <li><NavLink to="/admin/permissions">Permissions</NavLink></li>}
-                </ul>
+            {showManageClients && (
+              <li>
+                <NavLink to="/admin/schools">
+                  <Icon icon="mdi:account-multiple" className="menu-icon" />
+                  <span>Manage Clients</span>
+                </NavLink>
               </li>
             )}
 
+            {showPayments && (
+              <li>
+                <NavLink to="/admin/payments">
+                  <Icon icon="mdi:credit-card" className="menu-icon" />
+                  <span>Payments</span>
+                </NavLink>
+              </li>
+            )}
+
+            {showAnalytics && (
+              <li>
+                <NavLink to="/admin/analytics">
+                  <Icon icon="mdi:chart-line" className="menu-icon" />
+                  <span>Analytics</span>
+                </NavLink>
+              </li>
+            )}
+
+            {showReports && (
+              <li>
+                <NavLink to="/admin/reports">
+                  <Icon icon="mdi:file-chart" className="menu-icon" />
+                  <span>Manage Report</span>
+                </NavLink>
+              </li>
+            )}
+
+            {showManageUsers && (
+              <li
+                className={`dropdown ${openDropdownKey === "access" ? "open" : ""}`}
+              >
+                <a
+                  href="#access"
+                  className={`menu-trigger ${
+                    openDropdownKey === "access" ? "active-page" : ""
+                  }`}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setOpenDropdownKey((prev) =>
+                      prev === "access" ? null : "access"
+                    );
+                  }}
+                >
+                  <Icon icon="flowbite:users-group-outline" className="menu-icon" />
+                  <span>Manage Users</span>
+                  <Icon
+                    icon={
+                      openDropdownKey === "access"
+                        ? "mdi:chevron-up"
+                        : "mdi:chevron-down"
+                    }
+                    className="caret ms-auto"
+                  />
+                </a>
+                <ul
+                  className="sidebar-submenu"
+                  style={{
+                    maxHeight: openDropdownKey === "access" ? "600px" : "0px",
+                    overflow: "hidden",
+                    transition: "max-height .25s ease",
+                  }}
+                >
+                  {showManageUsers && (
+                    <li>
+                      <NavLink
+                        to="/admin/users"
+                        className={({ isActive }) => (isActive ? "active-page" : "")}
+                      >
+                        <i className="ri-circle-fill circle-icon text-primary-600 w-auto" />
+                        Users
+                      </NavLink>
+                    </li>
+                  )}
+                  {showRoles && (
+                    <li>
+                      <NavLink
+                        to="/admin/roles"
+                        className={({ isActive }) => (isActive ? "active-page" : "")}
+                      >
+                        <i className="ri-circle-fill circle-icon text-warning-main w-auto" />
+                        Roles
+                      </NavLink>
+                    </li>
+                  )}
+                  {showPermissions && (
+                    <li>
+                      <NavLink
+                        to="/admin/permissions"
+                        className={({ isActive }) => (isActive ? "active-page" : "")}
+                      >
+                        <i className="ri-circle-fill circle-icon text-info-main w-auto" />
+                        Permissions
+                      </NavLink>
+                    </li>
+                  )}
+                </ul>
+              </li>
+            )}
           </ul>
         </div>
       </aside>

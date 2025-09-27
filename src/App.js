@@ -1,5 +1,5 @@
 import React from "react";
-import { Routes, Route, Outlet, Navigate, useParams } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import RouteScrollToTop from "./helper/RouteScrollToTop";
 import Gate from "./components/router/Gate";
 
@@ -23,7 +23,6 @@ import SchoolSignInLayer from "./pages/school/page/SchoolSignin";
 import SchoolDashboard from "./pages/school/page/SchoolDashboard";
 import ManageTeacher from "./pages/school/page/ManageTeacher";
 
-
 export default function App() {
   return (
     <>
@@ -36,69 +35,41 @@ export default function App() {
         <Route path="/oauth-success" element={<OAuthSuccess />} />
         <Route path="/access-denied" element={<AccessDeniedPage />} />
 
-        {/* ---------- Admin Routes ---------- */}
+        {/* ---------- Admin Routes (Super Admin / Admin) ---------- */}
         <Route
-          element={
-            <Gate roles={["admin", "super-admin"]} anyPerm={["console.view"]} />
-          }
+          element={<Gate roles={["super-admin", "admin"]} anyPerm={["console.view"]} />}
         >
           <Route path="/admin" element={<HomePageOne />} />
-        </Route>
-
-        {/* ---------- Manage Clients ---------- */}
-        <Route
-          element={
-            <Gate
-              roles={["client-manager"]}
-              anyPerm={["manage_clients.manage"]}
-            />
-          }
-        >
-          <Route path="/admin/schools" element={<ManageClientsPage />} />
-        </Route>
-
-        {/* ---------- Payments ---------- */}
-        <Route
-          element={
-            <Gate
-              roles={["Payment Admin"]}
-              anyPerm={["payments.manage"]}
-            />
-          }
-        >
-          <Route path="/admin/payments" element={<ManagePaymentsPage />} />
-          <Route path="/admin/schools/:schoolId/payments" element={<SchoolPayments />} />
-        </Route>
-
-        {/* ---------- Users / Roles / Permissions ---------- */}
-        <Route
-          element={
-            <Gate
-              roles={["admin", "super-admin"]}
-              anyPerm={["users.manage", "roles.manage", "permissions.manage"]}
-            />
-          }
-        >
           <Route path="/admin/users" element={<AdminUsersPage />} />
           <Route path="/admin/roles" element={<AdminRolesPage />} />
           <Route path="/admin/permissions" element={<AdminPermissionsPage />} />
         </Route>
 
+        {/* ---------- Manage Clients (Client Manager) ---------- */}
+        <Route
+          element={<Gate roles={["client-manager"]} anyPerm={["menu.manage_clients"]} />}
+        >
+          <Route path="/admin/schools" element={<ManageClientsPage />} />
+        </Route>
+
+        {/* ---------- Payments (Payment Manager) ---------- */}
+        <Route
+          element={<Gate roles={["payment-manager"]} anyPerm={["menu.payments"]} />}
+        >
+          <Route path="/admin/payments" element={<ManagePaymentsPage />} />
+          <Route path="/admin/schools/:schoolId/payments" element={<SchoolPayments />} />
+        </Route>
+
         {/* ---------- School Routes ---------- */}
         <Route
-          element={
-            <Gate
-              roles={["school-admin", "teacher", "parent"]}
-              anyPerm={["school.dashboard.view"]}
-            />
-          }
+          element={<Gate roles={["school-admin", "teacher", "parent"]} anyPerm={["school.dashboard.view"]} />}
         >
           <Route path="/school" element={<SchoolDashboard />} />
           <Route path="/school/teachers" element={<ManageTeacher />} />
         </Route>
 
         {/* ---------- Fallback ---------- */}
-        <Route path="*" element={<Navigate to="/#" replace />} />
+        <Route path="*" element={<Navigate to="/sign-in-admin" replace />} />
       </Routes>
     </>
   );

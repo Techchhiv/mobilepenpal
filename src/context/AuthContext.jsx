@@ -5,20 +5,20 @@ import { useNavigate } from "react-router-dom";
 const AuthContext = createContext();
 export const useAuth = () => useContext(AuthContext);
 
+
 function deriveAuth(userObj) {
   const roles = Array.isArray(userObj?.roles) ? userObj.roles : [];
-  const roleNames = roles.map(r => r?.name).filter(Boolean);
-
+  const roleNames = roles.map(r => r?.name?.toLowerCase()).filter(Boolean); // lowercase
   const permNames = Array.isArray(userObj?.permissions)
-    ? userObj.permissions.map(p => (typeof p === "string" ? p : p?.name)).filter(Boolean)
+    ? userObj.permissions.map(p => (typeof p === "string" ? p : p?.name)?.toLowerCase()).filter(Boolean)
     : [];
 
   const isSuperAdmin = roleNames.includes("super-admin");
   const isSchoolAdmin = roleNames.includes("school-admin");
 
-  const hasRole = (role) => roleNames.includes(role);
-  const hasPermission = (perm) => isSuperAdmin || permNames.includes(perm);
-  const hasAnyPermission = (perms = []) => isSuperAdmin || perms.some(p => permNames.includes(p));
+  const hasRole = (role) => roleNames.includes(role.toLowerCase());
+  const hasPermission = (perm) => isSuperAdmin || permNames.includes(perm.toLowerCase());
+  const hasAnyPermission = (perms = []) => isSuperAdmin || perms.some(p => permNames.includes(p.toLowerCase()));
 
   return { roleNames, permNames, isSuperAdmin, isSchoolAdmin, hasRole, hasPermission, hasAnyPermission };
 }
@@ -27,6 +27,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(() => localStorage.getItem("token"));
   const [loading, setLoading] = useState(true);
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -64,10 +65,7 @@ export const AuthProvider = ({ children }) => {
     if (newToken) setToken(newToken);
   }, []);
 
-  const logout = useCallback(async () => {
-    try {
-      await API.post("/logout");
-    } catch (e) {}
+  const logout = useCallback(() => {
     setUser(null);
     setToken(null);
     navigate("/sign-in-admin", { replace: true });
@@ -75,24 +73,20 @@ export const AuthProvider = ({ children }) => {
 
   const derived = useMemo(() => deriveAuth(user || {}), [user]);
 
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        token,
-        loading,
-        isAuthenticated: !!user,
-        isSuperAdmin: derived.isSuperAdmin,
-        isSchoolAdmin: derived.isSchoolAdmin,
-        hasRole: derived.hasRole,
-        hasPermission: derived.hasPermission,
-        hasAnyPermission: derived.hasAnyPermission,
-        login,
-        logout,
-        setUser,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
+  const value = {
+    user,
+    token,
+    loading,
+    isAuthenticated: !!user,
+    isSuperAdmin: derived.isSuperAdmin,
+    isSchoolAdmin: derived.isSchoolAdmin,
+    hasRole: derived.hasRole,
+    hasPermission: derived.hasPermission,
+    hasAnyPermission: derived.hasAnyPermission,
+    login,
+    logout,
+    setUser,
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
