@@ -13,7 +13,7 @@ class SchoolController extends Controller
     public function __construct()
     {
         // Only users with menu.manage_clients permission can access schools
-        $this->middleware('permission:menu.manage_clients');
+        $this->middleware('permission:menu.manage_clients,');
     }
 
     public function index()

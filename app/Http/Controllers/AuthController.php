@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Schema;
 
 class AuthController extends Controller
 {
+    
     public function register(Request $request)
     {
         try {

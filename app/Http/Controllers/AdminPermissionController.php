@@ -7,10 +7,11 @@ use Spatie\Permission\Models\Permission;
 
 class AdminPermissionController extends Controller
 {
-    public function __construct()
+public function __construct()
 {
-    $this->middleware(['auth:api', 'role:super-admin,api']); // ✅ same guard
+    $this->middleware('auth:api');
 }
+
 
 
     public function index()

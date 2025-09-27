@@ -8,10 +8,12 @@ use Spatie\Permission\Models\Permission;
 
 class AdminRoleController extends Controller
 {
-   public function __construct()
+public function __construct()
 {
-    $this->middleware(['auth:api', 'role:super-admin,api']); // ✅ same guard
+    $this->middleware('auth:api');
+    // Do NOT restrict role here; permissions middleware in route is sufficient
 }
+
 
 
     public function index()
