@@ -22,6 +22,9 @@ import SchoolPayments from "./pages/admin/SchoolPayments";
 import SchoolSignInLayer from "./pages/school/page/SchoolSignin";
 import SchoolDashboard from "./pages/school/page/SchoolDashboard";
 import ManageTeacher from "./pages/school/page/ManageTeacher";
+import SchoolUsersPage from "./pages/school/page/SchoolUsersPage";
+import SchoolRolesPage from "./pages/school/page/SchoolRolesPage";
+import SchoolPermissionsPage from "./pages/school/page/SchoolPermissionsPage";
 
 export default function App() {
   return (
@@ -35,26 +38,29 @@ export default function App() {
         <Route path="/oauth-success" element={<OAuthSuccess />} />
         <Route path="/access-denied" element={<AccessDeniedPage />} />
 
-        {/* ---------- Admin Routes (Super Admin / Admin) ---------- */}
+        {/* ---------- Admin Dashboard (all logged-in users) ---------- */}
+        <Route path="/admin" element={<Gate><HomePageOne /></Gate>} />
+
+        {/* ---------- Users / Roles / Permissions (Super Admin / Admin only) ---------- */}
         <Route
-          element={<Gate roles={["super-admin", "admin"]} anyPerm={["console.view"]} />}
-        >
-          <Route path="/admin" element={<HomePageOne />} />
+          element={
+            <Gate anyPerm={["users.manage", "roles.manage", "permissions.manage"]}/>}>
           <Route path="/admin/users" element={<AdminUsersPage />} />
           <Route path="/admin/roles" element={<AdminRolesPage />} />
           <Route path="/admin/permissions" element={<AdminPermissionsPage />} />
         </Route>
 
-        {/* ---------- Manage Clients (Client Manager) ---------- */}
+
+        {/* ---------- Manage Clients (Client Manager only) ---------- */}
         <Route
-          element={<Gate roles={["client-manager"]} anyPerm={["menu.manage_clients"]} />}
+          element={<Gate anyPerm={["menu.manage_clients"]} />}
         >
           <Route path="/admin/schools" element={<ManageClientsPage />} />
         </Route>
 
-        {/* ---------- Payments (Payment Manager) ---------- */}
+        {/* ---------- Payments (Payment Manager only) ---------- */}
         <Route
-          element={<Gate roles={["payment-manager"]} anyPerm={["menu.payments"]} />}
+          element={<Gate anyPerm={["menu.payments"]} />}
         >
           <Route path="/admin/payments" element={<ManagePaymentsPage />} />
           <Route path="/admin/schools/:schoolId/payments" element={<SchoolPayments />} />
@@ -62,10 +68,21 @@ export default function App() {
 
         {/* ---------- School Routes ---------- */}
         <Route
-          element={<Gate roles={["school-admin", "teacher", "parent"]} anyPerm={["school.dashboard.view"]} />}
+          element={
+            <Gate
+
+              anyPerm={["school.dashboard.view"]}
+            />
+          }
         >
           <Route path="/school" element={<SchoolDashboard />} />
           <Route path="/school/teachers" element={<ManageTeacher />} />
+          <Route path="/school/users" element={<SchoolUsersPage />} />
+          <Route path="/school/roles" element={<SchoolRolesPage />} />
+          <Route
+            path="/school/permissions"
+            element={<SchoolPermissionsPage />}
+          />
         </Route>
 
         {/* ---------- Fallback ---------- */}

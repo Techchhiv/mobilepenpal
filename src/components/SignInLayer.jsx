@@ -41,17 +41,7 @@ const AdminSignInLayer = () => {
       const roles = (data.user.roles || []).map(r => r.name);
       const perms = (data.user.permissions || []).map(p => (typeof p === "string" ? p : p?.name));
 
-      if (roles.includes("super-admin")) {
-        navigate("/admin");
-      } else if (roles.includes("school-admin")) {
-        navigate("/admin"); // school-admin default dashboard
-      } else if (roles.includes("payment-manager") || perms.includes("menu.payments")) {
-        navigate("/admin/payments");
-      } else if (roles.includes("client-manager") || perms.includes("menu.manage_clients")) {
-        navigate("/admin/schools");
-      } else {
-        navigate("/admin"); // fallback
-      }
+      navigate("/admin")
     } catch (err) {
       const status = err?.response?.status;
       let msg = err?.response?.data?.message || err?.message || "Login failed. Please try again.";
