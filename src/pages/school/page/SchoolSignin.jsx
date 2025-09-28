@@ -58,27 +58,24 @@ const SchoolSignInLayer = () => {
       setAuthToken(data.token);
       login(data.user || data.teacher, data.token, data.abilities);
 
-      // Redirect based on roles
       const roles = (data.user?.roles || data.teacher?.roles || []).map(r => r.name.toLowerCase());
 
       if (roles.includes("school-admin") || roles.includes("teacher") || roles.includes("parent")) {
         navigate("/school", { replace: true });
       } else if (roles.includes("super-admin") || roles.includes("team-admin")) {
         navigate("/admin", { replace: true });
-      } else {
-        navigate("/sign-in-school", { replace: true });
       }
-
     } catch (err) {
       const status = err?.response?.status;
-      let msg = err?.response?.data?.message || err?.message || "Login failed. Please try again.";
+      let msg = err?.response?.data?.message || "Login failed. Please check your credentials.";
       if (status === 422) msg = "Invalid credentials or school key.";
       setError(msg);
-      console.error("School login error:", err);
+      console.error("Login error:", err);
     } finally {
       setSubmitting(false);
     }
   };
+
 
   return (
     <section className="auth bg-base d-flex flex-wrap">
@@ -100,8 +97,8 @@ const SchoolSignInLayer = () => {
 
           {/* Switch Login Type */}
           <div className="mb-16 d-flex gap-2">
-            <button type="button" className={`btn ${loginType==="school"?"btn-primary":"btn-light"}`} onClick={()=>setLoginType("school")}>School Admin</button>
-            <button type="button" className={`btn ${loginType==="teacher"?"btn-primary":"btn-light"}`} onClick={()=>setLoginType("teacher")}>Teacher</button>
+            <button type="button" className={`btn ${loginType === "school" ? "btn-primary" : "btn-light"}`} onClick={() => setLoginType("school")}>School Admin</button>
+            <button type="button" className={`btn ${loginType === "teacher" ? "btn-primary" : "btn-light"}`} onClick={() => setLoginType("teacher")}>Teacher</button>
           </div>
 
           <form onSubmit={handleLogin}>
@@ -110,7 +107,7 @@ const SchoolSignInLayer = () => {
               <input
                 type="text"
                 className="form-control h-56-px bg-neutral-50 radius-12"
-                placeholder={loginType==="teacher"?"Teacher ID":"Email"}
+                placeholder={loginType === "teacher" ? "Teacher ID" : "Email"}
                 value={emailOrId}
                 onChange={e => setEmailOrId(e.target.value)}
                 required

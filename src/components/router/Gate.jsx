@@ -12,6 +12,7 @@ export default function Gate({ anyPerm = [], allPerm = [], children }) {
     return <Navigate to="/sign-in-admin" replace state={{ from: location }} />;
   }
 
+  
   if (isSuperAdmin) return children || <Outlet />;
 
   // Check permissions

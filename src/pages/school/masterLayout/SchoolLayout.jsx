@@ -79,7 +79,7 @@ const SchoolLayout = ({ children }) => {
            {showTeacher && (
              <li>
               <NavLink
-                to="/school/teachers"
+                to="/school/teachers_list"
                 className={({ isActive }) => (isActive ? "active-page" : "")}
               >
                 <Icon icon="mdi:teach" className="menu-icon" />

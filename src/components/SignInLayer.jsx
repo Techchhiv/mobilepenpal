@@ -13,16 +13,14 @@ const AdminSignInLayer = () => {
   const [submitting, setSubmitting] = useState(false);
 
   const navigate = useNavigate();
-  const { isAuthenticated, login, user } = useAuth();
+  const { isAuthenticated, login } = useAuth();
 
+  // Redirect if already logged in
   useEffect(() => {
     if (isAuthenticated) {
-      const roles = (user?.roles || []).map(r => r.name.toLowerCase());
-      if (roles.includes("super-admin") || roles.includes("team-admin")) {
-        navigate("/admin", { replace: true });
-      }
+      navigate("/admin", { replace: true });
     }
-  }, [isAuthenticated, user, navigate]);
+  }, [isAuthenticated, navigate]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -30,26 +28,31 @@ const AdminSignInLayer = () => {
     setSubmitting(true);
 
     try {
-      const { data } = await API.post("/login", { email: email.trim(), password });
+      const payload = { email: email.trim(), password };
+      const { data } = await API.post("/login", payload);
+
+      // Set token for subsequent requests
       setAuthToken(data.token);
+
+      // Save user + token in AuthContext
       login(data.user, data.token);
 
-      const roles = (data.user.roles || []).map(r => r.name.toLowerCase());
+      // Determine redirect dynamically based on role/permissions
+      const roles = (data.user.roles || []).map(r => r.name);
+      const perms = (data.user.permissions || []).map(p => (typeof p === "string" ? p : p?.name));
 
-      if (roles.includes("super-admin") || roles.includes("team-admin")) {
-        navigate("/admin", { replace: true });
-      } else if (roles.includes("school-admin") || roles.includes("teacher") || roles.includes("parent")) {
-        navigate("/school", { replace: true });
+      if (roles.includes("super-admin")) {
+        navigate("/admin");
+      
       } else {
-        navigate("/sign-in-admin", { replace: true });
+        navigate("/admin"); // fallback
       }
-
     } catch (err) {
       const status = err?.response?.status;
-      let msg = err?.response?.data?.message || err?.message || "Login failed.";
+      let msg = err?.response?.data?.message || err?.message || "Login failed. Please try again.";
       if (status === 422) msg = "Invalid credentials.";
       setError(msg);
-      console.error("Admin login error:", err);
+      console.error("Login error:", err);
     } finally {
       setSubmitting(false);
     }
@@ -69,17 +72,21 @@ const AdminSignInLayer = () => {
             <img src={penLogo} alt="logo" />
           </Link>
           <h4 className="mb-12">Sign In to your Account</h4>
-          <p className="mb-32 text-secondary-light text-lg">Welcome back! Please enter your details.</p>
+          <p className="mb-32 text-secondary-light text-lg">
+            Welcome back! Please enter your details.
+          </p>
 
           <form onSubmit={handleLogin}>
             <div className="icon-field mb-16">
-              <span className="icon top-50 translate-middle-y"><Icon icon="mage:email" /></span>
+              <span className="icon top-50 translate-middle-y">
+                <Icon icon="mage:email" />
+              </span>
               <input
                 type="email"
                 className="form-control h-56-px bg-neutral-50 radius-12"
                 placeholder="Email"
                 value={email}
-                onChange={e => setEmail(e.target.value)}
+                onChange={(e) => setEmail(e.target.value)}
                 autoComplete="username"
                 required
               />
@@ -87,13 +94,15 @@ const AdminSignInLayer = () => {
 
             <div className="position-relative mb-20">
               <div className="icon-field">
-                <span className="icon top-50 translate-middle-y"><Icon icon="solar:lock-password-outline" /></span>
+                <span className="icon top-50 translate-middle-y">
+                  <Icon icon="solar:lock-password-outline" />
+                </span>
                 <input
                   type="password"
                   className="form-control h-56-px bg-neutral-50 radius-12"
                   placeholder="Password"
                   value={password}
-                  onChange={e => setPassword(e.target.value)}
+                  onChange={(e) => setPassword(e.target.value)}
                   autoComplete="current-password"
                   required
                 />
@@ -114,7 +123,9 @@ const AdminSignInLayer = () => {
           <div className="mt-4 text-center">
             <p>
               <span>School Login?</span>{" "}
-              <Link to="/sign-in-school" className="text-primary">Click here</Link>
+              <Link to="/sign-in-school" className="text-primary">
+                Click here
+              </Link>
             </p>
           </div>
         </div>
