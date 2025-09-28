@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Teacher;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -13,55 +14,81 @@ class TeacherController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth:api');
+        $this->middleware('auth:api'); // only authenticated school-admin
     }
 
     /**
-     * Display a listing of teachers.
+     * Display all teachers for this school.
      */
     public function index()
     {
-        $teachers = Teacher::with('school')->orderBy('id', 'desc')->get();
+        $user = auth()->user();
+        $teachers = Teacher::with('school')
+            ->where('school_id', $user->school_id)
+            ->orderByDesc('id')
+            ->get();
         return response()->json($teachers);
     }
 
     /**
-     * Store a newly created teacher.
+     * Create a new teacher.
      */
     public function store(Request $request)
     {
+        $user = auth()->user();
+
+        // Ensure school admin
+        if (!$user->school_id) {
+            return response()->json(['message' => 'You are not associated with a school.'], 403);
+        }
+
         $validator = Validator::make($request->all(), [
-            'school_id' => 'required|exists:schools,id',
-            'name'      => 'required|string|max:255',
-            'email'     => 'required|email|unique:teachers,email',
-            'phone'     => 'nullable|string|max:20',
-            'subject'   => 'nullable|string|max:100',
-            'photo'     => 'nullable|image|max:2048', // max 2MB
+            'name'     => 'required|string|max:255',
+            'email'    => 'required|email|unique:users,email', // store in users
+            'phone'    => 'nullable|string|max:20',
+            'subject'  => 'nullable|string|max:100',
+            'photo'    => 'nullable|image|max:2048',
+            'password' => 'required|string|min:6', // store in users
         ]);
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $data = $request->only(['school_id', 'name', 'email', 'phone', 'subject']);
+        // 1️⃣ Create the teacher record in teachers table
+        // 1️⃣ Create the teacher record in teachers table
+        $teacherData = $request->only(['name', 'email', 'phone', 'subject']);
+        $teacherData['school_id'] = $user->school_id;
+        $teacherData['teacher_id'] = strtoupper('TCH-' . Str::random(6));
+        $teacherData['school_key'] = strtoupper(Str::random(8));
 
         if ($request->hasFile('photo')) {
             $path = $request->file('photo')->store('teachers', 'public');
-            $data['photo'] = $path;
+            $teacherData['photo'] = $path;
         }
 
-        // Generate teacher login ID, school key, and password
-        $data['teacher_id'] = strtoupper('TCH-'.Str::random(6));
-        $data['school_key'] = strtoupper(Str::random(8));
-        $data['password'] = Hash::make(Str::random(8)); // random password
+        $teacher = Teacher::create($teacherData);
 
-        $teacher = Teacher::create($data);
 
-        return response()->json($teacher, 201);
+        // 2️⃣ Create corresponding user record for login
+        $userData = [
+            'name'      => $request->name,
+            'email'     => $request->email,
+            'password'  => Hash::make($request->password),
+            'school_id' => $user->school_id,
+        ];
+
+        $userAccount = User::create($userData);
+        $userAccount->assignRole('teacher');
+
+        return response()->json([
+            'teacher' => $teacher,
+            'user'    => $userAccount
+        ], 201);
     }
 
     /**
-     * Display the specified teacher.
+     * Show teacher details.
      */
     public function show($id)
     {
@@ -73,32 +100,29 @@ class TeacherController extends Controller
     }
 
     /**
-     * Update the specified teacher.
+     * Update teacher info.
      */
     public function update(Request $request, $id)
     {
         $teacher = Teacher::find($id);
-        if (!$teacher) {
-            return response()->json(['message' => 'Teacher not found'], 404);
-        }
+        if (!$teacher) return response()->json(['message' => 'Teacher not found'], 404);
 
         $validator = Validator::make($request->all(), [
-            'school_id' => 'sometimes|required|exists:schools,id',
-            'name'      => 'sometimes|required|string|max:255',
-            'email'     => 'sometimes|required|email|unique:teachers,email,' . $teacher->id,
-            'phone'     => 'nullable|string|max:20',
-            'subject'   => 'nullable|string|max:100',
-            'photo'     => 'nullable|image|max:2048',
+            'name'     => 'sometimes|required|string|max:255',
+            'email'    => 'sometimes|required|email|unique:users,email,' . $teacher->id,
+            'phone'    => 'nullable|string|max:20',
+            'subject'  => 'nullable|string|max:100',
+            'photo'    => 'nullable|image|max:2048',
+            'password' => 'nullable|string|min:6',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $data = $request->only(['school_id', 'name', 'email', 'phone', 'subject']);
+        $data = $request->only(['name', 'phone', 'subject']);
 
         if ($request->hasFile('photo')) {
-            // Delete old photo if exists
             if ($teacher->photo && Storage::disk('public')->exists($teacher->photo)) {
                 Storage::disk('public')->delete($teacher->photo);
             }
@@ -108,23 +132,35 @@ class TeacherController extends Controller
 
         $teacher->update($data);
 
+        // Update corresponding user login
+        $userAccount = User::where('email', $teacher->email)->first();
+        if ($userAccount) {
+            $userData = $request->only(['name', 'email']);
+            if ($request->has('password')) {
+                $userData['password'] = Hash::make($request->password);
+            }
+            $userAccount->update($userData);
+        }
+
         return response()->json($teacher);
     }
 
     /**
-     * Remove the specified teacher.
+     * Delete a teacher.
      */
     public function destroy($id)
     {
         $teacher = Teacher::find($id);
-        if (!$teacher) {
-            return response()->json(['message' => 'Teacher not found'], 404);
-        }
+        if (!$teacher) return response()->json(['message' => 'Teacher not found'], 404);
 
-        // Delete photo if exists
+        // Delete photo
         if ($teacher->photo && Storage::disk('public')->exists($teacher->photo)) {
             Storage::disk('public')->delete($teacher->photo);
         }
+
+        // Delete corresponding user account
+        $userAccount = User::where('email', $teacher->email)->first();
+        if ($userAccount) $userAccount->delete();
 
         $teacher->delete();
 

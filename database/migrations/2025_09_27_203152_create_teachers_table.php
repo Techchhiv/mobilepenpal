@@ -9,15 +9,15 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('teachers', function (Blueprint $table) {
-            $table->id(); // internal ID
+            $table->id();
             $table->unsignedBigInteger('school_id'); // link to school
-            $table->string('teacher_id')->unique(); // login identity
+            $table->string('teacher_id')->unique();  // generated login ID
             $table->string('name');
             $table->string('email')->unique();
             $table->string('phone')->nullable();
             $table->string('subject')->nullable();
+            $table->boolean('is_active')->default(true);
             $table->string('photo')->nullable();
-            $table->string('password'); // hashed password
             $table->string('school_key'); // assigned school key
             $table->timestamps();
 

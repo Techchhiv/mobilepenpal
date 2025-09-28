@@ -8,12 +8,11 @@ use Illuminate\Support\Facades\Hash;
 
 class SchoolUserController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware('auth:api');
-        // Optional: enforce permission for school-admin
-        $this->middleware('permission:users.manage|roles.manage|permissions.manage');
-    }
+public function __construct()
+{
+    $this->middleware('auth:api');
+   
+}
 
     /**
      * Display a listing of school users.

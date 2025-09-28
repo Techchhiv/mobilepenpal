@@ -128,6 +128,11 @@ class RbacSeeder extends Seeder
                 'teachers.update',
                 'teachers.delete',
                 'teachers.enable_disable',
+                'student.view',
+                'student.create',
+                'student.update',
+                'student.delete',
+                'student.enable_disable',
                 'parents.view',
                 'parents.create',
                 'parents.update',
@@ -159,6 +164,22 @@ class RbacSeeder extends Seeder
                 'payments.delete',
                 'payments.enable_disable',
                 'menu.payments'
+            ])->get(),
+
+            'teacher' => Permission::whereIn('name', [
+                'teachers.view',
+                'teachers.create',
+                'teachers.update',
+                'teachers.delete',
+                'teachers.enable_disable',
+            ])->get(),
+
+            'student' => Permission::whereIn('name', [
+                'student.view',
+                'student.create',
+                'student.update',
+                'student.delete',
+                'student.enable_disable',
             ])->get(),
 
             'client-manager' => Permission::whereIn('name', [

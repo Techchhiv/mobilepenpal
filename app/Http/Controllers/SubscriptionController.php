@@ -8,10 +8,11 @@ use Illuminate\Http\Request;
 
 class SubscriptionController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware(['auth:api', 'role:super-admin,api']);
-    }
+ public function __construct()
+{
+    $this->middleware('auth:api');
+   
+}
 
     
     public function index(School $school)

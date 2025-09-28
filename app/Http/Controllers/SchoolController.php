@@ -10,11 +10,11 @@ use Illuminate\Support\Str;
 
 class SchoolController extends Controller
 {
-    public function __construct()
-    {
-        // Only users with menu.manage_clients permission can access schools
-        $this->middleware('permission:menu.manage_clients,');
-    }
+  public function __construct()
+{
+    $this->middleware('auth:api');
+   
+}
 
     public function index()
     {
