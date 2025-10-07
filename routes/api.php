@@ -10,6 +10,8 @@ use App\Http\Controllers\{
     AdminPermissionController,
     SchoolController,
     SchoolDashboardController,
+    SchoolPermissionController,
+    SchoolRoleController,
     SchoolUserController,
     StudentController,
     SubscriptionController,
@@ -57,7 +59,7 @@ Route::middleware('auth:api')->group(function () {
 
         // Users / Roles / Permissions → anyone with the correct permissions
         Route::middleware(['auth:api', 'permission:users.manage|roles.manage|permissions.manage'])->group(function () {
-            Route::apiResource('users', SchoolUserController::class)->only(['index', 'store', 'update', 'destroy']);
+            Route::apiResource('users', AdminUserController::class)->only(['index', 'store', 'update', 'destroy']);
             Route::apiResource('roles', AdminRoleController::class)->only(['index', 'store', 'update', 'destroy']);
             Route::apiResource('permissions', AdminPermissionController::class)->only(['index', 'store', 'update', 'destroy']);
         });
@@ -85,9 +87,9 @@ Route::prefix('school')->middleware('auth:api')->group(function() {
 
     // Manage school users / roles / permissions (school-admin only)
     Route::middleware('permission:users.manage|roles.manage|permissions.manage')->group(function () {
-        Route::apiResource('users', AdminUserController::class)->only(['index','store','update','destroy']);
-        Route::apiResource('roles', AdminRoleController::class)->only(['index','store','update','destroy']);
-        Route::apiResource('permissions', AdminPermissionController::class)->only(['index','store','update','destroy']);
+        Route::apiResource('users', SchoolUserController::class)->only(['index','store','update','destroy']);
+        Route::apiResource('roles', SchoolRoleController::class)->only(['index','store','update','destroy']);
+        Route::apiResource('permissions', SchoolPermissionController::class)->only(['index','store','update','destroy']);
     });
 });
 

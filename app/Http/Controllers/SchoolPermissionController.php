@@ -7,11 +7,11 @@ use Spatie\Permission\Models\Permission;
 
 class SchoolPermissionController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware('auth:api');
-        $this->middleware('permission:permissions.manage');
-    }
+public function __construct()
+{
+    $this->middleware('auth:api');
+   
+}
 
     public function index(Request $request)
     {
