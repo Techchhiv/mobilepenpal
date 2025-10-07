@@ -13,7 +13,6 @@ use Illuminate\Support\Facades\Schema;
 
 class AuthController extends Controller
 {
-    
     public function register(Request $request)
     {
         try {
@@ -30,7 +29,6 @@ class AuthController extends Controller
             ]);
 
             [$abilities, $permissionsPayload] = $this->abilitiesAndPerms($user);
-
             $token = $user->createToken('spa', $abilities)->plainTextToken;
 
             $payload = $user->load('roles')->toArray();
@@ -48,42 +46,95 @@ class AuthController extends Controller
         }
     }
 
-  public function login(Request $request)
-{
-    try {
+    public function login(Request $request)
+    {
+        try {
+            $data = $request->validate([
+                'email'      => ['required','email'],
+                'password'   => ['required','min:6'],
+                'school_key' => ['nullable','string'],
+            ]);
+
+            $user = User::where('email', $data['email'])->first();
+            if (!$user || !Hash::check($data['password'], $user->password)) {
+                return response()->json(['message' => 'Invalid credentials'], 422);
+            }
+
+            // If user is school-based, enforce school_key
+            $roles = $user->roles->pluck('name')->toArray();
+            if (collect($roles)->intersect(['school-admin','teacher','parent'])->isNotEmpty()) {
+                if (empty($data['school_key'])) {
+                    return response()->json(['message' => 'School key is required for school accounts'], 422);
+                }
+                $school = School::where('school_key', $data['school_key'])->first();
+                if (!$school) {
+                    return response()->json(['message' => 'Invalid school key'], 404);
+                }
+                if ((int)$user->school_id !== (int)$school->id) {
+                    return response()->json(['message' => 'This user does not belong to that school'], 403);
+                }
+            }
+
+            // Mark user (and linked teacher) online
+            $this->markUserAndTeacherOnline($user);
+
+            [$abilities, $permissionsPayload] = $this->abilitiesAndPerms($user);
+            $token = $user->createToken('spa', $abilities)->plainTextToken;
+
+            $payload = $user->load('roles')->toArray();
+            $payload['permissions'] = $permissionsPayload;
+
+            return response()->json([
+                'token'     => $token,
+                'user'      => $payload,
+                'abilities' => $abilities,
+            ]);
+        } catch (\Throwable $e) {
+            \Log::error('LOGIN_ERROR', ['msg' => $e->getMessage()]);
+            return response()->json(['message' => 'Server error during login.'], 500);
+        }
+    }
+
+    public function teacherLogin(Request $request)
+    {
         $data = $request->validate([
-            'email'      => ['required','email'],
-            'password'   => ['required','min:6'],
-            'school_key' => ['nullable','string'], // optional at first, we'll enforce below
+            'teacher_id' => ['required','string'],
+            'password'   => ['required','string'],
+            'school_key' => ['required','string'],
         ]);
 
-        // First find the user by email
-        $user = User::where('email', $data['email'])->first();
+        // 1) Validate school
+        $school = School::where('school_key', $data['school_key'])->first();
+        if (!$school) {
+            return response()->json(['message' => 'Invalid school key'], 422);
+        }
 
+        // 2) Find teacher (must be active & in that school)
+        $teacher = Teacher::where('teacher_id', $data['teacher_id'])
+            ->where('school_id', $school->id)
+            ->where('is_active', 1)
+            ->first();
+
+        if (!$teacher) {
+            return response()->json(['message' => 'Teacher not found for this school, or inactive'], 422);
+        }
+
+        // 3) Authenticate via User (by email)
+        $user = User::where('email', $teacher->email)->first();
         if (!$user || !Hash::check($data['password'], $user->password)) {
             return response()->json(['message' => 'Invalid credentials'], 422);
         }
 
-        // Roles
-        $roles = $user->roles->pluck('name')->toArray();
-
-        // If user is school-based → require a valid school_key
-        if (collect($roles)->intersect(['school-admin','teacher','parent'])->isNotEmpty()) {
-            if (empty($data['school_key'])) {
-                return response()->json(['message' => 'School key is required for school accounts'], 422);
-            }
-
-            $school = School::where('school_key', $data['school_key'])->first();
-            if (!$school) {
-                return response()->json(['message' => 'Invalid school key'], 404);
-            }
-
-            if ($user->school_id !== $school->id) {
-                return response()->json(['message' => 'This user does not belong to that school'], 403);
-            }
+        // Ensure link to this school (or enforce strictly by returning 403)
+        if ((int)$user->school_id !== (int)$school->id) {
+            $user->school_id = $school->id;
+            $user->save();
         }
 
-        // Abilities & permissions
+        // 4) Mark both online
+        $this->markUserAndTeacherOnline($user, $teacher);
+
+        // 5) Build abilities & token (same as normal login)
         [$abilities, $permissionsPayload] = $this->abilitiesAndPerms($user);
         $token = $user->createToken('spa', $abilities)->plainTextToken;
 
@@ -92,16 +143,10 @@ class AuthController extends Controller
 
         return response()->json([
             'token'     => $token,
-            'user'      => $payload,
+            'user'      => $payload,   // frontend expects `user`
             'abilities' => $abilities,
         ]);
-    } catch (\Throwable $e) {
-        \Log::error('LOGIN_ERROR', ['msg' => $e->getMessage()]);
-        return response()->json(['message' => 'Server error during login.'], 500);
     }
-}
-
-
 
     public function me(Request $request)
     {
@@ -117,87 +162,79 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
-        $request->user()->currentAccessToken()?->delete();
+        if ($user = $request->user()) {
+            // delete current token only
+            $user->currentAccessToken()?->delete();
+
+            // if other tokens exist, keep online; else mark offline
+            $stillOnline = $user->tokens()->exists();
+
+            $user->forceFill([
+                'is_online'    => $stillOnline,
+                'last_seen_at' => now(),
+            ])->save();
+
+            // mirror to teacher (by email & school)
+            Teacher::where('email', $user->email)
+                ->when($user->school_id, fn($q) => $q->where('school_id', $user->school_id))
+                ->update([
+                    'is_online'    => $stillOnline,
+                    'last_seen_at' => now(),
+                ]);
+        }
+
         return response()->json(['message' => 'Logged out']);
     }
 
     /**
      * Build abilities + permissions safely (works even if Spatie tables not migrated yet).
      */
-private function abilitiesAndPerms(User $user): array
-{
-    $spatieTablesExist = Schema::hasTable('permissions')
-        && Schema::hasTable('roles')
-        && Schema::hasTable('model_has_roles')
-        && Schema::hasTable('role_has_permissions');
+    private function abilitiesAndPerms(User $user): array
+    {
+        $spatieTablesExist = Schema::hasTable('permissions')
+            && Schema::hasTable('roles')
+            && Schema::hasTable('model_has_roles')
+            && Schema::hasTable('role_has_permissions');
 
-    if ($spatieTablesExist) {
-        $isSuper = $user->hasRole('super-admin');
+        if ($spatieTablesExist) {
+            $isSuper = $user->hasRole('super-admin');
 
-        $permissions = $user->getAllPermissions()
-            ->pluck('name')         // just the names
-            ->map(fn($p) => strtolower(str_replace(' ', '-', $p))) // normalize
-            ->toArray();
+            $permissions = $user->getAllPermissions()
+                ->pluck('name')
+                ->map(fn($p) => strtolower(str_replace(' ', '-', $p)))
+                ->toArray();
 
-        $abilities = $isSuper ? ['*'] : $permissions;
+            $abilities = $isSuper ? ['*'] : $permissions;
 
-        return [$abilities, $permissions];
-    } else {
+            return [$abilities, $permissions];
+        }
+
         return [[], []];
     }
-}
 
+    /**
+     * Helper: mark user and (optional) teacher online, update last_seen_at.
+     */
+    private function markUserAndTeacherOnline(User $user, ?Teacher $teacher = null): void
+    {
+        $now = now();
 
+        $user->forceFill([
+            'is_online'    => true,
+            'last_seen_at' => $now,
+        ])->save();
 
-public function teacherLogin(Request $request)
-{
-    $data = $request->validate([
-        'teacher_id' => ['required','string'],
-        'password'   => ['required','string'],
-        'school_key' => ['required','string'],
-    ]);
+        if (!$teacher) {
+            $teacher = Teacher::where('email', $user->email)
+                ->when($user->school_id, fn($q) => $q->where('school_id', $user->school_id))
+                ->first();
+        }
 
-    // 1) Find school by key
-    $school = School::where('school_key', $data['school_key'])->first();
-    if (!$school) {
-        return response()->json(['message' => 'Invalid school key'], 422);
+        if ($teacher) {
+            $teacher->forceFill([
+                'is_online'    => true,
+                'last_seen_at' => $now,
+            ])->save();
+        }
     }
-
-    // 2) Find active teacher in that school by teacher_id
-    $teacher = Teacher::where('teacher_id', $data['teacher_id'])
-        ->where('school_id', $school->id)
-        ->where('is_active', 1)
-        ->first();
-
-    if (!$teacher) {
-        return response()->json(['message' => 'Teacher not found for this school, or inactive'], 422);
-    }
-
-    // 3) Authenticate using the related User (by email)
-    $user = User::where('email', $teacher->email)->first();
-    if (!$user || !\Illuminate\Support\Facades\Hash::check($data['password'], $user->password)) {
-        return response()->json(['message' => 'Invalid credentials'], 422);
-    }
-
-    // Optional: make sure user's school_id matches teacher's school
-    if ($user->school_id !== $school->id) {
-        $user->school_id = $school->id;   // or return 403 if you prefer strictness
-        $user->save();
-    }
-
-    // 4) Build abilities/permissions exactly like normal login
-    [$abilities, $permissionsPayload] = $this->abilitiesAndPerms($user);
-    $token = $user->createToken('spa', $abilities)->plainTextToken;
-
-    $payload = $user->load('roles')->toArray();
-    $payload['permissions'] = $permissionsPayload;
-
-    return response()->json([
-        'token'     => $token,
-        'user'      => $payload,    // <-- return a "user" object so the frontend logic works
-        'abilities' => $abilities,
-    ]);
-}
-
-
 }

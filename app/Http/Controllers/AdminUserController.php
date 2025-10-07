@@ -26,7 +26,7 @@ public function __construct()
     {
         // keep it light: only basic fields + role names
         $users = User::query()
-            ->select(['id','name','email','created_at'])
+            ->select(['id','name','email','is_online','last_seen_at','created_at'])
             ->with(['roles:id,name'])   // NO pivot/huge relations
             ->orderByDesc('id')
             ->paginate(15);

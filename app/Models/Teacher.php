@@ -20,7 +20,7 @@ class Teacher extends Model
         'subject',
         'photo',
         'is_active',
-        'school_key',
+        'school_key','is_online','last_seen_at',
     ];
 
     public function school()
