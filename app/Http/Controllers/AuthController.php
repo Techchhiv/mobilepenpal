@@ -151,27 +151,53 @@ private function abilitiesAndPerms(User $user): array
 
 public function teacherLogin(Request $request)
 {
-    $request->validate([
-        'teacher_id' => 'required|string|exists:teachers,teacher_id',
-        'password'   => 'required|string',
-        'school_key' => 'required|string',
+    $data = $request->validate([
+        'teacher_id' => ['required','string'],
+        'password'   => ['required','string'],
+        'school_key' => ['required','string'],
     ]);
 
-    $teacher = Teacher::where('teacher_id', $request->teacher_id)
-                      ->where('school_key', $request->school_key)
-                      ->first();
-
-    if (!$teacher || !Hash::check($request->password, $teacher->password)) {
-        return response()->json(['message' => 'Invalid credentials or school key'], 422);
+    // 1) Find school by key
+    $school = School::where('school_key', $data['school_key'])->first();
+    if (!$school) {
+        return response()->json(['message' => 'Invalid school key'], 422);
     }
 
-    $token = $teacher->createToken('teacher-token')->plainTextToken;
+    // 2) Find active teacher in that school by teacher_id
+    $teacher = Teacher::where('teacher_id', $data['teacher_id'])
+        ->where('school_id', $school->id)
+        ->where('is_active', 1)
+        ->first();
+
+    if (!$teacher) {
+        return response()->json(['message' => 'Teacher not found for this school, or inactive'], 422);
+    }
+
+    // 3) Authenticate using the related User (by email)
+    $user = User::where('email', $teacher->email)->first();
+    if (!$user || !\Illuminate\Support\Facades\Hash::check($data['password'], $user->password)) {
+        return response()->json(['message' => 'Invalid credentials'], 422);
+    }
+
+    // Optional: make sure user's school_id matches teacher's school
+    if ($user->school_id !== $school->id) {
+        $user->school_id = $school->id;   // or return 403 if you prefer strictness
+        $user->save();
+    }
+
+    // 4) Build abilities/permissions exactly like normal login
+    [$abilities, $permissionsPayload] = $this->abilitiesAndPerms($user);
+    $token = $user->createToken('spa', $abilities)->plainTextToken;
+
+    $payload = $user->load('roles')->toArray();
+    $payload['permissions'] = $permissionsPayload;
 
     return response()->json([
-        'teacher' => $teacher,
-        'token' => $token,
-        'abilities' => [], // optional: fill with teacher permissions if needed
+        'token'     => $token,
+        'user'      => $payload,    // <-- return a "user" object so the frontend logic works
+        'abilities' => $abilities,
     ]);
 }
+
 
 }
