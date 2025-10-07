@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import $ from "jquery";
 import "datatables.net-dt/js/dataTables.dataTables.js";
 import { Icon } from "@iconify/react";
@@ -8,29 +8,64 @@ import SchoolLayout from "../../masterLayout/SchoolLayout";
 import { useAuth } from "../../../../context/AuthContext";
 import API_BASE_URL from "../../../../helper/Base_urls";
 
+const ONLINE_GRACE_MS = 2 * 60 * 1000; // 2 minutes
+
 const TeacherList = () => {
   const { hasPermission, hasAnyPermission } = useAuth();
   const [teachers, setTeachers] = useState([]);
   const [message, setMessage] = useState("");
+  const dtRef = useRef(null);
+
+  const isOnline = (t) => {
+    // accepts 1/0, true/false, "1"/"0" OR last_seen within grace window
+    const flag = t?.is_online === true || String(t?.is_online) === "1";
+    const last = t?.last_seen_at ? new Date(t.last_seen_at) : null;
+    const fresh = last ? (Date.now() - last.getTime()) <= ONLINE_GRACE_MS : false;
+    return flag || fresh;
+  };
+
+  const normalizeTeacher = (t) => ({
+    ...t,
+    active:
+      t?.is_active === true ||
+      String(t?.is_active ?? t?.status ?? "0") === "1",
+    online: isOnline(t),
+  });
 
   const fetchTeachers = async () => {
     try {
       const res = await API.get("/school/teachers");
-      setTeachers(res.data);
+      const rows = Array.isArray(res.data) ? res.data : [];
+      setTeachers(rows.map(normalizeTeacher));
     } catch (err) {
-      console.error(err);
+      console.error("Fetch teachers failed:", err);
     }
   };
 
+  // initial load
+  useEffect(() => { fetchTeachers(); }, []);
+
+  // auto refresh every 20s (updates Online)
   useEffect(() => {
-    fetchTeachers();
+    const id = setInterval(fetchTeachers, 20000);
+    return () => clearInterval(id);
   }, []);
 
+  // (re)build DataTable when rows change
   useEffect(() => {
-    if (teachers.length > 0) {
-      const table = $("#teacherTable").DataTable({ destroy: true, pageLength: 10 });
-      return () => table.destroy(true);
+    if (dtRef.current) {
+      dtRef.current.destroy(true);
+      dtRef.current = null;
     }
+    if (teachers.length > 0) {
+      dtRef.current = $("#teacherTable").DataTable({ destroy: true, pageLength: 10 });
+    }
+    return () => {
+      if (dtRef.current) {
+        dtRef.current.destroy(true);
+        dtRef.current = null;
+      }
+    };
   }, [teachers]);
 
   const deleteTeacher = async (id) => {
@@ -74,14 +109,15 @@ const TeacherList = () => {
                 <th>Email</th>
                 <th>Phone</th>
                 <th>Subject</th>
-                <th>Status</th>
+                {/* <th>Status</th> */}
+                <th>Online</th>
                 {canAnyAction && <th>Action</th>}
               </tr>
             </thead>
             <tbody>
               {teachers.length === 0 ? (
                 <tr>
-                  <td colSpan={canAnyAction ? 9 : 8} className="text-center">
+                  <td colSpan={canAnyAction ? 10 : 9} className="text-center">
                     No teachers found
                   </td>
                 </tr>
@@ -94,12 +130,7 @@ const TeacherList = () => {
                         <img
                           src={`${API_BASE_URL}/storage/${t.photo}`}
                           alt={t.name}
-                          style={{
-                            width: 40,
-                            height: 40,
-                            objectFit: "cover",
-                            borderRadius: "50%",
-                          }}
+                          style={{ width: 40, height: 40, objectFit: "cover", borderRadius: "50%" }}
                         />
                       ) : (
                         <span className="text-muted">No Image</span>
@@ -110,17 +141,28 @@ const TeacherList = () => {
                     <td>{t.email}</td>
                     <td>{t.phone}</td>
                     <td>{t.subject}</td>
+
+                    {/* <td>
+                      <span
+                        className={`px-24 py-4 rounded-pill fw-medium text-sm ${
+                          t.active ? "bg-success-focus text-success-main" : "bg-danger-focus text-danger-main"
+                        }`}
+                      >
+                        {t.active ? "Active" : "Inactive"}
+                      </span>
+                    </td> */}
+
                     <td>
                       <span
                         className={`px-24 py-4 rounded-pill fw-medium text-sm ${
-                          t.status
-                            ? "bg-success-focus text-success-main"
-                            : "bg-danger-focus text-danger-main"
+                          t.online ? "bg-success-focus text-success-main" : "bg-danger-focus text-danger-main"
                         }`}
+                        title={t.last_seen_at ? `Last seen: ${new Date(t.last_seen_at).toLocaleString()}` : ""}
                       >
-                        {t.status ? "Active" : "Inactive"}
+                        {t.online ? "Online" : "Offline"}
                       </span>
                     </td>
+
                     {canAnyAction && (
                       <td>
                         {hasPermission("teachers.view") && (

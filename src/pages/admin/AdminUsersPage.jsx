@@ -1,5 +1,5 @@
 // src/pages/admin/AdminUsersPage.jsx
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import $ from "jquery";
 import "datatables.net-dt/js/dataTables.dataTables.js";
 import { Icon } from "@iconify/react";
@@ -7,9 +7,18 @@ import { Link } from "react-router-dom";
 import API from "../../helper/api";
 import MasterLayout from "../../masterLayout/MasterLayout";
 
-// Small helper: accept [] or {data:[]}
+// Accept [] or {data:[]}
 const normalizeList = (payload) =>
   Array.isArray(payload) ? payload : Array.isArray(payload?.data) ? payload.data : [];
+
+const ONLINE_GRACE_MS = 2 * 60 * 1000;
+const isTruthy = (v) => v === true || String(v) === "1";
+const computeOnline = (u) => {
+  const flag = isTruthy(u?.is_online);
+  const last = u?.last_seen_at ? new Date(u.last_seen_at) : null;
+  const fresh = last ? (Date.now() - last.getTime()) <= ONLINE_GRACE_MS : false;
+  return flag || fresh;
+};
 
 function UserFormModal({
   open,
@@ -41,22 +50,9 @@ function UserFormModal({
 
   return (
     <>
-      {/* Backdrop */}
       <div className="modal-backdrop fade show"></div>
-
-      {/* Modal */}
-      <div
-        className="modal fade show d-block"
-        tabIndex={-1}
-        role="dialog"
-        aria-modal="true"
-        onClick={onClose}
-      >
-        <div
-          className="modal-dialog modal-lg modal-dialog-centered"
-          role="document"
-          onClick={(e) => e.stopPropagation()}
-        >
+      <div className="modal fade show d-block" tabIndex={-1} role="dialog" aria-modal="true" onClick={onClose}>
+        <div className="modal-dialog modal-lg modal-dialog-centered" role="document" onClick={(e) => e.stopPropagation()}>
           <div className="modal-content">
             <div className="modal-header">
               <h6 className="modal-title">{isEdit ? "Edit User" : "Add User"}</h6>
@@ -77,34 +73,18 @@ function UserFormModal({
             >
               <div className="modal-body">
                 <div className="row g-3">
-                  {/* Name */}
                   <div className="col-12 col-md-6">
                     <label className="form-label">Name</label>
-                    <input
-                      className="form-control"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      required
-                    />
+                    <input className="form-control" value={name} onChange={(e) => setName(e.target.value)} required />
                   </div>
 
-                  {/* Email */}
                   <div className="col-12 col-md-6">
                     <label className="form-label">Email</label>
-                    <input
-                      type="email"
-                      className="form-control"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                    />
+                    <input type="email" className="form-control" value={email} onChange={(e) => setEmail(e.target.value)} required />
                   </div>
 
-                  {/* Password */}
                   <div className="col-12">
-                    <label className="form-label">
-                      {isEdit ? "Password (leave empty to keep)" : "Password"}
-                    </label>
+                    <label className="form-label">{isEdit ? "Password (leave empty to keep)" : "Password"}</label>
                     <input
                       type="password"
                       className="form-control"
@@ -116,13 +96,9 @@ function UserFormModal({
                     />
                   </div>
 
-                  {/* Roles */}
                   <div className="col-12">
                     <label className="form-label">Roles</label>
-                    <div
-                      className="border rounded-3 p-2"
-                      style={{ maxHeight: 220, overflow: "auto" }}
-                    >
+                    <div className="border rounded-3 p-2" style={{ maxHeight: 220, overflow: "auto" }}>
                       <div className="row g-2">
                         {allRoles.map((r) => (
                           <div key={r.id || r.name} className="col-12 col-sm-6">
@@ -137,9 +113,7 @@ function UserFormModal({
                             </label>
                           </div>
                         ))}
-                        {!allRoles.length && (
-                          <div className="text-muted small px-2">No roles</div>
-                        )}
+                        {!allRoles.length && <div className="text-muted small px-2">No roles</div>}
                       </div>
                     </div>
                   </div>
@@ -147,23 +121,9 @@ function UserFormModal({
               </div>
 
               <div className="modal-footer">
-                <button
-                  type="button"
-                  className="btn btn-light"
-                  onClick={onClose}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  disabled={saving}
-                >
-                  {saving
-                    ? "Saving…"
-                    : isEdit
-                    ? "Save Changes"
-                    : "Create User"}
+                <button type="button" className="btn btn-light" onClick={onClose}>Cancel</button>
+                <button type="submit" className="btn btn-primary" disabled={saving}>
+                  {saving ? "Saving…" : isEdit ? "Save Changes" : "Create User"}
                 </button>
               </div>
             </form>
@@ -174,7 +134,6 @@ function UserFormModal({
   );
 }
 
-
 const AdminUsersPage = () => {
   const [rows, setRows] = useState([]);
   const [allRoles, setAllRoles] = useState([]);
@@ -182,27 +141,37 @@ const AdminUsersPage = () => {
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(true);
 
-  // modal state
   const [modalOpen, setModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [editing, setEditing] = useState(null); // null | {id,name,email,roles:[]}
+  const [editing, setEditing] = useState(null);
+
+  const tableRef = useRef(null);
+  const pollRef = useRef(null);
 
   const flash = (txt, isErr = false) => {
     (isErr ? setErr : setMessage)(txt);
     setTimeout(() => (isErr ? setErr("") : setMessage("")), 2500);
   };
 
-  const fetchUsers = async () => {
-    const { data } = await API.get("/admin/users");
-    const list = normalizeList(data);
-    return list.map((u) => ({
-      id: u.id,
-      name: u.name,
-      email: u.email,
-      roles: (u.roles || []).map((r) => r.name),
-      created_at: u.created_at,
-    }));
-  };
+const fetchUsers = async () => {
+  const { data } = await API.get("/admin/users");
+  const list = normalizeList(data);
+
+  return list.map((u) => ({
+    id: u.id,
+    name: u.name,
+    email: u.email,
+    roles: (u.roles || []).map((r) => r.name),
+    created_at: u.created_at,
+
+    // keep what the API sends
+    is_online: u.is_online,           // 0/1 or true/false
+    last_seen_at: u.last_seen_at,     // timestamp
+
+    // add a derived field your table will use
+    online: computeOnline(u),         // <-- THIS is what you render
+  }));
+};
 
   const fetchRoles = async () => {
     const { data } = await API.get("/admin/roles");
@@ -228,24 +197,41 @@ const AdminUsersPage = () => {
 
   useEffect(() => { load(); }, []);
 
-  // Init / re-init DataTable (only when rows change)
+  // Poll every 20s for fresh online status
+
   useEffect(() => {
-    if (!rows.length) return;
-    const table = $("#usersTable").DataTable({
-      destroy: true,
-      pageLength: 10,
-    });
-    return () => table.destroy(true);
+    pollRef.current = setInterval(async () => {
+      try {
+        const users = await fetchUsers();   // <- already an array with .online
+        setRows(users);
+      } catch (e) {
+        // silent fail
+      }
+    }, 20000);
+    return () => clearInterval(pollRef.current);
+  }, []);
+
+
+  // (re)build DataTable when rows change
+  useEffect(() => {
+    if (tableRef.current) {
+      tableRef.current.destroy(true);
+      tableRef.current = null;
+    }
+    if (rows.length) {
+      tableRef.current = $("#usersTable").DataTable({ destroy: true, pageLength: 10 });
+    }
+    return () => {
+      if (tableRef.current) {
+        tableRef.current.destroy(true);
+        tableRef.current = null;
+      }
+    };
   }, [rows]);
 
   const openCreate = () => { setEditing(null); setModalOpen(true); };
   const openEdit = (u) => {
-    setEditing({
-      id: u.id,
-      name: u.name,
-      email: u.email,
-      roles: u.roles || [],
-    });
+    setEditing({ id: u.id, name: u.name, email: u.email, roles: u.roles || [] });
     setModalOpen(true);
   };
 
@@ -299,36 +285,26 @@ const AdminUsersPage = () => {
       <div className="card basic-data-table">
         <div className="card-header d-flex align-items-center justify-content-between">
           <div className="d-flex align-items-center gap-2">
-            <button
-              type="button"
-              className="btn btn-primary-600 radius-3 px-20 py-11"
-              onClick={openCreate}
-            >
+            <button type="button" className="btn btn-primary-600 radius-3 px-20 py-11" onClick={openCreate}>
               <Icon icon="lucide:plus" className="me-1" />
               Add User
             </button>
             {message && <span className="text-success fw-semibold">{message}</span>}
             {err && <span className="text-danger">{err}</span>}
           </div>
-
-          {/* Quick legend */}
           <div className="d-none d-sm-flex align-items-center gap-3 text-muted">
             <small className="d-inline-flex align-items-center gap-1">
-              <span className="badge bg-primary-light text-primary-600">A</span> Admin-ish
+              <span className="badge bg-success-focus text-success-main">●</span> Online
             </small>
             <small className="d-inline-flex align-items-center gap-1">
-              <span className="badge bg-neutral-200">U</span> User
+              <span className="badge bg-danger-focus text-danger-main">●</span> Offline
             </small>
           </div>
         </div>
 
         <div className="card-body">
           <div className="table-responsive">
-            <table
-              className="table bordered-table mb-0"
-              id="usersTable"
-              data-page-length={10}
-            >
+            <table className="table bordered-table mb-0" id="usersTable" data-page-length={10}>
               <thead>
                 <tr>
                   <th scope="col" style={{ width: 80 }}>
@@ -339,6 +315,7 @@ const AdminUsersPage = () => {
                   <th scope="col">Name</th>
                   <th scope="col">Email</th>
                   <th scope="col">Roles</th>
+                  <th scope="col">Online</th>
                   <th scope="col">Created</th>
                   <th scope="col" style={{ width: 140 }}>Action</th>
                 </tr>
@@ -371,6 +348,19 @@ const AdminUsersPage = () => {
                     <td className="text-truncate" style={{ maxWidth: 260 }}>
                       {(u.roles || []).join(", ") || "-"}
                     </td>
+
+                    <td>
+  <span
+    className={`px-24 py-4 rounded-pill fw-medium text-sm ${
+      u.online ? "bg-success-focus text-success-main" : "bg-danger-focus text-danger-main"
+    }`}
+    title={u.last_seen_at ? `Last seen: ${new Date(u.last_seen_at).toLocaleString()}` : ""}
+  >
+    {u.online ? "Online" : "Offline"}
+  </span>
+</td>
+
+
 
                     <td>{u.created_at ? new Date(u.created_at).toLocaleDateString() : "-"}</td>
 
@@ -405,7 +395,7 @@ const AdminUsersPage = () => {
                 ))}
                 {!rows.length && (
                   <tr>
-                    <td colSpan={6} className="text-center text-muted py-4">
+                    <td colSpan={7} className="text-center text-muted py-4">
                       No users found.
                     </td>
                   </tr>
@@ -416,7 +406,6 @@ const AdminUsersPage = () => {
         </div>
       </div>
 
-      {/* Create / Edit Modal */}
       <UserFormModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}

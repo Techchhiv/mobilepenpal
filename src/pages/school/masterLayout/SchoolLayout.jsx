@@ -147,7 +147,7 @@ const SchoolLayout = ({ children }) => {
                       </NavLink>
                     </li>
                   )}
-                  {showRoles && (
+                  {/* {showRoles && (
                     <li>
                       <NavLink
                         to="/school/roles"
@@ -168,7 +168,7 @@ const SchoolLayout = ({ children }) => {
                         Permissions
                       </NavLink>
                     </li>
-                  )}
+                  )} */}
                 </ul>
               </li>
             )}
