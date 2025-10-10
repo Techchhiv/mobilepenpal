@@ -20,12 +20,7 @@ const SchoolSignInLayer = () => {
   // Redirect if already logged in
   useEffect(() => {
     if (isAuthenticated) {
-      const roles = (user?.roles || []).map(r => r.name.toLowerCase());
-      if (roles.includes("school-admin") || roles.includes("teacher") || roles.includes("parent")) {
         navigate("/school", { replace: true });
-      } else if (roles.includes("super-admin") || roles.includes("team-admin")) {
-        navigate("/admin", { replace: true });
-      }
     }
   }, [isAuthenticated, user, navigate]);
 
