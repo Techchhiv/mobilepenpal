@@ -5,14 +5,15 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Spatie\Permission\Models\Role;
+
 
 class SchoolUserController extends Controller
 {
-public function __construct()
-{
-    $this->middleware('auth:api');
-   
-}
+    public function __construct()
+    {
+        $this->middleware('auth:api');
+    }
 
     /**
      * Display a listing of school users.
@@ -28,11 +29,11 @@ public function __construct()
             $query->where('school_id', $authUser->school_id);
         }
 
-        $users = $query->select(['id','name','email','created_at'])
-                       ->orderByDesc('id')
-                       ->paginate(15);
+        $users = $query->select(['id', 'name', 'email', 'created_at'])
+            ->orderByDesc('id')
+            ->paginate(15);
 
-        $users->getCollection()->transform(function($u){
+        $users->getCollection()->transform(function ($u) {
             $u->permissions = $u->getAllPermissions()->pluck('name')->values();
             return $u;
         });
@@ -43,31 +44,46 @@ public function __construct()
     /**
      * Store a newly created school user.
      */
+    // App/Http/Controllers/SchoolUserController.php
+
+
+    // ...
+
     public function store(Request $request)
     {
         $authUser = $request->user();
 
         $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
+            'name'     => 'required|string|max:255',
+            'email'    => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8',
-            'roles' => 'array',
-            'roles.*' => 'exists:roles,name',
+            'roles'    => 'array',
+            'roles.*'  => 'exists:roles,name',
         ]);
 
         $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
+            'name'      => $request->name,
+            'email'     => $request->email,
+            'password'  => Hash::make($request->password),
             'school_id' => $authUser->hasRole('school-admin') ? $authUser->school_id : null,
         ]);
 
-        if ($request->has('roles')) {
-            $user->assignRole($request->roles);
+        $roles = $request->input('roles', []);
+
+        // If school-admin is selected, auto-add all per-school roles
+        if (in_array('school-admin', $roles, true) && $user->school_id) {
+            $tenantRoleNames = Role::where('school_id', $user->school_id)->pluck('name')->all();
+            $roles = array_values(array_unique(array_merge($roles, $tenantRoleNames)));
+        }
+
+        if (!empty($roles)) {
+            $user->syncRoles($roles);
         }
 
         return response()->json($user->load('roles'), 201);
     }
+
+
 
     /**
      * Display a specific school user.
@@ -98,24 +114,32 @@ public function __construct()
         }
 
         $request->validate([
-            'name' => 'sometimes|required|string|max:255',
-            'email' => 'sometimes|required|string|email|max:255|unique:users,email,' . $user->id,
+            'name'     => 'sometimes|required|string|max:255',
+            'email'    => 'sometimes|required|string|email|max:255|unique:users,email,' . $user->id,
             'password' => 'sometimes|nullable|string|min:8',
-            'roles' => 'array',
-            'roles.*' => 'exists:roles,name',
+            'roles'    => 'array',
+            'roles.*'  => 'exists:roles,name',
         ]);
 
-        $user->name = $request->input('name', $user->name);
-        $user->email = $request->input('email', $user->email);
+        $user->fill([
+            'name'  => $request->input('name', $user->name),
+            'email' => $request->input('email', $user->email),
+        ]);
 
-        if ($request->has('password') && $request->password) {
+        if ($request->filled('password')) {
             $user->password = Hash::make($request->password);
         }
-
         $user->save();
 
         if ($request->has('roles')) {
-            $user->syncRoles($request->roles);
+            $roles = $request->input('roles', []);
+
+            if (in_array('school-admin', $roles, true) && $user->school_id) {
+                $tenantRoleNames = Role::where('school_id', $user->school_id)->pluck('name')->all();
+                $roles = array_values(array_unique(array_merge($roles, $tenantRoleNames)));
+            }
+
+            $user->syncRoles($roles);
         }
 
         return response()->json($user->load('roles'));
