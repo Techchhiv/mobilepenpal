@@ -4,39 +4,24 @@ import "datatables.net-dt/js/dataTables.dataTables.js";
 import { Icon } from "@iconify/react";
 import { Link } from "react-router-dom";
 import API from "../../../../helper/api";
+import SchoolLayout from "../../masterLayout/SchoolLayout";
 import { useAuth } from "../../../../context/AuthContext";
 import API_BASE_URL from "../../../../helper/Base_urls";
-import SchoolLayout from "../../masterLayout/SchoolLayout";
 
 const ONLINE_GRACE_MS = 2 * 60 * 1000; // 2 minutes
 
-const TeacherList = () => {
+const ClassRoomsList = () => {
   const { hasPermission, hasAnyPermission } = useAuth();
   const [teachers, setTeachers] = useState([]);
   const [message, setMessage] = useState("");
   const dtRef = useRef(null);
 
-  const isOnline = (t) => {
-    // accepts 1/0, true/false, "1"/"0" OR last_seen within grace window
-    const flag = t?.is_online === true || String(t?.is_online) === "1";
-    const last = t?.last_seen_at ? new Date(t.last_seen_at) : null;
-    const fresh = last ? (Date.now() - last.getTime()) <= ONLINE_GRACE_MS : false;
-    return flag || fresh;
-  };
-
-  const normalizeTeacher = (t) => ({
-    ...t,
-    active:
-      t?.is_active === true ||
-      String(t?.is_active ?? t?.status ?? "0") === "1",
-    online: isOnline(t),
-  });
 
   const fetchTeachers = async () => {
     try {
       const res = await API.get("/school/teachers");
       const rows = Array.isArray(res.data) ? res.data : [];
-      setTeachers(rows.map(normalizeTeacher));
+      // setTeachers(rows.map(normalizeTeacher));
     } catch (err) {
       console.error("Fetch teachers failed:", err);
     }
@@ -71,7 +56,7 @@ const TeacherList = () => {
   const deleteTeacher = async (id) => {
     if (!window.confirm("Delete this teacher?")) return;
     try {
-      await API.delete(`/school/teachers/${id}`);
+      await API.delete(`#`);
       setTeachers((prev) => prev.filter((t) => t.id !== id));
       setMessage("Teacher deleted successfully");
     } catch (err) {
@@ -88,9 +73,9 @@ const TeacherList = () => {
         <div className="card-header d-flex justify-content-between align-items-center">
           <h5>Teachers</h5>
           {hasPermission("teachers.create") && (
-            <Link to="/school/teachers_create">
+            <Link to="3">
               <button type="button" className="btn btn-primary-600 radius-3 px-20 py-11">
-                Add Teacher
+                Add ClassRooms
               </button>
             </Link>
           )}
@@ -206,4 +191,4 @@ const TeacherList = () => {
   );
 };
 
-export default TeacherList;
+export default ClassRoomsList;

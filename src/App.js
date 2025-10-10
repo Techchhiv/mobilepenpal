@@ -27,6 +27,7 @@ import SchoolRolesPage from "./pages/school/page/SchoolRolesPage";
 import SchoolPermissionsPage from "./pages/school/page/SchoolPermissionsPage";
 import TeacherList from "./pages/school/page/Teacher/TeacherList";
 import TeacherCreate from "./pages/school/page/Teacher/TeacherCreate";
+import ClassRoomsList from "./pages/school/page/ClassRooms/ClassRoomsList";
 
 export default function App() {
   return (
@@ -82,6 +83,9 @@ export default function App() {
         <Route element={<Gate anyPerm={["teachers.view"]} />}>
           <Route path="/school/teachers_list" element={<TeacherList />} />
           <Route path="/school/teachers_create" element={<TeacherCreate />} />
+        </Route>
+        <Route element={<Gate anyPerm={["classrooms.view"]} />}>
+          <Route path="/school/classroomslist" element={<ClassRoomsList />} />
         </Route>
 
 

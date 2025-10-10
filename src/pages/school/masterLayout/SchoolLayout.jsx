@@ -20,6 +20,7 @@ const SchoolLayout = ({ children }) => {
   const showRoles = hasPermission("roles.manage");
   const showPermissions = hasPermission("permissions.manage");
   const showTeacher = hasPermission("teachers.view");
+  const showClassRooms = hasPermission("classrooms.view");
 
 
   // Open dropdown based on route
@@ -98,15 +99,17 @@ const SchoolLayout = ({ children }) => {
               </NavLink>
             </li>
 
-            <li>
+           {showClassRooms && (
+               <li>
               <NavLink
-                to="/school/performance"
+                to="/school/classroomslist"
                 className={({ isActive }) => (isActive ? "active-page" : "")}
               >
                 <Icon icon="mdi:chart-bar" className="menu-icon" />
-                <span>Analyze Performance</span>
+                <span>Class Rooms</span>
               </NavLink>
             </li>
+           )}
 
             {/* Manage Users / Roles / Permissions */}
             {(showManageUsers || showRoles || showPermissions) && (

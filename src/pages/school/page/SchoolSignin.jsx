@@ -32,7 +32,7 @@ const SchoolSignInLayer = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
-    setSubmitting(true);
+    setSubmitting(true);   
 
     try {
       let payload, endpoint;
