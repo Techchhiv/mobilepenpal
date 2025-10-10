@@ -24,10 +24,31 @@ function UserFormModal({ open, onClose, onSubmit, allRoles, initial, saving }) {
     setRoles(initial?.roles || []);
   }, [initial, open]);
 
-  const toggleRole = (rName) =>
-    setRoles((prev) =>
-      prev.includes(rName) ? prev.filter((r) => r !== rName) : [...prev, rName]
-    );
+ const tenantRoleNames = useMemo(
+    () => allRoles.map(r => r.name).filter(n => n !== "school-admin"),
+    [allRoles]
+  );
+
+  const toggleRole = (rName) => {
+    setRoles(prev => {
+      const has = prev.includes(rName);
+
+      // special behavior for school-admin
+      if (rName === "school-admin") {
+        if (has) {
+          // uncheck only school-admin; keep whatever else is currently checked
+          return prev.filter(n => n !== "school-admin");
+        } else {
+          // checking school-admin => select every tenant role too
+          const merged = Array.from(new Set(["school-admin", ...tenantRoleNames, ...prev]));
+          return merged;
+        }
+      }
+
+      // normal toggle
+      return has ? prev.filter(n => n !== rName) : [...prev, rName];
+    });
+  };
 
   if (!open) return null;
 
@@ -86,6 +107,7 @@ function UserFormModal({ open, onClose, onSubmit, allRoles, initial, saving }) {
                         {allRoles.map((r) => (
                           <div key={r.id || r.name} className="col-12 col-sm-6">
                             <label className="form-check d-flex align-items-center gap-2">
+                              
                               <input type="checkbox" className="form-check-input" checked={roles.includes(r.name)} onChange={() => toggleRole(r.name)} />
                               <span className="form-check-label">{r.name}</span>
                             </label>
@@ -139,10 +161,16 @@ const SchoolUsersPage = () => {
     }));
   };
 
-  const fetchRoles = async () => {
-    const { data } = await API.get("/school/roles");
-    return normalizeList(data).map((r) => ({ id: r.id, name: r.name }));
-  };
+ const fetchRoles = async () => {
+  const { data } = await API.get("/school/roles");
+  const list = normalizeList(data).map(r => ({ id: r.id, name: r.name }));
+
+  // make sure global school-admin appears in the picker
+  if (!list.find(r => r.name === "school-admin")) {
+    list.unshift({ id: "global-school-admin", name: "school-admin" });
+  }
+  return list;
+};
 
   const load = async () => {
     setLoading(true);
@@ -169,7 +197,19 @@ const SchoolUsersPage = () => {
   }, [rows]);
 
   const openCreate = () => { setEditing(null); setModalOpen(true); };
-  const openEdit = (u) => setEditing({ id: u.id, name: u.name, email: u.email, roles: u.roles || [] }) || setModalOpen(true);
+  const openEdit = (u) => {
+  const tenantRoleNames = allRoles.map(r => r.name).filter(n => n !== "school-admin");
+  const hasSchoolAdmin = (u.roles || []).includes("school-admin");
+
+  setEditing({
+    id: u.id,
+    name: u.name,
+    email: u.email,
+    roles: hasSchoolAdmin ? ["school-admin", ...tenantRoleNames] : (u.roles || []),
+  });
+  setModalOpen(true);
+};
+
 
   const handleSubmit = async (payload) => {
     setSaving(true);
