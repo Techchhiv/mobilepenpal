@@ -83,7 +83,7 @@ class TeacherController extends Controller
                 'password'  => Hash::make($request->password),
                 'school_id' => $authUser->school_id,
             ]);
-            $userAccount->assignRole('teacher');
+            // $userAccount->assignRole('teacher');
 
             return response()->json([
                 'teacher' => $teacher,

@@ -34,13 +34,10 @@ class AppServiceProvider extends ServiceProvider
         $blueprints = [
             'teacher-manager' => [
                 'teachers.view','teachers.create','teachers.update','teachers.delete','teachers.enable_disable',
-                'classrooms.view','classrooms.create','classrooms.update','classrooms.delete','classrooms.enable_disable',
                 'school.dashboard.view',
             ],
             'student-manager' => [
-                'parents.view','parents.create','parents.update','parents.delete','parents.enable_disable','parents.create_children',
                 'children.view','children.create','children.update',
-                'enrollments.view','enrollments.create','enrollments.update','enrollments.disable',
                 'school.dashboard.view',
             ],
             'classroom-manager' => [
