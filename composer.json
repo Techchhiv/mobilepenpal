@@ -8,6 +8,7 @@
         "php": "^8.0.2",
         "doctrine/dbal": "^4.2",
         "fruitcake/laravel-cors": "^3.0",
+        "giggsey/libphonenumber-for-php": "^9.0",
         "guzzlehttp/guzzle": "^7.2",
         "inertiajs/inertia-laravel": "^0.6.3",
         "kreait/firebase-php": "^7.18",

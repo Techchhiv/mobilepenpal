@@ -3,6 +3,14 @@
 namespace App\Exceptions;
 
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
+use Illuminate\Auth\AuthenticationException;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 
 class Handler extends ExceptionHandler
@@ -43,8 +51,90 @@ class Handler extends ExceptionHandler
      */
     public function register()
     {
-        $this->reportable(function (Throwable $e) {
-            //
+        // Validation errors
+        $this->renderable(function (ValidationException $e, Request $request) {
+            if ($request->is('api/mobile/*')) {
+                return response()->json([
+                    'code' => 400,
+                    'message' => 'Validation Error',
+                    'data' => null,
+                    'error' => $e->errors()
+                ], 400);
+            }
+        });
+
+        // Not Found (URL not existing)
+        $this->renderable(function (NotFoundHttpException $e, Request $request) {
+            if ($request->is('api/mobile/*')) {
+                return response()->json([
+                    'code' => 404,
+                    'message' => 'Not Found',
+                    'data' => null,
+                    'error' => []
+                ], 404);
+            }
+        });
+
+        // Model not found
+        $this->renderable(function (ModelNotFoundException $e, Request $request) {
+            if ($request->is('api/mobile/*')) {
+                return response()->json([
+                    'code' => 404,
+                    'message' => 'Not Found',
+                    'data' => null,
+                    'error' => []
+                ], 404);
+            }
+        });
+
+        // Authorization (no permission)
+        $this->renderable(function (AuthorizationException $e, Request $request) {
+            if ($request->is('api/mobile/*')) {
+                return response()->json([
+                    'code' => 401,
+                    'message' => 'Unauthorized',
+                    'data' => null,
+                    'error' => null
+                ], 401);
+            }
+        });
+
+        // Authentication (not logged in)
+        $this->renderable(function (AuthenticationException $e, Request $request) {
+            if ($request->is('api/mobile/*')) {
+                return response()->json([
+                    'code' => 403,
+                    'message' => 'Unauthenticated',
+                    'data' => null,
+                    'error' => null
+                ], 403);
+            }
+        });
+
+        // General HTTP errors
+        $this->renderable(function (HttpException $e, Request $request) {
+            if ($request->is('api/mobile/*')) {
+                $code = $e->getStatusCode();
+                $message = Response::$statusTexts[$code] ?? 'Error';
+                return response()->json([
+                    'code' => $code,
+                    'message' => 'An Error Occurred',
+                    'data' => null,
+                    'error' => $message
+                ], $code);
+            }
+        });
+
+        // Catch-all fallback
+        $this->renderable(function (Throwable $e, Request $request) {
+            if ($request->is('api/mobile/*')) {
+                return response()->json([
+                    'code' => 500,
+                    'message' => 'An Error Occurred',
+                    'data' => null,
+                    'error' => $e->getMessage()
+                ], 500);
+            }
         });
     }
 }
