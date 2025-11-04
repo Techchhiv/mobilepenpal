@@ -19,4 +19,7 @@ class AppColors {
   static const Color textGray40 = Color(0xFF909090);
   static const Color textGray20 = Color(0xFFAEAEAE);
   static const Color textWhiteOff = Color(0xFFF2F2F7);
+
+  // Button Colors
+  static const Color buttonPrimary = Color(0xFF378B8A);
 }
