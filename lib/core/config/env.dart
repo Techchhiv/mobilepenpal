@@ -13,4 +13,6 @@ class Env {
   static bool get isDebug => environment == 'development';
 
   static const String apiVersion = 'v1';
+  
+  static const String accessToken = 'student_token';
 }

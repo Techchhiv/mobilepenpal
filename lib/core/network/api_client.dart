@@ -1,7 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:mobilepenpal/core/config/env.dart';
-import 'package:mobilepenpal/core/config/app_constants.dart';
 import 'package:mobilepenpal/data/models/api_response.dart';
 
 class ApiClient {
@@ -28,7 +27,7 @@ class ApiClient {
       InterceptorsWrapper(
         onRequest: (options, handler) async {
           final token = await _secureStorage.read(
-            key: AppConstants.accessToken,
+            key: Env.accessToken,
           );
 
           if (token != null && token.isNotEmpty) {
@@ -46,7 +45,7 @@ class ApiClient {
         },
         onError: (DioException e, handler) async {
           if (e.response?.statusCode == 401) {
-            await _secureStorage.delete(key: AppConstants.accessToken);
+            await _secureStorage.delete(key: Env.accessToken);
           }
           return handler.next(e);
         },
@@ -55,15 +54,15 @@ class ApiClient {
   }
 
   Future<void> saveToken(String token) async {
-    await _secureStorage.write(key: AppConstants.accessToken, value: token);
+    await _secureStorage.write(key: Env.accessToken, value: token);
   }
 
   Future<void> clearToken() async {
-    await _secureStorage.delete(key: AppConstants.accessToken);
+    await _secureStorage.delete(key: Env.accessToken);
   }
 
   Future<bool> isAuthenticated() async {
-    final token = await _secureStorage.read(key: AppConstants.accessToken);
+    final token = await _secureStorage.read(key: Env.accessToken);
     return token != null && token.isNotEmpty;
   }
 
