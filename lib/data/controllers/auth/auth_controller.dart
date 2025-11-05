@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:mobilepenpal/data/services/auth_service.dart';
+import 'package:mobilepenpal/data/services/firebase_service.dart';
 
 class AuthController extends GetxController {
+  final AuthService _authService = AuthService();
   final _box = GetStorage();
 
   final identifierController = TextEditingController();
@@ -15,6 +18,10 @@ class AuthController extends GetxController {
   var identifierError = ''.obs;
   var schoolIdError = ''.obs;
   var passwordError = ''.obs;
+
+  Map<String, dynamic>? get studentData => _box.read('student_data');
+
+  bool get isLoggedIn => _box.read('is_logged_in') ?? false;
 
   void validateIdentifier(String value) {
     if (value.isEmpty) {
@@ -57,47 +64,76 @@ class AuthController extends GetxController {
     validateSchoolId(schoolIdController.text);
     validatePassword(passwordController.text);
 
-    if (identifierController.text.isNotEmpty &&
-        schoolIdController.text.isNotEmpty &&
-        passwordController.text.isNotEmpty &&
-        identifierError.value.isEmpty &&
-        schoolIdError.value.isEmpty &&
-        passwordError.value.isEmpty) {
-      try {
-        isLoading.value = true;
-        
+    if (identifierError.value.isNotEmpty ||
+        schoolIdError.value.isNotEmpty ||
+        passwordError.value.isNotEmpty) {
+      Get.snackbar(
+        "error".tr,
+        "fill_all_fields_correctly".tr,
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    if (identifierController.text.isEmpty ||
+        schoolIdController.text.isEmpty ||
+        passwordController.text.isEmpty) {
+      Get.snackbar(
+        "error".tr,
+        "fill_all_fields".tr,
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    try {
+      isLoading.value = true;
+
+      final response = await _authService.loginStudent(
+        identifier: identifierController.text.trim(),
+        password: passwordController.text,
+        schoolKey: schoolIdController.text.trim(),
+      );
+
+      if (response.code == 200) {
+        final firebaseService = Get.find<FirebaseService>();
+        String phoneNumber = identifierController.text.trim();
+
+        final error = await firebaseService.sendOtp(phoneNumber);
+
+        if (error == null) {
+          Get.snackbar(
+            "success".tr,
+            "otp_sent_successfully".tr,
+            backgroundColor: Colors.green,
+            colorText: Colors.white,
+          );
+
+          Get.offAllNamed('/otp');
+        } else {
+          Get.snackbar(
+            "error".tr,
+            error,
+            backgroundColor: Colors.red,
+            colorText: Colors.white,
+          );
+        }
+      } else {
         Get.snackbar(
-          "success".tr,
-          "login_successful".tr,
-          backgroundColor: Colors.green,
+          "error".tr,
+          response.message ?? "login_failed".tr,
+          backgroundColor: Colors.red,
           colorText: Colors.white,
         );
-
-        await Future.delayed(const Duration(seconds: 2));
-
-        Get.offAllNamed('/otp');
-      } catch (e) {
-        // Get.snackbar(
-        //   "error".tr,
-        //   "login_error".tr,
-        //   backgroundColor: Colors.red,
-        //   colorText: Colors.white,
-        // );
-        print("Login error: $e");
-      } finally {
-        isLoading.value = false;
       }
-    } else {
-      // Get.snackbar(
-      //   "error".tr,
-      //   "fill_all_fields_correctly".tr,
-      //   backgroundColor: Colors.orange,
-      //   colorText: Colors.white,
-      // );;
+    } finally {
+      isLoading.value = false;
     }
   }
 
-  void logout() {
+  void logout() async {
     Get.dialog(
       AlertDialog(
         title: Text('logout'.tr),
@@ -106,11 +142,9 @@ class AuthController extends GetxController {
           TextButton(child: Text('cancel'.tr), onPressed: () => Get.back()),
           TextButton(
             child: Text('ok'.tr),
-            onPressed: () {
-              _box.remove('token');
-              _box.remove('user_phone');
-              _box.remove('school_id');
-              _box.remove('is_logged_in');
+            onPressed: () async {
+              await _authService.logout();
+              await _box.erase();
 
               Get.back();
               Get.offAllNamed('/login');
@@ -120,8 +154,6 @@ class AuthController extends GetxController {
       ),
     );
   }
-
-  bool get isLoggedIn => _box.read('is_logged_in') ?? false;
 
   @override
   void onClose() {

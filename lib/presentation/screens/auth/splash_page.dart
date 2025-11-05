@@ -13,7 +13,7 @@ class SplashPage extends StatelessWidget {
 
   void _setLanguageAndNavigate(Locale locale) {
     localeController.changeLocale(locale);
-    Get.offAllNamed('/verify_otp');
+    Get.offAllNamed('/login');
   }
 
   @override

@@ -6,7 +6,7 @@ import 'package:mobilepenpal/data/controllers/auth/auth_controller.dart';
 class LoginPage extends StatelessWidget {
   LoginPage({super.key});
 
-  final AuthController authController = Get.put(AuthController());
+  final AuthController authController = Get.find<AuthController>();
 
   @override
   Widget build(BuildContext context) {
@@ -254,11 +254,11 @@ class LoginPage extends StatelessWidget {
                   height: 56,
                   child: ElevatedButton(
                     onPressed: authController.isLoading.value
-                        ? null // Disables button when loading
+                        ? null
                         : () => authController.login(),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: authController.isLoading.value
-                          ? Colors.grey[400] // Gray out when loading
+                          ? Colors.grey[400]
                           : AppColors.primary,
                       foregroundColor: Colors.white,
                       elevation: 0,
