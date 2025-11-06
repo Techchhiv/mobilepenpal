@@ -16,6 +16,7 @@ class Student extends Authenticatable
 
     protected $hidden = [
         'password',
+        'firebase_uid'
     ];
 
      protected $casts = [

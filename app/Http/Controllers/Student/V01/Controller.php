@@ -21,7 +21,7 @@ abstract class Controller
     protected array $_errors = [];
     protected int $_code = 200;
     protected string $_message = 'OK';
-    protected array $_result = [];
+    protected $_result = null;
 
     public function __construct()
     {
