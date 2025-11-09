@@ -69,7 +69,7 @@ static const String apiBaseUrl = String.fromEnvironment(
   );
 ```
 
-## 5. Backend Configuration
+## 4. Backend Configuration
 
 The Laravel backend server must be running on host `0.0.0.0` and port `8000`to accept connections from mobile devices and emulators.
 
@@ -81,7 +81,7 @@ php artisan serve --host=0.0.0.0 --port=8000
 
 This will make the backend accessible to devices on your local network. Using `127.0.0.1` or `localhost` will only allow connections from the same machine.
 
-## 6. Run the application
+## 5. Run the application
 
 ```bash
 flutter run
