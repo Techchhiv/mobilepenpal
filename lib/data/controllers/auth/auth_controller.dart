@@ -59,6 +59,9 @@ class AuthController extends GetxController {
 
   Future<void> login() async {
     if (isLoading.value) return;
+    identifierController.text = '069558076';
+    schoolIdController.text = 'SCHOOL2024';
+    passwordController.text = 'password123';
 
     validateIdentifier(identifierController.text);
     validateSchoolId(schoolIdController.text);
@@ -97,6 +100,8 @@ class AuthController extends GetxController {
         schoolKey: schoolIdController.text.trim(),
       );
 
+      _saveStudentInfo(response.data?["student"]);
+
       if (response.code == 200) {
         final firebaseService = Get.find<FirebaseService>();
         String phoneNumber = identifierController.text.trim();
@@ -111,7 +116,7 @@ class AuthController extends GetxController {
             colorText: Colors.white,
           );
 
-          Get.offAllNamed('/otp');
+          Get.offAllNamed('/verify_otp');
         } else {
           Get.snackbar(
             "error".tr,
@@ -152,6 +157,16 @@ class AuthController extends GetxController {
           ),
         ],
       ),
+    );
+  }
+
+  Future<void> _saveStudentInfo(student) async {
+    await _box.write('user_phone', student.phone ?? '');
+    await _box.write('first_name', student.firstName ?? '');
+    await _box.write('last_name', student.lastName ?? '');
+    await _box.write(
+      'full_name',
+      '${student.firstName ?? ''} ${student.lastName ?? ''}'.trim(),
     );
   }
 

@@ -60,8 +60,10 @@ final Map<String, String> kmKH = {
   'otp_verified_successfully': 'ការផ្ទៀងផ្ទាត់ OTP បានជោគជ័យ',
   'invalid_otp_code': 'លេខកូដ OTP មិនត្រឹមត្រូវ',
   'verification_failed': 'ការផ្ទៀងផ្ទាត់បរាជ័យ',
+  'opt_sent_successfuly': "បានផ្ញើ OTP ដោយជោគជ័យ",
   'otp_resent_successfully': 'បានផ្ញើ OTP ឡើងវិញដោយជោគជ័យ',
   'resend': 'ផ្ញើរឡើងវិញ',
+  'resend_in': 'ផ្ញើរឡើងវិញនៅពេល',
   'clear': 'លុប',
   'verify': 'ផ្ទៀងផ្ទាត់',
 

@@ -4,6 +4,7 @@ import 'package:get_storage/get_storage.dart';
 import 'package:mobilepenpal/core/theme/app_colors.dart';
 import 'package:mobilepenpal/data/services/firebase_service.dart';
 import 'package:mobilepenpal/data/services/auth_service.dart';
+import 'package:mobilepenpal/presentation/widgets/loading_model.dart';
 
 class OtpController extends GetxController {
   final FirebaseService _firebaseService = Get.find<FirebaseService>();
@@ -15,6 +16,7 @@ class OtpController extends GetxController {
   final RxBool hasError = false.obs;
   final RxInt countdown = 60.obs;
   final RxBool canResend = false.obs;
+  final RxString countdownText = "".obs;
 
   String get phoneNumber {
     final phone = _box.read('user_phone');
@@ -24,16 +26,13 @@ class OtpController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    _updateCountdownText();
     startCountdown();
   }
 
   void onOtpChanged(String code) {
     otpCode.value = code;
     hasError.value = false;
-    
-    if (code.length == 6) {
-      verifyOtp();
-    }
   }
 
   Future<void> verifyOtp() async {
@@ -53,8 +52,14 @@ class OtpController extends GetxController {
       isLoading.value = true;
       hasError.value = false;
 
+      Get.dialog(
+        const LoadingModal(message: 'Verifying...'),
+        barrierDismissible: false,
+        barrierColor: Colors.transparent,
+      );
+
       final user = await _firebaseService.verifyOtp(otpCode.value);
-      
+
       if (user != null) {
         final idToken = await user.getIdToken();
 
@@ -64,44 +69,53 @@ class OtpController extends GetxController {
         );
 
         if (response.code == 200) {
-          Get.snackbar(
-            'success'.tr,
-            'otp_verified_successfully'.tr,
-            backgroundColor: Colors.green,
-            colorText: Colors.white,
+          if (Get.isDialogOpen ?? false) {
+            Get.back();
+          }
+
+          Get.dialog(
+            const LoadingModal(
+              message: 'Success!',
+              isSuccess: true,
+            ),
+            barrierDismissible: false,
+            barrierColor: Colors.transparent,
           );
-          
-          // Navigate to home page
+
+          await Future.delayed(const Duration(seconds: 1));
+
+          if (Get.isDialogOpen ?? false) {
+            Get.back();
+          }
+
           Get.offAllNamed('/home');
+
         } else {
-          hasError.value = true;
-          Get.snackbar(
-            'error'.tr,
-            response.message ?? 'verification_failed'.tr,
-            backgroundColor: Colors.red,
-            colorText: Colors.white,
-          );
+          _handleError(response.message ?? 'verification_failed'.tr);
         }
       } else {
-        hasError.value = true;
-        Get.snackbar(
-          'error'.tr,
-          'invalid_otp_code'.tr,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
+        _handleError('invalid_otp_code'.tr);
       }
     } catch (e) {
-      hasError.value = true;
-      Get.snackbar(
-        'error'.tr,
-        'verification_failed'.tr,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      _handleError('verification_failed'.tr);
     } finally {
       isLoading.value = false;
     }
+  }
+
+  void _handleError(String errorMessage) {
+    hasError.value = true;
+
+    if (Get.isDialogOpen ?? false) {
+      Get.back();
+    }
+
+    Get.snackbar(
+      'error'.tr,
+      errorMessage,
+      backgroundColor: Colors.red,
+      colorText: Colors.white,
+    );
   }
 
   Future<void> resendOtp() async {
@@ -120,9 +134,10 @@ class OtpController extends GetxController {
     try {
       countdown.value = 60;
       canResend.value = false;
-      
+      _updateCountdownText();
+
       final error = await _firebaseService.sendOtp(phoneNumber);
-      
+
       if (error == null) {
         Get.snackbar(
           'info'.tr,
@@ -139,6 +154,7 @@ class OtpController extends GetxController {
           colorText: Colors.white,
         );
         canResend.value = true;
+        _updateCountdownText();
       }
     } catch (e) {
       Get.snackbar(
@@ -148,31 +164,42 @@ class OtpController extends GetxController {
         colorText: Colors.white,
       );
       canResend.value = true;
+      _updateCountdownText();
     }
   }
 
   void startCountdown() {
     canResend.value = false;
     countdown.value = 60;
+    _updateCountdownText();
 
-    Future.delayed(const Duration(seconds: 1), () {
-      if (countdown.value > 0) {
-        countdown.value--;
-        startCountdown();
-      } else {
-        canResend.value = true;
-      }
-    });
+    _runCountdown();
   }
 
-  String get countdownText {
-    if (canResend.value) return "resend".tr;
-    return "${'resend_in'.tr} ${countdown.value}s";
+  void _runCountdown() {
+    if (countdown.value > 0) {
+      Future.delayed(const Duration(seconds: 1), () {
+        countdown.value--;
+        _updateCountdownText();
+        _runCountdown();
+      });
+    } else {
+      canResend.value = true;
+      _updateCountdownText();
+    }
+  }
+
+  void _updateCountdownText() {
+    if (canResend.value) {
+      countdownText.value = "resend".tr;
+    } else {
+      countdownText.value = "${'resend_in'.tr} ${countdown.value}s";
+    }
   }
 
   String get maskedPhoneNumber {
     if (phoneNumber.isEmpty || phoneNumber.length < 4) return phoneNumber;
-    final lastFour = phoneNumber.substring(phoneNumber.length - 4);
+    final lastFour = phoneNumber.substring(phoneNumber.length - 3);
     return '+855 ••• ••• $lastFour';
   }
 }

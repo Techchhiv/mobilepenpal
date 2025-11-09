@@ -60,8 +60,10 @@ final Map<String, String> enUS = {
   'otp_verified_successfully': 'OTP verified successfully',
   'invalid_otp_code': 'Invalid OTP code',
   'verification_failed': 'Verification failed',
+  'otp_sent_successfully': "OTP sent successfully",
   'otp_resent_successfully': 'OTP resent successfully',
   'resend': 'Resend',
+  'resend_in': 'Resend in',
   'clear': 'Clear',
   'verify': 'Verify',
 

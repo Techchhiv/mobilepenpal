@@ -13,8 +13,6 @@ class HomeController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    // Optionally load profile automatically when home page opens
-    // getProfile();
   }
 
   Future<void> getProfile() async {

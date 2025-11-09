@@ -42,13 +42,11 @@ class LoginPage extends StatelessWidget {
         ),
       ),
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              const SizedBox(height: 20),
               Center(
                 child: Column(
                   children: [
@@ -112,11 +110,17 @@ class LoginPage extends StatelessWidget {
                     ),
                     errorBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Colors.red, width: 1),
+                      borderSide: const BorderSide(
+                        color: Colors.red,
+                        width: 1,
+                      ),
                     ),
                     focusedErrorBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Colors.red, width: 2),
+                      borderSide: const BorderSide(
+                        color: Colors.red,
+                        width: 2,
+                      ),
                     ),
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 16,
@@ -126,14 +130,15 @@ class LoginPage extends StatelessWidget {
                         ? authController.schoolIdError.value
                         : null,
                   ),
-                  onChanged: (value) => authController.validateSchoolId(value),
+                  onChanged: (value) =>
+                      authController.validateSchoolId(value),
                 ),
               ),
               const SizedBox(height: 24),
 
               Text(
                 'phone_number'.tr,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                   color: Colors.black87,
@@ -165,17 +170,24 @@ class LoginPage extends StatelessWidget {
                     ),
                     errorBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Colors.red, width: 1),
+                      borderSide: const BorderSide(
+                        color: Colors.red,
+                        width: 1,
+                      ),
                     ),
                     focusedErrorBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Colors.red, width: 2),
+                      borderSide: const BorderSide(
+                        color: Colors.red,
+                        width: 2,
+                      ),
                     ),
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 16,
                       vertical: 16,
                     ),
-                    errorText: authController.identifierError.value.isNotEmpty
+                    errorText:
+                        authController.identifierError.value.isNotEmpty
                         ? authController.identifierError.value
                         : null,
                   ),
@@ -219,11 +231,17 @@ class LoginPage extends StatelessWidget {
                     ),
                     errorBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Colors.red, width: 1),
+                      borderSide: const BorderSide(
+                        color: Colors.red,
+                        width: 1,
+                      ),
                     ),
                     focusedErrorBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Colors.red, width: 2),
+                      borderSide: const BorderSide(
+                        color: Colors.red,
+                        width: 2,
+                      ),
                     ),
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 16,
@@ -243,7 +261,8 @@ class LoginPage extends StatelessWidget {
                         ? authController.passwordError.value
                         : null,
                   ),
-                  onChanged: (value) => authController.validatePassword(value),
+                  onChanged: (value) =>
+                      authController.validatePassword(value),
                 ),
               ),
               const SizedBox(height: 32),

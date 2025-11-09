@@ -5,7 +5,7 @@ class AuthtEndpoints {
   static const String login = '$_base/auth/login';
   static const String register = '$_base/auth/register';
   static const String logout = '$_base/auth/logout';
-  static const String otp = '$_base/auth/verify_otp';
+  static const String otp = '$_base/auth/verify-otp';
 
   // Check Student
   static const String profile = '$_base/auth/check';
