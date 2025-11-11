@@ -7,29 +7,34 @@ class AuthService {
   final ApiClient _apiClient = ApiClient();
 
   Future<ApiResponse<Map<String, dynamic>>> loginStudent({
-    required String identifier,
+    required String phone,
     required String password,
-    required String schoolKey,
+    // required String schoolKey,
   }) async {
     final result = await _apiClient.request<Map<String, dynamic>>(
       method: 'POST',
-      path: AuthtEndpoints.login,
+      path: AuthEndpoints.login,
       data: {
-        "identifier": identifier,
+        "phone": phone,
         "password": password,
-        "school_key": schoolKey,
+        // "school_key": schoolKey,
       },
       fromData: (data) {
+        final token = data['token'];
         final student = Student.fromJson(data['student']);
-        return {"student": student};
+        return {"student": student, "token": token};
       },
     );
+
+    if (result.code == 200) {
+      await _apiClient.saveToken(result.data?['token']);
+    }
 
     return result;
   }
 
   Future<void> logout() async {
-    await _apiClient.request(method: 'POST', path: AuthtEndpoints.logout);
+    await _apiClient.request(method: 'POST', path: AuthEndpoints.logout);
     await _apiClient.clearToken();
   }
 
@@ -40,7 +45,7 @@ class AuthService {
   Future<ApiResponse<Student>> getProfile() async {
     final result = await _apiClient.request<Student>(
       method: 'GET',
-      path: AuthtEndpoints.profile,
+      path: AuthEndpoints.profile,
       fromData: (data) => Student.fromJson(data['student']),
     );
 
@@ -53,7 +58,7 @@ class AuthService {
   }) async {
     final result = await _apiClient.request<Map<String, dynamic>>(
       method: 'POST',
-      path: AuthtEndpoints.otp,
+      path: AuthEndpoints.otp,
       data: {"phone": phone, "firebase_token": firebaseToken},
       fromData: (data) {
         final token = data['token'];

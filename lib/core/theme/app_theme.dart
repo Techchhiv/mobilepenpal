@@ -17,12 +17,12 @@ class AppTheme {
         headlineSmall: _getTextStyle(
           fontSize: 22,
           fontWeight: FontWeight.bold,
-          color: AppColors.textWhiteOff,
+          color: AppColors.text,
           languageCode: languageCode,
         ),
         bodyMedium: _getTextStyle(
           fontSize: 16,
-          color: AppColors.textWhiteOff,
+          color: AppColors.text,
           languageCode: languageCode,
         ),
       ),

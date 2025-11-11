@@ -37,6 +37,7 @@ class SplashPage extends StatelessWidget {
                       style: GoogleFonts.battambang(
                         fontSize: 32,
                         fontWeight: FontWeight.bold,
+                        color: AppColors.textWhiteOff,
                       ),
                     ),
                     const SizedBox(height: 10),
@@ -46,6 +47,7 @@ class SplashPage extends StatelessWidget {
                         fontSize: 16,
                         height: 1.5,
                         fontWeight: FontWeight.w500,
+                        color: AppColors.textWhiteOff,
                       ),
                     ),
                     const SizedBox(height: 40),
@@ -73,6 +75,7 @@ class SplashPage extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
+                              color: AppColors.textWhiteOff,
                             ),
                           ),
                         ],
@@ -98,6 +101,7 @@ class SplashPage extends StatelessWidget {
                     style: GoogleFonts.battambang(
                       fontSize: 16,
                       fontWeight: FontWeight.w800,
+                      color: AppColors.textWhiteOff,
                     ),
                   ),
                   const SizedBox(height: 15),
@@ -118,6 +122,7 @@ class SplashPage extends StatelessWidget {
                         style: GoogleFonts.battambang(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
+                          color: AppColors.textWhiteOff,
                         ),
                       ),
                     ),
@@ -140,6 +145,7 @@ class SplashPage extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
+                          color: AppColors.textWhiteOff,
                         ),
                       ),
                     ),

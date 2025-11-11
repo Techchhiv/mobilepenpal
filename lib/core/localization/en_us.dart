@@ -142,7 +142,9 @@ final Map<String, String> enUS = {
   // ===== Error & Success Messages =====
   'invalid_credentials': 'Invalid credentials',
   'email_or_phone_required': 'Email or phone number is required',
+  'phone_required': "Phone number is required",
   'invalid_email_or_phone': 'Invalid email or phone number',
+  'invalid_phone': 'Invalid phone number',
   'school_id_required': 'School ID is required',
   'school_id_min_2_cha': 'School ID must be at least 2 characters',
   'password_required': 'Password is required',
@@ -182,7 +184,6 @@ final Map<String, String> enUS = {
   'invalid_format': 'Invalid format',
   'field_required': 'This field is required',
   'invalid_email': 'Invalid email address',
-  'invalid_phone': 'Invalid phone number',
   'invalid_url': 'Invalid URL',
   'min_length': 'Must be at least @length characters',
   'max_length': 'Must be at most @length characters',
@@ -197,4 +198,7 @@ final Map<String, String> enUS = {
   'assignment': 'Assignment',
   'score': 'Score',
   'result': 'Result',
+
+  // ===== Home =====
+  'parent': "Parent",
 };

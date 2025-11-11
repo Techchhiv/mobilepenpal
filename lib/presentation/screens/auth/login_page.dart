@@ -16,28 +16,36 @@ class LoginPage extends StatelessWidget {
         backgroundColor: AppColors.primary,
         elevation: 0,
         automaticallyImplyLeading: false,
-        title: InkWell(
-          onTap: () => Get.offAllNamed('/'),
-          borderRadius: BorderRadius.circular(8),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(
-                Icons.arrow_back_ios_new_rounded,
-                color: Colors.white,
-                size: 20,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                'back'.tr,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
+        title: Obx(
+          () => InkWell(
+            onTap: authController.isLoading.value
+                ? null
+                : () => Get.offAllNamed('/'),
+            borderRadius: BorderRadius.circular(8),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  color: authController.isLoading.value
+                      ? Colors.white.withOpacity(0.5)
+                      : Colors.white,
+                  size: 20,
                 ),
-              ),
-            ],
+                const SizedBox(width: 6),
+                Text(
+                  'back'.tr,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: authController.isLoading.value
+                        ? Colors.white.withOpacity(0.5)
+                        : Colors.white,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -57,10 +65,10 @@ class LoginPage extends StatelessWidget {
                         color: Colors.grey[100],
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.person_outline,
                         size: 40,
-                        color: AppColors.primary,
+                        color: AppColors.primary.withOpacity(0.7),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -76,65 +84,6 @@ class LoginPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 48),
-              Text(
-                'school_id'.tr,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Obx(
-                () => TextFormField(
-                  controller: authController.schoolIdController,
-                  keyboardType: TextInputType.text,
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: Colors.grey[100],
-                    hintText: 'enter_your_school_id'.tr,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: AppColors.primary,
-                        width: 2,
-                      ),
-                    ),
-                    errorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Colors.red,
-                        width: 1,
-                      ),
-                    ),
-                    focusedErrorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Colors.red,
-                        width: 2,
-                      ),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 16,
-                    ),
-                    errorText: authController.schoolIdError.value.isNotEmpty
-                        ? authController.schoolIdError.value
-                        : null,
-                  ),
-                  onChanged: (value) =>
-                      authController.validateSchoolId(value),
-                ),
-              ),
-              const SizedBox(height: 24),
 
               Text(
                 'phone_number'.tr,
@@ -147,11 +96,14 @@ class LoginPage extends StatelessWidget {
               const SizedBox(height: 8),
               Obx(
                 () => TextFormField(
-                  controller: authController.identifierController,
+                  controller: authController.phoneController,
                   keyboardType: TextInputType.phone,
+                  enabled: !authController.isLoading.value,
                   decoration: InputDecoration(
                     filled: true,
-                    fillColor: Colors.grey[100],
+                    fillColor: authController.isLoading.value
+                        ? Colors.grey[300]
+                        : Colors.grey[100],
                     hintText: 'enter_your_phone_number'.tr,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -170,29 +122,26 @@ class LoginPage extends StatelessWidget {
                     ),
                     errorBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Colors.red,
-                        width: 1,
-                      ),
+                      borderSide: const BorderSide(color: Colors.red, width: 1),
                     ),
                     focusedErrorBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Colors.red,
-                        width: 2,
-                      ),
+                      borderSide: const BorderSide(color: Colors.red, width: 2),
                     ),
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 16,
                       vertical: 16,
                     ),
-                    errorText:
-                        authController.identifierError.value.isNotEmpty
-                        ? authController.identifierError.value
+                    errorText: authController.phoneError.value.isNotEmpty
+                        ? authController.phoneError.value
                         : null,
+                    hintStyle: TextStyle(
+                      color: authController.isLoading.value
+                          ? Colors.grey[500]
+                          : null,
+                    ),
                   ),
-                  onChanged: (value) =>
-                      authController.validateIdentifier(value),
+                  onChanged: (value) => authController.validatePhone(value),
                 ),
               ),
               const SizedBox(height: 24),
@@ -210,9 +159,13 @@ class LoginPage extends StatelessWidget {
                 () => TextFormField(
                   controller: authController.passwordController,
                   obscureText: !authController.isPasswordVisible.value,
+                  enabled:
+                      !authController.isLoading.value, // Disable during loading
                   decoration: InputDecoration(
                     filled: true,
-                    fillColor: Colors.grey[100],
+                    fillColor: authController.isLoading.value
+                        ? Colors.grey[300]
+                        : Colors.grey[100],
                     hintText: 'enter_your_password'.tr,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -231,17 +184,11 @@ class LoginPage extends StatelessWidget {
                     ),
                     errorBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Colors.red,
-                        width: 1,
-                      ),
+                      borderSide: const BorderSide(color: Colors.red, width: 1),
                     ),
                     focusedErrorBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Colors.red,
-                        width: 2,
-                      ),
+                      borderSide: const BorderSide(color: Colors.red, width: 2),
                     ),
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 16,
@@ -252,17 +199,24 @@ class LoginPage extends StatelessWidget {
                         authController.isPasswordVisible.value
                             ? Icons.visibility
                             : Icons.visibility_off,
-                        color: Colors.grey[600],
+                        color: authController.isLoading.value
+                            ? Colors.grey[400]
+                            : Colors.grey[600],
                       ),
-                      onPressed: () =>
-                          authController.togglePasswordVisibility(),
+                      onPressed: authController.isLoading.value
+                          ? null
+                          : () => authController.togglePasswordVisibility(),
                     ),
                     errorText: authController.passwordError.value.isNotEmpty
                         ? authController.passwordError.value
                         : null,
+                    hintStyle: TextStyle(
+                      color: authController.isLoading.value
+                          ? Colors.grey[500]
+                          : null,
+                    ),
                   ),
-                  onChanged: (value) =>
-                      authController.validatePassword(value),
+                  onChanged: (value) => authController.validatePassword(value),
                 ),
               ),
               const SizedBox(height: 32),
@@ -324,28 +278,34 @@ class LoginPage extends StatelessWidget {
               ),
               const SizedBox(height: 12),
 
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () {
-                      Get.snackbar(
-                        'Testing'.tr,
-                        'Change forgot password'.tr,
-                        backgroundColor: Colors.blue[50],
-                        colorText: AppColors.primary,
-                      );
-                    },
-                    child: Text(
-                      'forgot_password'.tr,
-                      style: TextStyle(
-                        color: AppColors.text,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
+              Obx(
+                () => Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: authController.isLoading.value
+                          ? null
+                          : () {
+                              Get.snackbar(
+                                'Testing'.tr,
+                                'Change forgot password'.tr,
+                                backgroundColor: Colors.blue[50],
+                                colorText: AppColors.primary,
+                              );
+                            },
+                      child: Text(
+                        'forgot_password'.tr,
+                        style: TextStyle(
+                          color: authController.isLoading.value
+                              ? AppColors.text.withOpacity(0.5)
+                              : AppColors.text,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ],
           ),

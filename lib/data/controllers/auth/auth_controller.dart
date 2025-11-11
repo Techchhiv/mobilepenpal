@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:mobilepenpal/data/models/student/student.dart';
 import 'package:mobilepenpal/data/services/auth_service.dart';
-import 'package:mobilepenpal/data/services/firebase_service.dart';
 
 class AuthController extends GetxController {
   final AuthService _authService = AuthService();
   final _box = GetStorage();
 
-  final identifierController = TextEditingController();
-  final schoolIdController = TextEditingController();
+  final phoneController = TextEditingController();
+  // final schoolIdController = TextEditingController();
   final passwordController = TextEditingController();
 
   var isPasswordVisible = false.obs;
   var isLoading = false.obs;
 
-  var identifierError = ''.obs;
+  var phoneError = ''.obs;
   var schoolIdError = ''.obs;
   var passwordError = ''.obs;
 
@@ -23,25 +23,25 @@ class AuthController extends GetxController {
 
   bool get isLoggedIn => _box.read('is_logged_in') ?? false;
 
-  void validateIdentifier(String value) {
+  void validatePhone(String value) {
     if (value.isEmpty) {
-      identifierError.value = "email_or_phone_required".tr;
+      phoneError.value = "phone_required".tr;
     } else if (!GetUtils.isPhoneNumber(value.replaceAll(' ', ''))) {
-      identifierError.value = 'invalid_email_or_phone'.tr;
+      phoneError.value = 'invalid_phone'.tr;
     } else {
-      identifierError.value = '';
+      phoneError.value = '';
     }
   }
 
-  void validateSchoolId(String value) {
-    if (value.isEmpty) {
-      schoolIdError.value = "school_id_required".tr;
-    } else if (value.length < 2) {
-      schoolIdError.value = 'school_id_min_2_cha'.tr;
-    } else {
-      schoolIdError.value = '';
-    }
-  }
+  // void validateSchoolId(String value) {
+  //   if (value.isEmpty) {
+  //     schoolIdError.value = "school_id_required".tr;
+  //   } else if (value.length < 2) {
+  //     schoolIdError.value = 'school_id_min_2_cha'.tr;
+  //   } else {
+  //     schoolIdError.value = '';
+  //   }
+  // }
 
   void validatePassword(String value) {
     if (value.isEmpty) {
@@ -59,16 +59,14 @@ class AuthController extends GetxController {
 
   Future<void> login() async {
     if (isLoading.value) return;
-    identifierController.text = '069558076';
-    schoolIdController.text = 'SCHOOL2024';
+    phoneController.text = '069558076';
     passwordController.text = 'password123';
 
-    validateIdentifier(identifierController.text);
-    validateSchoolId(schoolIdController.text);
+    validatePhone(phoneController.text);
     validatePassword(passwordController.text);
 
-    if (identifierError.value.isNotEmpty ||
-        schoolIdError.value.isNotEmpty ||
+    if (phoneError.value.isNotEmpty ||
+        // schoolIdError.value.isNotEmpty ||
         passwordError.value.isNotEmpty) {
       Get.snackbar(
         "error".tr,
@@ -79,8 +77,8 @@ class AuthController extends GetxController {
       return;
     }
 
-    if (identifierController.text.isEmpty ||
-        schoolIdController.text.isEmpty ||
+    if (phoneController.text.isEmpty ||
+        // schoolIdController.text.isEmpty ||
         passwordController.text.isEmpty) {
       Get.snackbar(
         "error".tr,
@@ -95,40 +93,40 @@ class AuthController extends GetxController {
       isLoading.value = true;
 
       final response = await _authService.loginStudent(
-        identifier: identifierController.text.trim(),
+        phone: phoneController.text.trim(),
         password: passwordController.text,
-        schoolKey: schoolIdController.text.trim(),
+        // schoolKey: schoolIdController.text.trim(),
       );
 
       _saveStudentInfo(response.data?["student"]);
 
       if (response.code == 200) {
-        final firebaseService = Get.find<FirebaseService>();
-        String phoneNumber = identifierController.text.trim();
+        // final firebaseService = Get.find<FirebaseService>();
+        // String phoneNumber = phoneController.text.trim();
 
-        final error = await firebaseService.sendOtp(phoneNumber);
+        // final error = await firebaseService.sendOtp(phoneNumber);
 
-        if (error == null) {
-          Get.snackbar(
-            "success".tr,
-            "otp_sent_successfully".tr,
-            backgroundColor: Colors.green,
-            colorText: Colors.white,
-          );
+        // if (error == null) {
+        //   Get.snackbar(
+        //     "success".tr,
+        //     "otp_sent_successfully".tr,
+        //     backgroundColor: Colors.green,
+        //     colorText: Colors.white,
+        //   );
 
-          Get.offAllNamed('/verify_otp');
-        } else {
-          Get.snackbar(
-            "error".tr,
-            error,
-            backgroundColor: Colors.red,
-            colorText: Colors.white,
-          );
-        }
+        Get.offAllNamed('/home');
+        // } else {
+        //   Get.snackbar(
+        //     "error".tr,
+        //     error,
+        //     backgroundColor: Colors.red,
+        //     colorText: Colors.white,
+        //   );
+        // }
       } else {
         Get.snackbar(
           "error".tr,
-          response.message ?? "login_failed".tr,
+          response.message,
           backgroundColor: Colors.red,
           colorText: Colors.white,
         );
@@ -160,7 +158,10 @@ class AuthController extends GetxController {
     );
   }
 
-  Future<void> _saveStudentInfo(student) async {
+  Future<void> _saveStudentInfo(Student student) async {
+    await _box.write('student', student.toJson());
+    await _box.write('is_logged_in', true);
+
     await _box.write('user_phone', student.phone ?? '');
     await _box.write('first_name', student.firstName ?? '');
     await _box.write('last_name', student.lastName ?? '');
@@ -172,8 +173,8 @@ class AuthController extends GetxController {
 
   @override
   void onClose() {
-    identifierController.dispose();
-    schoolIdController.dispose();
+    phoneController.dispose();
+    // schoolIdController.dispose();
     passwordController.dispose();
     super.onClose();
   }

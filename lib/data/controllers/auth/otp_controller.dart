@@ -74,10 +74,7 @@ class OtpController extends GetxController {
           }
 
           Get.dialog(
-            const LoadingModal(
-              message: 'Success!',
-              isSuccess: true,
-            ),
+            const LoadingModal(message: 'Success!', isSuccess: true),
             barrierDismissible: false,
             barrierColor: Colors.transparent,
           );
@@ -89,9 +86,8 @@ class OtpController extends GetxController {
           }
 
           Get.offAllNamed('/home');
-
         } else {
-          _handleError(response.message ?? 'verification_failed'.tr);
+          _handleError(response.message);
         }
       } else {
         _handleError('invalid_otp_code'.tr);

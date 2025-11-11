@@ -1,4 +1,4 @@
-class AuthtEndpoints {
+class AuthEndpoints {
   static const String _base = '/student/v01';
 
   // Authentication

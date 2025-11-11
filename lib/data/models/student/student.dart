@@ -1,116 +1,95 @@
 class Student {
   final int id;
-  final int? schoolId;
-  final String? firstName;
-  final String? lastName;
-  final String? dateOfBirth;
+  final String firstName;
+  final String lastName;
+  final String? nickname;
+  final int? age;
   final String? gender;
-  final String? email;
-  final String? phone;
+  final String? dateOfBirth;
+  final String? avatar;
+  final String? mode;
+  final String? parentPin;
   final String? parentFirstName;
   final String? parentLastName;
-  final String? parentEmail;
-  final String? parentPhone;
+  final String? email;
+  final String phone;
+  final int? level;
+  final int? streak;
+  final int? timeSpent;
+  final String? lastPlayed;
   final String? address;
-  final String? dataOfEnrollment;
-  final int? isActive;
-  final String? schoolKey;
-  final String? createdAt;
-  final String? updatedAt;
+  final String? enrollmentYear;
 
   Student({
     required this.id,
-    this.schoolId,
-    this.firstName,
-    this.lastName,
-    this.dateOfBirth,
+    required this.firstName,
+    required this.lastName,
+    this.nickname,
+    this.age,
     this.gender,
-    this.email,
-    this.phone,
+    this.dateOfBirth,
+    this.avatar,
+    this.mode,
+    this.parentPin,
     this.parentFirstName,
     this.parentLastName,
-    this.parentEmail,
-    this.parentPhone,
+    this.email,
+    required this.phone,
+    this.level,
+    this.streak,
+    this.timeSpent,
+    this.lastPlayed,
     this.address,
-    this.dataOfEnrollment,
-    this.isActive,
-    this.schoolKey,
-    this.createdAt,
-    this.updatedAt,
+    this.enrollmentYear,
   });
 
   factory Student.fromJson(Map<String, dynamic> json) {
     return Student(
-      id: json['id'] as int,
-      schoolId: json['school_id'] as int?,
-      firstName: json['first_name'] as String?,
-      lastName: json['last_name'] as String?,
-      dateOfBirth: json['date_of_birth'] as String?,
-      gender: json['gender'] as String?,
-      email: json['email'] as String?,
-      phone: json['phone'] as String?,
-      parentFirstName: json['parent_first_name'] as String?,
-      parentLastName: json['parent_last_name'] as String?,
-      parentEmail: json['parent_email'] as String?,
-      parentPhone: json['parent_phone'] as String?,
-      address: json['address'] as String?,
-      dataOfEnrollment: json['data_of_enrollment'] as String?,
-      isActive: json['is_active'] as int?,
-      schoolKey: json['school_key'] as String?,
-      createdAt: json['created_at'] as String?,
-      updatedAt: json['updated_at'] as String?,
+      id: json['id'] ?? 0,
+      firstName: json['first_name'] ?? '',
+      lastName: json['last_name'] ?? '',
+      nickname: json['nickname'],
+      age: json['age'],
+      gender: json['gender'],
+      dateOfBirth: json['date_of_birth'],
+      avatar: json['avatar'],
+      mode: json['mode'],
+      parentPin: json['parent_pin'],
+      parentFirstName: json['parent_first_name'],
+      parentLastName: json['parent_last_name'],
+      email: json['email'],
+      phone: json['phone'] ?? '',
+      level: json['level'],
+      streak: json['streak'] ?? 0,
+      timeSpent: json['time_spent'] ?? 0,
+      lastPlayed: json['last_played'],
+      address: json['address'],
+      enrollmentYear: json['enrollment_year'],
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'school_id': schoolId,
       'first_name': firstName,
       'last_name': lastName,
-      'date_of_birth': dateOfBirth,
+      'nickname': nickname,
+      'age': age,
       'gender': gender,
-      'email': email,
-      'phone': phone,
+      'date_of_birth': dateOfBirth,
+      'avatar': avatar,
+      'mode': mode,
+      'parent_pin': parentPin,
       'parent_first_name': parentFirstName,
       'parent_last_name': parentLastName,
-      'parent_email': parentEmail,
-      'parent_phone': parentPhone,
+      'email': email,
+      'phone': phone,
+      'level': level,
+      'streak': streak,
+      'time_spent': timeSpent,
+      'last_played': lastPlayed,
       'address': address,
-      'data_of_enrollment': dataOfEnrollment,
-      'is_active': isActive,
-      'school_key': schoolKey,
-      'created_at': createdAt,
-      'updated_at': updatedAt,
+      'enrollment_year': enrollmentYear,
     };
-  }
-
-  String get fullName {
-    if (firstName != null && lastName != null) {
-      return '$firstName $lastName';
-    } else if (firstName != null) {
-      return firstName!;
-    } else if (lastName != null) {
-      return lastName!;
-    }
-    return 'Unknown';
-  }
-
-  String get parentFullName {
-    if (parentFirstName != null && parentLastName != null) {
-      return '$parentFirstName $parentLastName';
-    } else if (parentFirstName != null) {
-      return parentFirstName!;
-    } else if (parentLastName != null) {
-      return parentLastName!;
-    }
-    return 'Unknown';
-  }
-
-  bool get isStudentActive => isActive == 1;
-
-  @override
-  String toString() {
-    return 'Student(id: $id, name: $fullName, email: $email, phone: $phone)';
   }
 }

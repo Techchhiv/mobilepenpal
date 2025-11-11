@@ -142,7 +142,9 @@ final Map<String, String> kmKH = {
   // ===== Error & Success Messages =====
   'invalid_credentials': 'ព័ត៌មានសម្ងាត់មិនត្រឹមត្រូវ',
   'email_or_phone_required': 'ត្រូវការអ៊ីមែល ឬ លេខទូរស័ព្ទ',
+  'phone_required': "ត្រូវការលេខទូរស័ព្ទ",
   'invalid_email_or_phone': 'អ៊ីមែល ឬ លេខទូរស័ព្ទមិនត្រឹមត្រូវ',
+  'invalid_phone': 'លេខទូរស័ព្ទមិនត្រឹមត្រូវ',
   'school_id_required': 'ត្រូវការលេខសម្គាល់សាលា',
   'school_id_min_2_cha': 'លេខសម្គាល់សាលាត្រូវមានយ៉ាងតិច ២ តួអក្សរ',
   'password_required': 'ត្រូវការពាក្យសម្ងាត់',
@@ -182,7 +184,6 @@ final Map<String, String> kmKH = {
   'invalid_format': 'ទម្រង់មិនត្រឹមត្រូវ',
   'field_required': 'ត្រូវការបំពេញព័ត៌មាន',
   'invalid_email': 'អ៊ីមែលមិនត្រឹមត្រូវ',
-  'invalid_phone': 'លេខទូរស័ព្ទមិនត្រឹមត្រូវ',
   'invalid_url': 'URL មិនត្រឹមត្រូវ',
   'min_length': 'ត្រូវតែមានយ៉ាងតិច @length តួអក្សរ',
   'max_length': 'មិនត្រូវលើសពី @length តួអក្សរ',
@@ -197,4 +198,7 @@ final Map<String, String> kmKH = {
   'assignment': 'កិច្ចការ',
   'score': 'ពិន្ទុ',
   'result': 'លទ្ធផល',
+
+  // ===== Home =====
+  'parent': "អាណាព្យាបាល",
 };
