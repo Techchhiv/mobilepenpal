@@ -6,6 +6,7 @@ use App\Helpers\ChangePhoneNumberFormat;
 use App\Http\Requests\Student\V01\Auth\LoginRequest;
 use App\Http\Requests\Student\V01\Auth\RegisterRequest;
 use App\Http\Requests\Student\V01\Auth\VerifyOtpRequest;
+use App\Http\Resources\Student\V01\User\UserDetailResource;
 use App\Models\Student;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -32,13 +33,13 @@ class AuthController extends Controller
     {
         $validated = $request->validated();
 
-        if (!isKhmerPhone($validated['phone']) || !isKhmerPhone($validated['parent_phone'])) {
+        if (!isKhmerPhone($validated['phone'])) {
             return $this->returnError("The phone number must be a valid Cambodian number.", 422);
         }
 
         $userInfo = [
             'phoneNumber' => ChangePhoneNumberFormat::toE164GlobalFormat($validated['phone']),
-            'displayName' => $validated['first_name']. ' ' . $validated['last_name'] ?? null,
+            'displayName' => $validated['first_name'] . ' ' . $validated['last_name'] ?? null,
         ];
 
         $firebaseUser = $this->firebaseAuth->createUser($userInfo);
@@ -57,6 +58,24 @@ class AuthController extends Controller
     {
         $validated = $request->validated();
 
+        $student = Student::where('phone', $validated['phone'])
+            ->first();
+
+        if (!$student || !Hash::check($validated['password'], $student->password)) {
+            return $this->returnError('The provided credentials are incorrect.', 401);
+        }
+
+        $token = $student->createToken('student_token')->plainTextToken;
+
+        $this->setResult("student", new UserDetailResource($student));
+        $this->setResult("token", $token);
+        return $this->returnResponse();
+    }
+
+    public function login_test(LoginRequest $request): JsonResponse
+    {
+        $validated = $request->validated();
+
         $student = Student::where('school_key', $validated['school_key'])
             ->where(function ($query) use ($validated) {
                 $query->where('phone', $validated['identifier'])
@@ -67,8 +86,10 @@ class AuthController extends Controller
         if (!$student || !Hash::check($validated['password'], $student->password)) {
             return $this->returnError('The provided credentials are incorrect.', 401);
         }
+        $token = $student->createToken('student_token')->plainTextToken;
 
         $this->setResult("student", $student);
+        $this->setResult("token", $token);
         return $this->returnResponse();
     }
 

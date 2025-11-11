@@ -15,21 +15,21 @@ class RegisterRequest extends FormRequest
     {
         return [
             'school_id' => 'required|exists:schools,id',
+            'school_key' => 'required|string|exists:schools,school_key',
             'first_name' => 'required|string|max:100',
             'last_name' => 'required|string|max:100',
+            'age'=> 'required|int',
             'date_of_birth' => 'required|date',
-            'gender' => 'required|in:male,female,other',
-            'email' => 'nullable|email|unique:students,email',
-            'phone' => 'required|string|unique:students,phone',
-            'password' => 'required|string|min:6',
-            'school_key' => 'required|string',
+            'gender' => 'required|in:male,female',
 
             'parent_first_name' => 'nullable|string|max:100',
             'parent_last_name' => 'nullable|string|max:100',
-            'parent_email' => 'nullable|email|unique:students,parent_email',
-            'parent_phone' => 'nullable|string|unique:students,parent_phone',
+            'email' => 'nullable|email|unique:students,email',
+            'phone' => 'required|string|unique:students,phone',
+            'password' => 'required|string|min:6',
 
             'address' => 'nullable|string',
+            'enrollment_year' => 'nullable'
         ];
     }
 }
