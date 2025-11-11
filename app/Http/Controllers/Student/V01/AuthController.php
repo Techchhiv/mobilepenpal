@@ -37,16 +37,16 @@ class AuthController extends Controller
             return $this->returnError("The phone number must be a valid Cambodian number.", 422);
         }
 
-        $userInfo = [
-            'phoneNumber' => ChangePhoneNumberFormat::toE164GlobalFormat($validated['phone']),
-            'displayName' => $validated['first_name'] . ' ' . $validated['last_name'] ?? null,
-        ];
+        // $userInfo = [
+        //     'phoneNumber' => ChangePhoneNumberFormat::toE164GlobalFormat($validated['phone']),
+        //     'displayName' => $validated['first_name'] . ' ' . $validated['last_name'] ?? null,
+        // ];
 
-        $firebaseUser = $this->firebaseAuth->createUser($userInfo);
-        $firebaseUid = $firebaseUser->uid;
+        // $firebaseUser = $this->firebaseAuth->createUser($userInfo);
+        // $firebaseUid = $firebaseUser->uid;
 
         $validated['password'] = Hash::make($validated['password']);
-        $validated['firebase_uid'] = $firebaseUid;
+        // $validated['firebase_uid'] = $firebaseUid;
 
         $student = Student::create($validated);
 

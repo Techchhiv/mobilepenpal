@@ -10,17 +10,27 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
+use function App\Helpers\fetchStudentProgress;
+
 class UserController extends Controller
 {
+
+    public function __construct()
+    {
+        require_once app_path('Helpers/FetchStudentProgress.php');
+    }
     public function profile(): JsonResponse
     {
-        $authUser = Auth::user();
+        $authUser = auth::guard('students')->user();
 
         if (!$authUser) {
             return $this->returnError('User not authenticated', 401);
         }
 
+        $studentProgress = fetchStudentProgress($authUser);
+
         $this->setResult("profile", new UserDetailResource($authUser));
+        $this->setResult("progress", $studentProgress);
         return $this->returnResponse();
     }
 

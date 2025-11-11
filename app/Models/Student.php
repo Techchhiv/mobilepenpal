@@ -23,4 +23,19 @@ class Student extends Authenticatable
         'date_of_birth' => 'date',
         'enrollment_year' => 'date',
     ];
+
+    public function levelProgress()
+    {
+        return $this->hasMany(StudentLevelProgress::class);
+    }
+
+    public function stageProgress()
+    {
+        return $this->hasMany(StudentStageProgress::class);
+    }
+
+    public function exerciseAttempts()
+    {
+        return $this->hasMany(StudentExerciseAttempt::class);
+    }
 }
