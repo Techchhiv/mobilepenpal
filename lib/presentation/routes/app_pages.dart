@@ -10,21 +10,21 @@ import 'app_routes.dart';
 
 class AppPages {
   static final routes = [
-    GetPage(name: AppRoutes.splash, page: () => HomePage(), binding: HomeBinding()),
-    // GetPage(
-    //   name: AppRoutes.login,
-    //   page: () => LoginPage(),
-    //   binding: AuthBinding(),
-    // ),
-    // GetPage(
-    //   name: AppRoutes.otp,
-    //   page: () => OtpVerificationPage(),
-    //   binding: OtpBinding(),
-    // ),
-    // GetPage(
-    //   name: AppRoutes.home,
-    //   page: () => HomePage(),
-    //   binding: HomeBinding(),
-    // ),
+    GetPage(name: AppRoutes.splash, page: () => SplashPage()),
+    GetPage(
+      name: AppRoutes.login,
+      page: () => LoginPage(),
+      binding: AuthBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.otp,
+      page: () => OtpVerificationPage(),
+      binding: OtpBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.home,
+      page: () => HomePage(),
+      binding: HomeBinding(),
+    ),
   ];
 }

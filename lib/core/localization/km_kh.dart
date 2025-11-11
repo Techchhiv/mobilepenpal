@@ -191,6 +191,7 @@ final Map<String, String> kmKH = {
 
   // ===== School Specific =====
   'student': 'សិស្ស',
+  'parent': "អាណាព្យាបាល",
   'teacher': 'គ្រូ',
   'class': 'ថ្នាក់',
   'grade': 'ចំណាត់ថ្នាក់',
@@ -198,7 +199,53 @@ final Map<String, String> kmKH = {
   'assignment': 'កិច្ចការ',
   'score': 'ពិន្ទុ',
   'result': 'លទ្ធផល',
+  'my_course': 'វគ្គសិក្សារបស់ខ្ញុំ',
 
-  // ===== Home =====
-  'parent': "អាណាព្យាបាល",
+  // ===== Course & Progress =====
+  'my_courses': 'វគ្គសិក្សារបស់ខ្ញុំ',
+  'in_progress': 'កំពុងរៀន',
+  'start': 'ចាប់ផ្តើម',
+  'progress': 'វឌ្ឍនភាព',
+  'lessons': 'មេរៀន',
+  'stars': 'ផ្កាយ',
+  'remaining': 'នៅសល់',
+  'course_progress': 'វឌ្ឍនភាពវគ្គសិក្សា',
+  'continue_learning': 'បន្តការរៀន',
+  'begin_course': 'ចាប់ផ្តើមវគ្គសិក្សា',
+  'view_course': 'មើលវគ្គសិក្សា',
+  'course_details': 'ព័ត៌មានលម្អិតវគ្គសិក្សា',
+  'level': 'កម្រិត',
+  'stage': 'ដំណាក់កាល',
+  'exercise': 'លំហាត់',
+  'world': 'ពិភព',
+  'learning_letters': 'រៀនអក្សរ',
+  'learning_numbers': 'រៀនលេខ',
+  'khmer_alphabet': 'អក្សរខ្មែរ',
+  'math_practice': 'លំហាត់គណិតវិទ្យា',
+
+  // ===== Home & Dashboard =====
+  'achievements': 'សមិទ្ធផល',
+  'streak': 'ដំណើរបន្ត',
+  'time_spent': 'ពេលវេលាបានប្រើ',
+  'last_played': 'លេងចុងក្រោយ',
+  'current_level': 'កម្រិតបច្ចុប្បន្ន',
+  'next_level': 'កម្រិតបន្ទាប់',
+  'experience_points': 'ពិន្ទុបទពិសោធន៍',
+
+  // ===== Notifications =====
+  'no_notifications': 'គ្មានការជូនដំណឹង',
+  'mark_all_read': 'សម្គាល់ថាបានអានទាំងអស់',
+  'new_assignment': 'កិច្ចការថ្មី',
+  'achievement_unlocked': 'បានបើកសមិទ្ធផល',
+  'level_up': 'ត្រឡប់កម្រិត!',
+
+  // ===== Mode Switching =====
+  'student_mode': 'ម៉ូដសិស្ស',
+  'parent_mode': 'ម៉ូដអាណាព្យាបាល',
+  'switch_to_parent': 'ប្តូរទៅអាណាព្យាបាល',
+  'switch_to_student': 'ប្តូរទៅសិស្ស',
+  'parent_pin': 'កូដអាណាព្យាបាល',
+  'enter_parent_pin': 'បញ្ចូលកូដអាណាព្យាបាល',
+  'parent_dashboard': 'ផ្ទាំងអាណាព្យាបាល',
+  'student_progress': 'វឌ្ឍនភាពសិស្ស',
 };

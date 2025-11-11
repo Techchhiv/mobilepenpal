@@ -2,15 +2,32 @@ import 'package:mobilepenpal/data/models/student/student.dart';
 import 'package:mobilepenpal/data/models/api_response.dart';
 import 'package:mobilepenpal/core/network/api_client.dart';
 import 'package:mobilepenpal/core/network/endpoint/home.dart';
+import 'package:mobilepenpal/data/models/student/student_progress.dart';
+
+class ProfileResponse {
+  final Student profile;
+  final List<StudentProgress> progress;
+
+  ProfileResponse({required this.profile, required this.progress});
+
+  factory ProfileResponse.fromJson(Map<String, dynamic> json) {
+    return ProfileResponse(
+      profile: Student.fromJson(json['profile']),
+      progress: (json['progress'] as List<dynamic>?)
+          ?.map((progress) => StudentProgress.fromJson(progress))
+          .toList() ?? [],
+    );
+  }
+}
 
 class HomeService {
   final ApiClient _apiClient = ApiClient();
 
-  Future<ApiResponse<Student>> getStudentProfile() async {
-    final result = await _apiClient.request<Student>(
+  Future<ApiResponse<ProfileResponse>> getStudentProfile() async {
+    final result = await _apiClient.request<ProfileResponse>(
       method: 'GET',
       path: HomeEndpoints.profile,
-      fromData: (data) => Student.fromJson(data['profile']),
+      fromData: (data) => ProfileResponse.fromJson(data),
     );
 
     return result;

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:mobilepenpal/data/models/student/student.dart';
+import 'package:mobilepenpal/data/models/student/student_progress.dart';
 import 'package:mobilepenpal/data/services/home_service.dart';
 
 class HomeController extends GetxController {
@@ -10,12 +11,9 @@ class HomeController extends GetxController {
 
   var isLoading = false.obs;
   var isProfileLoading = false.obs;
-  var userName = ''.obs;
-  var userAvatar = ''.obs;
   var student = Rxn<Student>();
   var currentMode = 'student'.obs;
-
-  var courses = <Map<String, dynamic>>[].obs;
+  var studentProgress = <StudentProgress>[].obs;
 
   @override
   void onInit() {
@@ -28,22 +26,22 @@ class HomeController extends GetxController {
   }
 
   void loadInitialData() {
-    loadUserDataFromStorage();
+    loadCachedData();
     fetchStudentProfile();
-    loadCourses();
   }
 
-  void loadUserDataFromStorage() {
+  void loadCachedData() {
     final studentData = _box.read('student');
     if (studentData != null && studentData is Map<String, dynamic>) {
       student.value = Student.fromJson(studentData);
-      userName.value =
-          '${student.value?.firstName ?? ''} ${student.value?.lastName ?? ''}'
-              .trim();
-    } else {
-      userName.value = _box.read('full_name') ?? 'Student';
     }
-    userAvatar.value = _box.read('user_avatar') ?? '';
+
+    final progressData = _box.read('student_progress');
+    if (progressData != null && progressData is List<dynamic>) {
+      studentProgress.assignAll(
+        progressData.map((data) => StudentProgress.fromJson(data)).toList(),
+      );
+    }
   }
 
   Future<void> fetchStudentProfile() async {
@@ -55,12 +53,13 @@ class HomeController extends GetxController {
       final response = await _homeService.getStudentProfile();
 
       if (response.code == 200 && response.data != null) {
-        student.value = response.data;
-        userName.value =
-            '${response.data?.firstName ?? ''} ${response.data?.lastName ?? ''}'
-                .trim();
+        student.value = response.data!.profile;
+        studentProgress.assignAll(response.data!.progress);
 
-        await _saveStudentToStorage(response.data!);
+        await _saveToStorage(
+          student: response.data!.profile,
+          progress: response.data!.progress,
+        );
       } else {
         Get.snackbar(
           'error'.tr,
@@ -74,59 +73,27 @@ class HomeController extends GetxController {
     }
   }
 
-  Future<void> _saveStudentToStorage(Student student) async {
+  Future<void> _saveToStorage({
+    required Student student,
+    required List<StudentProgress> progress,
+  }) async {
     await _box.write('student', student.toJson());
-    await _box.write(
-      'full_name',
-      '${student.firstName} ${student.lastName}'.trim(),
-    );
-    await _box.write('user_phone', student.phone);
-  }
-
-  void loadCourses() {
-    courses.assignAll([
-      {
-        'title': 'ផ្នែកអក្សរ',
-        'subtitle': 'រៀនសរសេរអក្សរខ្មែរ',
-        'progress': 9,
-        'total': 20,
-        'color': Colors.pink,
-        'icon': '📝',
-      },
-      {
-        'title': 'ផ្នែកសូរ',
-        'subtitle': 'ការបញ្ចេញសូរ និងអានសៀវភៅ',
-        'progress': 9,
-        'total': 20,
-        'color': Colors.blue,
-        'icon': '🔊',
-      },
-    ]);
-  }
-
-  double calculateProgress(int progress, int total) {
-    if (total == 0) return 0;
-    return progress / total;
+    
+    final progressList = progress.map((p) => p.toJson()).toList();
+    await _box.write('student_progress', progressList);
   }
 
   Future<void> refreshCourses() async {
     isLoading.value = true;
-
-    await Future.wait([
-      fetchStudentProfile(),
-      Future.delayed(const Duration(seconds: 1)),
-    ]);
-
-    loadCourses();
+    await fetchStudentProfile();
     isLoading.value = false;
   }
 
   String get fullName => student.value != null
       ? '${student.value!.firstName} ${student.value!.lastName}'
-      : userName.value;
-  String get studentAddress => student.value?.address ?? 'No address';
+      : 'Student';
+
   String get parentName => student.value?.parentFirstName != null
-      ? '${student.value!.parentFirstName} ${student.value?.parentLastName ?? ""}'
-            .trim()
+      ? '${student.value!.parentFirstName} ${student.value?.parentLastName ?? ""}'.trim()
       : 'Parent';
 }

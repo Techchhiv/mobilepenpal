@@ -192,13 +192,60 @@ final Map<String, String> enUS = {
   // ===== School Specific =====
   'student': 'Student',
   'teacher': 'Teacher',
+  'parent': "Parent",
   'class': 'Class',
   'grade': 'Grade',
   'homework': 'Homework',
   'assignment': 'Assignment',
   'score': 'Score',
   'result': 'Result',
+  'my_course': 'My Course',
 
-  // ===== Home =====
-  'parent': "Parent",
+  // ===== Course & Progress =====
+  'my_courses': 'My Courses',
+  'in_progress': 'In Progress',
+  'start': 'Start',
+  'progress': 'Progress',
+  'lessons': 'lessons',
+  'stars': 'Stars',
+  'remaining': 'Remaining',
+  'course_progress': 'Course Progress',
+  'continue_learning': 'Continue Learning',
+  'begin_course': 'Begin Course',
+  'view_course': 'View Course',
+  'course_details': 'Course Details',
+  'level': 'Level',
+  'stage': 'Stage',
+  'exercise': 'Exercise',
+  'world': 'World',
+  'learning_letters': 'Learning Letters',
+  'learning_numbers': 'Learning Numbers',
+  'khmer_alphabet': 'Khmer Alphabet',
+  'math_practice': 'Math Practice',
+
+  // ===== Home & Dashboard =====
+  'achievements': 'Achievements',
+  'streak': 'Streak',
+  'time_spent': 'Time Spent',
+  'last_played': 'Last Played',
+  'current_level': 'Current Level',
+  'next_level': 'Next Level',
+  'experience_points': 'Experience Points',
+
+  // ===== Notifications =====
+  'no_notifications': 'No Notifications',
+  'mark_all_read': 'Mark All as Read',
+  'new_assignment': 'New Assignment',
+  'achievement_unlocked': 'Achievement Unlocked',
+  'level_up': 'Level Up!',
+
+  // ===== Mode Switching =====
+  'student_mode': 'Student Mode',
+  'parent_mode': 'Parent Mode',
+  'switch_to_parent': 'Switch to Parent',
+  'switch_to_student': 'Switch to Student',
+  'parent_pin': 'Parent PIN',
+  'enter_parent_pin': 'Enter Parent PIN',
+  'parent_dashboard': 'Parent Dashboard',
+  'student_progress': 'Student Progress',
 };
