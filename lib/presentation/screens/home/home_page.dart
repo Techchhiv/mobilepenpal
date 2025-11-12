@@ -7,6 +7,7 @@ import 'package:mobilepenpal/data/models/student/student.dart';
 import 'package:mobilepenpal/presentation/screens/home/parent_home.dart';
 import 'package:mobilepenpal/presentation/screens/home/student_home.dart';
 import 'package:mobilepenpal/presentation/widgets/mode_switcher.dart';
+
 class HomePage extends StatelessWidget {
   HomePage({super.key});
 
@@ -41,7 +42,8 @@ class HomePage extends StatelessWidget {
 
                   ModeSwitcher(
                     currentMode: homeController.currentMode,
-                    onModeChanged: homeController.setCurrentMode,
+                    onModeChanged: (mode) =>
+                        homeController.requestModeChange(mode),
                   ),
 
                   const SizedBox(height: 24),

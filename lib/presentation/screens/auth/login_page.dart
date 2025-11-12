@@ -159,8 +159,7 @@ class LoginPage extends StatelessWidget {
                 () => TextFormField(
                   controller: authController.passwordController,
                   obscureText: !authController.isPasswordVisible.value,
-                  enabled:
-                      !authController.isLoading.value, // Disable during loading
+                  enabled: !authController.isLoading.value,
                   decoration: InputDecoration(
                     filled: true,
                     fillColor: authController.isLoading.value

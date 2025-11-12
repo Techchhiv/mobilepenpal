@@ -50,9 +50,7 @@ class StudentHome extends StatelessWidget {
                 badgeColor: progress.isCompleted
                     ? Colors.green
                     : const Color(0xFFFF9800),
-                onTap: () {
-                  // Navigate to details
-                },
+                onTap: () {},
               );
             }).toList(),
           );

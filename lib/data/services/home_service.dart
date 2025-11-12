@@ -13,9 +13,11 @@ class ProfileResponse {
   factory ProfileResponse.fromJson(Map<String, dynamic> json) {
     return ProfileResponse(
       profile: Student.fromJson(json['profile']),
-      progress: (json['progress'] as List<dynamic>?)
-          ?.map((progress) => StudentProgress.fromJson(progress))
-          .toList() ?? [],
+      progress:
+          (json['progress'] as List<dynamic>?)
+              ?.map((progress) => StudentProgress.fromJson(progress))
+              .toList() ??
+          [],
     );
   }
 }
@@ -43,6 +45,16 @@ class HomeService {
       fromData: (data) => Student.fromJson(data['profile']),
     );
 
+    return result;
+  }
+
+  Future<ApiResponse<Map<String, dynamic>>> updateParentPin(String pin) async {
+    final result = await _apiClient.request<Map<String, dynamic>>(
+      method: 'PUT',
+      path: HomeEndpoints.updatePin,
+      data: {'parent_pin': pin},
+      fromData: (data) => data as Map<String, dynamic>,
+    );
     return result;
   }
 }
