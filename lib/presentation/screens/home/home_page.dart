@@ -67,10 +67,14 @@ class HomePage extends StatelessWidget {
       children: [
         Row(
           children: [
-            CircleAvatar(
-              radius: 28,
-              backgroundColor: Colors.grey[200],
-              child: Icon(Icons.person, color: Colors.grey[600]),
+            InkWell(
+              onTap: () => Get.toNamed('/setting'),
+              customBorder: CircleBorder(),
+              child: CircleAvatar(
+                radius: 28,
+                backgroundColor: Colors.grey[200],
+                child: Icon(Icons.person, color: Colors.grey[600]),
+              ),
             ),
             const SizedBox(width: 12),
             Column(

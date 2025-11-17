@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:mobilepenpal/core/theme/app_colors.dart';
+import 'package:mobilepenpal/data/controllers/utils/pin_controller.dart';
 import 'package:mobilepenpal/data/models/student/student.dart';
 import 'package:mobilepenpal/data/models/student/student_progress.dart';
 import 'package:mobilepenpal/data/services/home_service.dart';
@@ -16,7 +17,7 @@ class HomeController extends GetxController {
   var isLoading = false.obs;
   var isProfileLoading = false.obs;
   var student = Rxn<Student>();
-  var currentMode = 'student'.obs;
+  var currentMode = ''.obs;
   var studentProgress = <StudentProgress>[].obs;
 
   @override
@@ -26,10 +27,12 @@ class HomeController extends GetxController {
   }
 
   void setCurrentMode(String mode) {
+    _box.write('mode', mode);
     currentMode.value = mode;
   }
 
   void loadInitialData() {
+    setCurrentMode(_box.read('mode') ?? 'student');
     loadCachedData();
     fetchStudentProfile();
   }
@@ -103,21 +106,17 @@ class HomeController extends GetxController {
         }
 
         final ok = await Get.to<bool>(
-          () => PinWidget(
-            mode: PinMode.verify,
-            title: 'unlock_parent_mode'.tr,
-            autoCloseOnSuccess: false,
-          ),
+          () => PinWidget(mode: PinMode.verify, title: 'unlock_parent_mode'.tr),
         );
 
         if (ok == true) {
-          currentMode.value = 'parent';
+          setCurrentMode('parent');
         }
         return;
       }
 
       if (skip) {
-        currentMode.value = 'parent';
+        setCurrentMode('parent');
         return;
       }
 
@@ -127,14 +126,14 @@ class HomeController extends GetxController {
           () => const PinWidget(mode: PinMode.create),
         );
         if (created == true) {
-          currentMode.value = 'parent';
+          setCurrentMode('parent');
         }
       } else if (create == false) {
         _box.write('skip_parent_pin_setup', true);
-        currentMode.value = 'parent';
+        setCurrentMode('parent');
       }
     } else {
-      currentMode.value = 'student';
+      setCurrentMode('student');
     }
   }
 

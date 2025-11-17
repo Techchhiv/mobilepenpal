@@ -57,4 +57,34 @@ class HomeService {
     );
     return result;
   }
+
+  Future<ApiResponse<Map<String, dynamic>>> updatePassword({
+    required String currentPassword,
+    required String newPassword,
+    required String confirmPassword,
+  }) async {
+    final result = await _apiClient.request<Map<String, dynamic>>(
+      method: 'PUT',
+      path: HomeEndpoints.password,
+      data: {
+        'current_password': currentPassword,
+        'new_password': newPassword,
+        'new_password_confirmation': confirmPassword,
+      },
+      fromData: (data) => data as Map<String, dynamic>,
+    );
+
+    return result;
+  }
+
+  Future<ApiResponse<Student>> updateUser(Map<String, dynamic> data) async {
+    final result = await _apiClient.request<Student>(
+      method: 'PUT',
+      path: HomeEndpoints.update,
+      data: data,
+      fromData: (data) => Student.fromJson(data['students']),
+    );
+
+    return result;
+  }
 }

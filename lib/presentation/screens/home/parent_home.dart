@@ -26,7 +26,7 @@ class ParentHome extends StatelessWidget {
 
         const SizedBox(height: 24),
 
-        _buildSummaryCard(),
+        _buildSummaryCard(context),
       ],
     );
   }
@@ -98,7 +98,10 @@ class ParentHome extends StatelessWidget {
                     children: const [
                       Text(
                         'ឈី អរុណា',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                       ),
                       Text(
                         'ថ្នាក់ទី ៣ក',
@@ -128,7 +131,7 @@ class ParentHome extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 16),
-        
+
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -147,7 +150,7 @@ class ParentHome extends StatelessWidget {
                   ),
                 ],
               ),
-        
+
               Spacer(),
               Divider(),
               const SizedBox(height: 6),
@@ -165,7 +168,7 @@ class ParentHome extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 12),
-        
+
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
                 child: LinearProgressIndicator(
@@ -175,12 +178,16 @@ class ParentHome extends StatelessWidget {
                   minHeight: 8,
                 ),
               ),
-        
+
               const SizedBox(height: 12),
-        
+
               Row(
                 children: const [
-                  Icon(Icons.check_circle_outline, color: Colors.blue, size: 18),
+                  Icon(
+                    Icons.check_circle_outline,
+                    color: Colors.blue,
+                    size: 18,
+                  ),
                   SizedBox(width: 6),
                   Text('Recent: ', style: TextStyle(fontSize: 13)),
                   SizedBox(width: 6),
@@ -203,7 +210,7 @@ class ParentHome extends StatelessWidget {
                   ),
                 ],
               ),
-        
+
               const SizedBox(height: 16),
               ElevatedButton.icon(
                 onPressed: () {},
@@ -224,38 +231,64 @@ class ParentHome extends StatelessWidget {
     );
   }
 
-  Widget _buildSummaryCard() {
+  Widget _buildSummaryCard(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text("របាយការណ៍សង្ខេប"),
-        SizedBox(height: 12,),
+        SizedBox(height: 12),
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
           decoration: BoxDecoration(
-            color: const Color(0xFF004D40),
+            color: Colors.white,
             borderRadius: BorderRadius.circular(20),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'សង្ខេបសកម្មភាព',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
-              ),
-              const SizedBox(height: 12),
-        
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _buildSummaryItem('មេរៀនបានរៀន', '24', Colors.lightBlueAccent),
-                  _buildSummaryItem('ពេលវេលាសិក្សា', '8h 30m', Colors.greenAccent),
-                  _buildSummaryItem('លទ្ធផលល្អ', '95%', Colors.orangeAccent),
+                  Icon(Icons.bar_chart_sharp, color: Colors.black, size: 16,),
+              const SizedBox(width: 12),
+                  Text(
+                    'សង្ខេបសកម្មភាព',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _buildSummaryItem(
+                        "មេរៀនដែលបានមើល",
+                        '24',
+                        Color(0xFF165DFB),
+                      ),
+                      const SizedBox(height: 24),
+                      _buildSummaryItem("សមិទ្ធិផល", '24', Color(0xFF9810FA)),
+                    ],
+                  ),
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _buildSummaryItem(
+                        "សរុបពេលវេលាសិក្សា",
+                        '8h 30m',
+                        Color(0xFF00A63E),
+                      ),
+                      const SizedBox(height: 24),
+                      _buildSummaryItem(
+                        "ពិន្ទុមធ្យម",
+                        '95%',
+                        Color(0xFFF54900),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ],
@@ -273,14 +306,14 @@ class ParentHome extends StatelessWidget {
           value,
           style: TextStyle(
             color: color,
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
+            fontWeight: FontWeight.w900,
+            fontSize: 24,
           ),
         ),
         const SizedBox(height: 4),
         Text(
           label,
-          style: const TextStyle(color: Colors.white70, fontSize: 12),
+          style: const TextStyle(color: Color(0xFF737384), fontSize: 14),
           textAlign: TextAlign.center,
         ),
       ],
