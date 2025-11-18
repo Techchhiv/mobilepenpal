@@ -10,9 +10,10 @@ Route::prefix('auth')->group(function () {
     Route::get('/check', [AuthController::class, 'check']);
 });
 
-Route::prefix('profile')->group(function() {
+Route::prefix('profile')->group(function () {
     Route::get('', [UserController::class, 'profile']);
     Route::put('', [UserController::class, 'update']);
+    Route::post('/upload-avatar', [UserController::class, 'updateImage']);
     Route::put('/password', [UserController::class, 'updatePassword']);
     Route::put('/update-pin', [UserController::class, 'updateParentPin']);
     Route::post('/switch-mode', [UserController::class, 'switchMode']);

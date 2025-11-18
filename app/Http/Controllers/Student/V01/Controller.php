@@ -124,7 +124,7 @@ abstract class Controller
     {
         $this->setCode($code);
         $this->setMessage($message);
-        $this->_result = $data;
+        $this->_result = $data == [] ? null : $data;
 
         return $this->returnResponse($code);
     }

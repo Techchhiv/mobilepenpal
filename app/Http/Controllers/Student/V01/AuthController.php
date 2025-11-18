@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
 use function App\Helpers\isKhmerPhone;
+use function App\Helpers\uploadImageBase64;
 use Kreait\Firebase\Factory;
 
 class AuthController extends Controller
@@ -24,9 +25,10 @@ class AuthController extends Controller
     public function __construct()
     {
         require_once app_path('Helpers/PhoneNumberValidation.php');
-        $this->firebaseAuth = (new Factory)
-            ->withServiceAccount(config('firebase.credentials'))
-            ->createAuth();
+        require_once app_path('Helpers/UploadMedia.php');
+        // $this->firebaseAuth = (new Factory)
+        //     ->withServiceAccount(config('firebase.credentials'))
+        //     ->createAuth();
     }
 
     public function register(RegisterRequest $request): JsonResponse
@@ -46,6 +48,7 @@ class AuthController extends Controller
         // $firebaseUid = $firebaseUser->uid;
 
         $validated['password'] = Hash::make($validated['password']);
+        $validated['avatar'] = uploadImageBase64($validated['avatar']);
         // $validated['firebase_uid'] = $firebaseUid;
 
         $student = Student::create($validated);

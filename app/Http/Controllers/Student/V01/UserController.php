@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Hash;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
 use function App\Helpers\fetchStudentProgress;
+use function App\Helpers\uploadImageBase64;
 
 class UserController extends Controller
 {
@@ -18,6 +19,7 @@ class UserController extends Controller
     public function __construct()
     {
         require_once app_path('Helpers/FetchStudentProgress.php');
+        require_once app_path('Helpers/UploadMedia.php');
     }
     public function profile(): JsonResponse
     {
@@ -111,6 +113,46 @@ class UserController extends Controller
         $isPinSet = !empty($student->parent_pin);
 
         $this->setResult('is_parent_pin_set', $isPinSet);
+        return $this->returnResponse();
+    }
+
+    public function updateImage(Request $request): JsonResponse
+    {
+        $request->validate([
+            'image' => 'required|string'
+        ]);
+
+        /** @var Student $student */
+        $student = Auth::user();
+
+        if (!$student) {
+            return $this->returnError('User not authenticated', 401);
+        }
+
+        if ($student->avatar) {
+            $previousPath = public_path($student->avatar);
+            if (file_exists($previousPath)) {
+                unlink($previousPath);
+
+                $folder = dirname($previousPath);
+                while ($folder !== public_path('images') && is_dir($folder) && count(scandir($folder)) === 2) {
+                    rmdir($folder);
+                    $folder = dirname($folder);
+                }
+            }
+        }
+
+        $imagePath = uploadImageBase64($request->image);
+
+        if (!$imagePath) {
+            return $this->returnError('Incorrect Image type or wrong format', 422);
+        }
+
+        $student->update([
+            'avatar' => $imagePath
+        ]);
+
+        $this->setResult('student', new UserDetailResource($student));
         return $this->returnResponse();
     }
 }
