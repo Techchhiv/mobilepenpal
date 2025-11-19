@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
+import 'package:mobilepenpal/presentation/widgets/achievement_card.dart';
 import 'package:mobilepenpal/presentation/widgets/course_card.dart';
 
 class StudentHome extends StatelessWidget {
@@ -55,6 +56,42 @@ class StudentHome extends StatelessWidget {
             }).toList(),
           );
         }),
+
+        const SizedBox(height: 18),
+
+        Text(
+          'achievements'.tr,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        
+        const SizedBox(height: 18),
+
+        AchievementCard(
+          backgroundColor: Color(0xFFF0FDF4),
+          borderColor:  Color(0xFF2EC4B6),
+          icon: Icons.emoji_events,
+          iconBackgroundColor: Color(0xFF00C950),
+          iconSize: 24,
+          title: 'លំហាត់គណិត', 
+          subtitle:
+              'បញ្ចប់មេរៀនគណិត ១០ មេរៀន',
+          titleStyle: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Colors.black87,
+          ),
+          subtitleStyle: TextStyle(fontSize: 13, color: Colors.grey[600]),
+          onTap: () {
+            Get.snackbar(
+              'Achievement'.tr,
+              'Fast Learner achievement details'.tr,
+            );
+          },
+          borderRadius: 12,
+          padding: const EdgeInsets.all(16),
+          margin: EdgeInsets.zero,
+          borderWidth: 2.0,
+        ),
       ],
     );
   }

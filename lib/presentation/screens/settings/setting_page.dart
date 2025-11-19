@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:mobilepenpal/core/config/env.dart';
 import 'package:mobilepenpal/core/theme/app_colors.dart';
 import 'package:mobilepenpal/data/controllers/settings/setting_controller.dart';
 import 'package:mobilepenpal/data/controllers/utils/pin_controller.dart';
@@ -51,31 +52,66 @@ class SettingPage extends StatelessWidget {
           children: [
             Row(
               children: [
-                Stack(
-                  children: [
-                    CircleAvatar(
-                      radius: 50,
-                      backgroundColor: Colors.grey[300],
-                      child: Icon(Icons.person, size: 40, color: Colors.white),
+                Obx(() {
+                  return GestureDetector(
+                    onTap: () {
+                      settingController.pickAndUploadImage();
+                    },
+                    child: Stack(
+                      children: [
+                        if (settingController.isLoading.value)
+                          Container(
+                            width: 100,
+                            height: 100,
+                            decoration: BoxDecoration(
+                              color: Colors.grey[300],
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Center(
+                              child: CircularProgressIndicator(),
+                            ),
+                          )
+                        else
+                          CircleAvatar(
+                            radius: 50,
+                            backgroundColor: Colors.grey[300],
+                            backgroundImage:
+                                settingController.avatarUrl.isNotEmpty
+                                ? NetworkImage(
+                                        Env.backendUrl +
+                                            settingController.avatarUrl,
+                                      )
+                                      as ImageProvider
+                                : null,
+                            child: settingController.avatarUrl.isEmpty
+                                ? const Icon(
+                                    Icons.person,
+                                    size: 40,
+                                    color: Colors.white,
+                                  )
+                                : null,
+                          ),
+                        if (!settingController.isLoading.value)
+                          Positioned(
+                            bottom: 0,
+                            right: 0,
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.camera_alt,
+                                size: 16,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
-                    Positioned(
-                      bottom: 0,
-                      right: 0,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: Colors.grey[600],
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.camera_alt,
-                          size: 16,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                  );
+                }),
                 const SizedBox(width: 16),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

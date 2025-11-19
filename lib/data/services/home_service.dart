@@ -87,4 +87,17 @@ class HomeService {
 
     return result;
   }
+
+  Future<ApiResponse<Student>> uploadAvatar(String base64Image) async {
+    final result = await _apiClient.request<Student>(
+      method: 'POST',
+      path: HomeEndpoints.uploadImage,
+      data: {'image': base64Image},
+      fromData: (data) => Student.fromJson(
+        data['student'],
+      ),
+    );
+
+    return result;
+  }
 }

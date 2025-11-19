@@ -208,6 +208,9 @@ final Map<String, String> enUS = {
   'data_saved': 'Data saved successfully',
   'data_updated': 'Data updated successfully',
   'data_deleted': 'Data deleted successfully',
+  'image_updated': "Image updated successfully",
+  'image_too_large': 'Image size is too large. Please choose an image smaller than 2MB',
+
 
   // ===== Buttons =====
   'cancel': 'Cancel',

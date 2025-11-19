@@ -19,6 +19,8 @@ class HomeController extends GetxController {
   var student = Rxn<Student>();
   var currentMode = ''.obs;
   var studentProgress = <StudentProgress>[].obs;
+  
+  String get avatarUrl => student.value?.avatar ?? '';
 
   @override
   void onInit() {

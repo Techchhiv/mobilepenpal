@@ -2,7 +2,12 @@
 class Env {
   static const String apiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://192.168.98.151:8000/api/mobile',
+    defaultValue: 'http://192.168.0.157:8000/api/mobile',
+  );
+
+  static const String backendUrl = String.fromEnvironment(
+    'BACKEND_URL',
+    defaultValue: 'http://192.168.0.157:8000',
   );
 
   static const String environment = String.fromEnvironment(

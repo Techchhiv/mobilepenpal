@@ -1,22 +1,96 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:image_picker/image_picker.dart';
+
 import 'package:mobilepenpal/core/theme/app_colors.dart';
 import 'package:mobilepenpal/data/models/student/student.dart';
 import 'package:mobilepenpal/data/services/auth_service.dart';
+import 'package:mobilepenpal/data/services/home_service.dart';
 
 class SettingController extends GetxController {
   final AuthService authService = AuthService();
+  final HomeService homeService = HomeService();
+  final ImagePicker imagePicker = ImagePicker();
   final box = GetStorage();
 
   var currentMode = 'student'.obs;
   var student = Rxn<Student>();
+  var isLoading = false.obs;
 
   @override
   void onInit() {
     super.onInit();
     currentMode.value = box.read('mode') ?? 'student';
     student.value = Student.fromJson(box.read('student') ?? {});
+  }
+
+  String get avatarUrl => student.value?.avatar ?? '';
+
+  Future<void> pickAndUploadImage() async {
+    try {
+      final XFile? image = await imagePicker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 512,
+        maxHeight: 512,
+        imageQuality: 80,
+      );
+
+      if (image != null) {
+        final fileSize = await image.length();
+        const maxSize = 2 * 1024 * 1024;
+
+        if (fileSize > maxSize) {
+          Get.snackbar(
+            'warning'.tr,
+            'image_too_large'.tr,
+            backgroundColor: Colors.orange,
+            colorText: Colors.white,
+            duration: Duration(seconds: 3),
+          );
+          return;
+        }
+
+        isLoading.value = true;
+
+        final bytes = await image.readAsBytes();
+        final String base64Image = base64Encode(bytes);
+        final String imageData = 'data:image/jpeg;base64,$base64Image';
+
+        final response = await homeService.uploadAvatar(imageData);
+
+        isLoading.value = false;
+
+        if (response.code == 200 && response.data != null) {
+          student.value = response.data;
+          box.write('student', student.value?.toJson());
+
+          Get.snackbar(
+            'success'.tr,
+            'Profile picture updated successfully'.tr,
+            backgroundColor: Colors.green,
+            colorText: Colors.white,
+          );
+        } else {
+          Get.snackbar(
+            'Error'.tr,
+            response.message,
+            backgroundColor: Colors.red,
+            colorText: Colors.white,
+          );
+        }
+      }
+    } catch (e) {
+      isLoading.value = false;
+      Get.snackbar(
+        'Error'.tr,
+        'Failed to pick image: $e'.tr,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
   }
 
   void logout() {

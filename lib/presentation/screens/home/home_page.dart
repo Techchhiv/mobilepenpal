@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:mobilepenpal/core/config/env.dart';
 import 'package:mobilepenpal/data/controllers/auth/auth_controller.dart';
 import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
 import 'package:mobilepenpal/data/models/student/student.dart';
@@ -71,9 +72,15 @@ class HomePage extends StatelessWidget {
               onTap: () => Get.toNamed('/setting'),
               customBorder: CircleBorder(),
               child: CircleAvatar(
-                radius: 28,
-                backgroundColor: Colors.grey[200],
-                child: Icon(Icons.person, color: Colors.grey[600]),
+                radius: 30,
+                backgroundColor: Colors.grey[300],
+                backgroundImage: homeController.avatarUrl.isNotEmpty
+                    ? NetworkImage(Env.backendUrl + homeController.avatarUrl)
+                          as ImageProvider
+                    : null,
+                child: homeController.avatarUrl.isEmpty
+                    ? const Icon(Icons.person, size: 40, color: Colors.white)
+                    : null,
               ),
             ),
             const SizedBox(width: 12),
