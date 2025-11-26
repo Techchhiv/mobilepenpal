@@ -18,11 +18,11 @@ class Stage extends Model
 
     public function exercises()
     {
-        return $this->hasMany(Exercise::class);
+        return $this->hasMany(Exercise::class)->orderBy('order_index');
     }
 
     public function studentProgress()
     {
-        return $this->hasMany(StudentStageProgress::class);
+        return $this->hasOne(StudentStageProgress::class)->where('student_id', auth()->id());
     }
 }

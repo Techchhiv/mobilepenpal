@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class StudentLevelProgress extends Model
+class StudentWorldProgress extends Model
 {
     use HasFactory;
 
@@ -15,14 +15,4 @@ class StudentLevelProgress extends Model
         'is_completed' => 'boolean',
         'is_unlocked' => 'boolean',
     ];
-
-    public function student()
-    {
-        return $this->belongsTo(Student::class);
-    }
-
-    public function level()
-    {
-        return $this->belongsTo(Level::class);
-    }
 }

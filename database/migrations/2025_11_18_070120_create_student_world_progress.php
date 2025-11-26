@@ -13,16 +13,16 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('levels', function (Blueprint $table) {
+        Schema::create('student_world_progress', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('student_id')->constrained()->onDelete('cascade');
             $table->foreignId('world_id')->constrained()->onDelete('cascade');
+            $table->unique(['student_id', 'world_id']);
 
-            $table->string('name');
-            $table->text('description')->nullable();
-            $table->integer('order_index');
-
-            $table->string('background_image')->nullable();
-            $table->integer('required_stars')->default(0);
+            $table->integer('total_stars_earned')->default(0);
+            $table->integer('completion_percentage')->default(0);
+            $table->boolean('is_completed')->default(false);
+            $table->boolean('is_unlocked')->default(false);
 
             $table->timestamps();
         });
@@ -35,6 +35,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('levels');
+        Schema::dropIfExists('student_world_progress');
     }
 };

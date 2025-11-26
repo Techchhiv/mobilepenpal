@@ -1,177 +1,163 @@
 <?php
-// database/seeders/WorldLevelStageSeeder.php
+
 namespace Database\Seeders;
 
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 use App\Models\World;
 use App\Models\Level;
 use App\Models\Stage;
-use App\Models\Student;
-use App\Models\StudentLevelProgress;
-use App\Models\StudentStageProgress;
-use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Log;
+use App\Models\Exercise;
 
 class WorldLevelStageSeeder extends Seeder
 {
-    public function run(): void
+    public function run()
     {
-        // Create World 1: រៀនអក្សរ (Learning Letters)
-        $khmerMathWorld = World::create([
-            'name' => 'រៀនអក្សរ',
-            'description' => 'រៀនអក្សរតាមព្យុជ្ជនៈខ្មែរ',
-            'is_completed' => false,
-            'is_active' => true,
-        ]);
+        DB::transaction(function () {
+            DB::table('exercises')->delete();
+            DB::table('stages')->delete();
+            DB::table('levels')->delete();
+            DB::table('worlds')->delete();
 
-        // Create 10 Levels for Khmer Letters World
-        $levelsKhmerMath = [];
-        for ($i = 1; $i <= 10; $i++) {
-            $levelsKhmerMath[] = Level::create([
-                'world_id' => $khmerMathWorld->id,
-                'name' => 'Level ' . $i,
-                'order_index' => $i,
-                'required_stars' => $i * 3,
+            $alphabetWorld = World::create([
+                'name' => 'ព្យញ្ជនៈខ្មែរ',
+                'description' => 'រៀនគូរព្យញ្ជនៈខ្មែរ',
+                'icon_url' => null,
+                'map_image_url' => null,
+                'theme_color' => '#4CAF50',
+                'order_index' => 1,
+                'is_active' => true,
             ]);
-        }
 
-        // Create Stages for Khmer Letters World
-        $stageCount = 0;
-        foreach ($levelsKhmerMath as $level) {
-            $stagesPerLevel = $level->order_index === 3 ? 8 : 6;
-
-            for ($j = 1; $j <= $stagesPerLevel; $j++) {
-                Stage::create([
-                    'level_id' => $level->id,
-                    'name' => 'Stage ' . (++$stageCount),
-                    'order_index' => $j,
-                    'max_stars' => 3,
-                ]);
-            }
-        }
-
-        // Create World 2: រៀនលេខ (Learning Numbers)
-        $numbersWorld = World::create([
-            'name' => 'រៀនលេខ',
-            'description' => 'ការអនុវត្តន៍លំហាត់គណិត',
-            'is_completed' => false,
-            'is_active' => true,
-        ]);
-
-        // Create 10 Levels for Numbers World
-        $levelsNumbers = [];
-        for ($i = 1; $i <= 10; $i++) {
-            $levelsNumbers[] = Level::create([
-                'world_id' => $numbersWorld->id,
-                'name' => 'Level ' . $i,
-                'order_index' => $i,
-                'required_stars' => $i * 3,
+            $numbersWorld = World::create([
+                'name' => 'លេខខ្មែរ',
+                'description' => 'រៀនគូរលេខខ្មែរ',
+                'icon_url' => null,
+                'map_image_url' => null,
+                'theme_color' => '#2196F3',
+                'order_index' => 2,
+                'is_active' => true,
             ]);
-        }
 
-        // Create Stages for Numbers World
-        $stageCount = 0;
-        foreach ($levelsNumbers as $level) {
-            $stagesPerLevel = 5;
+            $alphabetLevels = [
+                [
+                    'name' => 'ក​ - ឃ',
+                    'description' => 'ព្យញ្ជនៈមូលដ្ឋាន',
+                    'order_index' => 1,
+                    'background_image' => null,
+                    'required_stars' => 0,
+                ],
+                [
+                    'name' => 'ង - ជ',
+                    'description' => 'ព្យញ្ជនៈបន្ត',
+                    'order_index' => 2,
+                    'background_image' => null,
+                    'required_stars' => 0,
+                ],
+                [
+                    'name' => 'ឈ - ឋ',
+                    'description' => 'ព្យញ្ជនៈបន្ត',
+                    'order_index' => 3,
+                    'background_image' => null,
+                    'required_stars' => 0,
+                ],
+            ];
 
-            for ($j = 1; $j <= $stagesPerLevel; $j++) {
-                Stage::create([
-                    'level_id' => $level->id,
-                    'name' => 'Stage ' . (++$stageCount),
-                    'order_index' => $j,
-                    'max_stars' => 3,
-                ]);
+            $numberLevels = [
+                [
+                    'name' => 'លេខ 0-៤',
+                    'description' => 'រៀនលេខពីសូន្យដល់បួន',
+                    'order_index' => 1,
+                    'background_image' => null,
+                    'required_stars' => 0,
+                ],
+                [
+                    'name' => 'លេខ ៥-៩',
+                    'description' => 'រៀនលេខពីប្រាំដល់ប្រាំបួន',
+                    'order_index' => 2,
+                    'background_image' => null,
+                    'required_stars' => 8,
+                ],
+            ];
+
+            foreach ($alphabetLevels as $levelData) {
+                $level = Level::create(array_merge($levelData, [
+                    'world_id' => $alphabetWorld->id,
+                ]));
+
+                for ($stageOrder = 1; $stageOrder <= 3; $stageOrder++) {
+                    $stage = Stage::create([
+                        'level_id' => $level->id,
+                        'name' => "Stage {$stageOrder}",
+                        'description' => "Practice session {$stageOrder} for {$level->name}",
+                        'instruction' => "Trace the Khmer characters following the guided path",
+                        'order_index' => $stageOrder,
+                        'max_stars' => 3,
+                    ]);
+
+                    $this->createExercisesForStage($stage, $level->name, $stageOrder);
+                }
             }
+
+            foreach ($numberLevels as $levelData) {
+                $level = Level::create(array_merge($levelData, [
+                    'world_id' => $numbersWorld->id,
+                ]));
+
+                for ($stageOrder = 1; $stageOrder <= 3; $stageOrder++) {
+                    $stage = Stage::create([
+                        'level_id' => $level->id,
+                        'name' => "Stage {$stageOrder}",
+                        'description' => "Practice session {$stageOrder} for {$level->name}",
+                        'instruction' => "Trace the Khmer numbers following the guided path",
+                        'order_index' => $stageOrder,
+                        'max_stars' => 3,
+                    ]);
+
+                    $this->createExercisesForStage($stage, $level->name, $stageOrder);
+                }
+            }
+        });
+    }
+
+    private function createExercisesForStage($stage, $levelName, $stageOrder)
+    {
+        $exercises = [];
+
+        if (str_contains($levelName, 'ព្យញ្ជនៈ')) {
+            $consonants = ['ក', 'ខ', 'គ', 'ឃ', 'ង', 'ច', 'ឆ', 'ជ', 'ឈ', 'ញ', 'ដ', 'ឋ', 'ឌ', 'ឍ', 'ណ', 'ត', 'ថ', 'ទ', 'ធ', 'ន',
+                           'ប', 'ផ', 'ព', 'ភ', 'ម', 'យ', 'រ', 'ល', 'វ', 'ស', 'ហ', 'ឡ', 'អ'];
+            $exercises = array_slice($consonants, ($stageOrder - 1) * 4, 4);
+        } elseif (str_contains($levelName, 'ស្រៈ')) {
+            $vowels = ['ា', 'ិ', 'ី', 'ឹ', 'ឺ', 'ុ', 'ូ', 'ួ', 'ើ', 'ឿ'];
+            $exercises = array_slice($vowels, ($stageOrder - 1) * 3, 3);
+        } elseif (str_contains($levelName, 'Advanced')) {
+            $advanced = ['ំ', 'ះ', 'ៈ', '៉', '៊', '់', '៌', '៍', '៎', '៏'];
+            $exercises = array_slice($advanced, ($stageOrder - 1) * 3, 3);
+        } elseif (str_contains($levelName, '1-5')) {
+            $exercises = ['១', '២', '៣', '៤', '៥'];
+            $exercises = array_slice($exercises, ($stageOrder - 1) * 3, 3);
+        } elseif (str_contains($levelName, '6-10')) {
+            $exercises = ['៦', '៧', '៨', '៩', '១០'];
+            $exercises = array_slice($exercises, ($stageOrder - 1) * 3, 3);
+        } elseif (str_contains($levelName, 'Teen')) {
+            $exercises = ['១១', '១២', '១៣', '១៤', '១៥', '១៦', '១៧', '១៨', '១៩'];
+            $exercises = array_slice($exercises, ($stageOrder - 1) * 3, 3);
         }
 
-        $student = Student::find(1);
-        if ($student) {
-            $this->createStudentProgress($student, $levelsKhmerMath[0], 9, 20, false);
-
-            $this->createCompletedWorldProgress($student, $levelsNumbers, $numbersWorld);
-
+        foreach ($exercises as $index => $character) {
+            Exercise::create([
+                'stage_id' => $stage->id,
+                'prompt' => "Draw the Khmer character: {$character}",
+                'character' => $character,
+                'question' => "Trace the character {$character}",
+                'options' => json_encode([$character, 'ម', 'រ', 'ល']),
+                'instruction' => "Follow the stroke order to draw {$character} correctly",
+                'hint' => "Start from the top left and follow the guided path",
+                'order_index' => $index + 1,
+            ]);
         }
     }
 
-    private function createStudentProgress($student, $level, $completedStages, $totalStages, $isLevelCompleted = false): void
-    {
-        // Create level progress using direct model
-        StudentLevelProgress::create([
-            'student_id' => $student->id,
-            'level_id' => $level->id,
-            'total_stars' => $completedStages * 3,
-            'is_completed' => $isLevelCompleted,
-            'unlocked' => true,
-            'last_played' => now(),
-        ]);
 
-        $stages = $level->stages()->orderBy('order_index')->get();
-
-        // Create completed stages
-        for ($i = 0; $i < min($completedStages, count($stages)); $i++) {
-            StudentStageProgress::create([
-                'student_id' => $student->id,
-                'stage_id' => $stages[$i]->id,
-                'stars_earned' => 3, // Max stars for completed stages
-                'completion_rate' => 100.0,
-                'status' => 'completed',
-                'last_played' => now(),
-            ]);
-        }
-
-        // Create current stage (in progress)
-        if ($completedStages < count($stages) && !$isLevelCompleted) {
-            StudentStageProgress::create([
-                'student_id' => $student->id,
-                'stage_id' => $stages[$completedStages]->id,
-                'stars_earned' => 0,
-                'completion_rate' => 0.0,
-                'status' => 'in_progress',
-                'last_played' => now(),
-            ]);
-        }
-
-        // Create locked stages
-        for ($i = $completedStages + 1; $i < count($stages); $i++) {
-            StudentStageProgress::create([
-                'student_id' => $student->id,
-                'stage_id' => $stages[$i]->id,
-                'stars_earned' => 0,
-                'completion_rate' => 0.0,
-                'status' => 'locked',
-                'last_played' => null,
-            ]);
-        }
-    }
-
-    private function createCompletedWorldProgress($student, $levels, $world): void
-    {
-        $totalStages = $world->stages()->count();
-        $totalStars = $totalStages * 3;
-
-        $world->update(['is_completed' => true]);
-
-        foreach ($levels as $level) {
-            $levelStages = $level->stages()->orderBy('order_index')->get();
-
-            StudentLevelProgress::create([
-                'student_id' => $student->id,
-                'level_id' => $level->id,
-                'total_stars' => $levelStages->count() * 3,
-                'is_completed' => true,
-                'unlocked' => true,
-                'last_played' => now(),
-            ]);
-
-            foreach ($levelStages as $stage) {
-                StudentStageProgress::create([
-                    'student_id' => $student->id,
-                    'stage_id' => $stage->id,
-                    'stars_earned' => 3, // Max stars
-                    'completion_rate' => 100.0,
-                    'status' => 'completed',
-                    'last_played' => now(),
-                ]);
-            }
-        }
-    }
 }

@@ -4,13 +4,13 @@ namespace App\Http\Controllers\Student\V01;
 
 use App\Http\Requests\Student\V01\User\UpdateUserRequest;
 use App\Http\Resources\Student\V01\User\UserDetailResource;
+use App\Helpers\StudentProgress;
 use App\Models\Student;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
-use function App\Helpers\fetchStudentProgress;
 use function App\Helpers\uploadImageBase64;
 
 class UserController extends Controller
@@ -18,7 +18,6 @@ class UserController extends Controller
 
     public function __construct()
     {
-        require_once app_path('Helpers/FetchStudentProgress.php');
         require_once app_path('Helpers/UploadMedia.php');
     }
     public function profile(): JsonResponse
@@ -29,10 +28,13 @@ class UserController extends Controller
             return $this->returnError('User not authenticated', 401);
         }
 
-        $studentProgress = fetchStudentProgress($authUser);
+        $studentProgress = new StudentProgress();
 
         $this->setResult("profile", new UserDetailResource($authUser));
-        $this->setResult("progress", $studentProgress);
+        $this->setResult(
+            "progress",
+            $studentProgress->getWorldsWithProgress()
+        );
         return $this->returnResponse();
     }
 

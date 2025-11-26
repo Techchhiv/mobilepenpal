@@ -17,10 +17,12 @@ return new class extends Migration
             $table->id();
             $table->foreignId('student_id')->constrained('students');
             $table->foreignId('exercise_id')->constrained('exercises');
+
             $table->string('user_answer')->nullable();
-            $table->integer('points_earned')->default(0);
+            // $table->integer('points_earned')->default(0);
             // $table->integer('time_taken')->nullable();
             $table->boolean('is_correct')->default(false);
+
             $table->timestamps();
         });
     }

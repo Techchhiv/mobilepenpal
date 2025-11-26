@@ -17,10 +17,10 @@ return new class extends Migration
             $table->id();
             $table->foreignId('student_id')->constrained('students');
             $table->foreignId('stage_id')->constrained('stages');
+
             $table->integer('stars_earned')->default(0);
-            $table->float('completion_rate')->default(0);
-            $table->string('status')->default('locked');
-            $table->timestamp('last_played')->nullable();
+            $table->enum('status',['locked', 'unlocked', 'completed'])->default('locked');
+
             $table->timestamps();
         });
     }

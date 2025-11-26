@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Student\V01\AuthController;
 use App\Http\Controllers\Student\V01\UserController;
+use App\Http\Controllers\Student\V01\WorldController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -18,4 +19,12 @@ Route::prefix('profile')->group(function () {
     Route::put('/update-pin', [UserController::class, 'updateParentPin']);
     Route::post('/switch-mode', [UserController::class, 'switchMode']);
     Route::get('/check-pin', [UserController::class, 'checkParentPin']);
+});
+
+Route::prefix('worlds')->group(function () {
+    Route::get('', [WorldController::class, 'index']);
+    Route::get('{id}', [WorldController::class, 'showWorld']);
+    Route::get('/level/{levelId}', [WorldController::class, 'showLevel']);
+    Route::get('/level/stage/{stageId}', [WorldController::class, 'showStage']);
+    Route::post('/exercise/submit', [WorldController::class, 'submitExerciseBatch']);
 });

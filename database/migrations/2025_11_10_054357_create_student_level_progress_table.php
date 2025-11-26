@@ -17,10 +17,11 @@ return new class extends Migration
             $table->id();
             $table->foreignId('student_id')->constrained('students');
             $table->foreignId('level_id')->constrained('levels');
+
             $table->integer('total_stars')->default(0);
             $table->boolean('is_completed')->default(false);
-            $table->boolean('unlocked')->default(false);
-            $table->timestamp('last_played')->nullable();
+            $table->boolean('is_unlocked')->default(false);
+
             $table->timestamps();
         });
     }

@@ -1,0 +1,140 @@
+<?php
+
+namespace App\Http\Controllers\Student\V01;
+
+use App\Helpers\StudentProgress;
+use App\Http\Resources\Student\V01\World\LevelWithStageResource;
+use App\Http\Resources\Student\V01\World\StageWithExercisesResource;
+use App\Http\Resources\Student\V01\World\WorldIndexResource;
+use App\Http\Resources\Student\V01\World\WorldWithLevelResource;
+use App\Models\Exercise;
+use App\Models\World;
+use App\Models\Level;
+use App\Models\Stage;
+use App\Models\StudentExerciseAttempt;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Symfony\Component\HttpFoundation\JsonResponse;
+
+class WorldController extends Controller
+{
+    public function index()
+    {
+        $progressService = new StudentProgress();
+
+        $progressService->unlockWorldForStudent(Auth::id());
+
+        $worlds = World::withCount([
+            'levels',
+            'studentLevelProgress as completed_levels_count' => function ($query) {
+                $query->where('is_completed', true);
+            }
+        ])->with('studentProgress')
+            ->where('is_active', true)
+            ->orderBy('order_index')
+            ->get();
+
+        $this->setResult('worlds', WorldIndexResource::collection($worlds));
+        return $this->returnResponse();
+    }
+
+    public function showWorld($id): JsonResponse
+    {
+        $world = World::with("levels")->find($id);
+
+        if (!$world) {
+            return $this->returnError('World not found', 404);
+        }
+
+        $this->setResult('world', new WorldWithLevelResource($world));
+
+        return $this->returnResponse();
+    }
+
+    public function showLevel($levelId): JsonResponse
+    {
+        $studentId = auth()->id();
+
+        $level = Level::with(['stages.studentProgress' => function ($query) use ($studentId) {
+            $query->where('student_id', $studentId);
+        }])->find($levelId);
+
+        if (!$level) {
+            return $this->returnError('Level not found', 404);
+        }
+
+        $this->setResult('level', new LevelWithStageResource($level));
+
+        return $this->returnResponse();
+    }
+
+    public function showStage($stageId): JsonResponse
+    {
+        $stage = Stage::with(['exercises' => function ($query) {
+            $query->orderBy('order_index');
+        }])->find($stageId);
+
+        if (!$stage) {
+            return $this->returnError('Stage not found', 404);
+        }
+
+        $this->setResult('stage', new StageWithExercisesResource($stage));
+        return $this->returnResponse();
+    }
+
+    public function submitExerciseBatch(Request $request): JsonResponse
+    {
+        $studentId = auth()->id();
+        $attempts = $request->input('attempts', []);
+
+        if (empty($attempts)) {
+            return $this->returnError('No attempts provided', 400);
+        }
+
+        $summary = [];
+        $progressService = new StudentProgress();
+
+        DB::transaction(function () use ($studentId, $attempts, $progressService, &$summary) {
+            $firstExercise = Exercise::with('stage')->find($attempts[0]['exercise_id']);
+            if (!$firstExercise) return $this->returnError('Invalid exercise ID', 400);
+
+            $stageId = $firstExercise->stage_id;
+
+            $totalExercises = 0;
+            $correctAttempts = 0;
+
+            foreach ($attempts as $attempt) {
+                StudentExerciseAttempt::create([
+                    'student_id' => $studentId,
+                    'exercise_id' => $attempt['exercise_id'],
+                    'user_answer' => $attempt['user_answer'],
+                    'is_correct' => $attempt['is_correct'],
+                ]);
+
+                $totalExercises++;
+                if ($attempt['is_correct']) {
+                    $correctAttempts++;
+                }
+            }
+
+            $results = [
+                'total_exercises' => $totalExercises,
+                'correct_attempts' => $correctAttempts,
+                'stage_id' => $stageId
+            ];
+
+            $progressResult  = $progressService->updateStageProgress($studentId, $stageId, $results);
+
+            $summary = [
+                'stars_earned' => $progressResult['stars_earned'],
+                'correct_answers' => $progressResult['correct_attempts'],
+                'total_questions' => $progressResult['total_exercises'],
+                'is_new_best' => $progressResult['is_new_best'] ?? false
+            ];
+        });
+
+        $this->setResult('summary', $summary);
+        return $this->returnResponse();
+    }
+}

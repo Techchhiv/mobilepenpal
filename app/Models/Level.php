@@ -11,6 +11,11 @@ class Level extends Model
 
     protected $guarded = [];
 
+    protected $casts = [
+        'is_completed' => 'boolean',
+        'is_unlocked' => 'boolean',
+    ];
+
     public function world()
     {
         return $this->belongsTo(World::class);
@@ -18,11 +23,18 @@ class Level extends Model
 
     public function stages()
     {
-        return $this->hasMany(Stage::class);
+        return $this->hasMany(Stage::class)->orderBy('order_index');
     }
 
     public function studentProgress()
     {
-        return $this->hasMany(StudentLevelProgress::class);
+        return $this->hasOne(StudentLevelProgress::class)->where('student_id', auth()->id());
+    }
+
+    public function completedStagesProgress()
+    {
+        return $this->hasManyThrough(StudentStageProgress::class, Stage::class)
+            ->where('student_id', auth()->id())
+            ->where('status', 'completed');
     }
 }
