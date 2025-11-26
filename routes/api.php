@@ -31,6 +31,9 @@ Route::get('/auth/google/redirect', [GoogleAuthController::class, 'redirectToGoo
 Route::get('/auth/google/callback', [GoogleAuthController::class, 'handleGoogleCallback']);
 Route::post('/logout', [AuthController::class, 'logout']);
 
+// Public schools list for student registration
+Route::get('/schools/list', [SchoolController::class, 'publicList']);
+
 /* -------------------------------
    Authenticated Routes
 --------------------------------*/

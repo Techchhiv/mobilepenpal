@@ -12,7 +12,7 @@ class SchoolController extends Controller
 {
   public function __construct()
 {
-    $this->middleware('auth:api');
+    $this->middleware('auth:api')->except(['publicList']);
    
 }
 
@@ -103,5 +103,18 @@ class SchoolController extends Controller
         } while (School::where('school_key', $key)->exists());
 
         return response()->json(['key' => $key]);
+    }
+
+    // Public endpoint for student registration
+    public function publicList()
+    {
+        $schools = School::where('is_active', true)
+            ->select(['id', 'name', 'school_key'])
+            ->orderBy('name')
+            ->get();
+
+        return response()->json([
+            'data' => $schools
+        ]);
     }
 }
