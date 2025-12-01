@@ -20,6 +20,8 @@ class SettingController extends GetxController {
   var student = Rxn<Student>();
   var isLoading = false.obs;
 
+  String get parentPin => student.value?.parentPin ?? '';
+
   @override
   void onInit() {
     super.onInit();

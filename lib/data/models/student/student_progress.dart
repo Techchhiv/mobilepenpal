@@ -1,75 +1,59 @@
 class StudentProgress {
-  final int worldId;
-  final String worldName;
-  final String worldDescription;
-  final String? worldImage;
-  final String? backgroundImage;
-  final bool isCompleted;
-  final bool isActive;
-  final int totalLessons;
-  final int totalStages;
-  final int completedLessons;
-  final int completedStages;
-  final int totalStars;
-  final int remainingLessons;
-  final int remainingStages;
-  final double progressPercentage;
+  int id;
+  String name;
+  String description;
+  String? iconUrl;
+  String? mapImageUrl;
+  String themeColor;
+  bool isUnlocked;
+  bool isCompleted;
+  int levelsCompleted;
+  int levelsTotal;
+  int levelsRemaining;
 
   StudentProgress({
-    required this.worldId,
-    required this.worldName,
-    required this.worldDescription,
-    this.worldImage,
-    this.backgroundImage,
+    required this.id,
+    required this.name,
+    required this.description,
+    this.iconUrl,
+    this.mapImageUrl,
+    required this.themeColor,
+    required this.isUnlocked,
     required this.isCompleted,
-    required this.isActive,
-    required this.totalLessons,
-    required this.totalStages,
-    required this.completedLessons,
-    required this.completedStages,
-    required this.totalStars,
-    required this.remainingLessons,
-    required this.remainingStages,
-    required this.progressPercentage,
+    required this.levelsCompleted,
+    required this.levelsTotal,
+    required this.levelsRemaining,
   });
 
   factory StudentProgress.fromJson(Map<String, dynamic> json) {
     return StudentProgress(
-      worldId: json['world_id'] ?? 0,
-      worldName: json['world_name'] ?? '',
-      worldDescription: json['world_description'] ?? '',
-      worldImage: json['world_image'],
-      backgroundImage: json['background_image'],
-      isCompleted: (json['is_completed'] ?? 0) == 1,
-      isActive: (json['is_active'] ?? 0) == 1,
-      totalLessons: json['total_lessons'] ?? 0,
-      totalStages: json['total_stages'] ?? 0,
-      completedLessons: json['completed_lessons'] ?? 0,
-      completedStages: json['completed_stages'] ?? 0,
-      totalStars: json['total_stars'] ?? 0,
-      remainingLessons: json['remaining_lessons'] ?? 0,
-      remainingStages: json['remaining_stages'] ?? 0,
-      progressPercentage: (json['progress_percentage'] ?? 0).toDouble(),
+      id: json['id'] as int? ?? 0,
+      name: json['name'] as String? ?? '',
+      description: json['description'] as String? ?? '',
+      iconUrl: json['icon_url'] as String?,
+      mapImageUrl: json['map_image_url'] as String?,
+      themeColor: json['theme_color'] as String? ?? '#000000',
+      isUnlocked: json['is_unlocked'] as bool? ?? false,
+      isCompleted: json['is_completed'] as bool? ?? false,
+      levelsCompleted: json['levels_completed'] as int? ?? 0,
+      levelsTotal: json['levels_total'] as int? ?? 0,
+      levelsRemaining: json['levels_remaining'] as int? ?? 0,
     );
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'world_id': worldId,
-      'world_name': worldName,
-      'world_description': worldDescription,
-      'world_image': worldImage,
-      'background_image': backgroundImage,
-      'is_completed': isCompleted ? 1 : 0,
-      'is_active': isActive ? 1 : 0,
-      'total_lessons': totalLessons,
-      'total_stages': totalStages,
-      'completed_lessons': completedLessons,
-      'completed_stages': completedStages,
-      'total_stars': totalStars,
-      'remaining_lessons': remainingLessons,
-      'remaining_stages': remainingStages,
-      'progress_percentage': progressPercentage,
-    };
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['id'] = id;
+    data['name'] = name;
+    data['description'] = description;
+    data['icon_url'] = iconUrl;
+    data['map_image_url'] = mapImageUrl;
+    data['theme_color'] = themeColor;
+    data['is_unlocked'] = isUnlocked;
+    data['is_completed'] = isCompleted;
+    data['levels_completed'] = levelsCompleted;
+    data['levels_total'] = levelsTotal;
+    data['levels_remaining'] = levelsRemaining;
+    return data;
   }
 }

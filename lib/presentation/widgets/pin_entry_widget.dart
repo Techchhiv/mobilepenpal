@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobilepenpal/core/theme/app_colors.dart';
-import 'package:mobilepenpal/data/controllers/utils/pin_controller.dart';
+import 'package:mobilepenpal/data/controllers/home/pin_controller.dart';
 import 'package:mobilepenpal/data/services/home_service.dart';
 
 class PinWidget extends StatelessWidget {

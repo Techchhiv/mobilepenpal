@@ -258,6 +258,7 @@ final Map<String, String> enUS = {
   'my_courses': 'My Courses',
   'in_progress': 'In Progress',
   'start': 'Start',
+  "locked": 'Locked',
   'progress': 'Progress',
   'lessons': 'lessons',
   'stars': 'Stars',

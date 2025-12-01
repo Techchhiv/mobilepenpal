@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:mobilepenpal/core/config/env.dart';
 import 'package:mobilepenpal/core/theme/app_colors.dart';
 import 'package:mobilepenpal/data/controllers/settings/setting_controller.dart';
-import 'package:mobilepenpal/data/controllers/utils/pin_controller.dart';
+import 'package:mobilepenpal/data/controllers/home/pin_controller.dart';
 import 'package:mobilepenpal/presentation/screens/settings/change_password_page.dart';
 import 'package:mobilepenpal/presentation/screens/settings/update_profile_page.dart';
 import 'package:mobilepenpal/presentation/widgets/pin_entry_widget.dart';
@@ -197,7 +197,9 @@ class SettingPage extends StatelessWidget {
                 onTap: () {
                   Get.to(
                     () => PinWidget(
-                      mode: PinMode.update,
+                      mode: settingController.parentPin.isEmpty
+                          ? PinMode.create
+                          : PinMode.update,
                       title: 'update_parent_pin'.tr,
                       returnToSettings: true,
                     ),
@@ -205,8 +207,6 @@ class SettingPage extends StatelessWidget {
                 },
               ),
               SizedBox(height: 15),
-            ],
-            if (settingController.currentMode.value == 'parent') ...[
               _buildSettingTile(
                 icon: Icons.lock,
                 title: 'change_password'.tr,
@@ -222,7 +222,6 @@ class SettingPage extends StatelessWidget {
               SizedBox(height: 15),
             ],
 
-            // Account Settings
             _buildSettingTile(
               icon: Icons.settings_outlined,
               title: 'settings'.tr,

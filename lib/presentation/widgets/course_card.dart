@@ -53,7 +53,7 @@ class CourseCard extends StatelessWidget {
       ),
     );
   }
-  
+
   Widget _buildContent(BuildContext context, double progress) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -96,6 +96,8 @@ class CourseCard extends StatelessWidget {
                             fontWeight: FontWeight.bold,
                             color: Colors.black87,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 2),
                         Text(
@@ -104,6 +106,8 @@ class CourseCard extends StatelessWidget {
                             fontSize: 14,
                             color: Colors.grey[600],
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),

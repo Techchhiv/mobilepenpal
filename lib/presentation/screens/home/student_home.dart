@@ -37,21 +37,28 @@ class StudentHome extends StatelessWidget {
           return Column(
             children: homeController.studentProgress.map((progress) {
               return CourseCard(
-                courseTitle: progress.worldName,
-                courseSubtitle: progress.worldDescription,
+                courseTitle: progress.name,
+                courseSubtitle: progress.description,
                 badgeText: progress.isCompleted
                     ? 'completed'.tr
                     : 'in_progress'.tr,
-                completedLessons: progress.completedStages,
-                totalLessons: progress.totalStages,
-                buttonText: progress.completedStages > 0
+                completedLessons: progress.levelsCompleted,
+                totalLessons: progress.levelsTotal,
+                buttonText: progress.levelsCompleted > 0
                     ? 'continue'.tr
                     : 'start'.tr,
-                primaryColor: _getColorForWorld(progress.worldId),
-                badgeColor: progress.isCompleted
+                primaryColor: _getColorForWorld(progress.id),
+                badgeColor: progress.isCompleted == true
                     ? Colors.green
                     : const Color(0xFFFF9800),
-                onTap: () {},
+                onTap: () {
+                  Get.toNamed(
+                    '/world/${progress.id}',
+                    arguments: {
+                      'color': _getColorForWorld(progress.id).value,
+                    },
+                  );
+                },
               );
             }).toList(),
           );
@@ -63,18 +70,17 @@ class StudentHome extends StatelessWidget {
           'achievements'.tr,
           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
-        
+
         const SizedBox(height: 18),
 
         AchievementCard(
           backgroundColor: Color(0xFFF0FDF4),
-          borderColor:  Color(0xFF2EC4B6),
+          borderColor: Color(0xFF2EC4B6),
           icon: Icons.emoji_events,
           iconBackgroundColor: Color(0xFF00C950),
           iconSize: 24,
-          title: 'លំហាត់គណិត', 
-          subtitle:
-              'បញ្ចប់មេរៀនគណិត ១០ មេរៀន',
+          title: 'លំហាត់គណិត',
+          subtitle: 'បញ្ចប់មេរៀនគណិត ១០ មេរៀន',
           titleStyle: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,

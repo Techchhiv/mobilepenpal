@@ -254,6 +254,7 @@ final Map<String, String> kmKH = {
   'my_courses': 'វគ្គសិក្សារបស់ខ្ញុំ',
   'in_progress': 'កំពុងរៀន',
   'start': 'ចាប់ផ្តើម',
+  "locked": 'ចាក់សោរ',
   'progress': 'វឌ្ឍនភាព',
   'lessons': 'មេរៀន',
   'stars': 'ផ្កាយ',
