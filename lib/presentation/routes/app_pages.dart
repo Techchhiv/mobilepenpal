@@ -4,6 +4,7 @@ import 'package:mobilepenpal/core/bindings/home_binding.dart';
 import 'package:mobilepenpal/core/bindings/level_binding.dart';
 import 'package:mobilepenpal/core/bindings/otp_binding.dart';
 import 'package:mobilepenpal/core/bindings/setting_binding.dart';
+import 'package:mobilepenpal/core/bindings/stage_binding.dart';
 import 'package:mobilepenpal/core/bindings/world_binding.dart';
 import 'package:mobilepenpal/presentation/screens/auth/login_page.dart';
 import 'package:mobilepenpal/presentation/screens/auth/otp_verification_page.dart';
@@ -12,6 +13,8 @@ import 'package:mobilepenpal/presentation/screens/home/home_page.dart';
 import 'package:mobilepenpal/presentation/screens/settings/setting_page.dart';
 import 'package:mobilepenpal/presentation/screens/world/course_detail_page.dart';
 import 'package:mobilepenpal/presentation/screens/world/level_detail_page.dart';
+import 'package:mobilepenpal/presentation/screens/world/stage_detail_page.dart';
+import 'package:mobilepenpal/presentation/screens/world/stage_summary_page.dart';
 import 'app_routes.dart';
 
 class AppPages {
@@ -50,5 +53,13 @@ class AppPages {
       page: () => LevelDetailPage(),
       binding: LevelBinding(),
     ),
+
+    GetPage(
+      name: AppRoutes.stage,
+      page: () => StageDetailPage(),
+      binding: StageBinding(),
+    ),
+
+    GetPage(name: AppRoutes.summary, page: () => StageSummaryPage()),
   ];
 }

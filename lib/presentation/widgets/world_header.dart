@@ -79,7 +79,7 @@ class WorldHeader extends StatelessWidget {
   Widget _buildBackButton() {
     return GestureDetector(
       onTap: () {
-        Get.back();
+        Get.offAllNamed('/home');
       },
       child: SizedBox(
         width: 30,

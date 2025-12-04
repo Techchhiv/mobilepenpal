@@ -77,47 +77,10 @@ class WorldController extends GetxController {
     }
   }
 
-  Future<void> submitExerciseBatch(Map<String, dynamic> exerciseData) async {
-    isLoading.value = true;
-    try {
-      final response = await _worldService.submitExerciseBatch(exerciseData);
-      if (response.code == 200) {
-        Get.snackbar(
-          'Success',
-          'Exercise submitted successfully',
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-        );
-        // Refresh world data to update progress
-        if (currentWorld.value != null) {
-          await fetchWorldById(currentWorld.value!.id);
-        }
-      } else {
-        Get.snackbar(
-          'Error',
-          response.message,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
-      }
-    } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Failed to submit exercise: $e',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
-  // Helper method to get world by ID from cached list
   World? getWorldById(int worldId) {
     return worldsList.firstWhereOrNull((world) => world.id == worldId);
   }
 
-  // Helper method to get level by ID
   WorldLevel? getLevelById(int levelId) {
     for (final world in worldsList) {
       final level = world.levels.firstWhereOrNull(

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:mobilepenpal/core/network/route_builder.dart';
 import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
+import 'package:mobilepenpal/data/controllers/world/world_controller.dart';
+import 'package:mobilepenpal/presentation/routes/app_routes.dart';
 import 'package:mobilepenpal/presentation/widgets/achievement_card.dart';
 import 'package:mobilepenpal/presentation/widgets/course_card.dart';
 
@@ -51,13 +54,30 @@ class StudentHome extends StatelessWidget {
                 badgeColor: progress.isCompleted == true
                     ? Colors.green
                     : const Color(0xFFFF9800),
-                onTap: () {
-                  Get.toNamed(
-                    '/world/${progress.id}',
-                    arguments: {
-                      'color': _getColorForWorld(progress.id).value,
-                    },
-                  );
+                onTap: () async {
+                  final worldController = Get.find<WorldController>();
+
+                  await worldController.fetchWorldById(progress.id);
+
+                  final world = worldController.currentWorld.value;
+                  if (world != null && world.id == progress.id) {
+                    final route = RouteBuilder.build(AppRoutes.world, {
+                      'id': progress.id.toString(),
+                    });
+
+                    Get.toNamed(
+                      route,
+                      arguments: {
+                        'color': _getColorForWorld(progress.id).value,
+                      },
+                    );
+                  } else {
+                    Get.snackbar(
+                      'Error',
+                      'Failed to load course'.tr,
+                      snackPosition: SnackPosition.BOTTOM,
+                    );
+                  }
                 },
               );
             }).toList(),

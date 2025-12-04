@@ -7,8 +7,26 @@ class LevelController extends GetxController {
   
   var isLoading = false.obs;
   var currentLevel = Rxn<Level>();
+  late int worldId;
+  late int levelId;
 
-  Future<void> fetchLevelDetail(int levelId) async {
+  @override
+  void onInit() {
+    super.onInit();
+    
+    final parameters = Get.parameters;
+    
+    worldId = int.tryParse(parameters['worldId'] ?? '') ?? 0;
+    levelId = int.tryParse(parameters['levelId'] ?? '') ?? 0;
+    
+    if (levelId > 0) {
+      fetchLevelDetail();
+    } else {
+      Get.snackbar('Error', 'Invalid level ID');
+    }
+  }
+
+  Future<void> fetchLevelDetail() async {
     isLoading.value = true;
     try {
       final response = await _worldService.getLevelById(levelId);

@@ -2,6 +2,7 @@ import 'package:mobilepenpal/core/network/endpoint/world.dart';
 import 'package:mobilepenpal/data/models/api_response.dart';
 import 'package:mobilepenpal/core/network/api_client.dart';
 import 'package:mobilepenpal/data/models/level/level.dart';
+import 'package:mobilepenpal/data/models/stage/stage.dart';
 import 'package:mobilepenpal/data/models/world/world.dart';
 
 class WorldService {
@@ -52,23 +53,28 @@ class WorldService {
     return result;
   }
 
-  // Future<ApiResponse<Stage>> getStageById(int stageId) async {
-  //   final result = await _apiClient.request<Stage>(
-  //     method: 'GET',
-  //     path: WorldEndpoints.getStageById(stageId),
-  //     fromData: (data) => Stage.fromJson(data),
-  //   );
+  Future<ApiResponse<Stage>> getStageById(int stageId) async {
+    final result = await _apiClient.request<Stage>(
+      method: 'GET',
+      path: WorldEndpoints.getStageById(stageId),
+      fromData: (data) {
+        if (data == null || data['stage'] == null) {
+          throw Exception("Invalid stage structure: $data");
+        }
+        return Stage.fromJson(data['stage']);
+      },
+    );
 
-  //   return result;
-  // }
+    return result;
+  }
 
   Future<ApiResponse<Map<String, dynamic>>> submitExerciseBatch(
-    Map<String, dynamic> exerciseData,
+    List<Map<String, dynamic>> attempts,
   ) async {
     final result = await _apiClient.request<Map<String, dynamic>>(
       method: 'POST',
       path: WorldEndpoints.submitExercise,
-      data: exerciseData,
+      data: {'attempts': attempts},
       fromData: (data) => data as Map<String, dynamic>,
     );
 

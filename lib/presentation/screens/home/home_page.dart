@@ -4,9 +4,11 @@ import 'package:get_storage/get_storage.dart';
 import 'package:mobilepenpal/core/config/env.dart';
 import 'package:mobilepenpal/data/controllers/auth/auth_controller.dart';
 import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
+import 'package:mobilepenpal/data/controllers/world/world_controller.dart';
 import 'package:mobilepenpal/data/models/student/student.dart';
 import 'package:mobilepenpal/presentation/screens/home/parent_home.dart';
 import 'package:mobilepenpal/presentation/screens/home/student_home.dart';
+import 'package:mobilepenpal/presentation/widgets/loading_overly.dart';
 import 'package:mobilepenpal/presentation/widgets/mode_switcher.dart';
 
 class HomePage extends StatelessWidget {
@@ -14,6 +16,7 @@ class HomePage extends StatelessWidget {
 
   final HomeController homeController = Get.find<HomeController>();
   final AuthController authController = Get.find<AuthController>();
+  final WorldController worldController = Get.find<WorldController>();
   final box = GetStorage();
 
   Student? get student {
@@ -28,32 +31,37 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
-      body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: () async => homeController.refreshCourses(),
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-            child: Obx(
-              () => Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildHeader(),
-                  const SizedBox(height: 24),
-
-                  ModeSwitcher(
-                    currentMode: homeController.currentMode,
-                    onModeChanged: (mode) =>
-                        homeController.requestModeChange(mode),
+      body: Obx(
+        () => LoadingOverlay(
+          isLoading: worldController.isLoading.value,
+          child: SafeArea(
+            child: RefreshIndicator(
+              onRefresh: () async => homeController.refreshCourses(),
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 24,
+                ),
+                child: Obx(
+                  () => Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildHeader(),
+                      const SizedBox(height: 24),
+                      ModeSwitcher(
+                        currentMode: homeController.currentMode,
+                        onModeChanged: (mode) =>
+                            homeController.requestModeChange(mode),
+                      ),
+                      const SizedBox(height: 24),
+                      if (homeController.currentMode.value == 'student')
+                        StudentHome(homeController: homeController)
+                      else
+                        ParentHome(homeController: homeController),
+                    ],
                   ),
-
-                  const SizedBox(height: 24),
-
-                  if (homeController.currentMode.value == 'student')
-                    StudentHome(homeController: homeController)
-                  else
-                    ParentHome(homeController: homeController),
-                ],
+                ),
               ),
             ),
           ),

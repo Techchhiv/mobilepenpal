@@ -1,16 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:mobilepenpal/data/controllers/world/level_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/world_controller.dart';
 import 'package:mobilepenpal/data/models/world/world.dart';
+import 'package:mobilepenpal/presentation/widgets/loading_overly.dart';
 import 'package:mobilepenpal/presentation/widgets/world_header.dart';
 import 'package:mobilepenpal/presentation/widgets/world_map.dart';
 
 class CourseDetailPage extends StatelessWidget {
   CourseDetailPage({super.key});
 
+  final LevelController levelController = Get.find<LevelController>();
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(body: _CourseDetailContent());
+    return Scaffold(
+      body: Obx(
+        () => LoadingOverlay(
+          isLoading: levelController.isLoading.value,
+          child: _CourseDetailContent(),
+        ),
+      ),
+    );
   }
 }
 
@@ -23,7 +34,10 @@ class _CourseDetailContent extends StatelessWidget {
     final int worldId = int.tryParse(idString ?? '') ?? 0;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      worldController.fetchWorldById(worldId);
+      final current = worldController.currentWorld.value;
+      if (current == null || current.id != worldId) {
+        worldController.fetchWorldById(worldId);
+      }
     });
 
     return Obx(() {
@@ -64,7 +78,6 @@ class _CourseDetailContent extends StatelessWidget {
     return Stack(
       children: [
         WorldMap(world: world),
-
         const WorldHeader(),
       ],
     );

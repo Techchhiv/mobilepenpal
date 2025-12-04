@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobilepenpal/core/network/route_builder.dart';
+import 'package:mobilepenpal/data/controllers/world/level_controller.dart';
 import 'package:mobilepenpal/data/models/world/world_level.dart';
 import 'package:mobilepenpal/data/models/world/world.dart';
 import 'package:mobilepenpal/presentation/routes/app_routes.dart';
@@ -75,7 +76,7 @@ class _WorldMapState extends State<WorldMap> {
     return levels.length - 1;
   }
 
-  void _onLevelTap(WorldLevel level) {
+  Future<void> _onLevelTap(WorldLevel level) async {
     final bool isUnlocked = level.isUnlocked || level.isUnlocked == true;
 
     if (!isUnlocked) {
@@ -83,12 +84,27 @@ class _WorldMapState extends State<WorldMap> {
       return;
     }
 
-    Get.toNamed(
-      RouteBuilder.build(AppRoutes.level, {
-        'worldId': widget.world.id.toString(),
-        'levelId': level.id.toString(),
-      }),
-    );
+    final levelController = Get.find<LevelController>();
+
+    // Set ids for the controller
+    levelController.worldId = widget.world.id;
+    levelController.levelId = level.id;
+
+    // Fetch level detail -> triggers LoadingOverlay on this page
+    await levelController.fetchLevelDetail();
+
+    final currentLevel = levelController.currentLevel.value;
+    if (currentLevel == null || currentLevel.id != level.id) {
+      _showSnackBar('Failed to load level', Colors.red);
+      return;
+    }
+
+    final route = RouteBuilder.build(AppRoutes.level, {
+      'worldId': widget.world.id.toString(),
+      'levelId': level.id.toString(),
+    });
+
+    Get.toNamed(route);
   }
 
   void _showSnackBar(String message, Color backgroundColor) {
