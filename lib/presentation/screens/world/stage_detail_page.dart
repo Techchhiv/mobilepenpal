@@ -1,3 +1,5 @@
+
+import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_drawing_board/flutter_drawing_board.dart';
 import 'package:get/get.dart';
@@ -34,7 +36,7 @@ class StageDetailPage extends GetView<StageController> {
                   const SizedBox(height: 20),
                   _buildTopBar(context),
                   const SizedBox(height: 20),
-                  _buildBirdIllustration(),
+                  _buildIllustration(),
                   const SizedBox(height: 30),
                   _buildDrawingBoard(),
                   const SizedBox(height: 16),
@@ -134,7 +136,7 @@ class StageDetailPage extends GetView<StageController> {
 
   // ───────────────── Bird illustration ─────────────────
 
-  Widget _buildBirdIllustration() {
+  Widget _buildIllustration() {
     return SizedBox(
       height: 120,
       child: Stack(
@@ -146,7 +148,7 @@ class StageDetailPage extends GetView<StageController> {
               width: 80,
               height: 60,
               decoration: BoxDecoration(
-                color: Colors.green.shade300.withOpacity(0.3),
+                color: Colors.green.shade300.withValues(alpha: 0.3),
                 shape: BoxShape.circle,
               ),
             ),
@@ -155,7 +157,7 @@ class StageDetailPage extends GetView<StageController> {
             width: 100,
             height: 100,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.9),
+              color: Colors.white.withValues(alpha: 0.9),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
@@ -170,68 +172,172 @@ class StageDetailPage extends GetView<StageController> {
   }
 
   // ───────────────── Drawing board ─────────────────
-
   Widget _buildDrawingBoard() {
     return Center(
-      child: Container(
-        width: controller.boardWidth,
-        height: controller.boardHeight,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(20),
-          child: DrawingBoard(
-            controller: controller.drawingController,
-            background: Obx(() {
-              return Container(
-                width: controller.boardWidth,
-                height: controller.boardHeight,
-                color: Colors.white,
-                child: Stack(
-                  children: [
-                    Center(
-                      child: Opacity(
-                        opacity: 0.15,
-                        child: Text(
-                          controller.selectedCharacter.value.isNotEmpty
-                              ? controller.selectedCharacter.value
-                              : "ក",
-                          style: TextStyle(
-                            fontSize: controller.fontSize,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey.shade600,
+      child: Obx(() {
+        final feedbackState = controller.feedback.value;
+        final dx = feedbackState == DrawFeedback.wrong
+            ? controller.shakeOffset.value
+            : 0.0;
+
+        double scale;
+        switch (feedbackState) {
+          case DrawFeedback.correct:
+            scale = 1.05;
+            break;
+          case DrawFeedback.wrong:
+            scale = 1.06;
+            break;
+          default:
+            scale = 1.0;
+        }
+
+        return AnimatedScale(
+          scale: scale,
+          duration: const Duration(milliseconds: 150),
+          curve: Curves.easeOut,
+          child: Transform.translate(
+            offset: Offset(dx, 0),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Container(
+                  width: controller.boardWidth,
+                  height: controller.boardHeight,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.1),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: DrawingBoard(
+                      controller: controller.drawingController,
+                      background: Obx(() {
+                        return Container(
+                          width: controller.boardWidth,
+                          height: controller.boardHeight,
+                          color: Colors.white,
+                          child: Stack(
+                            children: [
+                              Center(
+                                child: Opacity(
+                                  opacity: 0.15,
+                                  child: Text(
+                                    controller
+                                            .selectedCharacter
+                                            .value
+                                            .isNotEmpty
+                                        ? controller.selectedCharacter.value
+                                        : "ក",
+                                    style: TextStyle(
+                                      fontSize: controller.fontSize,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
+                      showDefaultTools: false,
+                      onPointerDown: (_) => controller.onPointerDown(),
+                      onPointerUp: (_) async => await controller.onPointerUp(),
+                    ),
+                  ),
+                ),
+
+                Align(
+                  alignment: Alignment.center,
+                  child: ConfettiWidget(
+                    confettiController: controller.confettiController,
+                    blastDirectionality:
+                        BlastDirectionality.explosive,
+                    emissionFrequency: 0.01,
+                    numberOfParticles: 25,
+                    maxBlastForce: 30,
+                    minBlastForce: 10,
+                    gravity: 0.25,
+                    shouldLoop: false,
+                  ),
+                ),
+
+                Obx(() {
+                  final feedbackState = controller.feedback.value;
+                  final praise = controller.praiseText.value;
+
+                  final isVisible =
+                      feedbackState == DrawFeedback.correct &&
+                      praise.isNotEmpty;
+
+                  return Positioned(
+                    top: 10,
+                    child: AnimatedScale(
+                      scale: isVisible ? 1.0 : 0.0,
+                      duration: const Duration(milliseconds: 1000),
+                      curve: Curves.elasticOut,
+                      child: AnimatedOpacity(
+                        opacity: isVisible ? 1.0 : 0.0, 
+                        duration: const Duration(milliseconds: 500),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.yellow.shade700,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.20),
+                                blurRadius: 6,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.8),
+                              width: 2,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.star,
+                                color: Colors.white,
+                                size: 18,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                praise,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
                     ),
-                  ],
-                ),
-              );
-            }),
-            showDefaultTools: false,
-
-            onPointerDown: (_) {
-              controller.onPointerDown();
-            },
-            onPointerUp: (_) async {
-              await controller.onPointerUp();
-            },
+                  );
+                }),
+              ],
+            ),
           ),
-        ),
-      ),
+        );
+      }),
     );
   }
-
-  // ───────────────── Character vowel forms ("ក/កា/កិ") ─────────────────
 
   Widget _buildCharacterOptions() {
     return Container(
@@ -271,14 +377,11 @@ class StageDetailPage extends GetView<StageController> {
     );
   }
 
-  // ───────────────── Bottom buttons ─────────────────
-
   Widget _buildBottomButtons() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: [
-          // Clear button
           Expanded(
             child: GestureDetector(
               onTap: controller.clearBoard,
@@ -293,9 +396,9 @@ class StageDetailPage extends GetView<StageController> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(Icons.delete, color: Colors.pink.shade300),
-                    const SizedBox(width: 8),
-                    const Text(
-                      "លុប",
+                    SizedBox(width: 8),
+                    Text(
+                      "delete".tr,
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -308,7 +411,6 @@ class StageDetailPage extends GetView<StageController> {
             ),
           ),
           const SizedBox(width: 12),
-          // Skip button (រំលង)
           Expanded(
             child: GestureDetector(
               onTap: controller.skipCurrentExercise,
@@ -318,13 +420,13 @@ class StageDetailPage extends GetView<StageController> {
                   color: Colors.orange.shade400,
                   borderRadius: BorderRadius.circular(28),
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(Icons.skip_next, color: Colors.white),
                     SizedBox(width: 8),
                     Text(
-                      "រំលង",
+                      "skip".tr,
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -372,10 +474,8 @@ class StageDetailPage extends GetView<StageController> {
 
                 const SizedBox(height: 48),
 
-                // Buttons stacked for easy tapping
                 Row(
                   children: [
-                    // Main menu (back to world)
                     Expanded(
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
@@ -415,7 +515,7 @@ class StageDetailPage extends GetView<StageController> {
                           padding: const EdgeInsets.symmetric(vertical: 14),
                         ),
                         onPressed: () {
-                          Navigator.of(ctx).pop(); // just close dialog
+                          Navigator.of(ctx).pop();
                         },
                         child: const Icon(Icons.play_arrow, size: 32),
                       ),

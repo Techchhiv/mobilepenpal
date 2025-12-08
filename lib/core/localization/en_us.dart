@@ -28,6 +28,8 @@ final Map<String, String> enUS = {
   'ok': 'OK',
   'yes': 'Yes',
   'no': 'No',
+  'retry': 'Retry',
+  'skip': 'Skip',
   'success': 'Success',
   'error': 'Error',
   'warning': 'Warning',

@@ -105,28 +105,24 @@ class _StageSummaryPageState extends State<StageSummaryPage>
     );
   }
 
-Widget _buildTopBar() {
-  return Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-    child: Align(
-      alignment: Alignment.centerLeft,
-      child: IconButton(
-        icon: const Icon(Icons.close, color: Colors.white),
-        onPressed: () {
-          final levelRoute = RouteBuilder.build(
-            AppRoutes.level,
-            {
+  Widget _buildTopBar() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: IconButton(
+          icon: const Icon(Icons.close, color: Colors.white),
+          onPressed: () {
+            final levelRoute = RouteBuilder.build(AppRoutes.level, {
               'worldId': worldId.toString(),
               'levelId': levelId.toString(),
-            },
-          );
-          Get.offNamed(levelRoute);
-        },
+            });
+            Get.offNamed(levelRoute);
+          },
+        ),
       ),
-    ),
-  );
-}
-
+    );
+  }
 
   Widget _buildIcon() {
     return Container(
@@ -143,13 +139,9 @@ Widget _buildTopBar() {
           ),
         ],
       ),
-      child: Lottie.asset(
-        "assets/animated/trophy.json",
-        repeat: false
-      )
+      child: Lottie.asset("assets/animated/trophy.json", repeat: false),
     );
   }
-
 
   Widget _buildScore() {
     return Column(
@@ -183,7 +175,7 @@ Widget _buildTopBar() {
           final isEarned = index < starsEarned;
           double dy;
           if (index == 1) {
-            dy = -18; 
+            dy = -18;
           } else {
             dy = 6;
           }
@@ -200,8 +192,7 @@ Widget _buildTopBar() {
                 controller: isEarned ? _starControllers[index] : null,
                 onLoaded: isEarned
                     ? (composition) {
-                        _starControllers[index].duration =
-                            composition.duration;
+                        _starControllers[index].duration = composition.duration;
                       }
                     : null,
                 repeat: false,
@@ -218,17 +209,13 @@ Widget _buildTopBar() {
       padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16),
       child: Row(
         children: [
-          // Retry
           Expanded(
             child: GestureDetector(
               onTap: () {
-                // Reset controller if it exists
                 try {
                   final stageController = Get.find<StageController>();
                   stageController.resetForRetry();
-                } catch (_) {
-                  // It's okay if not found; binding will create a new one
-                }
+                } catch (_) {}
 
                 final stageRoute = RouteBuilder.build(AppRoutes.stage, {
                   'worldId': worldId.toString(),
@@ -251,9 +238,9 @@ Widget _buildTopBar() {
                     ),
                   ],
                 ),
-                child: const Center(
+                child: Center(
                   child: Text(
-                    'RETRY',
+                    'retry'.tr,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
@@ -290,9 +277,9 @@ Widget _buildTopBar() {
                     ),
                   ],
                 ),
-                child: const Center(
+                child: Center(
                   child: Text(
-                    'CONTINUE',
+                    'continue'.tr,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,

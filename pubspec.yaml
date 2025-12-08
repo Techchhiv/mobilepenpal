@@ -49,6 +49,7 @@ dependencies:
   lottie: ^3.3.2
   flutter_drawing_board: ^0.9.8
   path_drawing: ^1.0.1
+  confetti: ^0.8.0
 
 dev_dependencies:
   flutter_test:
@@ -76,7 +77,6 @@ flutter:
   assets:
     - assets/images/
     - assets/animated/
-    - assets/data/khmer_glyph_paths.json
     # - assets/icons/logo.png
     # - images/a_dot_ham.jpeg
 

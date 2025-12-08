@@ -28,6 +28,8 @@ final Map<String, String> kmKH = {
   'ok': 'យល់ព្រម',
   'yes': 'បាទ/ចាស',
   'no': 'ទេ',
+  'retry': 'ម្ដងទៀត',
+  'skip': 'រំលង',
   'success': 'ជោគជ័យ',
   'error': 'កំហុស',
   'warning': 'ការព្រមាន',
