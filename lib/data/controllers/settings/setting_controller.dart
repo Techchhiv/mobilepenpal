@@ -20,6 +20,8 @@ class SettingController extends GetxController {
   var student = Rxn<Student>();
   var isLoading = false.obs;
 
+  var isParentPinRequired = true.obs;
+
   String get parentPin => student.value?.parentPin ?? '';
 
   @override
@@ -27,9 +29,17 @@ class SettingController extends GetxController {
     super.onInit();
     currentMode.value = box.read('mode') ?? 'student';
     student.value = Student.fromJson(box.read('student') ?? {});
+
+    final skip = box.read('skip_parent_pin_setup') ?? false;
+    isParentPinRequired.value = !skip;
   }
 
   String get avatarUrl => student.value?.avatar ?? '';
+
+  void setParentPinRequired(bool value) {
+    isParentPinRequired.value = value;
+    box.write('skip_parent_pin_setup', !value);
+  }
 
   Future<void> pickAndUploadImage() async {
     try {

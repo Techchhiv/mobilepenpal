@@ -19,7 +19,7 @@ class HomeController extends GetxController {
   var student = Rxn<Student>();
   var currentMode = ''.obs;
   var studentProgress = <StudentProgress>[].obs;
-  
+
   String get avatarUrl => student.value?.avatar ?? '';
 
   @override
@@ -93,17 +93,28 @@ class HomeController extends GetxController {
   }
 
   Future<void> requestModeChange(String newMode) async {
-    if (newMode == currentMode.value) return;
+    newMode = newMode.toLowerCase();
+
+    if (newMode == currentMode.value) {
+      return;
+    }
 
     if (newMode == 'parent') {
       final skip = _box.read('skip_parent_pin_setup') ?? false;
+
+      if (skip == true) {
+        setCurrentMode('parent');
+        return;
+      }
 
       final storedPin = await _secure.read(key: 'parent_pin');
       final apiPin = student.value?.parentPin;
 
       if ((storedPin != null && storedPin.isNotEmpty) ||
           (apiPin != null && apiPin.isNotEmpty)) {
-        if (storedPin == null && apiPin != null && apiPin.isNotEmpty) {
+        if ((storedPin == null || storedPin.isEmpty) &&
+            apiPin != null &&
+            apiPin.isNotEmpty) {
           await _secure.write(key: 'parent_pin', value: apiPin);
         }
 
@@ -112,26 +123,29 @@ class HomeController extends GetxController {
         );
 
         if (ok == true) {
+          await Future.delayed(const Duration(milliseconds: 200));
           setCurrentMode('parent');
         }
-        return;
-      }
 
-      if (skip) {
-        setCurrentMode('parent');
         return;
       }
 
       final create = await _showCreatePinPrompt();
+
+      if (create == null) {
+        return;
+      }
+
       if (create == true) {
         final created = await Get.to<bool>(
           () => const PinWidget(mode: PinMode.create),
         );
+
         if (created == true) {
           setCurrentMode('parent');
         }
-      } else if (create == false) {
-        _box.write('skip_parent_pin_setup', true);
+      } else {
+        await _box.write('skip_parent_pin_setup', true);
         setCurrentMode('parent');
       }
     } else {
@@ -147,11 +161,15 @@ class HomeController extends GetxController {
         content: Text("set_parent_pin_prompt".tr),
         actions: [
           TextButton(
-            onPressed: () => Get.back(result: false),
+            onPressed: () {
+              Get.back(result: false);
+            },
             child: Text('no'.tr),
           ),
           ElevatedButton(
-            onPressed: () => Get.back(result: true),
+            onPressed: () {
+              Get.back(result: true);
+            },
             child: Text('yes'.tr),
           ),
         ],

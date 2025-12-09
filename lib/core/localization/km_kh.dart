@@ -143,6 +143,7 @@ final Map<String, String> kmKH = {
   'nickname': 'ឈ្មោះហៅក្រៅ',
   'yyyy-mm-dd': 'ឆ្នាំ-ខែ-ថ្ងៃ',
   'year': 'ឆ្នាំ',
+  'require_parent_pin': 'តម្រូវឱ្យមានលេខសម្ងាត់មាតាបិតា',
 
   // ===== Status & Actions =====
   'active': 'សកម្ម',

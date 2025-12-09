@@ -4,6 +4,7 @@ import 'package:lottie/lottie.dart';
 import 'package:mobilepenpal/core/network/route_builder.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_controller.dart';
 import 'package:mobilepenpal/presentation/routes/app_routes.dart';
+import 'package:mobilepenpal/presentation/widgets/loading_overly.dart';
 
 class StageSummaryPage extends StatefulWidget {
   const StageSummaryPage({super.key});
@@ -22,8 +23,11 @@ class _StageSummaryPageState extends State<StageSummaryPage>
   late final int starsEarned;
   late final int correctAnswers;
   late final int totalQuestions;
+  late final int? nextStageId;
 
   late final List<AnimationController> _starControllers;
+
+  bool _isContinuing = false;
 
   @override
   void initState() {
@@ -40,6 +44,16 @@ class _StageSummaryPageState extends State<StageSummaryPage>
     starsEarned = (summary['stars_earned'] as int?) ?? 0;
     correctAnswers = (summary['correct_answers'] as int?) ?? 0;
     totalQuestions = (summary['total_questions'] as int?) ?? 0;
+
+    final dynamic rawNextStageId = summary['next_stage_id'];
+
+    if (rawNextStageId is int) {
+      nextStageId = rawNextStageId;
+    } else if (rawNextStageId is String) {
+      nextStageId = int.tryParse(rawNextStageId);
+    } else {
+      nextStageId = null;
+    }
 
     _starControllers = List.generate(
       maxStars,
@@ -77,28 +91,31 @@ class _StageSummaryPageState extends State<StageSummaryPage>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF2B7A78), Color(0xFF6B9F8E), Color(0xFF8FB99F)],
+    return LoadingOverlay(
+      isLoading: _isContinuing, // 👈 show overlay while continuing
+      child: Scaffold(
+        body: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Color(0xFF2B7A78), Color(0xFF6B9F8E), Color(0xFF8FB99F)],
+            ),
           ),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              const SizedBox(height: 8),
-              _buildTopBar(),
-              const SizedBox(height: 24),
-              _buildIcon(),
-              const SizedBox(height: 24),
-              _buildScore(),
-              Expanded(child: _buildStarDisplay()),
-              _buildBottomButtons(),
-              const SizedBox(height: 8),
-            ],
+          child: SafeArea(
+            child: Column(
+              children: [
+                const SizedBox(height: 8),
+                _buildTopBar(),
+                const SizedBox(height: 24),
+                _buildIcon(),
+                const SizedBox(height: 24),
+                _buildScore(),
+                Expanded(child: _buildStarDisplay()),
+                _buildBottomButtons(),
+                const SizedBox(height: 8),
+              ],
+            ),
           ),
         ),
       ),
@@ -253,16 +270,39 @@ class _StageSummaryPageState extends State<StageSummaryPage>
             ),
           ),
           const SizedBox(width: 16),
-          // Continue
           Expanded(
             child: GestureDetector(
-              onTap: () {
-                // For now, go back to level page
-                final levelRoute = RouteBuilder.build(AppRoutes.level, {
-                  'worldId': worldId.toString(),
-                  'levelId': levelId.toString(),
-                });
-                Get.offNamed(levelRoute);
+              onTap: () async {
+                if (nextStageId != null) {
+                  setState(() {
+                    _isContinuing = true;
+                  });
+
+                  try {
+                    final stageController = Get.find<StageController>();
+                    await stageController.loadStage(
+                      newStageId: nextStageId!,
+                      newWorldId: worldId,
+                      newLevelId: levelId,
+                    );
+                  } catch (_) {}
+
+                  if (!mounted) return;
+
+                  final nextStageRoute = RouteBuilder.build(AppRoutes.stage, {
+                    'worldId': worldId.toString(),
+                    'levelId': levelId.toString(),
+                    'stageId': nextStageId.toString(),
+                  });
+
+                  Get.offNamed(nextStageRoute);
+                } else {
+                  final levelRoute = RouteBuilder.build(AppRoutes.level, {
+                    'worldId': worldId.toString(),
+                    'levelId': levelId.toString(),
+                  });
+                  Get.offNamed(levelRoute);
+                }
               },
               child: Container(
                 height: 56,

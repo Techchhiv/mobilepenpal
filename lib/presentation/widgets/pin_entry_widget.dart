@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:mobilepenpal/core/theme/app_colors.dart';
 import 'package:mobilepenpal/data/controllers/home/pin_controller.dart';
 import 'package:mobilepenpal/data/services/home_service.dart';
+import 'package:mobilepenpal/presentation/widgets/loading_overly.dart';
 
 class PinWidget extends StatelessWidget {
   final PinMode mode;
@@ -41,48 +42,38 @@ class PinWidget extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: const Color(0xFF0E6B63),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 32),
-          child: Obx(
-            () => Stack(
-              children: [
-                Column(
-                  children: [
-                    _buildTopBar(),
-                    const SizedBox(height: 8),
-                    Expanded(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          _buildHeader(controller),
-                          const SizedBox(height: 20),
-                          _buildDotField(controller),
-                          if (controller.error.isNotEmpty)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 12.0),
-                              child: Text(
-                                controller.error,
-                                style: const TextStyle(color: Colors.redAccent),
-                              ),
+      body: LoadingOverlay(
+        isLoading: controller.loading,
+        child: Obx(
+          () => SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 32),
+              child: Column(
+                children: [
+                  _buildTopBar(),
+                  const SizedBox(height: 8),
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _buildHeader(controller),
+                        const SizedBox(height: 20),
+                        _buildDotField(controller),
+                        if (controller.error.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 12.0),
+                            child: Text(
+                              controller.error,
+                              style: const TextStyle(color: Colors.redAccent),
                             ),
-                        ],
-                      ),
-                    ),
-                    _buildNumpad(controller),
-                    const SizedBox(height: 18),
-                  ],
-                ),
-                if (controller.loading)
-                  Positioned.fill(
-                    child: Container(
-                      color: Colors.black38,
-                      child: const Center(
-                        child: CircularProgressIndicator(color: Colors.white),
-                      ),
+                          ),
+                      ],
                     ),
                   ),
-              ],
+                  _buildNumpad(controller),
+                  const SizedBox(height: 18),
+                ],
+              ),
             ),
           ),
         ),

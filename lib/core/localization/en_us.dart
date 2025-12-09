@@ -146,6 +146,7 @@ final Map<String, String> enUS = {
   'nickname': 'Nickname',
   'yyyy-mm-dd': 'YYYY-MM-DD',
   'year': 'Year',
+  'require_parent_pin': 'Required Parent Pin',
 
   // ===== Status & Actions =====
   'active': 'Active',

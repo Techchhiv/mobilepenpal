@@ -152,6 +152,24 @@ class StageController extends GetxController
     }
   }
 
+  Future<void> loadStage({
+    required int newStageId,
+    int? newWorldId,
+    int? newLevelId,
+  }) async {
+    stageId = newStageId;
+    if (newWorldId != null) worldId = newWorldId;
+    if (newLevelId != null) levelId = newLevelId;
+
+    attempts.clear();
+    currentExerciseIndex.value = 0;
+    selectedCharacter.value = '';
+    exercises.clear();
+    currentStage.value = null;
+
+    await fetchStageDetail();
+  }
+
   String get characterVowelFormsRaw {
     return currentExercise?.example ?? 'កា/កិ/កី';
   }
@@ -224,10 +242,7 @@ class StageController extends GetxController
     feedback.value = isCorrect ? DrawFeedback.correct : DrawFeedback.wrong;
 
     if (isCorrect) {
-      final phrases = [
-        'ល្អណាស់!',
-        'ធ្វើបានល្អ 👍',
-      ];
+      final phrases = ['ល្អណាស់!', 'ធ្វើបានល្អ 👍'];
       praiseText.value = phrases[Random().nextInt(phrases.length)];
       confettiController.play();
     } else {

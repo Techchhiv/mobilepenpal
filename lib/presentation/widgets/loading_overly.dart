@@ -5,11 +5,13 @@ import 'package:lottie/lottie.dart';
 class LoadingOverlay extends StatelessWidget {
   final bool isLoading;
   final Widget child;
+  final Widget? header;
 
   const LoadingOverlay({
     super.key,
     required this.isLoading,
     required this.child,
+    this.header,
   });
 
   @override
@@ -26,15 +28,16 @@ class LoadingOverlay extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    SizedBox(
-                      width: 320,
-                      height: 320,
-                      child: Lottie.asset(
-                        "assets/animated/loading_paperplan.json",
-                        repeat: true,
-                        animate: true,
-                      ),
-                    ),
+                    header ??
+                        SizedBox(
+                          width: 320,
+                          height: 320,
+                          child: Lottie.asset(
+                            "assets/animated/loading_paperplan.json",
+                            repeat: true,
+                            animate: true,
+                          ),
+                        ),
 
                     Transform.translate(
                       offset: const Offset(0, -64),
