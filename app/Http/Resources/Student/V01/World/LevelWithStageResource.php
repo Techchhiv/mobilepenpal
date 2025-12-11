@@ -20,6 +20,7 @@ class LevelWithStageResource extends JsonResource
             'description' => $this->description,
             'order_index' => $this->order_index,
             'background_image' => $this->background_image,
+            'world_name' => $this->world->name,
             'stages' => StageWithProgressResource::collection($this->stages),
         ];
     }

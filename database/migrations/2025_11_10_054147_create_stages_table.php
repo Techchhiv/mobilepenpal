@@ -22,7 +22,6 @@ return new class extends Migration
             $table->text('description')->nullable();
 
             $table->integer('order_index');
-            $table->integer('required_stars_to_unlock')->default(0);
             $table->integer('max_stars')->default(3);
             $table->timestamps();
         });

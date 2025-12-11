@@ -19,6 +19,8 @@ return new class extends Migration
             $table->foreignId('exercise_id')->constrained('exercises');
 
             $table->string('user_answer')->nullable();
+            $table->json('stroke')->nullable();
+            $table->string('label')->nullable();
             // $table->integer('points_earned')->default(0);
             // $table->integer('time_taken')->nullable();
             $table->boolean('is_correct')->default(false);

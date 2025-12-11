@@ -11,6 +11,7 @@ use App\Models\StudentWorldProgress;
 use App\Models\World;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class StudentProgress
 {
@@ -22,7 +23,7 @@ class StudentProgress
 
         $worlds = World::withCount([
             'levels',
-            'studentLevelProgress as completed_levels_count' => function ($query)  {
+            'studentLevelProgress as completed_levels_count' => function ($query) {
                 $query->where('is_completed', true);
             }
         ])
@@ -44,7 +45,6 @@ class StudentProgress
             $correctAttempts = $results['correct_attempts'];
             $score = $totalExercises > 0 ? round(($correctAttempts / $totalExercises) * 100) : 0;
             $newStarsEarned = $this->calculateStarsEarned($score, $stage->max_stars);
-
             $stageProgress = StudentStageProgress::where('student_id', $studentId)
                 ->where('stage_id', $stageId)
                 ->first();
@@ -62,12 +62,13 @@ class StudentProgress
                 $stageProgress->refresh();
             }
 
-            $this->checkAndUnlockNextContent($studentId, $stage);
+            $nextStageId = $this->checkAndUnlockNextContent($studentId, $stage);
 
             return [
                 'stars_earned' => $newStarsEarned,
                 'correct_attempts' => $correctAttempts,
                 'total_exercises' => $totalExercises,
+                'next_stage_id' => $nextStageId,
             ];
         });
     }
@@ -90,12 +91,31 @@ class StudentProgress
             ->where('status', 'completed')
             ->count();
 
+        $nextStage = Stage::where('level_id', $stage->level_id)
+            ->where('order_index', '>', $stage->order_index)
+            ->orderBy('order_index')
+            ->first();
+
         if ($completedStages === $levelStages->count()) {
             $this->completeLevel($studentId, $level);
             $this->checkWorldCompletion($studentId, $world);
-        } else {
-            $this->unlockNextStage($studentId, $stage);
+
+            if ($nextStage) {
+                $progress = StudentStageProgress::firstOrCreate(
+                    ['student_id' => $studentId, 'stage_id' => $nextStage->id],
+                    ['status' => 'unlocked', 'stars_earned' => 0]
+                );
+
+                if ($progress->status === 'locked') {
+                    $progress->update(['status' => 'unlocked']);
+                }
+                return $nextStage->id;
+            }
+
+            return null;
         }
+
+        return $this->unlockNextStage($studentId, $stage);
     }
 
     private function completeLevel($studentId, $level)
@@ -194,7 +214,11 @@ class StudentProgress
                 ['student_id' => $studentId, 'stage_id' => $nextStage->id],
                 ['status' => 'unlocked', 'stars_earned' => 0]
             );
+
+            return $nextStage->id;
         }
+
+        return null;
     }
 
     public function unlockWorldForStudent($studentId)

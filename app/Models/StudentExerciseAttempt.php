@@ -11,8 +11,27 @@ class StudentExerciseAttempt extends Model
 
     protected $guarded = [];
 
+    protected $casts = [
+        'stroke' => 'array',
+    ];
+
     public function exercise()
     {
         return $this->belongsTo(Exercise::class);
+    }
+
+    public function scopeForStudent($query, int $studentId)
+    {
+        return $query->where('student_id', $studentId);
+    }
+
+    public function scopeForDate($query, $date)
+    {
+        return $query->whereDate('created_at', $date);
+    }
+
+    public function scopeBetweenDates($query, $from, $to)
+    {
+        return $query->whereBetween('created_at', [$from, $to]);
     }
 }

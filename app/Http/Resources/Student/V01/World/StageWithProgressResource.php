@@ -14,8 +14,6 @@ class StageWithProgressResource extends JsonResource
      */
     public function toArray($request)
     {
-        $studentProgress = $this->studentProgress;
-
         return [
             'id' => $this->id,
             'name' => $this->name,
@@ -23,8 +21,8 @@ class StageWithProgressResource extends JsonResource
             'description' => $this->description,
             'order_index' => $this->order_index,
             'max_stars' => $this->max_stars,
-            'stars_earned' => $studentProgress ? $studentProgress->stars_earned : 0,
-            'status' => $studentProgress ? $studentProgress->status : 'locked',
+            'stars_earned' => $this->studentProgress ? $this->studentProgress->stars_earned : 0,
+            'status' => $this->studentProgress ? $this->studentProgress->status : 'locked',
         ];
     }
 }

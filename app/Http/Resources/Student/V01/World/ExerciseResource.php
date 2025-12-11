@@ -19,13 +19,14 @@ class ExerciseResource extends JsonResource
 
             'prompt' => $this->prompt,
             'character' => $this->character,
+            'example' => $this->example,
 
             'question' => $this->question,
             'options' => $this->options,
             'instruction' => $this->instruction,
             'hint' => $this->hint,
 
-            'order_index' => $this->order_index,
+            'order_index' => $this->pivot->order_index,
             'audio_url' => $this->audio_url,
             'image_url' => $this->image_url,
         ];

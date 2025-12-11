@@ -13,15 +13,13 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('levels', function (Blueprint $table) {
+        Schema::create('stage_exercises', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('world_id')->constrained()->onDelete('cascade');
+            $table->foreignId('stage_id')->constrained('stages');
+            $table->foreignId('exercise_id')->constrained('exercises');
 
-            $table->string('name');
-            $table->text('description')->nullable();
-            $table->integer('order_index');
-
-            $table->string('background_image')->nullable();
+            $table->integer('order_index')->default(1);
+            $table->integer('repeat_count')->default(3);
 
             $table->timestamps();
         });
@@ -34,6 +32,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('levels');
+        Schema::dropIfExists('stage_exercise');
     }
 };

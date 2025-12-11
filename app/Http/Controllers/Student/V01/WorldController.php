@@ -11,10 +11,12 @@ use App\Models\Exercise;
 use App\Models\World;
 use App\Models\Level;
 use App\Models\Stage;
+use App\Models\StageExercise;
 use App\Models\StudentExerciseAttempt;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
 class WorldController extends Controller
@@ -71,9 +73,7 @@ class WorldController extends Controller
 
     public function showStage($stageId): JsonResponse
     {
-        $stage = Stage::with(['exercises' => function ($query) {
-            $query->orderBy('order_index');
-        }])->find($stageId);
+        $stage = Stage::with('exercises')->find($stageId);
 
         if (!$stage) {
             return $this->returnError('Stage not found', 404);
@@ -96,10 +96,16 @@ class WorldController extends Controller
         $progressService = new StudentProgress();
 
         DB::transaction(function () use ($studentId, $attempts, $progressService, &$summary) {
-            $firstExercise = Exercise::with('stage')->find($attempts[0]['exercise_id']);
-            if (!$firstExercise) return $this->returnError('Invalid exercise ID', 400);
+            $firstAttempt = collect($attempts)->first();
 
-            $stageId = $firstExercise->stage_id;
+            if (!is_array($firstAttempt) || !isset($firstAttempt['exercise_id'])) {
+                throw new \InvalidArgumentException('Invalid attempts payload: missing exercise_id');
+            }
+
+            $exerciseId = $firstAttempt['exercise_id'];
+
+            $stageId = StageExercise::where('exercise_id', $exerciseId)
+                ->value('stage_id');
 
             $totalExercises = 0;
             $correctAttempts = 0;
@@ -110,6 +116,8 @@ class WorldController extends Controller
                     'exercise_id' => $attempt['exercise_id'],
                     'user_answer' => $attempt['user_answer'],
                     'is_correct' => $attempt['is_correct'],
+                    'stroke' => $attempt['stroke'],
+                    'label' => $attempt['label'],
                 ]);
 
                 $totalExercises++;
@@ -130,7 +138,8 @@ class WorldController extends Controller
                 'stars_earned' => $progressResult['stars_earned'],
                 'correct_answers' => $progressResult['correct_attempts'],
                 'total_questions' => $progressResult['total_exercises'],
-                'is_new_best' => $progressResult['is_new_best'] ?? false
+                'is_new_best' => $progressResult['is_new_best'] ?? false,
+                'next_stage_id'    => $progressResult['next_stage_id'] ?? null,
             ];
         });
 

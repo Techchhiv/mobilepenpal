@@ -16,6 +16,13 @@ class Exercise extends Model
         return $this->belongsTo(Stage::class);
     }
 
+    public function stages()
+    {
+        return $this->belongsToMany(Stage::class, StageExercise::class)
+            ->withPivot(['order_index', 'repeat_count'])
+            ->orderBy('stage_exercises.order_index');
+    }
+
     public function studentAttempts()
     {
         return $this->hasMany(StudentExerciseAttempt::class);
