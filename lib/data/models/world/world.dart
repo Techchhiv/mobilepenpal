@@ -54,29 +54,3 @@ class World {
 
   bool get isCompleted => levelsCompleted >= levelsTotal;
 }
-
-class WorldsResponse {
-  final List<World> worlds;
-
-  WorldsResponse({required this.worlds});
-
-  factory WorldsResponse.fromJson(Map<String, dynamic> json) {
-    return WorldsResponse(
-      worlds: (json['data'] as List<dynamic>? ?? [])
-          .map((world) => World.fromJson(world))
-          .toList(),
-    );
-  }
-}
-
-class WorldDetailResponse {
-  final World world;
-
-  WorldDetailResponse({required this.world});
-
-  factory WorldDetailResponse.fromJson(Map<String, dynamic> json) {
-    return WorldDetailResponse(
-      world: World.fromJson(json['data']['world']),
-    );
-  }
-}

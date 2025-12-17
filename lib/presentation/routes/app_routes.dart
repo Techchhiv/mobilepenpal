@@ -9,5 +9,7 @@ class AppRoutes {
   static const stage = '/world/:worldId/level/:levelId/stage/:stageId';
   static const summary = '/world/:worldId/level/:levelId/stage/:stageId/summary';
 
+  static const parentReport = '/parent/report';
+
   static const setting = '/setting';
 }

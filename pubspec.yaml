@@ -50,6 +50,12 @@ dependencies:
   flutter_drawing_board: ^0.9.8
   path_drawing: ^1.0.1
   confetti: ^0.8.0
+  text_to_path_maker: ^0.6.0
+  vector_math: ^2.2.0
+  intl: ^0.20.2
+  fl_chart: ^1.1.1
+  audioplayers: ^6.5.1
+  flutter_svg: ^2.2.3
 
 dev_dependencies:
   flutter_test:
@@ -77,6 +83,9 @@ flutter:
   assets:
     - assets/images/
     - assets/animated/
+    - assets/audios/characters/
+    - assets/images/characters/
+    - assets/strokes/strokes.json
     # - assets/icons/logo.png
     # - images/a_dot_ham.jpeg
 

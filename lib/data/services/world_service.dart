@@ -69,12 +69,19 @@ class WorldService {
   }
 
   Future<ApiResponse<Map<String, dynamic>>> submitExerciseBatch(
-    List<Map<String, dynamic>> attempts,
-  ) async {
+    List<Map<String, dynamic>> attempts, {
+    int? durationSeconds,
+  }) async {
+    final Map<String, dynamic> payload = {'attempts': attempts};
+
+    if (durationSeconds != null && durationSeconds > 0) {
+      payload['duration_seconds'] = durationSeconds;
+    }
+
     final result = await _apiClient.request<Map<String, dynamic>>(
       method: 'POST',
       path: WorldEndpoints.submitExercise,
-      data: {'attempts': attempts},
+      data: payload,
       fromData: (data) => data as Map<String, dynamic>,
     );
 

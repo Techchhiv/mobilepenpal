@@ -36,6 +36,9 @@ final Map<String, String> enUS = {
   'info': 'Information',
   'attention': 'Attention',
   'protection': 'Protection',
+  'accuracy': 'Accuracy',
+  'best': "Best",
+  'need': "Need",
 
   // ===== Authentication =====
   'enter_your_email_or_phone': 'Enter your email or phone number',
@@ -288,6 +291,13 @@ final Map<String, String> enUS = {
   'current_level': 'Current Level',
   'next_level': 'Next Level',
   'experience_points': 'Experience Points',
+  'summary': 'Summary',
+  'summary_daily': 'Summary Today',
+  'lesson_completed': "Lesson Completed",
+  'summary_weekly': 'Summary Weekly',
+  'mastered': 'Mastered',
+  'review': 'Review',
+  'practice_days': 'Practiced Day',
 
   // ===== Notifications =====
   'no_notifications': 'No Notifications',

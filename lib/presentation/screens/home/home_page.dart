@@ -35,34 +35,37 @@ class HomePage extends StatelessWidget {
         () => LoadingOverlay(
           isLoading: worldController.isLoading.value,
           child: SafeArea(
-            child: RefreshIndicator(
-              onRefresh: () async => homeController.refreshCourses(),
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 24,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 24,
+                  ),
+                  child: _buildHeader(),
                 ),
-                child: Obx(
-                  () => Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildHeader(),
-                      const SizedBox(height: 24),
-                      ModeSwitcher(
-                        currentMode: homeController.currentMode,
-                        onModeChanged: (mode) =>
-                            homeController.requestModeChange(mode),
-                      ),
-                      const SizedBox(height: 24),
-                      if (homeController.currentMode.value == 'student')
-                        StudentHome(homeController: homeController)
-                      else
-                        ParentHome(homeController: homeController),
-                    ],
+
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: ModeSwitcher(
+                    currentMode: homeController.currentMode,
+                    onModeChanged: (mode) =>
+                        homeController.requestModeChange(mode),
                   ),
                 ),
-              ),
+
+                const SizedBox(height: 16),
+
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: homeController.currentMode.value == 'student'
+                        ? StudentHome(homeController: homeController)
+                        : ParentHome(homeController: homeController),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -112,39 +115,39 @@ class HomePage extends StatelessWidget {
             ),
           ],
         ),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.1),
-                blurRadius: 4,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: IconButton(
-            onPressed: () {},
-            icon: Stack(
-              children: [
-                const Icon(Icons.notifications_outlined, size: 24),
-                Positioned(
-                  right: 0,
-                  top: 0,
-                  child: Container(
-                    width: 8,
-                    height: 8,
-                    decoration: const BoxDecoration(
-                      color: Colors.red,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
+        // Container(
+        //   decoration: BoxDecoration(
+        //     color: Colors.white,
+        //     borderRadius: BorderRadius.circular(12),
+        //     boxShadow: [
+        //       BoxShadow(
+        //         color: Colors.grey.withValues(alpha: 0.1),
+        //         blurRadius: 4,
+        //         offset: const Offset(0, 2),
+        //       ),
+        //     ],
+        //   ),
+        //   child: IconButton(
+        //     onPressed: () {},
+        //     icon: Stack(
+        //       children: [
+        //         const Icon(Icons.notifications_outlined, size: 24),
+        //         Positioned(
+        //           right: 0,
+        //           top: 0,
+        //           child: Container(
+        //             width: 8,
+        //             height: 8,
+        //             decoration: const BoxDecoration(
+        //               color: Colors.red,
+        //               shape: BoxShape.circle,
+        //             ),
+        //           ),
+        //         ),
+        //       ],
+        //     ),
+        //   ),
+        // ),
       ],
     );
   }

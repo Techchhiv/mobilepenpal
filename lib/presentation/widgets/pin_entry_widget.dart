@@ -85,7 +85,7 @@ class PinWidget extends StatelessWidget {
     return Row(
       children: [
         InkWell(
-          onTap: () => Get.back(result: false),
+          onTap: () => Get.key.currentState?.pop<bool>(false),
           child: Text(
             "back".tr,
             style: TextStyle(color: AppColors.textWhiteOff),
@@ -140,7 +140,7 @@ class PinWidget extends StatelessWidget {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: filled ? Colors.white : Colors.transparent,
-            border: Border.all(color: Colors.white.withOpacity(0.6), width: 2),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.6), width: 2),
           ),
         );
       }),
@@ -164,7 +164,7 @@ class PinWidget extends StatelessWidget {
         alignment: Alignment.center,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: pressed ? Colors.white.withOpacity(0.28) : Colors.transparent,
+          color: pressed ? Colors.white.withValues(alpha: 0.28) : Colors.transparent,
           border: showBorder
               ? Border.all(color: Colors.white54, width: 1.5)
               : null,

@@ -29,7 +29,7 @@ class LoginPage extends StatelessWidget {
                 Icon(
                   Icons.arrow_back_ios_new_rounded,
                   color: authController.isLoading.value
-                      ? Colors.white.withOpacity(0.5)
+                      ? Colors.white.withValues(alpha: 0.5)
                       : Colors.white,
                   size: 20,
                 ),
@@ -40,7 +40,7 @@ class LoginPage extends StatelessWidget {
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: authController.isLoading.value
-                        ? Colors.white.withOpacity(0.5)
+                        ? Colors.white.withValues(alpha: 0.5)
                         : Colors.white,
                   ),
                 ),
@@ -68,7 +68,7 @@ class LoginPage extends StatelessWidget {
                       child: Icon(
                         Icons.person_outline,
                         size: 40,
-                        color: AppColors.primary.withOpacity(0.7),
+                        color: AppColors.primary.withValues(alpha: 0.7),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -249,7 +249,7 @@ class LoginPage extends StatelessWidget {
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
                                   valueColor: AlwaysStoppedAnimation<Color>(
-                                    Colors.white.withOpacity(0.7),
+                                    Colors.white.withValues(alpha: 0.7),
                                   ),
                                 ),
                               ),
@@ -296,7 +296,7 @@ class LoginPage extends StatelessWidget {
                         'forgot_password'.tr,
                         style: TextStyle(
                           color: authController.isLoading.value
-                              ? AppColors.text.withOpacity(0.5)
+                              ? AppColors.text.withValues(alpha: 0.5)
                               : AppColors.text,
                           fontSize: 14,
                           fontWeight: FontWeight.w600,

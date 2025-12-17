@@ -27,7 +27,7 @@ class WorldHeader extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.2),
+                color: Colors.black.withValues(alpha: 0.2),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
@@ -99,12 +99,12 @@ class WorldHeader extends StatelessWidget {
         width: 50,
         height: 50,
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.2),
+          color: Colors.white.withValues(alpha: 0.2),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Icon(
           Icons.school,
-          color: Colors.white.withOpacity(0.7),
+          color: Colors.white.withValues(alpha: 0.7),
           size: 24,
         ),
       );
@@ -114,7 +114,7 @@ class WorldHeader extends StatelessWidget {
       width: 50,
       height: 50,
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.2),
+        color: Colors.white.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(8),
       ),
       child: ClipRRect(
@@ -125,7 +125,7 @@ class WorldHeader extends StatelessWidget {
           errorBuilder: (context, error, stackTrace) {
             return Icon(
               Icons.school,
-              color: Colors.white.withOpacity(0.7),
+              color: Colors.white.withValues(alpha: 0.7),
               size: 24,
             );
           },

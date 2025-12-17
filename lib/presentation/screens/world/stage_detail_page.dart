@@ -1,10 +1,12 @@
-
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_drawing_board/flutter_drawing_board.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:mobilepenpal/core/network/route_builder.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_controller.dart';
+import 'package:mobilepenpal/data/controllers/world/world_controller.dart';
+import 'package:mobilepenpal/data/controllers/world/stage_animation_controller.dart';
 import 'package:mobilepenpal/presentation/routes/app_routes.dart';
 import 'package:mobilepenpal/presentation/widgets/loading_overly.dart';
 
@@ -52,8 +54,6 @@ class StageDetailPage extends GetView<StageController> {
       ),
     );
   }
-
-  // ───────────────── Top bar ─────────────────
 
   Widget _buildTopBar(BuildContext context) {
     return Padding(
@@ -116,7 +116,6 @@ class StageDetailPage extends GetView<StageController> {
           ),
           const SizedBox(width: 12),
 
-          // ───── Pause button with modal ─────
           GestureDetector(
             onTap: () => _showPauseDialog(context),
             child: Container(
@@ -134,25 +133,12 @@ class StageDetailPage extends GetView<StageController> {
     );
   }
 
-  // ───────────────── Bird illustration ─────────────────
-
   Widget _buildIllustration() {
     return SizedBox(
-      height: 120,
-      child: Stack(
-        alignment: Alignment.center,
+      height: 130,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Positioned(
-            left: 60,
-            child: Container(
-              width: 80,
-              height: 60,
-              decoration: BoxDecoration(
-                color: Colors.green.shade300.withValues(alpha: 0.3),
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
           Container(
             width: 100,
             height: 100,
@@ -166,18 +152,28 @@ class StageDetailPage extends GetView<StageController> {
               color: Colors.grey.shade600,
             ),
           ),
+          Expanded(
+            child: Text(
+              "កុក",
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w500,
+                color: Colors.white,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
         ],
       ),
     );
   }
 
-  // ───────────────── Drawing board ─────────────────
   Widget _buildDrawingBoard() {
     return Center(
       child: Obx(() {
-        final feedbackState = controller.feedback.value;
+        final feedbackState = controller.anim.feedback.value;
         final dx = feedbackState == DrawFeedback.wrong
-            ? controller.shakeOffset.value
+            ? controller.anim.shakeOffset.value
             : 0.0;
 
         double scale;
@@ -236,14 +232,42 @@ class StageDetailPage extends GetView<StageController> {
                                             .isNotEmpty
                                         ? controller.selectedCharacter.value
                                         : "ក",
-                                    style: TextStyle(
+                                    style: GoogleFonts.battambang(
                                       fontSize: controller.fontSize,
-                                      fontWeight: FontWeight.bold,
+                                      fontWeight: FontWeight.normal,
+                                      height: 1.0,
                                       color: Colors.grey.shade600,
                                     ),
                                   ),
                                 ),
                               ),
+
+                              Obx(() {
+                                final p = controller.anim.guideCirclePx.value;
+                                final show =
+                                    controller.anim.isGuiding.value &&
+                                    p != null;
+                                if (!show) return const SizedBox.shrink();
+
+                                return Positioned(
+                                  left: p.dx - 14,
+                                  top: p.dy - 14,
+                                  child: IgnorePointer(
+                                    child: Container(
+                                      width: 28,
+                                      height: 28,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          width: 4,
+                                          color: Colors.orange,
+                                        ),
+                                        color: Colors.transparent,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }),
                             ],
                           ),
                         );
@@ -255,12 +279,12 @@ class StageDetailPage extends GetView<StageController> {
                   ),
                 ),
 
+                // Confetti (from animation controller)
                 Align(
                   alignment: Alignment.center,
                   child: ConfettiWidget(
-                    confettiController: controller.confettiController,
-                    blastDirectionality:
-                        BlastDirectionality.explosive,
+                    confettiController: controller.anim.confettiController,
+                    blastDirectionality: BlastDirectionality.explosive,
                     emissionFrequency: 0.01,
                     numberOfParticles: 25,
                     maxBlastForce: 30,
@@ -270,9 +294,10 @@ class StageDetailPage extends GetView<StageController> {
                   ),
                 ),
 
+                // Praise bubble (from animation controller)
                 Obx(() {
-                  final feedbackState = controller.feedback.value;
-                  final praise = controller.praiseText.value;
+                  final feedbackState = controller.anim.feedback.value;
+                  final praise = controller.anim.praiseText.value;
 
                   final isVisible =
                       feedbackState == DrawFeedback.correct &&
@@ -285,7 +310,7 @@ class StageDetailPage extends GetView<StageController> {
                       duration: const Duration(milliseconds: 1000),
                       curve: Curves.elasticOut,
                       child: AnimatedOpacity(
-                        opacity: isVisible ? 1.0 : 0.0, 
+                        opacity: isVisible ? 1.0 : 0.0,
                         duration: const Duration(milliseconds: 500),
                         child: Container(
                           padding: const EdgeInsets.symmetric(
@@ -340,41 +365,74 @@ class StageDetailPage extends GetView<StageController> {
   }
 
   Widget _buildCharacterOptions() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Obx(() {
-        final forms = controller.characterVowelFormsList;
-        if (forms.isEmpty) {
-          return const SizedBox.shrink();
-        }
+    return Obx(() {
+      final forms = controller.characterVowelFormsList;
+      if (forms.isEmpty) return const SizedBox.shrink();
 
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: forms.map((char) {
-            return SizedBox(
-              width: 40,
-              height: 30,
-              child: Center(
-                child: Text(
-                  char,
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey.shade700,
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: SizedBox(
+          height: 52,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Align(
+                alignment: Alignment.center,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 10,
+                    horizontal: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: forms.map((char) {
+                      return SizedBox(
+                        width: 40,
+                        height: 30,
+                        child: Center(
+                          child: Text(
+                            char,
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey.shade700,
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
                   ),
                 ),
               ),
-            );
-          }).toList(),
-        );
-      }),
-    );
+
+              Align(
+                alignment: Alignment.centerRight,
+                child: GestureDetector(
+                  onTap: controller.playCurrentCharacterAudio,
+                  child: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: Colors.orange.shade400,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.volume_up,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    });
   }
 
   Widget _buildBottomButtons() {
@@ -457,7 +515,6 @@ class StageDetailPage extends GetView<StageController> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Mascot / icon
                 Container(
                   width: 90,
                   height: 90,
@@ -466,7 +523,7 @@ class StageDetailPage extends GetView<StageController> {
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
-                    Icons.pets, // placeholder mascot
+                    Icons.pets,
                     size: 56,
                     color: Colors.orange.shade700,
                   ),
@@ -486,24 +543,47 @@ class StageDetailPage extends GetView<StageController> {
                           ),
                           padding: const EdgeInsets.symmetric(vertical: 14),
                         ),
-                        onPressed: () {
+                        onPressed: () async {
                           Navigator.of(ctx).pop();
 
-                          controller.clearBoard();
-                          controller.attempts.clear();
+                          controller.isSubmitting.value = true;
 
-                          final worldRoute = RouteBuilder.build(
-                            AppRoutes.world,
-                            {'id': controller.worldId.toString()},
-                          );
-                          Get.offAllNamed(worldRoute);
+                          try {
+                            controller.clearBoard();
+                            controller.attempts.clear();
+
+                            final worldController = Get.find<WorldController>();
+
+                            await worldController.fetchWorldById(
+                              controller.worldId,
+                            );
+
+                            final world = worldController.currentWorld.value;
+                            if (world == null ||
+                                world.id != controller.worldId) {
+                              Get.snackbar(
+                                'Error',
+                                'Failed to load course'.tr,
+                                snackPosition: SnackPosition.BOTTOM,
+                              );
+                              return;
+                            }
+
+                            final worldRoute = RouteBuilder.build(
+                              AppRoutes.world,
+                              {'id': controller.worldId.toString()},
+                            );
+
+                            Get.offNamed(worldRoute);
+                          } finally {
+                            controller.isSubmitting.value = false;
+                          }
                         },
                         child: const Icon(Icons.home, size: 32),
                       ),
                     ),
 
                     const SizedBox(width: 12),
-                    // Resume
                     Expanded(
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(

@@ -1,320 +1,138 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
+import 'package:mobilepenpal/presentation/widgets/home/parent_summary_page.dart';
 
 class ParentHome extends StatelessWidget {
   final HomeController homeController;
 
   const ParentHome({super.key, required this.homeController});
 
+  static const Color _brand = Color(0xFF00897B);
+
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return GetBuilder<HomeController>(
+      init: homeController,
+      initState: (_) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (homeController.dailySummary.value == null &&
+              !homeController.isSummaryLoading.value) {
+            homeController.fetchDailySummary();
+          }
+        });
+      },
+      builder: (_) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildTopButton(Icons.settings, 'ការកំណត់'),
-            _buildTopButton(Icons.bar_chart_outlined, 'របាយការណ៍'),
-            _buildTopButton(Icons.calendar_today_outlined, 'កាលវិភាគ'),
+            _buildTopActionsRow(),
+            const SizedBox(height: 24),
+            // _buildChildProgressSection(),
+            // const SizedBox(height: 24),
+            ParentSummaryCard(homeController: homeController),
           ],
+        );
+      },
+    );
+  }
+
+
+  Widget _buildTopActionsRow() {
+    return Row(
+      children: [
+        _buildTopActionBox(
+          icon: Icons.settings,
+          label: 'ការកំណត់',
+          onTap: () {},
         ),
-
-        const SizedBox(height: 24),
-
-        _buildChildProgressCard(),
-
-        const SizedBox(height: 24),
-
-        _buildSummaryCard(context),
+        _buildTopActionBox(
+          icon: Icons.bar_chart_outlined,
+          label: 'របាយការណ៍',
+          onTap: () => Get.toNamed('/parent/report'),
+        ),
+        _buildTopActionBox(
+          icon: Icons.calendar_today_outlined,
+          label: 'កាលវិភាគ',
+          onTap: () {},
+        ),
       ],
     );
   }
 
-  Widget _buildTopButton(IconData icon, String label) {
+  Widget _buildTopActionBox({
+    required IconData icon,
+    required String label,
+    VoidCallback? onTap,
+  }) {
     return Expanded(
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 4),
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: Colors.white,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
+          child: Container(
+            height: 74,
+            margin: const EdgeInsets.symmetric(horizontal: 4),
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ],
             ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Icon(icon, color: const Color(0xFF00897B)),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, color: _brand, size: 26),
+                const SizedBox(height: 8),
+                Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    height: 1.1,
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildChildProgressCard() {
+  Widget _buildChildProgressSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text("ដំណើរការ របស់កូនសិស្ស"),
-        SizedBox(height: 12),
+        const Text(
+          "ដំណើរការរបស់សិស្ស",
+          style: TextStyle(fontWeight: FontWeight.w700),
+        ),
+        const SizedBox(height: 12),
         Container(
           width: double.infinity,
-          height: 356,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 6,
-                offset: const Offset(0, 2),
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
               ),
             ],
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  CircleAvatar(
-                    radius: 28,
-                    backgroundColor: Colors.grey[200],
-                    child: Icon(Icons.person, color: Colors.grey[600]),
-                  ),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      Text(
-                        'ឈី អរុណា',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                      Text(
-                        'ថ្នាក់ទី ៣ក',
-                        style: TextStyle(color: Colors.grey, fontSize: 13),
-                      ),
-                    ],
-                  ),
-                  const Spacer(),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF3C9684),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Text(
-                      'កំពុងសកម្ម',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'មុខវិជ្ជា៖',
-                    style: TextStyle(fontSize: 14, color: Colors.black87),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'គណិតវិឡា',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.black87,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-
-              Spacer(),
-              Divider(),
-              const SizedBox(height: 6),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Progress',
-                    style: TextStyle(fontSize: 14, color: Colors.black),
-                  ),
-                  Text(
-                    '4/10 lessons',
-                    style: TextStyle(fontSize: 14, color: Colors.black),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: LinearProgressIndicator(
-                  value: 0.4,
-                  backgroundColor: Colors.grey[200],
-                  color: const Color(0xFF00897B),
-                  minHeight: 8,
-                ),
-              ),
-
-              const SizedBox(height: 12),
-
-              Row(
-                children: const [
-                  Icon(
-                    Icons.check_circle_outline,
-                    color: Colors.blue,
-                    size: 18,
-                  ),
-                  SizedBox(width: 6),
-                  Text('Recent: ', style: TextStyle(fontSize: 13)),
-                  SizedBox(width: 6),
-                  Text(
-                    'Finished Solar System Quiz',
-                    style: TextStyle(fontSize: 13),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              Row(
-                children: const [
-                  Icon(Icons.access_time, color: Colors.grey, size: 18),
-                  SizedBox(width: 6),
-                  Text('Time: ', style: TextStyle(fontSize: 13)),
-                  SizedBox(width: 6),
-                  Text(
-                    '1h 45m Today',
-                    style: TextStyle(fontSize: 13, color: Colors.grey),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 16),
-              ElevatedButton.icon(
-                onPressed: () {},
-                icon: const Icon(Icons.school_rounded),
-                label: const Text('ចូលមើលរបាយការណ៍'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF2EC4B6),
-                  minimumSize: const Size(double.infinity, 48),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSummaryCard(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text("របាយការណ៍សង្ខេប"),
-        SizedBox(height: 12),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.bar_chart_sharp, color: Colors.black, size: 16,),
-              const SizedBox(width: 12),
-                  Text(
-                    'សង្ខេបសកម្មភាព',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _buildSummaryItem(
-                        "មេរៀនដែលបានមើល",
-                        '24',
-                        Color(0xFF165DFB),
-                      ),
-                      const SizedBox(height: 24),
-                      _buildSummaryItem("សមិទ្ធិផល", '24', Color(0xFF9810FA)),
-                    ],
-                  ),
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _buildSummaryItem(
-                        "សរុបពេលវេលាសិក្សា",
-                        '8h 30m',
-                        Color(0xFF00A63E),
-                      ),
-                      const SizedBox(height: 24),
-                      _buildSummaryItem(
-                        "ពិន្ទុមធ្យម",
-                        '95%',
-                        Color(0xFFF54900),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSummaryItem(String label, String value, Color color) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Text(
-          value,
-          style: TextStyle(
-            color: color,
-            fontWeight: FontWeight.w900,
-            fontSize: 24,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: const TextStyle(color: Color(0xFF737384), fontSize: 14),
-          textAlign: TextAlign.center,
+          child: const Text("...keep your current child progress UI..."),
         ),
       ],
     );

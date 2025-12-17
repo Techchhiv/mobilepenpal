@@ -3,11 +3,16 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:mobilepenpal/core/theme/app_colors.dart';
 import 'package:mobilepenpal/data/controllers/home/pin_controller.dart';
+import 'package:mobilepenpal/data/models/report/daily_summary.dart';
+import 'package:mobilepenpal/data/models/report/monthly_summary.dart';
+import 'package:mobilepenpal/data/models/report/weekly_summary.dart';
 import 'package:mobilepenpal/data/models/student/student.dart';
 import 'package:mobilepenpal/data/models/student/student_progress.dart';
 import 'package:mobilepenpal/data/services/home_service.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:mobilepenpal/presentation/widgets/pin_entry_widget.dart';
+
+enum SummaryView { daily, weekly }
 
 class HomeController extends GetxController {
   final HomeService _homeService = HomeService();
@@ -19,6 +24,18 @@ class HomeController extends GetxController {
   var student = Rxn<Student>();
   var currentMode = ''.obs;
   var studentProgress = <StudentProgress>[].obs;
+
+  var summaryView = SummaryView.daily.obs;
+
+  var isWeeklyLoading = false.obs;
+  var weeklySummary = Rxn<WeeklySummary>();
+
+  var isSummaryLoading = false.obs;
+  var dailySummary = Rxn<DailySummary>();
+
+  var isMonthlyLoading = false.obs;
+  var monthlySummary = Rxn<MonthlySummary>();
+  var selectedMonth = ''.obs;
 
   String get avatarUrl => student.value?.avatar ?? '';
 
@@ -79,6 +96,94 @@ class HomeController extends GetxController {
       }
     } finally {
       isProfileLoading.value = false;
+    }
+  }
+
+  Future<void> fetchDailySummary({String? date}) async {
+    if (isSummaryLoading.value) return;
+
+    isSummaryLoading.value = true;
+    try {
+      final res = await _homeService.getDailySummary(date: date);
+
+      if (res.code == 200 && res.data != null) {
+        dailySummary.value = res.data!;
+      } else {
+        Get.snackbar(
+          'Error',
+          res.message,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+      }
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        e.toString(),
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    } finally {
+      isSummaryLoading.value = false;
+    }
+  }
+
+  Future<void> fetchWeeklySummary({String? fromDate, String? toDate}) async {
+    if (isWeeklyLoading.value) return;
+
+    isWeeklyLoading.value = true;
+    try {
+      final res = await _homeService.getWeeklySummary(
+        fromDate: fromDate,
+        toDate: toDate,
+      );
+      if (res.code == 200 && res.data != null) {
+        weeklySummary.value = res.data!;
+      } else {
+        Get.snackbar(
+          'Error',
+          res.message,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+      }
+    } finally {
+      isWeeklyLoading.value = false;
+    }
+  }
+
+  Future<void> fetchMonthlySummary({String? month}) async {
+    if (isMonthlyLoading.value) return;
+
+    isMonthlyLoading.value = true;
+    try {
+      final m = month ?? selectedMonth.value;
+      final res = await _homeService.getMonthlySummary(
+        month: (m.isEmpty ? null : m),
+      );
+
+      if (res.code == 200 && res.data != null) {
+        monthlySummary.value = res.data!;
+        if (res.data!.month.isNotEmpty) {
+          selectedMonth.value = res.data!.month;
+        }
+      } else {
+        Get.snackbar(
+          'Error',
+          res.message,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+      }
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        e.toString(),
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    } finally {
+      isMonthlyLoading.value = false;
     }
   }
 
@@ -184,10 +289,21 @@ class HomeController extends GetxController {
     }
   }
 
-  Future<void> refreshCourses() async {
+  Future<void> refreshHome() async {
     isLoading.value = true;
-    await fetchStudentProfile();
-    isLoading.value = false;
+    try {
+      await fetchStudentProfile();
+
+      if (currentMode.value == 'parent') {
+        if (summaryView.value == SummaryView.daily) {
+          await fetchDailySummary();
+        } else {
+          await fetchWeeklySummary();
+        }
+      }
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   String get fullName => student.value != null

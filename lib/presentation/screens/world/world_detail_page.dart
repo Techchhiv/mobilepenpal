@@ -7,25 +7,24 @@ import 'package:mobilepenpal/presentation/widgets/loading_overly.dart';
 import 'package:mobilepenpal/presentation/widgets/world_header.dart';
 import 'package:mobilepenpal/presentation/widgets/world_map.dart';
 
-class CourseDetailPage extends StatelessWidget {
-  CourseDetailPage({super.key});
-
-  final LevelController levelController = Get.find<LevelController>();
+class WorldDetailPage extends StatelessWidget {
+  const WorldDetailPage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final LevelController levelController = Get.find<LevelController>();
     return Scaffold(
       body: Obx(
         () => LoadingOverlay(
           isLoading: levelController.isLoading.value,
-          child: _CourseDetailContent(),
+          child: _WorldDetailContent(),
         ),
       ),
     );
   }
 }
 
-class _CourseDetailContent extends StatelessWidget {
+class _WorldDetailContent extends StatelessWidget {
   final WorldController worldController = Get.find<WorldController>();
 
   @override

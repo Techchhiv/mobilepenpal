@@ -49,17 +49,13 @@ class SettingPage extends StatelessWidget {
     );
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // AppBar
-  // ─────────────────────────────────────────────────────────────
-
   AppBar _buildAppBar() {
     return AppBar(
       backgroundColor: AppColors.primary,
       elevation: 0,
       automaticallyImplyLeading: false,
       title: InkWell(
-        onTap: () => Get.offAllNamed('/home'),
+        onTap: () => Get.offNamed('/home'),
         borderRadius: BorderRadius.circular(8),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -83,10 +79,6 @@ class SettingPage extends StatelessWidget {
       ),
     );
   }
-
-  // ─────────────────────────────────────────────────────────────
-  // Sections
-  // ─────────────────────────────────────────────────────────────
 
   Widget _buildSectionTitle(String title) {
     return Align(

@@ -36,6 +36,9 @@ final Map<String, String> kmKH = {
   'info': 'ព័ត៌មាន',
   'attention': 'សម្គាល់',
   'protection': 'សុវត្ថិភាព',
+  'accuracy': 'ភាពត្រឹមត្រូវ',
+  'best': "ល្អបំផុត",
+  'need': "ត្រូវហាត់បន្ថែម",
 
   // ===== Authentication =====
   'enter_your_email_or_phone': 'បញ្ចូលអ៊ីមែល ឬ លេខទូរស័ព្ទរបស់អ្នក',
@@ -284,6 +287,13 @@ final Map<String, String> kmKH = {
   'current_level': 'កម្រិតបច្ចុប្បន្ន',
   'next_level': 'កម្រិតបន្ទាប់',
   'experience_points': 'ពិន្ទុបទពិសោធន៍',
+  'summary': 'របាយការណ៍សង្ខេប',
+  'summary_daily': 'សង្ខេបថ្ងៃនេះ',
+  'lesson_completed': "មេរៀនបានហាត់",
+  'summary_weekly': 'សង្ខេបប្រចាំសប្ដាហ៍',
+  'mastered': 'ធ្វើបានល្អ',
+  'review': 'ត្រូវការអនុវត្តបន្ថែម',
+  'practice_days': 'ថ្ងៃដែលបានអនុវត្ត',
 
   // ===== Notifications =====
   'no_notifications': 'គ្មានការជូនដំណឹង',

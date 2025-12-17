@@ -46,7 +46,7 @@ class _LoadingModalState extends State<LoadingModal> {
       child: Container(
         width: MediaQuery.of(context).size.width,
         height: MediaQuery.of(context).size.height,
-        color: AppColors.primary.withOpacity(widget.opacity),
+        color: AppColors.primary.withValues(alpha: widget.opacity),
         child: Center(
           child: Container(
             width: 140,
@@ -56,7 +56,7 @@ class _LoadingModalState extends State<LoadingModal> {
               // borderRadius: BorderRadius.circular(16),
               // boxShadow: [
               //   BoxShadow(
-              //     color: Colors.black.withOpacity(0.3),
+              //     color: Colors.black.withValues(alpha: 0.3),
               //     blurRadius: 20,
               //     offset: const Offset(0, 8),
               //   ),

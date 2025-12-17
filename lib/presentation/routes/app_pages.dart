@@ -3,15 +3,18 @@ import 'package:mobilepenpal/core/bindings/auth_binding.dart';
 import 'package:mobilepenpal/core/bindings/home_binding.dart';
 import 'package:mobilepenpal/core/bindings/level_binding.dart';
 import 'package:mobilepenpal/core/bindings/otp_binding.dart';
+import 'package:mobilepenpal/core/bindings/report_binding.dart';
 import 'package:mobilepenpal/core/bindings/setting_binding.dart';
 import 'package:mobilepenpal/core/bindings/stage_binding.dart';
+import 'package:mobilepenpal/core/bindings/stage_summary_binding.dart';
 import 'package:mobilepenpal/core/bindings/world_binding.dart';
 import 'package:mobilepenpal/presentation/screens/auth/login_page.dart';
 import 'package:mobilepenpal/presentation/screens/auth/otp_verification_page.dart';
 import 'package:mobilepenpal/presentation/screens/auth/splash_page.dart';
 import 'package:mobilepenpal/presentation/screens/home/home_page.dart';
+import 'package:mobilepenpal/presentation/screens/report/report_detail_page.dart';
 import 'package:mobilepenpal/presentation/screens/settings/setting_page.dart';
-import 'package:mobilepenpal/presentation/screens/world/course_detail_page.dart';
+import 'package:mobilepenpal/presentation/screens/world/world_detail_page.dart';
 import 'package:mobilepenpal/presentation/screens/world/level_detail_page.dart';
 import 'package:mobilepenpal/presentation/screens/world/stage_detail_page.dart';
 import 'package:mobilepenpal/presentation/screens/world/stage_summary_page.dart';
@@ -44,7 +47,7 @@ class AppPages {
 
     GetPage(
       name: AppRoutes.world,
-      page: () => CourseDetailPage(),
+      page: () => WorldDetailPage(),
       binding: WorldBinding(),
     ),
 
@@ -60,6 +63,15 @@ class AppPages {
       binding: StageBinding(),
     ),
 
-    GetPage(name: AppRoutes.summary, page: () => StageSummaryPage()),
+    GetPage(
+      name: AppRoutes.summary,
+      page: () => StageSummaryPage(),
+      binding: StageSummaryBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.parentReport,
+      page: () => ReportDetailPage(),
+      binding: ReportBinding(),
+    ),
   ];
 }

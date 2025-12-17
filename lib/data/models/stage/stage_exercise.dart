@@ -13,8 +13,9 @@ class StageExercise {
   final String instruction;
   final String hint;
   final int orderIndex;
-  final String? audioUrl;
-  final String? imageUrl;
+  final String? characterType;
+  // final String? audioUrl;
+  // final String? imageUrl;
 
   StageExercise({
     required this.id,
@@ -26,8 +27,9 @@ class StageExercise {
     required this.instruction,
     required this.hint,
     required this.orderIndex,
-    this.audioUrl,
-    this.imageUrl,
+    this.characterType,
+    // this.audioUrl,
+    // this.imageUrl,
   });
 
   factory StageExercise.fromJson(Map<String, dynamic> json) {
@@ -58,8 +60,9 @@ class StageExercise {
       instruction: json['instruction'] as String,
       hint: json['hint'] as String,
       orderIndex: json['order_index'] as int,
-      audioUrl: json['audio_url'] as String?,
-      imageUrl: json['image_url'] as String?,
+      characterType: json['character_type'] as String?,
+      // audioUrl: json['audio_url'] as String?,
+      // imageUrl: json['image_url'] as String?,
     );
   }
 
@@ -74,8 +77,9 @@ class StageExercise {
       'instruction': instruction,
       'hint': hint,
       'order_index': orderIndex,
-      'audio_url': audioUrl,
-      'image_url': imageUrl,
+      'character_type': characterType,
+      // 'audio_url': audioUrl,
+      // 'image_url': imageUrl,
     };
   }
 

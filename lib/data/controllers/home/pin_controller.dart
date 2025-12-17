@@ -144,7 +144,7 @@ class PinController extends GetxController {
     await Future.delayed(const Duration(milliseconds: 150));
 
     if (stored != null && stored == entered) {
-      Get.back(result: true);
+      Get.key.currentState?.pop<bool>(true);
     } else {
       error = 'invalid_pin'.tr;
       pinController.clear();

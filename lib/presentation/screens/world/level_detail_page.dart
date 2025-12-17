@@ -44,10 +44,6 @@ class LevelDetailPage extends GetView<LevelController> {
     );
   }
 
-
-
-  // ───────────────── Background & overlay ─────────────────
-
   Widget _buildBackground() {
     return Positioned.fill(
       child: Image.asset(
@@ -65,7 +61,10 @@ class LevelDetailPage extends GetView<LevelController> {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             stops: const [0.1, 1],
-            colors: [AppColors.primary, AppColors.primary.withOpacity(0.0)],
+            colors: [
+              AppColors.primary,
+              AppColors.primary.withValues(alpha: 0.0),
+            ],
           ),
         ),
       ),
@@ -119,8 +118,6 @@ class LevelDetailPage extends GetView<LevelController> {
       );
     });
   }
-
-  // ───────────────── Body content (loading / error / stages) ─────────────────
 
   Widget _buildBodyContent() {
     if (controller.isLoading.value) {
@@ -182,19 +179,27 @@ class LevelDetailPage extends GetView<LevelController> {
     );
   }
 
-  // ───────────────── Stages carousel ─────────────────
-
   Widget _buildStagesCarousel(List<LevelStage> stages) {
-    return PageView.builder(
-      itemCount: stages.length,
-      itemBuilder: (context, index) {
-        final stage = stages[index];
-        return _buildStageCard(stage, index + 1, stages.length);
-      },
-    );
-  }
+    return Obx(() {
+      final pc = PageController(
+        initialPage: controller.initialStageIndex.value,
+      );
 
-  // ───────────────── Stage card ─────────────────
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!pc.hasClients) return;
+        pc.jumpToPage(controller.initialStageIndex.value);
+      });
+
+      return PageView.builder(
+        controller: pc,
+        itemCount: stages.length,
+        itemBuilder: (context, index) {
+          final stage = stages[index];
+          return _buildStageCard(stage, index + 1, stages.length);
+        },
+      );
+    });
+  }
 
   Widget _buildStageCard(LevelStage stage, int stageNumber, int totalStages) {
     final isUnlocked =
@@ -215,7 +220,7 @@ class LevelDetailPage extends GetView<LevelController> {
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -273,8 +278,8 @@ class LevelDetailPage extends GetView<LevelController> {
                       ),
                       elevation: 4,
                       shadowColor: isUnlocked
-                          ? AppColors.primary.withOpacity(0.5)
-                          : Colors.grey.withOpacity(0.5),
+                          ? AppColors.primary.withValues(alpha: 0.5)
+                          : Colors.grey.withValues(alpha: 0.5),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -335,8 +340,6 @@ class LevelDetailPage extends GetView<LevelController> {
       ),
     );
   }
-
-  // ───────────────── Navigation ─────────────────
 
   void _navigateToStage(int stageId) async {
     final StageController stageController = Get.find<StageController>();
