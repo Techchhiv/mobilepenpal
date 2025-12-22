@@ -39,16 +39,24 @@ class StageController extends GetxController {
   final attempts = <Map<String, dynamic>>[].obs;
 
   final hasDrawnStroke = false.obs;
-  static const String penUpToken = '#';
 
   Timer? idle;
   DateTime? _sessionStart;
 
   StageExercise? get currentExercise =>
       (currentExerciseIndex.value >= 0 &&
-              currentExerciseIndex.value < exercises.length)
-          ? exercises[currentExerciseIndex.value]
-          : null;
+          currentExerciseIndex.value < exercises.length)
+      ? exercises[currentExerciseIndex.value]
+      : null;
+
+  final List<List<Map<String, dynamic>>> _rawStrokes = [];
+  List<Map<String, dynamic>>? _currentStroke;
+
+  int? _t0Ms;
+  int _relTimeMs() {
+    _t0Ms ??= DateTime.now().millisecondsSinceEpoch;
+    return DateTime.now().millisecondsSinceEpoch - _t0Ms!;
+  }
 
   List<String> get characters =>
       exercises.map((e) => e.character).where((c) => c.isNotEmpty).toList();
@@ -168,6 +176,10 @@ class StageController extends GetxController {
     drawingController.clear();
     hasDrawnStroke.value = false;
     idle?.cancel();
+
+    _rawStrokes.clear();
+    _currentStroke = null;
+    _t0Ms = null;
   }
 
   void selectExerciseByIndex(int index) {
@@ -225,15 +237,34 @@ class StageController extends GetxController {
     final exercise = currentExercise;
     if (exercise == null) return;
 
+    final modelType = _mapCharacterTypeToModelType(exercise.characterType);
+
+    // ====== AI verify (currently disabled / API down) ======
+    // bool isCorrect = false;
+    // String? prediction;
+    //
+    // try {
+    //   final payload = getYXWithTime(modelType: modelType);
+    //   final data = await _worldService.predictDrawing(payload);
+    //
+    //   prediction = (data['prediction'] ?? '').toString().trim();
+    //   isCorrect = prediction == (exercise.character ?? '').trim();
+    // } catch (e) {
+    //   // Fallback while AI is down
+    //   isCorrect = Random().nextDouble() <= 0.9;
+    // }
+
     final bool isCorrect = Random().nextDouble() <= 0.9;
 
     if (isCorrect) {
       anim.showCorrect();
     } else {
-      await anim.showWrongAndReset(onAfterReset: () {
-        clearBoard();
-        hasDrawnStroke.value = false;
-      });
+      await anim.showWrongAndReset(
+        onAfterReset: () {
+          clearBoard();
+          hasDrawnStroke.value = false;
+        },
+      );
       return;
     }
 
@@ -254,6 +285,7 @@ class StageController extends GetxController {
 
     if (isLastExercise) {
       final durationSeconds = _sessionDurationSeconds;
+
       final summary = await submitExerciseBatch(
         List<Map<String, dynamic>>.from(attempts),
         durationSeconds: durationSeconds,
@@ -330,36 +362,64 @@ class StageController extends GetxController {
   }
 
   List<dynamic> getXYStrokes() {
-    final strokes = drawingController.getJsonList();
-    final List<dynamic> sequence = [];
+    final out = <dynamic>[];
 
-    for (final stroke in strokes) {
-      final steps = stroke['path']?['steps'];
-      if (steps is! List) continue;
-
-      bool strokeHasPoints = false;
-
-      for (final step in steps) {
-        final x = step['x'];
-        final y = step['y'];
-
-        if (x != null && y != null) {
-          sequence.add((x as num).toDouble());
-          sequence.add((y as num).toDouble());
-          strokeHasPoints = true;
-        }
+    for (final stroke in _rawStrokes) {
+      for (final p in stroke) {
+        out.add((p["x"] as num).toDouble());
+        out.add((p["y"] as num).toDouble());
       }
-
-      if (strokeHasPoints) {
-        sequence.add('#');
-      }
+      out.add('#');
     }
 
-    if (sequence.isNotEmpty && sequence.last == '#') {
-      sequence.removeLast();
-    }
+    if (out.isNotEmpty && out.last == '#') out.removeLast();
+    return out;
+  }
 
-    return sequence;
+  Map<String, dynamic> getXYStrokeWithTime({required String modelType}) {
+    return {
+      "strokes": _rawStrokes
+          .map(
+            (stroke) => {
+              "points": stroke.map((p) {
+                return {
+                  "x": (p["x"] as num).toDouble(),
+                  "y": (p["y"] as num).toDouble(),
+                  "time": (p["time"] as num?)?.toInt(),
+                };
+              }).toList(),
+            },
+          )
+          .toList(),
+      "model_type": modelType,
+    };
+  }
+
+  void onRawPointerDown(PointerDownEvent e) {
+    _currentStroke = [];
+    _currentStroke!.add({
+      "x": e.localPosition.dx,
+      "y": e.localPosition.dy,
+      "time": _relTimeMs(),
+    });
+    onPointerDown();
+  }
+
+  void onRawPointerMove(PointerMoveEvent e) {
+    if (_currentStroke == null) return;
+    _currentStroke!.add({
+      "x": e.localPosition.dx,
+      "y": e.localPosition.dy,
+      "time": _relTimeMs(),
+    });
+  }
+
+  void onRawPointerUp(PointerUpEvent e) {
+    if (_currentStroke != null && _currentStroke!.isNotEmpty) {
+      _rawStrokes.add(List<Map<String, dynamic>>.from(_currentStroke!));
+    }
+    _currentStroke = null;
+    onPointerUp();
   }
 
   int get _sessionDurationSeconds {
@@ -406,11 +466,11 @@ class StageController extends GetxController {
 
     if (entry == null) {
       anim.setGuideFromNormalized(strokesNorm: const [], svgW: 320, svgH: 320);
-      debugPrint('GUIDE NOT FOUND for "$key"');
       return;
     }
 
-    final sz = (entry['svg_size'] as Map<String, dynamic>?) ??
+    final sz =
+        (entry['svg_size'] as Map<String, dynamic>?) ??
         (entry['viewBox'] as Map<String, dynamic>?) ??
         {};
 
@@ -419,7 +479,11 @@ class StageController extends GetxController {
 
     final strokes = entry['strokes'] as List<dynamic>?;
     if (strokes == null || strokes.isEmpty) {
-      anim.setGuideFromNormalized(strokesNorm: const [], svgW: svgW, svgH: svgH);
+      anim.setGuideFromNormalized(
+        strokesNorm: const [],
+        svgW: svgW,
+        svgH: svgH,
+      );
       return;
     }
 
@@ -428,16 +492,35 @@ class StageController extends GetxController {
     for (final stroke in strokes) {
       final pts = <Offset>[];
       for (final p in (stroke as List)) {
-        pts.add(
-          Offset(
-            (p[0] as num).toDouble(),
-            (p[1] as num).toDouble(),
-          ),
-        ); // normalized 0..1
+        pts.add(Offset((p[0] as num).toDouble(), (p[1] as num).toDouble()));
       }
       strokesNorm.add(pts);
     }
 
-    anim.setGuideFromNormalized(strokesNorm: strokesNorm, svgW: svgW, svgH: svgH);
+    anim.setGuideFromNormalized(
+      strokesNorm: strokesNorm,
+      svgW: svgW,
+      svgH: svgH,
+    );
+  }
+
+  String _mapCharacterTypeToModelType(String? characterType) {
+    final t = (characterType ?? '').trim().toLowerCase();
+
+    // Backend values -> AI API values
+    switch (t) {
+      case 'digits':
+        return 'digit';
+      case 'consonants':
+        return 'consonant';
+      case 'independent_vowels':
+        return 'independent_vowel';
+      case 'dependent_vowels':
+        return 'dependent_vowel';
+      case 'math':
+        return 'math';
+      default:
+        return 'consonant';
+    }
   }
 }

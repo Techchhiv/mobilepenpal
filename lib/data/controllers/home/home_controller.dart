@@ -267,13 +267,13 @@ class HomeController extends GetxController {
         actions: [
           TextButton(
             onPressed: () {
-              Get.back(result: false);
+              Navigator.of(Get.overlayContext!).pop(false);
             },
             child: Text('no'.tr),
           ),
           ElevatedButton(
             onPressed: () {
-              Get.back(result: true);
+              Navigator.of(Get.overlayContext!).pop(true);
             },
             child: Text('yes'.tr),
           ),

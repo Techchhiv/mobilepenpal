@@ -32,15 +32,12 @@ class LevelController extends GetxController {
   int _computeNextStageIndex(List<LevelStage> stages) {
     if (stages.isEmpty) return 0;
 
-    // ✅ pick the first "unlocked but not completed" (best UX)
     final idx = stages.indexWhere((s) => s.status == "unlocked");
     if (idx != -1) return idx;
 
-    // ✅ fallback: first not completed
     final idx2 = stages.indexWhere((s) => s.status != "completed");
     if (idx2 != -1) return idx2;
 
-    // ✅ all completed -> last stage
     return stages.length - 1;
   }
 
@@ -51,7 +48,6 @@ class LevelController extends GetxController {
       if (response.code == 200) {
         currentLevel.value = response.data;
 
-        // ✅ compute where to land
         final stages = response.data?.stages ?? <LevelStage>[];
         initialStageIndex.value = _computeNextStageIndex(stages);
       } else {

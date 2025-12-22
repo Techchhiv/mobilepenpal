@@ -5,6 +5,11 @@ class Env {
     defaultValue: 'http://192.168.0.157:8000/api/mobile',
   );
 
+  static const String aiApiBaseUrl = String.fromEnvironment(
+    'AI_API_BASE_URL',
+    defaultValue: 'https://api.khmerpenpal.com/api/predict',
+  );
+
   static const String backendUrl = String.fromEnvironment(
     'BACKEND_URL',
     defaultValue: 'http://192.168.0.157:8000',

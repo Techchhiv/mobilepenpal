@@ -87,4 +87,29 @@ class WorldService {
 
     return result;
   }
+
+  // Future<Map<String, dynamic>> predictDrawing(
+  //   Map<String, dynamic> payload,
+  // ) async {
+  //   final uri = Uri.parse(Env.aiApiBaseUrl);
+  //
+  //   final response = await http.post(
+  //     uri,
+  //     headers: const {'Content-Type': 'application/json'},
+  //     body: jsonEncode(payload),
+  //   );
+  //
+  //   if (response.statusCode != 200) {
+  //     throw Exception(
+  //       'AI API error: ${response.statusCode} ${response.body}',
+  //     );
+  //   }
+  //
+  //   final data = jsonDecode(response.body);
+  //   if (data is! Map<String, dynamic>) {
+  //     throw Exception('Invalid AI API response format');
+  //   }
+  //
+  //   return data;
+  // }
 }
