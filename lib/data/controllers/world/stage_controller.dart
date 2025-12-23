@@ -28,17 +28,18 @@ class StageController extends GetxController {
 
   final DrawingController drawingController = DrawingController();
 
-  final double boardWidth = 320;
-  final double boardHeight = 320;
+  final letterSubpathsNorm = <List<Offset>>[].obs;
+  final strokeStrokesNorm = <List<Offset>>[].obs;
 
-  final double fontSize = 320;
+  final double boardWidth = 340;
+  final double boardHeight = 340;
 
   final currentExerciseIndex = 0.obs;
   final selectedCharacter = ''.obs;
 
   final attempts = <Map<String, dynamic>>[].obs;
 
-  final hasDrawnStroke = false.obs;
+  bool hasDrawnStroke = false;
 
   Timer? idle;
   DateTime? _sessionStart;
@@ -105,8 +106,6 @@ class StageController extends GetxController {
   Future<void> fetchStageDetail() async {
     isLoading.value = true;
     try {
-      await loadStrokeDb();
-
       final response = await _worldService.getStageById(stageId);
 
       if (response.code == 200) {
@@ -153,7 +152,7 @@ class StageController extends GetxController {
     exercises.clear();
     currentStage.value = null;
 
-    anim.setGuideFromNormalized(strokesNorm: const [], svgW: 320, svgH: 320);
+    anim.setGuideFromNormalized(strokesNorm: const [], boundsH: 1, boundsW: 1);
 
     await fetchStageDetail();
   }
@@ -174,7 +173,7 @@ class StageController extends GetxController {
 
   void clearBoard() {
     drawingController.clear();
-    hasDrawnStroke.value = false;
+    hasDrawnStroke = false;
     idle?.cancel();
 
     _rawStrokes.clear();
@@ -214,22 +213,22 @@ class StageController extends GetxController {
   }
 
   void onPointerDown() {
-    hasDrawnStroke.value = true;
+    hasDrawnStroke = true;
     idle?.cancel();
 
     anim.stopGuide();
   }
 
   Future<void> onPointerUp() async {
-    if (!hasDrawnStroke.value) return;
-    hasDrawnStroke.value = false;
+    if (!hasDrawnStroke) return;
+    hasDrawnStroke = false;
     idle?.cancel();
 
     idle = Timer(const Duration(milliseconds: 1500), () async {
       // anim.startGuide();
 
       await checkDrawing();
-      hasDrawnStroke.value = false;
+      hasDrawnStroke = false;
     });
   }
 
@@ -262,7 +261,7 @@ class StageController extends GetxController {
       await anim.showWrongAndReset(
         onAfterReset: () {
           clearBoard();
-          hasDrawnStroke.value = false;
+          hasDrawnStroke = false;
         },
       );
       return;
@@ -292,7 +291,7 @@ class StageController extends GetxController {
       );
 
       attempts.clear();
-      hasDrawnStroke.value = false;
+      hasDrawnStroke = false;
       drawingController.clear();
       _sessionStart = null;
 
@@ -311,9 +310,51 @@ class StageController extends GetxController {
     }
   }
 
-  void skipCurrentExercise() {
+  Future<void> skipCurrentExercise() async {
+    final exercise = currentExercise;
+    if (exercise == null) return;
+
+    attempts.add({
+      'exercise_id': exercise.id,
+      'user_answer': '',
+      'label': exercise.character,
+      'stroke': getXYStrokes(),
+      'is_correct': false,
+    });
+
+    await anim.showWrongAndReset(
+      onAfterReset: () {
+        clearBoard();
+        hasDrawnStroke = false;
+      },
+    );
+
     final isLastExercise = currentExerciseIndex.value >= exercises.length - 1;
-    if (isLastExercise) return;
+
+    if (isLastExercise) {
+      final durationSeconds = _sessionDurationSeconds;
+
+      final summary = await submitExerciseBatch(
+        List<Map<String, dynamic>>.from(attempts),
+        durationSeconds: durationSeconds,
+      );
+
+      attempts.clear();
+      hasDrawnStroke = false;
+      drawingController.clear();
+      _sessionStart = null;
+
+      if (summary != null) {
+        final summaryRoute = RouteBuilder.build(AppRoutes.summary, {
+          'worldId': worldId.toString(),
+          'levelId': levelId.toString(),
+          'stageId': stageId.toString(),
+        });
+
+        Get.offNamed(summaryRoute, arguments: {'summary': summary});
+      }
+      return;
+    }
 
     nextExercise();
     clearBoard();
@@ -328,7 +369,11 @@ class StageController extends GetxController {
       setGuideForCharacter(selectedCharacter.value);
     } else {
       selectedCharacter.value = '';
-      anim.setGuideFromNormalized(strokesNorm: const [], svgW: 320, svgH: 320);
+      anim.setGuideFromNormalized(
+        strokesNorm: const [],
+        boundsH: 1,
+        boundsW: 1,
+      );
     }
 
     clearBoard();
@@ -443,8 +488,12 @@ class StageController extends GetxController {
     final rel = _audioRelPath;
     if (rel == null) return;
 
-    await _audioPlayer.stop();
-    await _audioPlayer.play(AssetSource(rel));
+    try {
+      await _audioPlayer.stop();
+      await _audioPlayer.play(AssetSource(rel));
+    } catch (e) {
+      debugPrint('Audio missing: assets/$rel  ($e)');
+    }
   }
 
   Future<void> stopAudio() => _audioPlayer.stop();
@@ -461,53 +510,57 @@ class StageController extends GetxController {
     final db = _strokesDb.value;
     final items = db?['items'] as Map<String, dynamic>?;
 
-    final key = ch.trim();
-    final entry = items?[key] as Map<String, dynamic>?;
-
+    final entry = items?[ch.trim()] as Map<String, dynamic>?;
     if (entry == null) {
-      anim.setGuideFromNormalized(strokesNorm: const [], svgW: 320, svgH: 320);
-      return;
-    }
+      letterSubpathsNorm.clear();
+      strokeStrokesNorm.clear();
 
-    final sz =
-        (entry['svg_size'] as Map<String, dynamic>?) ??
-        (entry['viewBox'] as Map<String, dynamic>?) ??
-        {};
-
-    final svgW = (sz['w'] as num?)?.toDouble() ?? 320;
-    final svgH = (sz['h'] as num?)?.toDouble() ?? 320;
-
-    final strokes = entry['strokes'] as List<dynamic>?;
-    if (strokes == null || strokes.isEmpty) {
       anim.setGuideFromNormalized(
         strokesNorm: const [],
-        svgW: svgW,
-        svgH: svgH,
+        boundsW: 1.0,
+        boundsH: 1.0,
       );
       return;
     }
 
-    final strokesNorm = <List<Offset>>[];
+    final bounds = entry['bounds'] as Map<String, dynamic>? ?? {};
+    final bw = (bounds['w'] as num?)?.toDouble() ?? 1.0;
+    final bh = (bounds['h'] as num?)?.toDouble() ?? 1.0;
+
+    final letter = entry['letter'] as List<dynamic>? ?? [];
+    final letterOut = <List<Offset>>[];
+
+    for (final sub in letter) {
+      final pts = <Offset>[];
+      for (final p in (sub as List)) {
+        pts.add(Offset((p[0] as num).toDouble(), (p[1] as num).toDouble()));
+      }
+      if (pts.isNotEmpty) letterOut.add(pts);
+    }
+    letterSubpathsNorm.assignAll(letterOut);
+
+    final strokes = entry['strokes'] as List<dynamic>? ?? [];
+    final strokesOut = <List<Offset>>[];
 
     for (final stroke in strokes) {
       final pts = <Offset>[];
       for (final p in (stroke as List)) {
         pts.add(Offset((p[0] as num).toDouble(), (p[1] as num).toDouble()));
       }
-      strokesNorm.add(pts);
+      if (pts.isNotEmpty) strokesOut.add(pts);
     }
+    strokeStrokesNorm.assignAll(strokesOut);
 
     anim.setGuideFromNormalized(
-      strokesNorm: strokesNorm,
-      svgW: svgW,
-      svgH: svgH,
+      strokesNorm: strokesOut,
+      boundsW: bw,
+      boundsH: bh,
     );
   }
 
   String _mapCharacterTypeToModelType(String? characterType) {
     final t = (characterType ?? '').trim().toLowerCase();
 
-    // Backend values -> AI API values
     switch (t) {
       case 'digits':
         return 'digit';

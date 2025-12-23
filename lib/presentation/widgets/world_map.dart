@@ -86,11 +86,9 @@ class _WorldMapState extends State<WorldMap> {
 
     final levelController = Get.find<LevelController>();
 
-    // Set ids for the controller
     levelController.worldId = widget.world.id;
     levelController.levelId = level.id;
 
-    // Fetch level detail -> triggers LoadingOverlay on this page
     await levelController.fetchLevelDetail();
 
     final currentLevel = levelController.currentLevel.value;

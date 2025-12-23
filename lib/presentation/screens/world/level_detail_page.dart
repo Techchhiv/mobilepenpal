@@ -5,6 +5,7 @@ import 'package:mobilepenpal/core/network/route_builder.dart';
 import 'package:mobilepenpal/core/theme/app_colors.dart';
 import 'package:mobilepenpal/data/controllers/world/level_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_controller.dart';
+import 'package:mobilepenpal/data/controllers/world/world_controller.dart';
 import 'package:mobilepenpal/data/models/level/level_stage.dart';
 import 'package:mobilepenpal/presentation/routes/app_routes.dart';
 import 'package:mobilepenpal/presentation/widgets/loading_overly.dart';
@@ -80,8 +81,11 @@ class LevelDetailPage extends GetView<LevelController> {
       return Row(
         children: [
           InkWell(
-            onTap: () {
+            onTap: () async {
+              final worldController = Get.find<WorldController>();
+
               if (controller.worldId > 0) {
+                await worldController.fetchWorldById(controller.worldId);
                 final worldRoute = RouteBuilder.build(AppRoutes.world, {
                   'id': controller.worldId.toString(),
                 });

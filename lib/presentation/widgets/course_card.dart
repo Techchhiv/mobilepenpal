@@ -12,6 +12,7 @@ class CourseCard extends StatelessWidget {
   final Color primaryColor;
   final Color badgeColor;
   final bool isLoading;
+  final bool isLocked;
 
   const CourseCard({
     Key? key,
@@ -25,6 +26,7 @@ class CourseCard extends StatelessWidget {
     this.primaryColor = const Color(0xFFE91E63),
     this.badgeColor = const Color(0xFFFF9800),
     this.isLoading = false,
+    this.isLocked = false,
   }) : super(key: key);
 
   @override
@@ -188,7 +190,10 @@ class CourseCard extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.play_arrow, size: 20),
+                    Icon(
+                      isLocked ? Icons.vpn_key_rounded : Icons.play_arrow,
+                      size: 20,
+                    ),
                     const SizedBox(width: 8),
                     Text(
                       buttonText,

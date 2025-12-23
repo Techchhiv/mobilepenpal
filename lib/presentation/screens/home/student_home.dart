@@ -18,57 +18,80 @@ class StudentHome extends StatelessWidget {
       final loading = homeController.isProfileLoading.value;
       final list = homeController.studentProgress;
 
-      return RefreshIndicator(
-        onRefresh: () async => await homeController.refreshHome(),
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: EdgeInsets.zero,
-          children: [
-            // const SizedBox(height: 14),
-            Padding(
-              padding: const EdgeInsets.only(left: 4, bottom: 10, top: 8),
-              child: Row(
-                children: [
-                  const Text("📚  "),
-                  Text(
-                    'my_course'.tr,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ───── Fixed Header (NOT scrollable) ─────
+          Padding(
+            padding: const EdgeInsets.only(left: 4, bottom: 10, top: 8),
+            child: Row(
+              children: [
+                const Text("📚  "),
+                Text(
+                  'my_course'.tr,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
                   ),
-                ],
-              ),
-            ),
-
-            if (loading)
-              ...List.generate(
-                2,
-                (_) => const Padding(
-                  padding: EdgeInsets.only(bottom: 14),
-                  child: CourseCard(isLoading: true),
                 ),
-              )
-            else
-              ...List.generate(list.length, (index) {
-                final progress = list[index];
+              ],
+            ),
+          ),
 
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 14),
-                  child: CourseCard(
-                    courseTitle: progress.name,
-                    courseSubtitle: progress.description,
-                    badgeText: progress.isCompleted ? 'completed'.tr : 'in_progress'.tr,
-                    completedLessons: progress.levelsCompleted,
-                    totalLessons: progress.levelsTotal,
-                    buttonText: progress.levelsCompleted > 0 ? 'continue'.tr : 'start'.tr,
-                    primaryColor: _getColorForWorld(progress.id),
-                    badgeColor: progress.isCompleted ? Colors.green : const Color(0xFFFF9800),
-                    onTap: () => _openWorld(progress.id),
-                  ),
-                );
-              }),
+          // ───── Scrollable content ─────
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: () async => await homeController.refreshHome(),
+              child: loading
+                  ? ListView.builder(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: EdgeInsets.zero,
+                      itemCount: 2,
+                      itemBuilder: (_, __) => const Padding(
+                        padding: EdgeInsets.only(bottom: 14),
+                        child: CourseCard(isLoading: true),
+                      ),
+                    )
+                  : ListView.builder(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: EdgeInsets.zero,
+                      itemCount: list.length,
+                      itemBuilder: (_, index) {
+                        final progress = list[index];
+                        final unlocked = progress.isUnlocked == true;
 
-            const SizedBox(height: 24),
-          ],
-        ),
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 14),
+                          child: CourseCard(
+                            courseTitle: progress.name,
+                            courseSubtitle: progress.description,
+                            badgeText: progress.isCompleted
+                                ? 'completed'.tr
+                                : 'in_progress'.tr,
+                            completedLessons: progress.levelsCompleted,
+                            totalLessons: progress.levelsTotal,
+                            buttonText: unlocked
+                                ? (progress.levelsCompleted > 0
+                                      ? 'continue'.tr
+                                      : 'start'.tr)
+                                : 'locked'.tr,
+                            primaryColor: _getColorForWorld(progress.id),
+                            badgeColor: progress.isCompleted
+                                ? Colors.green
+                                : const Color(0xFFFF9800),
+                            onTap: unlocked
+                                ? () => _openWorld(progress.id)
+                                : null,
+                            isLocked: !unlocked,
+                          ),
+                        );
+                      },
+                    ),
+            ),
+          ),
+
+          const SizedBox(height: 12),
+        ],
       );
     });
   }
@@ -106,7 +129,6 @@ class StudentHome extends StatelessWidget {
         ),
         child: Row(
           children: [
-
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -175,13 +197,16 @@ class StudentHome extends StatelessWidget {
     final world = worldController.currentWorld.value;
 
     if (world != null && world.id == worldId) {
-      final route = RouteBuilder.build(
-        AppRoutes.world,
-        {'id': worldId.toString()},
-      );
+      final route = RouteBuilder.build(AppRoutes.world, {
+        'id': worldId.toString(),
+      });
       Get.toNamed(route);
     } else {
-      Get.snackbar('Error', 'Failed to load course'.tr, snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar(
+        'Error',
+        'Failed to load course'.tr,
+        snackPosition: SnackPosition.BOTTOM,
+      );
     }
   }
 

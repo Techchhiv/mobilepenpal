@@ -114,7 +114,7 @@ class ReportDetailPage extends StatelessWidget {
           );
         }
 
-        final attempts = m?.totalExercisesAttempted ?? 0;
+        final attempts = m?.totalStagesCompleted ?? 0;
         final stars = m?.totalStarsEarned ?? 0;
         final accuracy = m?.accuracy ?? 0.0;
         final time = _formatStudyTime(m?.totalTimeSpentSeconds ?? 0);

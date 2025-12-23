@@ -10,6 +10,7 @@ class StageAnimationController extends GetxController
   final feedback = DrawFeedback.none.obs;
   final shakeOffset = 0.0.obs;
   final praiseText = ''.obs;
+  final drawScale = 0.65.obs;
 
   late final AnimationController _shakeController;
   late final Animation<double> _shakeAnimation;
@@ -21,13 +22,13 @@ class StageAnimationController extends GetxController
   final guideCirclePx = Rxn<Offset>();
   final isGuiding = true.obs;
 
-  final guideLoopDurationMs = 1400.obs;
+  final guideDurationMs = 2000.obs;
 
-  double _boardW = 320;
-  double _boardH = 320;
+  double _boardW = 340;
+  double _boardH = 340;
 
-  double _svgW = 320;
-  double _svgH = 320;
+  double _boundsW = 1;
+  double _boundsH = 1;
 
   final guideStrokesPx = <List<Offset>>[].obs;
 
@@ -40,9 +41,10 @@ class StageAnimationController extends GetxController
       duration: const Duration(milliseconds: 350),
     );
 
-    _shakeAnimation = Tween<double>(begin: 0, end: 12)
-        .chain(CurveTween(curve: Curves.elasticIn))
-        .animate(_shakeController);
+    _shakeAnimation = Tween<double>(
+      begin: 0,
+      end: 12,
+    ).chain(CurveTween(curve: Curves.elasticIn)).animate(_shakeController);
 
     _shakeAnimation.addListener(() {
       shakeOffset.value = _shakeAnimation.value;
@@ -52,17 +54,18 @@ class StageAnimationController extends GetxController
       duration: const Duration(milliseconds: 800),
     );
 
-    guideController = AnimationController(
-      vsync: this,
-      duration: Duration(milliseconds: guideLoopDurationMs.value),
-    )
-      ..addListener(_updateGuideCircle)
-      ..addStatusListener((status) {
-        if (status == AnimationStatus.completed) {
-          _advanceGuideStroke();
-          if (isGuiding.value) guideController.forward(from: 0);
-        }
-      });
+    guideController =
+        AnimationController(
+            vsync: this,
+            duration: Duration(milliseconds: guideDurationMs.value),
+          )
+          ..addListener(_updateGuideCircle)
+          ..addStatusListener((status) {
+            if (status == AnimationStatus.completed) {
+              _advanceGuideStroke();
+              if (isGuiding.value) guideController.forward(from: 0);
+            }
+          });
   }
 
   @override
@@ -79,45 +82,78 @@ class StageAnimationController extends GetxController
   }
 
   void setGuideFromNormalized({
-    required List<List<Offset>> strokesNorm, // 0..1
-    required double svgW,
-    required double svgH,
+    required List<List<Offset>> strokesNorm,
+    required double boundsW,
+    required double boundsH,
   }) {
-    _svgW = svgW;
-    _svgH = svgH;
+    _boundsW = boundsW;
+    _boundsH = boundsH;
+    if (strokesNorm.isEmpty) {
+      guideStrokesPx.clear();
+      guideCirclePx.value = null;
+      currentGuideStrokeIndex.value = 0;
+      stopGuide();
+      return;
+    }
 
-    final px = strokesNorm
-        .map((stroke) => stroke.map(_normToBoardPx).toList())
-        .toList();
+    final px = <List<Offset>>[];
+    for (final stroke in strokesNorm) {
+      if (stroke.isEmpty) continue;
+      px.add(stroke.map(normToBoardPx).toList());
+    }
+
+    if (px.isEmpty) {
+      guideStrokesPx.clear();
+      guideCirclePx.value = null;
+      currentGuideStrokeIndex.value = 0;
+      stopGuide();
+      return;
+    }
 
     guideStrokesPx.assignAll(px);
 
     currentGuideStrokeIndex.value = 0;
-    guideCirclePx.value =
-        (px.isNotEmpty && px.first.isNotEmpty) ? px.first.first : null;
+    guideCirclePx.value = px.first.first;
 
     startGuide();
   }
 
-  Offset _normToBoardPx(Offset n) {
-    final sx = _boardW / _svgW;
-    final sy = _boardH / _svgH;
-    final s = min(sx, sy);
+  Offset normToBoardPx(Offset n) {
+    final w = _boundsW;
+    final h = _boundsH;
 
-    final drawW = _svgW * s;
-    final drawH = _svgH * s;
+    if (w <= 0 || h <= 0) {
+      final s = min(_boardW, _boardH) * drawScale.value;
+      final ox = (_boardW - s) / 2;
+      final oy = (_boardH - s) / 2;
+      return Offset(ox + n.dx * s, oy + n.dy * s);
+    }
+
+    final boardAspect = _boardW / _boardH;
+    final shapeAspect = w / h;
+
+    double drawW, drawH;
+
+    if (shapeAspect > boardAspect) {
+      drawW = _boardW * drawScale.value;
+      drawH = drawW / shapeAspect;
+    } else {
+      drawH = _boardH * drawScale.value;
+      drawW = drawH * shapeAspect;
+    }
+
     final ox = (_boardW - drawW) / 2;
     final oy = (_boardH - drawH) / 2;
 
-    return Offset(
-      ox + (n.dx * _svgW) * s,
-      oy + (n.dy * _svgH) * s,
-    );
+    return Offset(ox + n.dx * drawW, oy + n.dy * drawH);
   }
 
   void startGuide() {
     if (guideStrokesPx.isEmpty) return;
+
     isGuiding.value = true;
+    guideController.duration = Duration(milliseconds: _perStrokeDurationMs());
+
     guideController.forward(from: 0);
   }
 
@@ -148,11 +184,14 @@ class StageAnimationController extends GetxController
 
   void _advanceGuideStroke() {
     if (guideStrokesPx.isEmpty) return;
+
     final next = currentGuideStrokeIndex.value + 1;
     currentGuideStrokeIndex.value = (next >= guideStrokesPx.length) ? 0 : next;
 
     final stroke = guideStrokesPx[currentGuideStrokeIndex.value];
     guideCirclePx.value = stroke.isNotEmpty ? stroke.first : null;
+
+    guideController.duration = Duration(milliseconds: _perStrokeDurationMs());
   }
 
   void _updateGuideCircle() {
@@ -201,5 +240,16 @@ class StageAnimationController extends GetxController
       acc += seg;
     }
     return pts.last;
+  }
+
+  int _perStrokeDurationMs() {
+    final n = guideStrokesPx.length;
+    if (n <= 0) return guideDurationMs.value;
+
+    final weightedTotal = guideDurationMs.value * pow(1.2, n - 1);
+
+    final perStroke = weightedTotal / n;
+
+    return perStroke.round();
   }
 }

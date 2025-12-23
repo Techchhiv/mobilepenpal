@@ -12,7 +12,6 @@ class UpdateProfilePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      // Show loading status page when update is in progress
       if (controller.showLoadingStatus.value) {
         return LoadingStatus(
           isLoading: controller.isLoading.value,
@@ -20,10 +19,8 @@ class UpdateProfilePage extends StatelessWidget {
               !controller.isLoading.value && controller.errorMessage.isEmpty,
           onButtonPressed: () {
             if (controller.errorMessage.isEmpty) {
-              // Success - go to settings page
               Get.offAllNamed('/setting');
             } else {
-              // Error - go back to update profile page
               controller.showLoadingStatus.value = false;
             }
           },
@@ -37,7 +34,7 @@ class UpdateProfilePage extends StatelessWidget {
           elevation: 0,
           automaticallyImplyLeading: false,
           title: InkWell(
-            onTap: () => Get.back(),
+            onTap: () => Get.offNamed('/setting'),
             borderRadius: BorderRadius.circular(8),
             child: Row(
               mainAxisSize: MainAxisSize.min,

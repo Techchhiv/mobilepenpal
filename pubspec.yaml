@@ -56,6 +56,7 @@ dependencies:
   fl_chart: ^1.1.1
   audioplayers: ^6.5.1
   flutter_svg: ^2.2.3
+  svg_path_parser: ^1.1.2
 
 dev_dependencies:
   flutter_test:
@@ -83,8 +84,12 @@ flutter:
   assets:
     - assets/images/
     - assets/animated/
-    - assets/audios/characters/
-    - assets/images/characters/
+
+    - assets/audios/consonants/
+    - assets/audios/digits/
+    - assets/audios/independent_vowels/
+    - assets/audios/dependent_vowels/
+    
     - assets/strokes/strokes.json
     # - assets/icons/logo.png
     # - images/a_dot_ham.jpeg
@@ -101,9 +106,9 @@ flutter:
   # list giving the asset and other descriptors for the font. For
   # example:
   # fonts:
-  #   - family: Schyler
+  #   - family: OpenSchool
   #     fonts:
-  #       - asset: fonts/Schyler-Regular.ttf
+  #       - asset: assets/fonts/OpenKhmerSchool-Regular.ttf
   #       - asset: fonts/Schyler-Italic.ttf
   #         style: italic
   #   - family: Trajan Pro

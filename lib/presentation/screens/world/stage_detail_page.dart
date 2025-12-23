@@ -2,13 +2,13 @@ import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_drawing_board/flutter_drawing_board.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:mobilepenpal/core/network/route_builder.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/world_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_animation_controller.dart';
 import 'package:mobilepenpal/presentation/routes/app_routes.dart';
 import 'package:mobilepenpal/presentation/widgets/loading_overly.dart';
+import 'package:mobilepenpal/presentation/widgets/world/letter_painter.dart';
 
 class StageDetailPage extends GetView<StageController> {
   const StageDetailPage({super.key});
@@ -213,68 +213,66 @@ class StageDetailPage extends GetView<StageController> {
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(20),
-                    child: DrawingBoard(
-                      controller: controller.drawingController,
-                      background: Obx(() {
-                        return Container(
-                          width: controller.boardWidth,
-                          height: controller.boardHeight,
-                          color: Colors.white,
-                          child: Stack(
-                            children: [
-                              Center(
-                                child: Opacity(
-                                  opacity: 0.15,
-                                  child: Text(
-                                    controller
-                                            .selectedCharacter
-                                            .value
-                                            .isNotEmpty
-                                        ? controller.selectedCharacter.value
-                                        : "ក",
-                                    style: GoogleFonts.battambang(
-                                      fontSize: controller.fontSize,
-                                      fontWeight: FontWeight.normal,
-                                      height: 1.0,
-                                      color: Colors.grey.shade600,
-                                    ),
-                                  ),
-                                ),
-                              ),
+                    child: Listener(
+                      behavior: HitTestBehavior.opaque,
+                      onPointerDown: controller.onRawPointerDown,
+                      onPointerMove: controller.onRawPointerMove,
+                      onPointerUp: controller.onRawPointerUp,
+                      child: DrawingBoard(
+                        controller: controller.drawingController,
+                        background: Obx(() {
+                          final letter = controller.letterSubpathsNorm;
 
-                              Obx(() {
-                                final p = controller.anim.guideCirclePx.value;
-                                final show =
-                                    controller.anim.isGuiding.value &&
-                                    p != null;
-                                if (!show) return const SizedBox.shrink();
+                          final p = controller.anim.guideCirclePx.value;
+                          final guiding = controller.anim.isGuiding.value;
 
-                                return Positioned(
-                                  left: p.dx - 14,
-                                  top: p.dy - 14,
-                                  child: IgnorePointer(
-                                    child: Container(
-                                      width: 28,
-                                      height: 28,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                          width: 4,
-                                          color: Colors.orange,
+                          return Container(
+                            width: controller.boardWidth,
+                            height: controller.boardHeight,
+                            color: Colors.white,
+                            child: Stack(
+                              children: [
+                                if (letter.isNotEmpty)
+                                  Positioned.fill(
+                                    child: IgnorePointer(
+                                      child: CustomPaint(
+                                        painter: LetterPointsPainter(
+                                          letterSubpathsNorm: letter,
+                                          toBoardPx:
+                                              controller.anim.normToBoardPx,
+                                          fillEnabled: true,
+                                          strokeEnabled: false,
+                                          fillOpacity: 0.15,
                                         ),
-                                        color: Colors.transparent,
                                       ),
                                     ),
                                   ),
-                                );
-                              }),
-                            ],
-                          ),
-                        );
-                      }),
-                      showDefaultTools: false,
-                      onPointerDown: (_) => controller.onPointerDown(),
-                      onPointerUp: (_) async => await controller.onPointerUp(),
+
+                                if (guiding && p != null)
+                                  Positioned(
+                                    left: p.dx - 14,
+                                    top: p.dy - 14,
+                                    child: IgnorePointer(
+                                      child: Container(
+                                        width: 28,
+                                        height: 28,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                            width: 4,
+                                            color: Colors.orange,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          );
+                        }),
+
+                        showDefaultTools: false,
+                      ),
                     ),
                   ),
                 ),
@@ -294,9 +292,7 @@ class StageDetailPage extends GetView<StageController> {
                   ),
                 ),
 
-                // Praise bubble (from animation controller)
                 Obx(() {
-                  final feedbackState = controller.anim.feedback.value;
                   final praise = controller.anim.praiseText.value;
 
                   final isVisible =
