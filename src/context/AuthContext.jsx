@@ -42,6 +42,7 @@ export const AuthProvider = ({ children }) => {
     }
   }, [token]);
 
+  
   // Bootstrap user from token
   useEffect(() => {
     const bootstrap = async () => {
