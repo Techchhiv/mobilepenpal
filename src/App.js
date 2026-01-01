@@ -48,7 +48,7 @@ export default function App() {
         <Route
           element={
             <Gate anyPerm={["users.manage", "roles.manage", "permissions.manage"]} />}>
-          <Route path="/admin/users" element={<AdminUscersPage />} />
+          <Route path="/admin/users" element={<AdminUsersPage />} />
           <Route path="/admin/roles" element={<AdminRolesPage />} />
           <Route path="/admin/permissions" element={<AdminPermissionsPage />} />
         </Route>
