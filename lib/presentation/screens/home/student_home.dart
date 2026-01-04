@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobilepenpal/core/network/route_builder.dart';
-import 'package:mobilepenpal/core/theme/app_colors.dart';
 import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/world_controller.dart';
 import 'package:mobilepenpal/presentation/routes/app_routes.dart';
@@ -10,7 +9,7 @@ import 'package:mobilepenpal/presentation/widgets/course_card.dart';
 class StudentHome extends StatelessWidget {
   final HomeController homeController;
 
-  const StudentHome({super.key, required this.homeController});
+ StudentHome({super.key, required this.homeController});
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +20,6 @@ class StudentHome extends StatelessWidget {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ───── Fixed Header (NOT scrollable) ─────
           Padding(
             padding: const EdgeInsets.only(left: 4, bottom: 10, top: 8),
             child: Row(
@@ -38,7 +36,6 @@ class StudentHome extends StatelessWidget {
             ),
           ),
 
-          // ───── Scrollable content ─────
           Expanded(
             child: RefreshIndicator(
               onRefresh: () async => await homeController.refreshHome(),
@@ -75,7 +72,7 @@ class StudentHome extends StatelessWidget {
                                       ? 'continue'.tr
                                       : 'start'.tr)
                                 : 'locked'.tr,
-                            primaryColor: _getColorForWorld(progress.id),
+                            primaryColor: _getColorByIndex(index),
                             badgeColor: progress.isCompleted
                                 ? Colors.green
                                 : const Color(0xFFFF9800),
@@ -94,100 +91,6 @@ class StudentHome extends StatelessWidget {
         ],
       );
     });
-  }
-
-  Widget _buildHeroContinueCard({
-    required bool loading,
-    required bool hasCourse,
-    required String title,
-    required String subtitle,
-    required VoidCallback? onTap,
-    required Color color,
-  }) {
-    return InkWell(
-      onTap: (loading || !hasCourse) ? null : onTap,
-      borderRadius: BorderRadius.circular(22),
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(22),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              color.withValues(alpha: 0.95),
-              color.withValues(alpha: 0.65),
-            ],
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.10),
-              blurRadius: 18,
-              offset: const Offset(0, 10),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    loading ? "..." : "✨ ${'continue'.tr}",
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.95),
-                      fontWeight: FontWeight.w900,
-                      fontSize: 14,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    loading ? "Loading..." : title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w900,
-                      fontSize: 18,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    loading ? "" : subtitle,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.92),
-                      fontWeight: FontWeight.w600,
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(width: 10),
-
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.9),
-                borderRadius: BorderRadius.circular(999),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: const [
-                  Text("GO", style: TextStyle(fontWeight: FontWeight.w900)),
-                  SizedBox(width: 6),
-                  Icon(Icons.arrow_forward_rounded, size: 18),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   Future<void> _openWorld(int worldId) async {
@@ -210,14 +113,17 @@ class StudentHome extends StatelessWidget {
     }
   }
 
-  Color _getColorForWorld(int worldId) {
-    switch (worldId) {
-      case 1:
-        return AppColors.buttonPrimary;
-      case 2:
-        return const Color(0xFF6EC6FF);
-      default:
-        return const Color(0xFFFFC857);
-    }
+  final List<Color> _courseColors = [
+    Color(0xFF49aa7c),
+    Color(0xFF6EC6FF),
+    Color(0xFFFFC857),
+    Color(0xFFFF8A80),
+    Color(0xFF81C784),
+    Color(0xFFBA68C8),
+    Color(0xFF4DD0E1),
+  ];
+
+  Color _getColorByIndex(int index) {
+    return _courseColors[index % _courseColors.length];
   }
 }

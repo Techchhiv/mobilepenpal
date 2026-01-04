@@ -19,10 +19,11 @@ class ParentSummaryCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text("summary".tr),
-        SizedBox(height: 12),
+        Text("summary".tr, style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+        SizedBox(height: 24),
         Obx(() {
-          final showDaily = homeController.summaryView.value == SummaryView.daily;
+          final showDaily =
+              homeController.summaryView.value == SummaryView.daily;
 
           final dailyLoading = homeController.isSummaryLoading.value;
           final weeklyLoading = homeController.isWeeklyLoading.value;
@@ -239,43 +240,45 @@ class ParentSummaryCard extends StatelessWidget {
     return Column(
       key: key,
       children: [
-        _buildMetricGrid(children: [
-          _buildMetricTile(
-            title: "lesson_completed".tr,
-            value: daily == null ? '—' : '${daily.stagesCompleted}',
-            icon: Icons.menu_book_rounded,
-            tint: _brand,
-          ),
-          _buildMetricTile(
-            title: "stars".tr,
-            value: daily == null ? '—' : '${daily.starsEarned}',
-            icon: Icons.star_rounded,
-            tint: Color(0xFFF59E0B),
-          ),
-          _buildMetricTile(
-            title: "time".tr,
-            value: daily == null ? '—' : daily.timeSpentSeconds.toStudyTime(),
-            icon: Icons.schedule_rounded,
-            tint: Color(0xFF22C55E),
-          ),
-          _buildMetricTile(
-            title: "accuracy".tr,
-            value: daily == null ? '—' : '${(daily.accuracy * 100).round()}%',
-            icon: Icons.verified_rounded,
-            tint: Color(0xFF3B82F6),
-            bottom: daily == null
-                ? null
-                : ClipRRect(
-                    borderRadius: BorderRadius.circular(99),
-                    child: LinearProgressIndicator(
-                      value: daily.accuracy.clamp(0.0, 1.0),
-                      minHeight: _metricBottomHeight,
-                      backgroundColor: Colors.grey[200],
-                      color: Color(0xFF3B82F6),
+        _buildMetricGrid(
+          children: [
+            _buildMetricTile(
+              title: "lesson_completed".tr,
+              value: daily == null ? '—' : '${daily.stagesCompleted}',
+              icon: Icons.menu_book_rounded,
+              tint: _brand,
+            ),
+            _buildMetricTile(
+              title: "stars".tr,
+              value: daily == null ? '—' : '${daily.starsEarned}',
+              icon: Icons.star_rounded,
+              tint: Color(0xFFF59E0B),
+            ),
+            _buildMetricTile(
+              title: "time".tr,
+              value: daily == null ? '—' : daily.timeSpentSeconds.toStudyTime(),
+              icon: Icons.schedule_rounded,
+              tint: Color(0xFF22C55E),
+            ),
+            _buildMetricTile(
+              title: "accuracy".tr,
+              value: daily == null ? '—' : '${(daily.accuracy * 100).round()}%',
+              icon: Icons.verified_rounded,
+              tint: Color(0xFF3B82F6),
+              bottom: daily == null
+                  ? null
+                  : ClipRRect(
+                      borderRadius: BorderRadius.circular(99),
+                      child: LinearProgressIndicator(
+                        value: daily.accuracy.clamp(0.0, 1.0),
+                        minHeight: _metricBottomHeight,
+                        backgroundColor: Colors.grey[200],
+                        color: Color(0xFF3B82F6),
+                      ),
                     ),
-                  ),
-          ),
-        ]),
+            ),
+          ],
+        ),
 
         SizedBox(height: 14),
         Divider(color: Colors.black.withValues(alpha: 0.06)),
@@ -317,43 +320,47 @@ class ParentSummaryCard extends StatelessWidget {
     return Column(
       key: key,
       children: [
-        _buildMetricGrid(children: [
-          _buildMetricTile(
-            title: "lesson_completed".tr,
-            value: weekly == null ? '—' : '${weekly.totalStagesCompleted}',
-            icon: Icons.menu_book_rounded,
-            tint: _brand,
-          ),
-          _buildMetricTile(
-            title: "stars".tr,
-            value: weekly == null ? '—' : '${weekly.totalStarsEarned}',
-            icon: Icons.star_rounded,
-            tint: Color(0xFFF59E0B),
-          ),
-          _buildMetricTile(
-            title: "practice_days".tr,
-            value: weekly == null ? '—' : '${weekly.practiceDays}',
-            icon: Icons.calendar_today_rounded,
-            tint: Color(0xFF22C55E),
-          ),
-          _buildMetricTile(
-            title: "accuracy".tr,
-            value: weekly == null ? '—' : '${(weekly.accuracy * 100).round()}%',
-            icon: Icons.verified_rounded,
-            tint: Color(0xFF3B82F6),
-            bottom: weekly == null
-                ? null
-                : ClipRRect(
-                    borderRadius: BorderRadius.circular(99),
-                    child: LinearProgressIndicator(
-                      value: weekly.accuracy.clamp(0.0, 1.0),
-                      minHeight: _metricBottomHeight,
-                      backgroundColor: Colors.grey[200],
-                      color: Color(0xFF3B82F6),
+        _buildMetricGrid(
+          children: [
+            _buildMetricTile(
+              title: "lesson_completed".tr,
+              value: weekly == null ? '—' : '${weekly.totalStagesCompleted}',
+              icon: Icons.menu_book_rounded,
+              tint: _brand,
+            ),
+            _buildMetricTile(
+              title: "stars".tr,
+              value: weekly == null ? '—' : '${weekly.totalStarsEarned}',
+              icon: Icons.star_rounded,
+              tint: Color(0xFFF59E0B),
+            ),
+            _buildMetricTile(
+              title: "practice_days".tr,
+              value: weekly == null ? '—' : '${weekly.practiceDays}',
+              icon: Icons.calendar_today_rounded,
+              tint: Color(0xFF22C55E),
+            ),
+            _buildMetricTile(
+              title: "accuracy".tr,
+              value: weekly == null
+                  ? '—'
+                  : '${(weekly.accuracy * 100).round()}%',
+              icon: Icons.verified_rounded,
+              tint: Color(0xFF3B82F6),
+              bottom: weekly == null
+                  ? null
+                  : ClipRRect(
+                      borderRadius: BorderRadius.circular(99),
+                      child: LinearProgressIndicator(
+                        value: weekly.accuracy.clamp(0.0, 1.0),
+                        minHeight: _metricBottomHeight,
+                        backgroundColor: Colors.grey[200],
+                        color: Color(0xFF3B82F6),
+                      ),
                     ),
-                  ),
-          ),
-        ]),
+            ),
+          ],
+        ),
 
         SizedBox(height: 14),
         Divider(color: Colors.black.withValues(alpha: 0.06)),
@@ -506,7 +513,10 @@ class ParentSummaryCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[700])),
+                Text(
+                  label,
+                  style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+                ),
                 SizedBox(height: 2),
                 Text(
                   value,

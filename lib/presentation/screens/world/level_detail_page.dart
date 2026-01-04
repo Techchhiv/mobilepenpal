@@ -15,12 +15,10 @@ class LevelDetailPage extends GetView<LevelController> {
 
   @override
   Widget build(BuildContext context) {
-    final StageController stageController = Get.find<StageController>();
-
     return Scaffold(
-      body: Obx(
-        () => LoadingOverlay(
-          isLoading: stageController.isLoading.value,
+      body: Obx(() {
+        return LoadingOverlay(
+          isLoading: controller.isLoading.value,
           child: Stack(
             children: [
               _buildBackground(),
@@ -40,15 +38,15 @@ class LevelDetailPage extends GetView<LevelController> {
               ),
             ],
           ),
-        ),
-      ),
+        );
+      }),
     );
   }
 
   Widget _buildBackground() {
     return Positioned.fill(
       child: Image.asset(
-        "assets/images/level_background.jpg",
+        "assets/images/backgrounds/level_background.jpg",
         fit: BoxFit.fill,
       ),
     );
@@ -71,8 +69,6 @@ class LevelDetailPage extends GetView<LevelController> {
       ),
     );
   }
-
-  // ───────────────── Top bar ─────────────────
 
   Widget _buildTopBar() {
     return Obx(() {
@@ -108,16 +104,6 @@ class LevelDetailPage extends GetView<LevelController> {
               ),
             ),
           ),
-          const Spacer(),
-          if (controller.isLoading.value)
-            const SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-              ),
-            ),
         ],
       );
     });
@@ -125,21 +111,7 @@ class LevelDetailPage extends GetView<LevelController> {
 
   Widget _buildBodyContent() {
     if (controller.isLoading.value) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              "loading".tr,
-              style: const TextStyle(color: Colors.white, fontSize: 16),
-            ),
-          ],
-        ),
-      );
+      return const SizedBox.shrink();
     }
 
     final level = controller.currentLevel.value;
@@ -312,8 +284,6 @@ class LevelDetailPage extends GetView<LevelController> {
     );
   }
 
-  // ───────────────── Star display ─────────────────
-
   Widget _buildStarDisplay(int starsEarned, int maxStars) {
     return SizedBox(
       height: 80,
@@ -345,29 +315,35 @@ class LevelDetailPage extends GetView<LevelController> {
     );
   }
 
-  void _navigateToStage(int stageId) async {
-    final StageController stageController = Get.find<StageController>();
+ Future<void> _navigateToStage(int stageId) async {
+  final StageController stageController = Get.find<StageController>();
 
-    stageController.worldId = controller.worldId;
-    stageController.levelId = controller.levelId;
-    stageController.stageId = stageId;
+  controller.isLoading.value = true;
+  try {
+    await stageController.loadStage(
+      newStageId: stageId,
+      newWorldId: controller.worldId,
+      newLevelId: controller.levelId,
+    );
 
-    stageController.isLoading.value = true;
-
-    await stageController.fetchStageDetail();
-
-    stageController.isLoading.value = false;
-
-    if (stageController.currentStage.value != null) {
-      final route = RouteBuilder.build(AppRoutes.stage, {
-        'worldId': controller.worldId.toString(),
-        'levelId': controller.levelId.toString(),
-        'stageId': stageId.toString(),
-      });
-
-      Get.toNamed(route);
-    } else {
-      Get.snackbar('Error', 'Failed to load stage');
+    if (stageController.currentStage.value == null) {
+      Get.snackbar('Error', 'Stage not found');
+      return;
     }
+
+    final route = RouteBuilder.build(AppRoutes.stage, {
+      'worldId': controller.worldId.toString(),
+      'levelId': controller.levelId.toString(),
+      'stageId': stageId.toString(),
+    });
+
+    controller.isLoading.value = false;
+    await Future.delayed(Duration.zero);
+
+    Get.toNamed(route);
+  } finally {
+    controller.isLoading.value = false;
   }
+}
+
 }

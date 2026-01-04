@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_drawing_board/flutter_drawing_board.dart';
 import 'package:get/get.dart';
 import 'package:mobilepenpal/core/network/route_builder.dart';
+import 'package:mobilepenpal/data/controllers/world/level_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_controller.dart';
-import 'package:mobilepenpal/data/controllers/world/world_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_animation_controller.dart';
 import 'package:mobilepenpal/presentation/routes/app_routes.dart';
 import 'package:mobilepenpal/presentation/widgets/loading_overly.dart';
@@ -19,36 +19,59 @@ class StageDetailPage extends GetView<StageController> {
       body: Obx(
         () => LoadingOverlay(
           isLoading: controller.isSubmitting.value,
-          child: Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Color(0xFF2B7A78),
-                  Color(0xFF6B9F8E),
-                  Color(0xFF8FB99F),
-                ],
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: Image.asset(
+                  "assets/images/backgrounds/stage_background.png",
+                  fit: BoxFit.cover,
+                ),
               ),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-            child: SafeArea(
-              child: Column(
-                children: [
-                  const SizedBox(height: 20),
-                  _buildTopBar(context),
-                  const SizedBox(height: 20),
-                  _buildIllustration(),
-                  const SizedBox(height: 30),
-                  _buildDrawingBoard(),
-                  const SizedBox(height: 16),
-                  _buildCharacterOptions(),
-                  const Spacer(),
-                  _buildBottomButtons(),
-                  const SizedBox(height: 20),
-                ],
+
+              Positioned.fill(
+                child: Container(color: Colors.black.withValues(alpha: 0.25)),
               ),
-            ),
+
+              Positioned.fill(
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Color(0xFF2B7A78).withValues(alpha: 0.55),
+                        Color(0xFF6B9F8E).withValues(alpha: 0.35),
+                        Color(0xFF8FB99F).withValues(alpha: 0.15),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+              SafeArea(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 16,
+                  ),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 20),
+                      _buildTopBar(Get.context!),
+                      const SizedBox(height: 20),
+                      _buildIllustration(),
+                      const SizedBox(height: 10),
+                      _buildDrawingBoard(),
+                      const SizedBox(height: 16),
+                      _buildCharacterOptions(),
+                      const Spacer(),
+                      _buildBottomButtons(),
+                      const SizedBox(height: 20),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -134,35 +157,200 @@ class StageDetailPage extends GetView<StageController> {
   }
 
   Widget _buildIllustration() {
+    int? parseKhmerDigit(String raw) {
+      final s = raw.trim();
+      if (s.isEmpty) return null;
+
+      final ascii = int.tryParse(s);
+      if (ascii != null) return ascii;
+
+      const map = {
+        '០': 0,
+        '១': 1,
+        '២': 2,
+        '៣': 3,
+        '៤': 4,
+        '៥': 5,
+        '៦': 6,
+        '៧': 7,
+        '៨': 8,
+        '៩': 9,
+      };
+      if (s.length == 1) return map[s];
+      return null;
+    }
+
     return SizedBox(
-      height: 130,
+      height: 150,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Container(
-            width: 100,
-            height: 100,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.9),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(
-              Icons.flutter_dash,
-              size: 60,
-              color: Colors.grey.shade600,
-            ),
-          ),
           Expanded(
-            child: Text(
-              "កុក",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w500,
-                color: Colors.white,
-              ),
-              overflow: TextOverflow.ellipsis,
-            ),
+            child: Obx(() {
+              final path = controller.anim.illustrationAssetPath.value;
+              final ch = controller.selectedCharacter.value;
+              final digit = parseKhmerDigit(ch);
+
+              if (digit != null) {
+                final count = digit == 0 ? 1 : digit;
+
+                double itemSize;
+                if (count <= 3) {
+                  itemSize = 54;
+                } else if (count <= 5) {
+                  itemSize = 42;
+                } else {
+                  itemSize = 32;
+                }
+
+                final spacing = count > 5 ? 6.0 : 8.0;
+
+                final List<int> row1;
+                final List<int> row2;
+
+                if (count <= 5) {
+                  row1 = List.generate(count, (i) => i);
+                  row2 = const [];
+                } else {
+                  final firstRowCount = (count / 2).ceil();
+                  row1 = List.generate(firstRowCount, (i) => i);
+                  row2 = List.generate(count - firstRowCount, (i) => i);
+                }
+
+                return Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: row1
+                            .map(
+                              (_) => Padding(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: spacing / 2,
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Container(
+                                    width: itemSize,
+                                    height: itemSize,
+                                    color: Colors.white.withValues(alpha: 0.10),
+                                    child: path.isEmpty
+                                        ? Icon(
+                                            Icons.image_outlined,
+                                            color: Colors.grey.shade300,
+                                          )
+                                        : Image.asset(
+                                            path,
+                                            fit: BoxFit.contain,
+                                            errorBuilder: (_, __, ___) => Icon(
+                                              Icons
+                                                  .image_not_supported_outlined,
+                                              color: Colors.grey.shade300,
+                                            ),
+                                          ),
+                                  ),
+                                ),
+                              ),
+                            )
+                            .toList(),
+                      ),
+                      if (row2.isNotEmpty) ...[
+                        const SizedBox(height: 6),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: row2
+                              .map(
+                                (_) => Padding(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: spacing / 2,
+                                  ),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: Container(
+                                      width: itemSize,
+                                      height: itemSize,
+                                      color: Colors.white.withValues(
+                                        alpha: 0.10,
+                                      ),
+                                      child: path.isEmpty
+                                          ? Icon(
+                                              Icons.image_outlined,
+                                              color: Colors.grey.shade300,
+                                            )
+                                          : Image.asset(
+                                              path,
+                                              fit: BoxFit.contain,
+                                              errorBuilder: (_, __, ___) => Icon(
+                                                Icons
+                                                    .image_not_supported_outlined,
+                                                color: Colors.grey.shade300,
+                                              ),
+                                            ),
+                                    ),
+                                  ),
+                                ),
+                              )
+                              .toList(),
+                        ),
+                      ],
+                    ],
+                  ),
+                );
+              }
+
+              return Center(
+                child: Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.0),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: path.isEmpty
+                        ? Icon(
+                            Icons.image_outlined,
+                            size: 44,
+                            color: Colors.grey.shade600,
+                          )
+                        : Image.asset(
+                            path,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Icon(
+                              Icons.image_not_supported_outlined,
+                              size: 44,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                  ),
+                ),
+              );
+            }),
           ),
+
+          Obx(() {
+            final ch = controller.selectedCharacter.value;
+            final digit = parseKhmerDigit(ch);
+            if (digit != null) return const SizedBox.shrink();
+
+            final label = controller.anim.illustrationLabel.value;
+            if (label.isEmpty) return const SizedBox.shrink();
+
+            return Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            );
+          }),
         ],
       ),
     );
@@ -238,8 +426,7 @@ class StageDetailPage extends GetView<StageController> {
                                       child: CustomPaint(
                                         painter: LetterPointsPainter(
                                           letterSubpathsNorm: letter,
-                                          toBoardPx:
-                                              controller.anim.normToBoardPx,
+                                          toBoardPx: (p) => p,
                                           fillEnabled: true,
                                           strokeEnabled: false,
                                           fillOpacity: 0.15,
@@ -250,12 +437,12 @@ class StageDetailPage extends GetView<StageController> {
 
                                 if (guiding && p != null)
                                   Positioned(
-                                    left: p.dx - 14,
-                                    top: p.dy - 14,
+                                    left: p.dx - 11,
+                                    top: p.dy - 11,
                                     child: IgnorePointer(
                                       child: Container(
-                                        width: 28,
-                                        height: 28,
+                                        width: 22,
+                                        height: 22,
                                         decoration: BoxDecoration(
                                           shape: BoxShape.circle,
                                           border: Border.all(
@@ -277,7 +464,6 @@ class StageDetailPage extends GetView<StageController> {
                   ),
                 ),
 
-                // Confetti (from animation controller)
                 Align(
                   alignment: Alignment.center,
                   child: ConfettiWidget(
@@ -368,7 +554,7 @@ class StageDetailPage extends GetView<StageController> {
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 32),
         child: SizedBox(
-          height: 52,
+          height: 64,
           child: Stack(
             alignment: Alignment.center,
             children: [
@@ -388,7 +574,7 @@ class StageDetailPage extends GetView<StageController> {
                     children: forms.map((char) {
                       return SizedBox(
                         width: 40,
-                        height: 30,
+                        height: 37,
                         child: Center(
                           child: Text(
                             char,
@@ -407,22 +593,89 @@ class StageDetailPage extends GetView<StageController> {
 
               Align(
                 alignment: Alignment.centerRight,
-                child: GestureDetector(
-                  onTap: controller.playCurrentCharacterAudio,
-                  child: Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: Colors.orange.shade400,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.volume_up,
-                      color: Colors.white,
-                      size: 24,
-                    ),
-                  ),
-                ),
+                child: Obx(() {
+                  final isPlaying = controller.audio.isPlaying.value;
+
+                  return TweenAnimationBuilder<double>(
+                    tween: Tween(begin: 1.0, end: isPlaying ? 1.15 : 1.0),
+                    duration: const Duration(milliseconds: 700),
+                    curve: Curves.easeInOut,
+                    builder: (context, scale, child) {
+                      return AnimatedScale(
+                        scale: scale,
+                        duration: const Duration(milliseconds: 90),
+                        curve: Curves.easeOut,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            if (isPlaying)
+                              TweenAnimationBuilder<double>(
+                                tween: Tween(begin: 0.9, end: 1.2),
+                                duration: const Duration(milliseconds: 500),
+                                curve: Curves.easeOut,
+                                builder: (_, ringScale, __) {
+                                  return Opacity(
+                                    opacity: 0.35,
+                                    child: Transform.scale(
+                                      scale: ringScale,
+                                      child: Container(
+                                        width: 54,
+                                        height: 54,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                            color: Colors.white,
+                                            width: 2,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+
+                            Material(
+                              color: Colors.transparent,
+                              shape: const CircleBorder(),
+                              child: Ink(
+                                width: 48,
+                                height: 48,
+                                decoration: BoxDecoration(
+                                  color: Colors.orange.shade400,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: InkWell(
+                                  customBorder: const CircleBorder(),
+                                  onTap: controller.playCurrentCharacterAudio,
+                                  child: Center(
+                                    child: AnimatedSwitcher(
+                                      duration: const Duration(
+                                        milliseconds: 200,
+                                      ),
+                                      transitionBuilder: (c, anim) =>
+                                          ScaleTransition(
+                                            scale: anim,
+                                            child: c,
+                                          ),
+                                      child: Icon(
+                                        isPlaying
+                                            ? Icons.graphic_eq
+                                            : Icons.volume_up,
+                                        key: ValueKey(isPlaying),
+                                        color: Colors.white,
+                                        size: 26,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  );
+                }),
               ),
             ],
           ),
@@ -432,64 +685,77 @@ class StageDetailPage extends GetView<StageController> {
   }
 
   Widget _buildBottomButtons() {
+    Widget buildActionButton({
+      required VoidCallback onTap,
+      required Color bg,
+      required Color fg,
+      required IconData icon,
+      required String label,
+      Color? borderColor,
+    }) {
+      return Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(28),
+          onTap: onTap,
+          child: Ink(
+            height: 56,
+            decoration: BoxDecoration(
+              color: bg,
+              borderRadius: BorderRadius.circular(28),
+              border: borderColor != null
+                  ? Border.all(color: borderColor, width: 2)
+                  : null,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.10),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, color: fg),
+                const SizedBox(width: 8),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: fg,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: [
           Expanded(
-            child: GestureDetector(
+            child: buildActionButton(
               onTap: controller.clearBoard,
-              child: Container(
-                height: 56,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(28),
-                  border: Border.all(color: Colors.pink.shade200, width: 2),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.delete, color: Colors.pink.shade300),
-                    SizedBox(width: 8),
-                    Text(
-                      "delete".tr,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.pink,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              bg: Colors.white,
+              fg: Colors.pink,
+              icon: Icons.delete,
+              label: "delete".tr,
+              borderColor: Colors.pink.shade200,
             ),
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: GestureDetector(
+            child: buildActionButton(
               onTap: controller.skipCurrentExercise,
-              child: Container(
-                height: 56,
-                decoration: BoxDecoration(
-                  color: Colors.orange.shade400,
-                  borderRadius: BorderRadius.circular(28),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.skip_next, color: Colors.white),
-                    SizedBox(width: 8),
-                    Text(
-                      "skip".tr,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              bg: Colors.orange.shade400,
+              fg: Colors.white,
+              icon: Icons.skip_next,
+              label: "skip".tr,
             ),
           ),
         ],
@@ -548,29 +814,29 @@ class StageDetailPage extends GetView<StageController> {
                             controller.clearBoard();
                             controller.attempts.clear();
 
-                            final worldController = Get.find<WorldController>();
+                            final levelController = Get.find<LevelController>();
 
-                            await worldController.fetchWorldById(
-                              controller.worldId,
-                            );
+                            await levelController.fetchLevelDetail();
 
-                            final world = worldController.currentWorld.value;
-                            if (world == null ||
-                                world.id != controller.worldId) {
+                            final level = levelController.currentLevel.value;
+
+                            if (level == null ||
+                                level.id != controller.levelId) {
                               Get.snackbar(
                                 'Error',
-                                'Failed to load course'.tr,
+                                'Failed to load level'.tr,
                                 snackPosition: SnackPosition.BOTTOM,
                               );
                               return;
                             }
 
-                            final worldRoute = RouteBuilder.build(
-                              AppRoutes.world,
-                              {'id': controller.worldId.toString()},
-                            );
+                            final levelRoute =
+                                RouteBuilder.build(AppRoutes.level, {
+                                  'worldId': controller.worldId.toString(),
+                                  'levelId': controller.levelId.toString(),
+                                });
 
-                            Get.offNamed(worldRoute);
+                            Get.offNamed(levelRoute);
                           } finally {
                             controller.isSubmitting.value = false;
                           }

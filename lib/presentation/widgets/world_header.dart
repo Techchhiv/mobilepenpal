@@ -37,7 +37,7 @@ class WorldHeader extends StatelessWidget {
             children: [
               _buildBackButton(),
               const SizedBox(width: 12),
-              
+
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -55,10 +55,7 @@ class WorldHeader extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       world.description,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                      ),
+                      style: const TextStyle(color: Colors.white, fontSize: 14),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -66,7 +63,7 @@ class WorldHeader extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 12),
-              
+
               // World icon
               _buildWorldIcon(world.iconUrl),
             ],
@@ -77,17 +74,14 @@ class WorldHeader extends StatelessWidget {
   }
 
   Widget _buildBackButton() {
-    return GestureDetector(
-      onTap: () {
-        Get.offAllNamed('/home');
-      },
-      child: SizedBox(
-        width: 30,
-        height: 30,
-        child: Icon(
-          Icons.arrow_back,
-          color: Colors.white,
-          size: 20,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(10),
+        onTap: () => Get.offAllNamed('/home'),
+        child: const Padding(
+          padding: EdgeInsets.all(6),
+          child: Icon(Icons.arrow_back, color: Colors.white, size: 24),
         ),
       ),
     );
@@ -135,7 +129,7 @@ class WorldHeader extends StatelessWidget {
               child: CircularProgressIndicator(
                 value: loadingProgress.expectedTotalBytes != null
                     ? loadingProgress.cumulativeBytesLoaded /
-                        loadingProgress.expectedTotalBytes!
+                          loadingProgress.expectedTotalBytes!
                     : null,
                 color: Colors.white,
               ),

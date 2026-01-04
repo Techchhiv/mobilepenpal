@@ -65,11 +65,9 @@ class LoginPage extends StatelessWidget {
                         color: Colors.grey[100],
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(
-                        Icons.person_outline,
-                        size: 40,
-                        color: AppColors.primary.withValues(alpha: 0.7),
-                      ),
+                      child:Image.asset(
+                        'assets/images/logos/parent.png'
+                      )
                     ),
                     const SizedBox(height: 16),
                     Text(
@@ -93,7 +91,7 @@ class LoginPage extends StatelessWidget {
                   color: Colors.black87,
                 ),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               Obx(
                 () => TextFormField(
                   controller: authController.phoneController,
@@ -154,7 +152,7 @@ class LoginPage extends StatelessWidget {
                   color: Colors.black87,
                 ),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               Obx(
                 () => TextFormField(
                   controller: authController.passwordController,
@@ -218,8 +216,7 @@ class LoginPage extends StatelessWidget {
                   onChanged: (value) => authController.validatePassword(value),
                 ),
               ),
-              const SizedBox(height: 32),
-
+              SizedBox(height: 32),
               Obx(
                 () => SizedBox(
                   width: double.infinity,
@@ -275,37 +272,36 @@ class LoginPage extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
-
-              Obx(
-                () => Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: authController.isLoading.value
-                          ? null
-                          : () {
-                              Get.snackbar(
-                                'Testing'.tr,
-                                'Change forgot password'.tr,
-                                backgroundColor: Colors.blue[50],
-                                colorText: AppColors.primary,
-                              );
-                            },
-                      child: Text(
-                        'forgot_password'.tr,
-                        style: TextStyle(
-                          color: authController.isLoading.value
-                              ? AppColors.text.withValues(alpha: 0.5)
-                              : AppColors.text,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              SizedBox(height: 12),
+              // Obx(
+              //   () => Row(
+              //     mainAxisAlignment: MainAxisAlignment.end,
+              //     children: [
+              //       TextButton(
+              //         onPressed: authController.isLoading.value
+              //             ? null
+              //             : () {
+              //                 Get.snackbar(
+              //                   'Testing'.tr,
+              //                   'Change forgot password'.tr,
+              //                   backgroundColor: Colors.blue[50],
+              //                   colorText: AppColors.primary,
+              //                 );
+              //               },
+              //         child: Text(
+              //           'forgot_password'.tr,
+              //           style: TextStyle(
+              //             color: authController.isLoading.value
+              //                 ? AppColors.text.withValues(alpha: 0.5)
+              //                 : AppColors.text,
+              //             fontSize: 14,
+              //             fontWeight: FontWeight.w600,
+              //           ),
+              //         ),
+              //       ),
+              //     ],
+              //   ),
+              // ),
             ],
           ),
         ),

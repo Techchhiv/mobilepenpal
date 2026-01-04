@@ -37,25 +37,41 @@ class LetterPointsPainter extends CustomPainter {
       ..color = Colors.grey.withOpacity(strokeOpacity)
       ..isAntiAlias = true;
 
+    // ✅ Build ONE compound path for fill
+    final compound = Path()..fillType = PathFillType.evenOdd;
+
     for (final sub in letterSubpathsNorm) {
       if (sub.length < 2) continue;
 
-      final path = Path();
-      final first = toBoardPx(sub.first);
-      path.moveTo(first.dx, first.dy);
+      final pts = sub.map((o) => toBoardPx(o)).toList();
 
-      for (int i = 1; i < sub.length; i++) {
-        final p = toBoardPx(sub[i]);
-        path.lineTo(p.dx, p.dy);
-      }
+      // Use a polygon helper; it closes cleanly.
+      compound.addPolygon(pts, true);
+    }
 
-      path.close();
+    if (fillEnabled) {
+      canvas.drawPath(compound, fillPaint);
+    }
 
-      if (fillEnabled) {
-        canvas.drawPath(path, fillPaint);
-      }
+    if (strokeEnabled) {
+      // Stroke can be drawn per subpath (or also from compound—either works)
+      for (final sub in letterSubpathsNorm) {
+        if (sub.length < 2) continue;
 
-      if (strokeEnabled) {
+        final path = Path();
+        final first = toBoardPx(sub.first);
+        path.moveTo(first.dx, first.dy);
+
+        for (int i = 1; i < sub.length; i++) {
+          final p = toBoardPx(sub[i]);
+          path.lineTo(p.dx, p.dy);
+        }
+
+        // Optional: only close if it’s actually “closed”
+        // (helps avoid a long chord line when the contour is open)
+        final last = toBoardPx(sub.last);
+        if ((last - first).distance < 1.5) path.close();
+
         canvas.drawPath(path, strokePaint);
       }
     }

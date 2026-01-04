@@ -83,15 +83,15 @@ class StageSummaryPage extends GetView<StageSummaryController> {
       children: [
         Text(
           '${controller.correctAnswers}/${controller.totalQuestions}',
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 36,
             fontWeight: FontWeight.w900,
             color: Colors.white,
           ),
         ),
-        const SizedBox(height: 8),
-        const Text(
-          'ចម្លើយត្រឹមត្រូវ',
+        SizedBox(height: 8),
+        Text(
+          'answer'.tr,
           style: TextStyle(
             fontSize: 16,
             color: Colors.white70,
@@ -158,15 +158,11 @@ class StageSummaryPage extends GetView<StageSummaryController> {
                   ],
                 ),
                 child: Center(
-                  child: Text(
-                    'retry'.tr,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                      letterSpacing: 1.0,
-                    ),
-                  ),
+                  child: Icon(
+                    Icons.replay,
+                    color: Colors.white,
+                    size: 32,
+                  )
                 ),
               ),
             ),
@@ -189,15 +185,11 @@ class StageSummaryPage extends GetView<StageSummaryController> {
                   ],
                 ),
                 child: Center(
-                  child: Text(
-                    'continue'.tr,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                      letterSpacing: 1.0,
-                    ),
-                  ),
+                  child:Icon(
+                    Icons.arrow_forward,
+                    color: Colors.white,
+                    size: 32,
+                  )
                 ),
               ),
             ),

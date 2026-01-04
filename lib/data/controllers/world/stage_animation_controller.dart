@@ -1,6 +1,8 @@
+import 'dart:convert';
 import 'dart:math';
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 enum DrawFeedback { none, correct, wrong }
@@ -10,7 +12,6 @@ class StageAnimationController extends GetxController
   final feedback = DrawFeedback.none.obs;
   final shakeOffset = 0.0.obs;
   final praiseText = ''.obs;
-  final drawScale = 0.65.obs;
 
   late final AnimationController _shakeController;
   late final Animation<double> _shakeAnimation;
@@ -22,15 +23,22 @@ class StageAnimationController extends GetxController
   final guideCirclePx = Rxn<Offset>();
   final isGuiding = true.obs;
 
-  final guideDurationMs = 2000.obs;
-
   double _boardW = 340;
   double _boardH = 340;
 
-  double _boundsW = 1;
-  double _boundsH = 1;
-
   final guideStrokesPx = <List<Offset>>[].obs;
+
+  final List<List<double>> _cumLenByStroke = [];
+  final List<double> _totalLenByStroke = [];
+
+  final guideSpeedPxPerSec = 250.0.obs;
+
+  final minStrokeDurationMs = 450.obs;
+  final maxStrokeDurationMs = 2600.obs;
+
+  final _rng = Random();
+  List<String>? _digitFruitAssets;
+  final Map<int, String> _fruitByDigit = {};
 
   @override
   void onInit() {
@@ -41,14 +49,14 @@ class StageAnimationController extends GetxController
       duration: const Duration(milliseconds: 350),
     );
 
-    _shakeAnimation = Tween<double>(
-      begin: 0,
-      end: 12,
-    ).chain(CurveTween(curve: Curves.elasticIn)).animate(_shakeController);
-
-    _shakeAnimation.addListener(() {
-      shakeOffset.value = _shakeAnimation.value;
-    });
+    _shakeAnimation =
+        Tween<double>(
+            begin: 0,
+            end: 12,
+          ).chain(CurveTween(curve: Curves.elasticIn)).animate(_shakeController)
+          ..addListener(() {
+            shakeOffset.value = _shakeAnimation.value;
+          });
 
     confettiController = ConfettiController(
       duration: const Duration(milliseconds: 800),
@@ -57,7 +65,7 @@ class StageAnimationController extends GetxController
     guideController =
         AnimationController(
             vsync: this,
-            duration: Duration(milliseconds: guideDurationMs.value),
+            duration: const Duration(milliseconds: 1000),
           )
           ..addListener(_updateGuideCircle)
           ..addStatusListener((status) {
@@ -81,79 +89,54 @@ class StageAnimationController extends GetxController
     _boardH = height;
   }
 
-  void setGuideFromNormalized({
-    required List<List<Offset>> strokesNorm,
-    required double boundsW,
-    required double boundsH,
-  }) {
-    _boundsW = boundsW;
-    _boundsH = boundsH;
-    if (strokesNorm.isEmpty) {
+  void setGuideFromPx({required List<List<Offset>> strokesPx}) {
+    final cleaned = strokesPx.where((s) => s.length >= 2).toList();
+
+    if (cleaned.isEmpty) {
       guideStrokesPx.clear();
       guideCirclePx.value = null;
       currentGuideStrokeIndex.value = 0;
       stopGuide();
+
+      _cumLenByStroke.clear();
+      _totalLenByStroke.clear();
       return;
     }
 
-    final px = <List<Offset>>[];
-    for (final stroke in strokesNorm) {
-      if (stroke.isEmpty) continue;
-      px.add(stroke.map(normToBoardPx).toList());
-    }
+    guideStrokesPx.assignAll(cleaned);
 
-    if (px.isEmpty) {
-      guideStrokesPx.clear();
-      guideCirclePx.value = null;
-      currentGuideStrokeIndex.value = 0;
-      stopGuide();
-      return;
-    }
-
-    guideStrokesPx.assignAll(px);
+    _cumLenByStroke
+      ..clear()
+      ..addAll(cleaned.map(_buildCumLen));
+    _totalLenByStroke
+      ..clear()
+      ..addAll(_cumLenByStroke.map((c) => c.isEmpty ? 0.0 : c.last));
 
     currentGuideStrokeIndex.value = 0;
-    guideCirclePx.value = px.first.first;
+    guideCirclePx.value = cleaned.first.first;
 
     startGuide();
   }
 
-  Offset normToBoardPx(Offset n) {
-    final w = _boundsW;
-    final h = _boundsH;
-
-    if (w <= 0 || h <= 0) {
-      final s = min(_boardW, _boardH) * drawScale.value;
-      final ox = (_boardW - s) / 2;
-      final oy = (_boardH - s) / 2;
-      return Offset(ox + n.dx * s, oy + n.dy * s);
+  List<double> _buildCumLen(List<Offset> stroke) {
+    final n = stroke.length;
+    if (n == 0) return const [];
+    final cum = List<double>.filled(n, 0.0);
+    double acc = 0.0;
+    for (int i = 1; i < n; i++) {
+      acc += (stroke[i] - stroke[i - 1]).distance;
+      cum[i] = acc;
     }
-
-    final boardAspect = _boardW / _boardH;
-    final shapeAspect = w / h;
-
-    double drawW, drawH;
-
-    if (shapeAspect > boardAspect) {
-      drawW = _boardW * drawScale.value;
-      drawH = drawW / shapeAspect;
-    } else {
-      drawH = _boardH * drawScale.value;
-      drawW = drawH * shapeAspect;
-    }
-
-    final ox = (_boardW - drawW) / 2;
-    final oy = (_boardH - drawH) / 2;
-
-    return Offset(ox + n.dx * drawW, oy + n.dy * drawH);
+    return cum;
   }
 
   void startGuide() {
     if (guideStrokesPx.isEmpty) return;
 
     isGuiding.value = true;
-    guideController.duration = Duration(milliseconds: _perStrokeDurationMs());
-
+    guideController.duration = Duration(
+      milliseconds: _durationForStrokeMs(currentGuideStrokeIndex.value),
+    );
     guideController.forward(from: 0);
   }
 
@@ -191,7 +174,9 @@ class StageAnimationController extends GetxController
     final stroke = guideStrokesPx[currentGuideStrokeIndex.value];
     guideCirclePx.value = stroke.isNotEmpty ? stroke.first : null;
 
-    guideController.duration = Duration(milliseconds: _perStrokeDurationMs());
+    guideController.duration = Duration(
+      milliseconds: _durationForStrokeMs(currentGuideStrokeIndex.value),
+    );
   }
 
   void _updateGuideCircle() {
@@ -203,53 +188,194 @@ class StageAnimationController extends GetxController
     final stroke = guideStrokesPx[idx];
     if (stroke.length < 2) return;
 
-    guideCirclePx.value = _pointAtByDistance(stroke, guideController.value);
-  }
-
-  double _polyLen(List<Offset> pts) {
-    double len = 0;
-    for (int i = 1; i < pts.length; i++) {
-      len += (pts[i] - pts[i - 1]).distance;
+    final cum = _cumLenByStroke[idx];
+    final total = _totalLenByStroke[idx];
+    if (cum.length != stroke.length || total <= 0) {
+      guideCirclePx.value = stroke.first;
+      return;
     }
-    return len;
+
+    guideCirclePx.value = _pointAtByCumLen(
+      stroke,
+      cum,
+      total,
+      guideController.value,
+    );
   }
 
-  Offset _pointAtByDistance(List<Offset> pts, double t) {
-    if (pts.isEmpty) return Offset.zero;
-    if (pts.length == 1) return pts.first;
+  Offset _pointAtByCumLen(
+    List<Offset> pts,
+    List<double> cum,
+    double total,
+    double t,
+  ) {
+    final target = total * t.clamp(0.0, 1.0);
 
-    final total = _polyLen(pts);
-    if (total <= 0) return pts.first;
-
-    final target = total * t;
-    double acc = 0;
-
-    for (int i = 1; i < pts.length; i++) {
-      final a = pts[i - 1];
-      final b = pts[i];
-      final seg = (b - a).distance;
-      if (seg <= 0) continue;
-
-      if (acc + seg >= target) {
-        final localT = (target - acc) / seg;
-        return Offset(
-          a.dx + (b.dx - a.dx) * localT,
-          a.dy + (b.dy - a.dy) * localT,
-        );
+    int lo = 0, hi = cum.length - 1;
+    while (lo < hi) {
+      final mid = (lo + hi) >> 1;
+      if (cum[mid] >= target) {
+        hi = mid;
+      } else {
+        lo = mid + 1;
       }
-      acc += seg;
     }
-    return pts.last;
+
+    final i = lo;
+    if (i <= 0) return pts.first;
+
+    final prevLen = cum[i - 1];
+    final segLen = cum[i] - prevLen;
+    if (segLen <= 0) return pts[i];
+
+    final localT = (target - prevLen) / segLen;
+    final a = pts[i - 1];
+    final b = pts[i];
+    return Offset(a.dx + (b.dx - a.dx) * localT, a.dy + (b.dy - a.dy) * localT);
   }
 
-  int _perStrokeDurationMs() {
-    final n = guideStrokesPx.length;
-    if (n <= 0) return guideDurationMs.value;
+  int _durationForStrokeMs(int strokeIndex) {
+    if (strokeIndex < 0 || strokeIndex >= _totalLenByStroke.length) {
+      return minStrokeDurationMs.value;
+    }
 
-    final weightedTotal = guideDurationMs.value * pow(1.2, n - 1);
+    final lenPx = _totalLenByStroke[strokeIndex];
+    final speed = max(10.0, guideSpeedPxPerSec.value); // safety
 
-    final perStroke = weightedTotal / n;
+    final rawMs = (lenPx / speed * 1000.0).round();
 
-    return perStroke.round();
+    return rawMs.clamp(minStrokeDurationMs.value, maxStrokeDurationMs.value);
+  }
+
+  final illustrationAssetPath = ''.obs;
+  final illustrationLabel = ''.obs;
+
+  Map<String, dynamic>? _assetManifestCache;
+
+  Future<void> _ensureAssetManifestLoaded() async {
+    if (_assetManifestCache != null) return;
+    final raw = await rootBundle.loadString('AssetManifest.json');
+    _assetManifestCache = jsonDecode(raw) as Map<String, dynamic>;
+  }
+
+  Future<void> resolveIllustration({
+    required String characterType,
+    required String character,
+  }) async {
+    final type = characterType.trim().toLowerCase();
+    final ch = character.trim();
+
+    if (type.isEmpty || ch.isEmpty) {
+      illustrationAssetPath.value = '';
+      illustrationLabel.value = '';
+      return;
+    }
+
+    if (type == 'digits') {
+      await _resolveDigitFruit(ch);
+      return;
+    }
+
+    await _ensureAssetManifestLoaded();
+    final manifest = _assetManifestCache!;
+
+    final prefix = 'assets/images/$type/${ch}_';
+
+    final matches = manifest.keys
+        .where((k) => k.startsWith(prefix) && k.toLowerCase().endsWith('.png'))
+        .toList();
+
+    if (matches.isEmpty) {
+      illustrationAssetPath.value = '';
+      illustrationLabel.value = '';
+      return;
+    }
+
+    matches.sort();
+    final picked = matches.first;
+
+    illustrationAssetPath.value = picked;
+
+    final file = picked.split('/').last;
+    final underscore = file.indexOf('_');
+    final dot = file.lastIndexOf('.');
+    if (underscore != -1 && dot != -1 && dot > underscore) {
+      illustrationLabel.value = file.substring(underscore + 1, dot);
+    } else {
+      illustrationLabel.value = '';
+    }
+  }
+
+  Future<List<String>> _loadDigitFruitAssets() async {
+    if (_digitFruitAssets != null) return _digitFruitAssets!;
+    await _ensureAssetManifestLoaded();
+    final manifest = _assetManifestCache!;
+
+    const prefix = 'assets/images/digits/';
+    final matches = manifest.keys
+        .where((k) => k.startsWith(prefix) && k.toLowerCase().endsWith('.png'))
+        .toList();
+
+    matches.sort();
+    _digitFruitAssets = matches;
+    return matches;
+  }
+
+  Future<void> _resolveDigitFruit(String digitChar) async {
+    final d = _parseDigitAny(digitChar);
+    if (d == null) {
+      illustrationAssetPath.value = '';
+      illustrationLabel.value = '';
+      return;
+    }
+
+    final fruits = await _loadDigitFruitAssets();
+    if (fruits.isEmpty) {
+      // nothing found in AssetManifest
+      illustrationAssetPath.value = '';
+      illustrationLabel.value = digitChar.trim();
+      return;
+    }
+
+    final picked = _fruitByDigit.putIfAbsent(
+      d,
+      () => fruits[_rng.nextInt(fruits.length)],
+    );
+
+    illustrationAssetPath.value = picked;
+    illustrationLabel.value = digitChar.trim();
+  }
+
+  int? _parseDigitAny(String raw) {
+    final s = raw.trim();
+    if (s.isEmpty) return null;
+
+    final ascii = int.tryParse(s);
+    if (ascii != null) return ascii;
+
+    const kh = {
+      '០': 0,
+      '១': 1,
+      '២': 2,
+      '៣': 3,
+      '៤': 4,
+      '៥': 5,
+      '៦': 6,
+      '៧': 7,
+      '៨': 8,
+      '៩': 9,
+    };
+
+    if (s.length == 1 && kh.containsKey(s)) return kh[s];
+
+    int acc = 0;
+    bool ok = false;
+    for (final ch in s.characters) {
+      final v = kh[ch];
+      if (v == null) return null;
+      ok = true;
+      acc = acc * 10 + v;
+    }
+    return ok ? acc : null;
   }
 }

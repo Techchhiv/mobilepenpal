@@ -3,10 +3,11 @@ import 'package:get/get.dart';
 import 'package:mobilepenpal/core/network/route_builder.dart';
 import 'package:mobilepenpal/data/controllers/world/level_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_controller.dart';
+import 'package:mobilepenpal/data/controllers/world/world_controller.dart';
 import 'package:mobilepenpal/presentation/routes/app_routes.dart';
 
 class StageSummaryController extends GetxController
-    with GetTickerProviderStateMixin  {
+    with GetTickerProviderStateMixin {
   late final int worldId;
   late final int levelId;
   late final int stageId;
@@ -94,8 +95,11 @@ class StageSummaryController extends GetxController
 
       Get.offNamed(levelRoute);
     } catch (_) {
-      Get.snackbar('Error', 'Failed to load level'.tr,
-          snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar(
+        'Error',
+        'Failed to load level'.tr,
+        snackPosition: SnackPosition.BOTTOM,
+      );
     } finally {
       if (Get.isRegistered<StageSummaryController>()) {
         isContinuing.value = false;
@@ -123,9 +127,9 @@ class StageSummaryController extends GetxController
 
     if (nextStageId != null) {
       isContinuing.value = true;
-
       try {
         final stageController = Get.find<StageController>();
+
         await stageController.loadStage(
           newStageId: nextStageId!,
           newWorldId: worldId,
@@ -139,19 +143,38 @@ class StageSummaryController extends GetxController
         });
 
         Get.offNamed(nextStageRoute);
-      } catch (_) {
-        Get.snackbar('Error', 'Failed to load stage'.tr,
-            snackPosition: SnackPosition.BOTTOM);
+      } catch (e) {
+        Get.snackbar(
+          'Error',
+          'Failed to load stage'.tr,
+          snackPosition: SnackPosition.BOTTOM,
+        );
+      } finally {
         isContinuing.value = false;
       }
-
       return;
     }
 
-    final levelRoute = RouteBuilder.build(AppRoutes.level, {
-      'worldId': worldId.toString(),
-      'levelId': levelId.toString(),
-    });
-    Get.offNamed(levelRoute);
+    isContinuing.value = true;
+
+    try {
+      final worldController = Get.find<WorldController>();
+      await worldController.fetchWorldById(worldId);
+
+      final worldRoute = RouteBuilder.build(AppRoutes.world, {
+        'id': worldId.toString(),
+      });
+      Get.offNamed(worldRoute);
+    } catch (e) {
+      Get.snackbar(
+        'Notice',
+        'Could not refresh world yet'.tr,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } finally {
+      if (Get.isRegistered<StageSummaryController>()) {
+        isContinuing.value = false;
+      }
+    }
   }
 }

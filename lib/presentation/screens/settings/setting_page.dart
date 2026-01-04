@@ -260,19 +260,46 @@ class SettingPage extends StatelessWidget {
   Widget _buildGeneralSection() {
     return Column(
       children: [
-        _buildSettingTile(
-          icon: Icons.settings_outlined,
-          title: 'settings'.tr,
-          trailing: const Icon(
-            Icons.arrow_forward_ios,
-            size: 16,
-            color: Colors.black,
-          ),
-          onTap: () {
-            // Navigate to account settings
+        GetBuilder<SettingController>(
+          id: 'lang',
+          builder: (_) {
+            final current = Get.locale ?? const Locale('en', 'US');
+            final isKh = current.languageCode.toLowerCase() == 'km';
+
+            return _buildSettingTile(
+              icon: Icons.language_rounded,
+              title: 'language'.tr,
+              trailing: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                
+                child: Text(
+                  isKh ? "KH" : "EN",
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.black87,
+                    letterSpacing: 0.4,
+                  ),
+                ),
+              ),
+              onTap: () {
+                final next = isKh
+                    ? const Locale('en', 'US')
+                    : const Locale('km', 'KH');
+
+                Get.updateLocale(next);
+
+                settingController.update(['lang']);
+              },
+            );
           },
         ),
+
         const SizedBox(height: 15),
+
         _buildSettingTile(
           icon: Icons.logout,
           title: 'logout_acc'.tr,
@@ -281,17 +308,11 @@ class SettingPage extends StatelessWidget {
             size: 16,
             color: Colors.black,
           ),
-          onTap: () {
-            settingController.logout();
-          },
+          onTap: () => settingController.logout(),
         ),
       ],
     );
   }
-
-  // ─────────────────────────────────────────────────────────────
-  // Generic tile
-  // ─────────────────────────────────────────────────────────────
 
   Widget _buildSettingTile({
     required IconData icon,

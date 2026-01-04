@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'dart:math' as math;
 import 'package:get_storage/get_storage.dart';
 import 'package:lottie/lottie.dart';
 import 'package:mobilepenpal/core/config/env.dart';
@@ -38,45 +39,75 @@ class HomePage extends StatelessWidget {
       body: Obx(
         () => LoadingOverlay(
           isLoading: worldController.isLoading.value,
-          child: Container(
-            decoration: const BoxDecoration(
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 480),
+            curve: Curves.easeInOutCubic,
+            decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [
-                  Color(0xFFF3FBFF),
-                  Color(0xFFF7F8FF),
-                  Color(0xFFFFF7F2),
-                ],
+                colors: homeController.currentMode.value == 'student'
+                    ? [
+                        Color(0xFFF3FBFF),
+                        Color(0xFFF7F8FF),
+                        Color(0xFFFFF7F2),
+                      ]
+                    : [
+                        AppColors.primary,
+                        Color(0xFF1e8c79),
+                        Color(0xFF49aa7c),
+                      ],
               ),
             ),
             child: SafeArea(
-              child: Column(
+              child: Stack(
                 children: [
-                  const SizedBox(height: 12),
-
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: _buildHeroHeader(context),
+                  _buildDecorRotatedSquareAnimated(
+                    left: -80,
+                    top: 75,
+                    phase: 0.10,
                   ),
 
-                  const SizedBox(height: 12),
-
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: _buildModeCard(),
+                  _buildDecorRotatedSquareAnimated(
+                    right: -80,
+                    top: 140,
+                    phase: 0.1,
                   ),
 
-                  const SizedBox(height: 12),
+                  _buildDecorRotatedSquareAnimated(
+                    right: -80,
+                    bottom: 50,
+                    phase: 0.1,
+                  ),
 
-                  // content
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: homeController.currentMode.value == 'student'
-                          ? StudentHome(homeController: homeController)
-                          : ParentHome(homeController: homeController),
-                    ),
+                  Column(
+                    children: [
+                      const SizedBox(height: 12),
+
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: _buildHeroHeader(context),
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: _buildModeCard(),
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      // content
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: homeController.currentMode.value == 'student'
+                              ? StudentHome(homeController: homeController)
+                              : ParentHome(homeController: homeController),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -115,33 +146,24 @@ class HomePage extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Avatar
-              InkWell(
-                onTap: () => Get.toNamed('/setting'),
-                customBorder: const CircleBorder(),
-                child: Container(
-                  width: 58,
-                  height: 58,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white.withValues(alpha: 0.22),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.35),
-                      width: 2,
-                    ),
+              Container(
+                width: 58,
+                height: 58,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withValues(alpha: 0.22),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.35),
+                    width: 2,
                   ),
-                  child: ClipOval(
-                    child: homeController.avatarUrl.isNotEmpty
-                        ? Image.network(
-                            Env.backendUrl + homeController.avatarUrl,
-                            fit: BoxFit.cover,
-                          )
-                        : const Icon(
-                            Icons.person,
-                            size: 34,
-                            color: Colors.white,
-                          ),
-                  ),
+                ),
+                child: ClipOval(
+                  child: homeController.avatarUrl.isNotEmpty
+                      ? Image.network(
+                          Env.backendUrl + homeController.avatarUrl,
+                          fit: BoxFit.cover,
+                        )
+                      : const Icon(Icons.person, size: 34, color: Colors.white),
                 ),
               ),
 
@@ -220,6 +242,73 @@ class HomePage extends StatelessWidget {
       ),
     );
   }
+
+  Widget _buildDecorRotatedSquareAnimated({
+    double? left,
+    double? top,
+    double? right,
+    double? bottom,
+
+    double size = 148,
+    double radius = 43.48,
+    double baseAngleDeg = 45,
+    double opacity = 0.8,
+    Color color = const Color(0x99FFA500),
+
+    double floatPx = 8,
+    double breathe = 0.03,
+    double wiggleDeg = 2.0,
+    double phase = 0.0,
+  }) {
+    return Positioned(
+      left: left,
+      top: top,
+      right: right,
+      bottom: bottom,
+      child: IgnorePointer(
+        child: AnimatedBuilder(
+          animation: anim.bubbleController,
+          builder: (_, __) {
+            final t = (anim.bubbleController.value + phase) * 2 * math.pi;
+
+            final dy = math.sin(t) * floatPx;
+            final s = 1.0 + (math.sin(t + math.pi / 2) * breathe);
+            final wiggleRad = (math.sin(t) * wiggleDeg) * math.pi / 180;
+            final baseRad = baseAngleDeg * math.pi / 180;
+
+            return Transform.translate(
+              offset: Offset(0, dy),
+              child: Transform.rotate(
+                angle: baseRad + wiggleRad,
+                child: Transform.scale(
+                  scale: s,
+                  child: Opacity(
+                    opacity: opacity,
+                    child: Container(
+                      width: size,
+                      height: size,
+                      decoration: BoxDecoration(
+                        color: color,
+                        borderRadius: BorderRadius.circular(radius),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.12),
+                            blurRadius: 24,
+                            spreadRadius: 2,
+                            offset: const Offset(0, 12),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
 }
 
 class _SparklesOverlay extends StatelessWidget {
@@ -235,6 +324,7 @@ class _SparklesOverlay extends StatelessWidget {
     );
   }
 }
+
 class _BubblesPainter extends CustomPainter {
   final HomeAnimationController anim;
 
@@ -260,4 +350,3 @@ class _BubblesPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _BubblesPainter oldDelegate) => true;
 }
-

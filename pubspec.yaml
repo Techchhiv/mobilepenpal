@@ -57,6 +57,7 @@ dependencies:
   audioplayers: ^6.5.1
   flutter_svg: ^2.2.3
   svg_path_parser: ^1.1.2
+  mobile_scanner: ^7.1.4
 
 dev_dependencies:
   flutter_test:
@@ -68,6 +69,7 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
+  flutter_native_splash: ^2.4.7
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -82,8 +84,18 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
-    - assets/images/
+    - assets/images/backgrounds/
+    - assets/images/illustrations/
+    - assets/images/logos/
+    - assets/images/decorations/
+    - assets/images/consonants/
+    - assets/images/digits/
+    - assets/images/independent_vowels/
+    - assets/images/dependent_vowels/
+
     - assets/animated/
+
+    - assets/fonts/
 
     - assets/audios/consonants/
     - assets/audios/digits/
@@ -105,7 +117,19 @@ flutter:
   # "family" key with the font family name, and a "fonts" key with a
   # list giving the asset and other descriptors for the font. For
   # example:
-  # fonts:
+  fonts:
+    - family: Battambang
+      fonts:
+        - asset: assets/fonts/battambang/Battambang-Thin.ttf
+          weight: 100
+        - asset: assets/fonts/battambang/Battambang-Light.ttf
+          weight: 300
+        - asset: assets/fonts/battambang/Battambang-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/battambang/Battambang-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/battambang/Battambang-Black.ttf
+          weight: 900
   #   - family: OpenSchool
   #     fonts:
   #       - asset: assets/fonts/OpenKhmerSchool-Regular.ttf
@@ -120,10 +144,24 @@ flutter:
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
   
-# flutter_launcher_icons:
-#   android: true
-#   ios: true
-#   image_path: "assets/icons/logo.png"
-#   adaptive_icon_background: "#056E6D"
-#   adaptive_icon_foreground: "assets/icons/logo.png"
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/logos/penpal.png"
+  adaptive_icon_background: "#056E6D"
+  adaptive_icon_foreground: "assets/images/logos/penpal.png"
+
+flutter_native_splash:
+  color: "#056E6D"
+  image: assets/images/logos/penpal_padded.png
+
+  android: true
+  ios: true
+
+  android_12:
+    color: "#056E6D"
+    image: assets/images/logos/penpal_padded.png
+
+  fullscreen: true
+
 

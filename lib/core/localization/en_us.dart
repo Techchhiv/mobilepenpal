@@ -8,6 +8,7 @@ final Map<String, String> enUS = {
   'logout': 'Logout',
   'logout_acc': 'Logout of the account',
   'settings': 'Settings',
+  'setting': 'Setting',
   'change_language': 'Change Language',
   'dark_mode': 'Dark Mode',
   'loading': 'Loading...',
@@ -39,6 +40,7 @@ final Map<String, String> enUS = {
   'accuracy': 'Accuracy',
   'best': "Best",
   'need': "Need",
+  'scan': 'Scan QR',
 
   // ===== Authentication =====
   'enter_your_email_or_phone': 'Enter your email or phone number',
@@ -215,8 +217,8 @@ final Map<String, String> enUS = {
   'data_updated': 'Data updated successfully',
   'data_deleted': 'Data deleted successfully',
   'image_updated': "Image updated successfully",
-  'image_too_large': 'Image size is too large. Please choose an image smaller than 2MB',
-
+  'image_too_large':
+      'Image size is too large. Please choose an image smaller than 2MB',
 
   // ===== Buttons =====
   'cancel': 'Cancel',
@@ -361,4 +363,18 @@ final Map<String, String> enUS = {
   'create_your_pin': 'Create Your PIN',
   'confirm_your_pin': 'Confirm Your PIN',
   'verify_your_pin': 'Verify Your PIN',
+
+  // ===== QR Scanner =====
+  'scan_qr_title': 'Scan QR',
+  'flash_on': 'Flash On',
+  'flash_off': 'Flash Off',
+  'gallery': 'Gallery',
+  'align_qr_hint': 'Align the QR inside the frame',
+  'no_qr_found': 'No QR code found in that image.',
+  'invalid_qr': 'Invalid QR code.',
+  'scan_failed': 'Could not scan that image.',
+  'flash_unavailable': 'Flashlight is not available on this device.',
+
+  // ===== Summary Page =====
+  'answer': 'Execellent Jobs'
 };

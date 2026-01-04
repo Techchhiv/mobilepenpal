@@ -143,10 +143,10 @@ class AuthController extends GetxController {
     }
   }
 
-  // @override
-  // void onClose() {
-  //   phoneController.dispose();
-  //   passwordController.dispose();
-  //   super.onClose();
-  // }
+  @override
+  void onClose() {
+    phoneController.dispose();
+    passwordController.dispose();
+    super.onClose();
+  }
 }

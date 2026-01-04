@@ -14,6 +14,8 @@ class LevelController extends GetxController {
   late int worldId;
   late int levelId;
 
+  WorldService get worldService => _worldService;
+
   @override
   void onInit() {
     super.onInit();

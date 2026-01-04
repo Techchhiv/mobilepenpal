@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
+import 'package:mobilepenpal/presentation/screens/home/qr_scanner_page.dart';
 import 'package:mobilepenpal/presentation/widgets/home/parent_summary_page.dart';
 
 class ParentHome extends StatelessWidget {
@@ -26,6 +27,7 @@ class ParentHome extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const SizedBox(height: 12),
             _buildTopActionsRow(),
             const SizedBox(height: 24),
             // _buildChildProgressSection(),
@@ -37,24 +39,29 @@ class ParentHome extends StatelessWidget {
     );
   }
 
-
   Widget _buildTopActionsRow() {
     return Row(
       children: [
         _buildTopActionBox(
           icon: Icons.settings,
-          label: 'ការកំណត់',
-          onTap: () {},
+          label: 'setting'.tr,
+          onTap: () => Get.toNamed('/setting'),
         ),
         _buildTopActionBox(
           icon: Icons.bar_chart_outlined,
-          label: 'របាយការណ៍',
+          label: 'reports'.tr,
           onTap: () => Get.toNamed('/parent/report'),
         ),
         _buildTopActionBox(
-          icon: Icons.calendar_today_outlined,
-          label: 'កាលវិភាគ',
-          onTap: () {},
+          icon: Icons.qr_code,
+          label: 'scan'.tr,
+          onTap: () async {
+            final result = await Get.to(() => const QrScannerPage());
+
+            if (result != null) {
+              Get.snackbar('Scanned', result.toString());
+            }
+          },
         ),
       ],
     );

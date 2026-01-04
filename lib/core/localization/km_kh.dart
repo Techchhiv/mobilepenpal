@@ -8,6 +8,7 @@ final Map<String, String> kmKH = {
   'logout': 'ចាកចេញ',
   'logout_acc': 'ចាកចេញដោយស្វ័យប្រវត្តិ',
   'settings': 'ការកំណត់ផ្សេងៗ',
+  'setting': 'ការកំណត់',
   'change_language': 'ប្តូរភាសា',
   'dark_mode': 'ប្រើម៉ូដងងឹត',
   'loading': 'កំពុងដំណើរការ...',
@@ -39,6 +40,7 @@ final Map<String, String> kmKH = {
   'accuracy': 'ភាពត្រឹមត្រូវ',
   'best': "ល្អបំផុត",
   'need': "ត្រូវហាត់បន្ថែម",
+  'scan': 'ស្កេន QR',
 
   // ===== Authentication =====
   'enter_your_email_or_phone': 'បញ្ចូលអ៊ីមែល ឬ លេខទូរស័ព្ទរបស់អ្នក',
@@ -356,4 +358,18 @@ final Map<String, String> kmKH = {
   'create_your_pin': 'បង្កើតកូដរបស់អ្នក',
   'confirm_your_pin': 'បញ្ជាក់កូដរបស់អ្នក',
   'verify_your_pin': 'ផ្ទៀងផ្ទាត់កូដរបស់អ្នក',
+
+  // ===== QR Scanner =====
+  'scan_qr_title': 'ស្កេន QR',
+  'flash_on': 'បើកភ្លើង',
+  'flash_off': 'បិទភ្លើង',
+  'gallery': 'វិចិត្រសាល',
+  'align_qr_hint': 'ដាក់ QR នៅក្នុងប្រអប់',
+  'no_qr_found': 'រកមិនឃើញ QR ក្នុងរូបនេះទេ',
+  'invalid_qr': 'QR មិនត្រឹមត្រូវ',
+  'scan_failed': 'មិនអាចស្កេនបានទេ',
+  'flash_unavailable': 'មិនអាចប្រើភ្លើងលើឧបករណ៍នេះបានទេ',
+  
+  // ===== Summary Page =====
+  'answer': 'ឆ្លើយបានត្រឹមត្រូវ'
 };
