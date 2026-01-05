@@ -1,8 +1,11 @@
-
 class Env {
+  // static const String apiBaseUrl = String.fromEnvironment(
+  //   'API_BASE_URL',
+  //   defaultValue: 'http://192.168.0.157:8000/api/mobile',
+  // );
   static const String apiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://192.168.0.157:8000/api/mobile',
+    defaultValue: 'https://api.dev.khmerpenpal.com/api/mobile',
   );
 
   static const String aiApiBaseUrl = String.fromEnvironment(
@@ -10,9 +13,13 @@ class Env {
     defaultValue: 'https://api.khmerpenpal.com/api/predict',
   );
 
+  // static const String backendUrl = String.fromEnvironment(
+  //   'BACKEND_URL',
+  //   defaultValue: 'http://192.168.0.157:8000',
+  // );
   static const String backendUrl = String.fromEnvironment(
     'BACKEND_URL',
-    defaultValue: 'http://192.168.0.157:8000',
+    defaultValue: 'https://api.dev.khmerpenpal.com',
   );
 
   static const String environment = String.fromEnvironment(

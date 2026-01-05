@@ -26,8 +26,6 @@ class LevelController extends GetxController {
 
     if (levelId > 0) {
       fetchLevelDetail();
-    } else {
-      Get.snackbar('Error', 'Invalid level ID');
     }
   }
 
