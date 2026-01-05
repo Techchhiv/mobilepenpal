@@ -56,8 +56,7 @@ class _QrScannerPageState extends State<QrScannerPage> {
 
       await _controller.stop();
 
-      final BarcodeCapture? capture =
-          await _controller.analyzeImage(file.path);
+      final BarcodeCapture? capture = await _controller.analyzeImage(file.path);
 
       if (capture == null || capture.barcodes.isEmpty) {
         Get.snackbar('scan_qr_title'.tr, 'no_qr_found'.tr);
@@ -91,10 +90,7 @@ class _QrScannerPageState extends State<QrScannerPage> {
       ),
       body: Stack(
         children: [
-          MobileScanner(
-            controller: _controller,
-            onDetect: _onDetect,
-          ),
+          MobileScanner(controller: _controller, onDetect: _onDetect),
 
           Center(
             child: Container(
@@ -175,7 +171,7 @@ class _BottomActionButton extends StatelessWidget {
       height: 52,
       child: FilledButton(
         style: FilledButton.styleFrom(
-          backgroundColor: Colors.white.withOpacity(0.15),
+          backgroundColor: Colors.white.withValues(alpha: 0.15),
           foregroundColor: Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
@@ -189,10 +185,7 @@ class _BottomActionButton extends StatelessWidget {
             const SizedBox(width: 10),
             Text(
               label,
-              style: const TextStyle(
-                fontWeight: FontWeight.w700,
-                fontSize: 14,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
             ),
           ],
         ),

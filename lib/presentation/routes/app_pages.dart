@@ -8,6 +8,7 @@ import 'package:mobilepenpal/core/bindings/setting_binding.dart';
 import 'package:mobilepenpal/core/bindings/stage_binding.dart';
 import 'package:mobilepenpal/core/bindings/stage_summary_binding.dart';
 import 'package:mobilepenpal/core/bindings/world_binding.dart';
+import 'package:mobilepenpal/core/middleware/auth_middleware.dart';
 import 'package:mobilepenpal/presentation/screens/auth/login_page.dart';
 import 'package:mobilepenpal/presentation/screens/auth/otp_verification_page.dart';
 import 'package:mobilepenpal/presentation/screens/auth/splash_page.dart';
@@ -37,41 +38,48 @@ class AppPages {
       name: AppRoutes.home,
       page: () => HomePage(),
       binding: HomeBinding(),
+      middlewares: [AuthMiddleware()],
     ),
 
     GetPage(
       name: AppRoutes.setting,
       page: () => SettingPage(),
       binding: SettingBinding(),
+      middlewares: [AuthMiddleware()],
     ),
 
     GetPage(
       name: AppRoutes.world,
       page: () => WorldDetailPage(),
       binding: WorldBinding(),
+      middlewares: [AuthMiddleware()],
     ),
 
     GetPage(
       name: AppRoutes.level,
       page: () => LevelDetailPage(),
       binding: LevelBinding(),
+      middlewares: [AuthMiddleware()],
     ),
 
     GetPage(
       name: AppRoutes.stage,
       page: () => StageDetailPage(),
       binding: StageBinding(),
+      middlewares: [AuthMiddleware()],
     ),
 
     GetPage(
       name: AppRoutes.summary,
       page: () => StageSummaryPage(),
       binding: StageSummaryBinding(),
+      middlewares: [AuthMiddleware()],
     ),
     GetPage(
       name: AppRoutes.parentReport,
       page: () => ReportDetailPage(),
       binding: ReportBinding(),
+      middlewares: [AuthMiddleware()],
     ),
   ];
 }

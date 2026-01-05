@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobilepenpal/core/theme/app_colors.dart';
 import 'package:mobilepenpal/data/controllers/auth/auth_controller.dart';
+import 'package:mobilepenpal/presentation/routes/app_routes.dart';
 
 class LoginPage extends StatelessWidget {
   LoginPage({super.key});
@@ -20,7 +21,7 @@ class LoginPage extends StatelessWidget {
           () => InkWell(
             onTap: authController.isLoading.value
                 ? null
-                : () => Get.offAllNamed('/'),
+                : () => Get.offAllNamed(AppRoutes.splash),
             borderRadius: BorderRadius.circular(8),
             child: Row(
               mainAxisSize: MainAxisSize.min,

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get_storage/get_storage.dart';
 import 'package:mobilepenpal/core/localization/locale_controller.dart';
 import 'package:mobilepenpal/core/theme/app_colors.dart';
 import 'package:mobilepenpal/core/theme/theme_controller.dart';
@@ -14,18 +13,7 @@ class SplashPage extends StatelessWidget {
 
   void _setLanguageAndNavigate(Locale locale) {
     localeController.changeLocale(locale);
-
-    final box = GetStorage();
-    final token = box.read('token');
-    final hasToken = token != null && token.toString().trim().isNotEmpty;
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (hasToken) {
-        Get.offAllNamed(AppRoutes.home);
-      } else {
-        Get.offAllNamed(AppRoutes.login);
-      }
-    });
+    Get.offAllNamed(AppRoutes.login);
   }
 
   @override

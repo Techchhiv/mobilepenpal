@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 
 class TracePainter extends CustomPainter {
@@ -9,8 +8,8 @@ class TracePainter extends CustomPainter {
     this.strokeWidth = 6,
   });
 
-  final List<List<Offset>> strokesNorm;      // 0..1
-  final Offset Function(Offset n) toBoardPx; // your mapping
+  final List<List<Offset>> strokesNorm;
+  final Offset Function(Offset n) toBoardPx;
   final double opacity;
   final double strokeWidth;
 
@@ -23,7 +22,7 @@ class TracePainter extends CustomPainter {
       ..strokeWidth = strokeWidth
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round
-      ..color = Colors.blue.withOpacity(opacity);
+      ..color = Colors.blue.withValues(alpha: opacity);
 
     for (final stroke in strokesNorm) {
       if (stroke.length < 2) continue;

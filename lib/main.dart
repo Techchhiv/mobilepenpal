@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
-import 'package:firebase_core/firebase_core.dart';
+// import 'package:firebase_core/firebase_core.dart';
 import 'package:mobilepenpal/core/bindings/app_binding.dart';
+import 'package:mobilepenpal/core/config/env.dart';
 import 'package:mobilepenpal/core/localization/locale_controller.dart';
 
 import 'package:mobilepenpal/core/theme/app_theme.dart';
@@ -15,10 +17,21 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // await Firebase.initializeApp();
   await GetStorage.init();
-  runApp(MyApp());
+
+  const secure = FlutterSecureStorage();
+  final token = await secure.read(key: Env.accessToken);
+  final isLoggedIn = token != null && token.trim().isNotEmpty;
+
+  await GetStorage().write('is_logged_in', isLoggedIn);
+
+  runApp(MyApp(initialRoute: isLoggedIn ? AppRoutes.home : AppRoutes.splash));
 }
 
 class MyApp extends StatelessWidget {
+  final String initialRoute;
+
+  MyApp({super.key, required this.initialRoute});
+
   final ThemeController themeController = Get.put(ThemeController());
   final LocaleController localeController = Get.put(LocaleController());
 
@@ -27,13 +40,17 @@ class MyApp extends StatelessWidget {
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
 
+      // ========= Transition ==========
+      defaultTransition: Transition.cupertinoDialog,
+      transitionDuration: Duration(milliseconds: 250),
+
       // ===== Translation =====
       translations: AppTranslations(),
       locale: localeController.locale,
       fallbackLocale: const Locale('en', 'US'),
 
       // ========= Route List =========
-      initialRoute: AppRoutes.splash,
+      initialRoute: initialRoute,
       getPages: AppPages.routes,
 
       // Initialize global dependencies

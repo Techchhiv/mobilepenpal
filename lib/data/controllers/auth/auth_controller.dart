@@ -1,12 +1,14 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:mobilepenpal/core/config/env.dart';
 import 'package:mobilepenpal/data/services/auth_service.dart';
+import 'package:mobilepenpal/presentation/routes/app_routes.dart';
 
 class AuthController extends GetxController {
   final AuthService _authService = AuthService();
-  final _box = GetStorage();
 
   final phoneController = TextEditingController();
   // final schoolIdController = TextEditingController();
@@ -18,10 +20,6 @@ class AuthController extends GetxController {
   var phoneError = ''.obs;
   var schoolIdError = ''.obs;
   var passwordError = ''.obs;
-
-  Map<String, dynamic>? get studentData => _box.read('student_data');
-
-  bool get isLoggedIn => _box.read('is_logged_in') ?? false;
 
   @override
   void onInit() {
@@ -120,8 +118,14 @@ class AuthController extends GetxController {
         //     backgroundColor: Colors.green,
         //     colorText: Colors.white,
         //   );
+        FocusManager.instance.primaryFocus?.unfocus();
+        final token = await const FlutterSecureStorage().read(
+          key: Env.accessToken,
+        );
+        final ok = token != null && token.trim().isNotEmpty;
 
-        Get.offAllNamed('/home');
+        await GetStorage().write('is_logged_in', ok);
+        Get.offAllNamed(AppRoutes.home);
         // } else {
         //   Get.snackbar(
         //     "error".tr,
@@ -141,12 +145,5 @@ class AuthController extends GetxController {
     } finally {
       isLoading.value = false;
     }
-  }
-
-  @override
-  void onClose() {
-    phoneController.dispose();
-    passwordController.dispose();
-    super.onClose();
   }
 }

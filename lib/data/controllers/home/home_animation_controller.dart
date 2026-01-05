@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class HomeBubble {
-  double x; // 0..1
-  double y; // 0..1
-  double r; // px
-  double phase; // 0..1 (offset so each bubble is at different time)
-  double prevU; // track wrap per bubble
+  double x;
+  double y;
+  double r;
+  double phase;
+  double prevU;
 
   HomeBubble({
     required this.x,
@@ -20,7 +20,7 @@ class HomeBubble {
 
 class HomeAnimationController extends GetxController
     with GetSingleTickerProviderStateMixin {
-  late AnimationController bubbleController;
+  late final AnimationController bubbleController;
 
   final _rand = Random();
 
@@ -30,9 +30,12 @@ class HomeAnimationController extends GetxController
 
   final double floatUp = 8.0;
 
-  late List<HomeBubble> bubbles;
+  late final List<HomeBubble> bubbles;
 
-  double get t => bubbleController.value; 
+  static const int targetFps = 30;
+  int _lastMs = 0;
+
+  double get t => bubbleController.value;
 
   @override
   void onInit() {
@@ -43,7 +46,7 @@ class HomeAnimationController extends GetxController
     bubbleController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 4800),
-    )..addListener(_tick);
+    )..addListener(_throttledTick);
 
     bubbleController.repeat();
   }
@@ -63,9 +66,16 @@ class HomeAnimationController extends GetxController
     );
   }
 
-  void _tick() {
+  void _throttledTick() {
+    final nowMs = DateTime.now().millisecondsSinceEpoch;
+    final minDelta = (1000 / targetFps).floor();
+
+    if (nowMs - _lastMs < minDelta) return;
+    _lastMs = nowMs;
+
+    final tt = t;
     for (final b in bubbles) {
-      final u = ((t + b.phase) % 1.0);
+      final u = ((tt + b.phase) % 1.0);
 
       if (u < b.prevU) {
         final nb = _newBubble();
@@ -85,7 +95,6 @@ class HomeAnimationController extends GetxController
   double bubbleAlphaFromU(double u) {
     final s = sin(pi * u);
     final a = s * s;
-
     return 0.06 + a * 0.28;
   }
 

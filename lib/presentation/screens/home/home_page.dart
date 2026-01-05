@@ -36,98 +36,112 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Obx(
-        () => LoadingOverlay(
-          isLoading: worldController.isLoading.value,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 480),
-            curve: Curves.easeInOutCubic,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: homeController.currentMode.value == 'student'
-                    ? [
-                        Color(0xFFF3FBFF),
-                        Color(0xFFF7F8FF),
-                        Color(0xFFFFF7F2),
-                      ]
-                    : [
-                        AppColors.primary,
-                        Color(0xFF1e8c79),
-                        Color(0xFF49aa7c),
-                      ],
+      body: Stack(
+        children: [
+          // ✅ Background swap (no heavy gradient tween)
+          Obx(() {
+            final isStudent = homeController.currentMode.value == 'student';
+
+            return AnimatedSwitcher(
+              duration: const Duration(milliseconds: 240),
+              switchInCurve: Curves.easeOut,
+              switchOutCurve: Curves.easeIn,
+              child: Container(
+                key: ValueKey<bool>(isStudent),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: isStudent
+                        ? const [
+                            Color(0xFFF3FBFF),
+                            Color(0xFFF7F8FF),
+                            Color(0xFFFFF7F2),
+                          ]
+                        : const [
+                            AppColors.primary,
+                            Color(0xFF1e8c79),
+                            Color(0xFF49aa7c),
+                          ],
+                  ),
+                ),
               ),
-            ),
-            child: SafeArea(
-              child: Stack(
-                children: [
-                  _buildDecorRotatedSquareAnimated(
-                    left: -80,
-                    top: 75,
-                    phase: 0.10,
-                  ),
+            );
+          }),
 
-                  _buildDecorRotatedSquareAnimated(
-                    right: -80,
-                    top: 140,
-                    phase: 0.1,
-                  ),
+          SafeArea(
+            child: Stack(
+              children: [
+                _buildDecorRotatedSquareAnimated(
+                  left: -80,
+                  top: 75,
+                  phase: 0.10,
+                ),
+                _buildDecorRotatedSquareAnimated(
+                  right: -80,
+                  top: 140,
+                  phase: 0.10,
+                ),
+                _buildDecorRotatedSquareAnimated(
+                  right: -80,
+                  bottom: 50,
+                  phase: 0.10,
+                ),
 
-                  _buildDecorRotatedSquareAnimated(
-                    right: -80,
-                    bottom: 50,
-                    phase: 0.1,
-                  ),
+                Column(
+                  children: [
+                    const SizedBox(height: 12),
 
-                  Column(
-                    children: [
-                      const SizedBox(height: 12),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: _buildHeroHeader(context),
+                    ),
 
-                      Padding(
+                    const SizedBox(height: 12),
+
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: _buildModeCard(),
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    Expanded(
+                      child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: _buildHeroHeader(context),
-                      ),
-
-                      const SizedBox(height: 12),
-
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: _buildModeCard(),
-                      ),
-
-                      const SizedBox(height: 12),
-
-                      // content
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: homeController.currentMode.value == 'student'
+                        child: Obx(() {
+                          return homeController.currentMode.value == 'student'
                               ? StudentHome(homeController: homeController)
-                              : ParentHome(homeController: homeController),
-                        ),
+                              : ParentHome(homeController: homeController);
+                        }),
                       ),
-                    ],
-                  ),
-                ],
-              ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
-        ),
+
+          Obx(() {
+            return LoadingOverlay(
+              isLoading: worldController.isLoading.value,
+              child: const SizedBox.expand(),
+            );
+          }),
+        ],
       ),
     );
   }
 
   Widget _buildHeroHeader(BuildContext context) {
     final isStudent = homeController.currentMode.value == 'student';
-    final name = isStudent
-        ? homeController.fullName
-        : homeController.parentName;
+    final name =
+        isStudent ? homeController.fullName : homeController.parentName;
 
     return Stack(
       children: [
         Container(
-          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(24),
             gradient: const LinearGradient(
@@ -166,16 +180,14 @@ class HomePage extends StatelessWidget {
                       : const Icon(Icons.person, size: 34, color: Colors.white),
                 ),
               ),
-
               const SizedBox(width: 12),
 
-              // Texts
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      isStudent ? "👋 " + "welcome".tr : "✨ " + "welcome".tr,
+                      isStudent ? "👋 ${'welcome'.tr}" : "✨ ${'welcome'.tr}",
                       style: const TextStyle(
                         fontSize: 13,
                         color: Colors.white,
@@ -199,21 +211,28 @@ class HomePage extends StatelessWidget {
 
               Padding(
                 padding: const EdgeInsets.only(right: 8.0),
-                child: Lottie.asset(
-                  'assets/animated/cat.json',
-                  width: 72,
-                  height: 72,
-                  repeat: true,
-                  animate: true,
-                  fit: BoxFit.cover,
-                  frameRate: FrameRate.max,
+                child: RepaintBoundary(
+                  child: Lottie.asset(
+                    'assets/animated/cat.json',
+                    width: 72,
+                    height: 72,
+                    repeat: true,
+                    animate: true,
+                    fit: BoxFit.cover,
+                  ),
                 ),
               ),
             ],
           ),
         ),
 
-        Positioned.fill(child: IgnorePointer(child: _SparklesOverlay())),
+        const Positioned.fill(
+          child: IgnorePointer(
+            child: RepaintBoundary(
+              child: _SparklesOverlay(),
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -248,13 +267,11 @@ class HomePage extends StatelessWidget {
     double? top,
     double? right,
     double? bottom,
-
     double size = 148,
     double radius = 43.48,
     double baseAngleDeg = 45,
     double opacity = 0.8,
     Color color = const Color(0x99FFA500),
-
     double floatPx = 8,
     double breathe = 0.03,
     double wiggleDeg = 2.0,
@@ -266,45 +283,47 @@ class HomePage extends StatelessWidget {
       right: right,
       bottom: bottom,
       child: IgnorePointer(
-        child: AnimatedBuilder(
-          animation: anim.bubbleController,
-          builder: (_, __) {
-            final t = (anim.bubbleController.value + phase) * 2 * math.pi;
+        child: RepaintBoundary(
+          child: AnimatedBuilder(
+            animation: anim.bubbleController,
+            builder: (_, __) {
+              final t = (anim.bubbleController.value + phase) * 2 * math.pi;
 
-            final dy = math.sin(t) * floatPx;
-            final s = 1.0 + (math.sin(t + math.pi / 2) * breathe);
-            final wiggleRad = (math.sin(t) * wiggleDeg) * math.pi / 180;
-            final baseRad = baseAngleDeg * math.pi / 180;
+              final dy = math.sin(t) * floatPx;
+              final s = 1.0 + (math.sin(t + math.pi / 2) * breathe);
+              final wiggleRad = (math.sin(t) * wiggleDeg) * math.pi / 180;
+              final baseRad = baseAngleDeg * math.pi / 180;
 
-            return Transform.translate(
-              offset: Offset(0, dy),
-              child: Transform.rotate(
-                angle: baseRad + wiggleRad,
-                child: Transform.scale(
-                  scale: s,
-                  child: Opacity(
-                    opacity: opacity,
-                    child: Container(
-                      width: size,
-                      height: size,
-                      decoration: BoxDecoration(
-                        color: color,
-                        borderRadius: BorderRadius.circular(radius),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.12),
-                            blurRadius: 24,
-                            spreadRadius: 2,
-                            offset: const Offset(0, 12),
-                          ),
-                        ],
+              return Transform.translate(
+                offset: Offset(0, dy),
+                child: Transform.rotate(
+                  angle: baseRad + wiggleRad,
+                  child: Transform.scale(
+                    scale: s,
+                    child: Opacity(
+                      opacity: opacity,
+                      child: Container(
+                        width: size,
+                        height: size,
+                        decoration: BoxDecoration(
+                          color: color,
+                          borderRadius: BorderRadius.circular(radius),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.12),
+                              blurRadius: 24,
+                              spreadRadius: 2,
+                              offset: const Offset(0, 12),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         ),
       ),
     );
@@ -312,14 +331,18 @@ class HomePage extends StatelessWidget {
 }
 
 class _SparklesOverlay extends StatelessWidget {
-  final HomeAnimationController anim = Get.find<HomeAnimationController>();
+  const _SparklesOverlay();
 
   @override
   Widget build(BuildContext context) {
+    final HomeAnimationController anim = Get.find<HomeAnimationController>();
+
     return AnimatedBuilder(
       animation: anim.bubbleController,
       builder: (_, __) {
-        return CustomPaint(painter: _BubblesPainter(anim));
+        return CustomPaint(
+          painter: _BubblesPainter(anim, anim.bubbleController.value),
+        );
       },
     );
   }
@@ -327,8 +350,9 @@ class _SparklesOverlay extends StatelessWidget {
 
 class _BubblesPainter extends CustomPainter {
   final HomeAnimationController anim;
+  final double t;
 
-  _BubblesPainter(this.anim);
+  _BubblesPainter(this.anim, this.t);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -348,5 +372,7 @@ class _BubblesPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _BubblesPainter oldDelegate) => true;
+  bool shouldRepaint(covariant _BubblesPainter oldDelegate) {
+    return oldDelegate.t != t;
+  }
 }

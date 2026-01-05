@@ -26,7 +26,7 @@ class LetterPointsPainter extends CustomPainter {
 
     final fillPaint = Paint()
       ..style = PaintingStyle.fill
-      ..color = Colors.grey.withOpacity(fillOpacity)
+      ..color = Colors.grey.withValues(alpha: fillOpacity)
       ..isAntiAlias = true;
 
     final strokePaint = Paint()
@@ -34,10 +34,9 @@ class LetterPointsPainter extends CustomPainter {
       ..strokeWidth = strokeWidth
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round
-      ..color = Colors.grey.withOpacity(strokeOpacity)
+      ..color = Colors.grey.withValues(alpha: strokeOpacity)
       ..isAntiAlias = true;
 
-    // ✅ Build ONE compound path for fill
     final compound = Path()..fillType = PathFillType.evenOdd;
 
     for (final sub in letterSubpathsNorm) {
@@ -45,7 +44,6 @@ class LetterPointsPainter extends CustomPainter {
 
       final pts = sub.map((o) => toBoardPx(o)).toList();
 
-      // Use a polygon helper; it closes cleanly.
       compound.addPolygon(pts, true);
     }
 
@@ -54,7 +52,6 @@ class LetterPointsPainter extends CustomPainter {
     }
 
     if (strokeEnabled) {
-      // Stroke can be drawn per subpath (or also from compound—either works)
       for (final sub in letterSubpathsNorm) {
         if (sub.length < 2) continue;
 
@@ -67,8 +64,6 @@ class LetterPointsPainter extends CustomPainter {
           path.lineTo(p.dx, p.dy);
         }
 
-        // Optional: only close if it’s actually “closed”
-        // (helps avoid a long chord line when the contour is open)
         final last = toBoardPx(sub.last);
         if ((last - first).distance < 1.5) path.close();
 

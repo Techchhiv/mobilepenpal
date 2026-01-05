@@ -97,7 +97,7 @@ class WorldHeader extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
         ),
         child: Icon(
-          Icons.school,
+          Icons.book,
           color: Colors.white.withValues(alpha: 0.7),
           size: 24,
         ),

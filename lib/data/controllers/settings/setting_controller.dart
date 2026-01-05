@@ -9,6 +9,7 @@ import 'package:mobilepenpal/core/theme/app_colors.dart';
 import 'package:mobilepenpal/data/models/student/student.dart';
 import 'package:mobilepenpal/data/services/auth_service.dart';
 import 'package:mobilepenpal/data/services/home_service.dart';
+import 'package:mobilepenpal/presentation/routes/app_routes.dart';
 
 class SettingController extends GetxController {
   final AuthService authService = AuthService();
@@ -136,9 +137,11 @@ class SettingController extends GetxController {
             ),
             child: Text('confirmed'.tr),
             onPressed: () async {
+              Get.back();
               await authService.logout();
               box.remove("student");
-              Get.offAllNamed('/login');
+              await GetStorage().write('is_logged_in', false);
+              Get.offAllNamed(AppRoutes.login);
             },
           ),
         ],

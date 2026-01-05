@@ -115,33 +115,4 @@ class ParentHome extends StatelessWidget {
       ),
     );
   }
-
-  Widget _buildChildProgressSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          "ដំណើរការរបស់សិស្ស",
-          style: TextStyle(fontWeight: FontWeight.w700),
-        ),
-        const SizedBox(height: 12),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 3),
-              ),
-            ],
-          ),
-          child: const Text("...keep your current child progress UI..."),
-        ),
-      ],
-    );
-  }
 }
