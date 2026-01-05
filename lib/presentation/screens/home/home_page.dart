@@ -14,7 +14,6 @@ import 'package:mobilepenpal/presentation/screens/home/parent_home.dart';
 import 'package:mobilepenpal/presentation/screens/home/student_home.dart';
 import 'package:mobilepenpal/presentation/widgets/loading_overly.dart';
 import 'package:mobilepenpal/presentation/widgets/mode_switcher.dart';
-import 'package:shimmer/shimmer.dart';
 
 class HomePage extends StatelessWidget {
   HomePage({super.key});
@@ -39,6 +38,7 @@ class HomePage extends StatelessWidget {
     return Scaffold(
       body: Stack(
         children: [
+          // ✅ Background swap (no heavy gradient tween)
           Obx(() {
             final isStudent = homeController.currentMode.value == 'student';
 
@@ -94,7 +94,7 @@ class HomePage extends StatelessWidget {
 
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Obx(() => _buildHeroHeader(context)),
+                      child: _buildHeroHeader(context),
                     ),
 
                     const SizedBox(height: 12),
@@ -135,48 +135,8 @@ class HomePage extends StatelessWidget {
 
   Widget _buildHeroHeader(BuildContext context) {
     final isStudent = homeController.currentMode.value == 'student';
-
-    final isLoadingProfile =
-        homeController.isProfileLoading.value &&
-        homeController.student.value == null;
-
-    final name = isStudent
-        ? homeController.fullName
-        : homeController.parentName;
-
-    Widget shimmerBlock({
-      required double width,
-      required double height,
-      double radius = 12,
-    }) {
-      return Shimmer.fromColors(
-        baseColor: Colors.white.withValues(alpha: 0.22),
-        highlightColor: Colors.white.withValues(alpha: 0.38),
-        child: Container(
-          width: width,
-          height: height,
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.24),
-            borderRadius: BorderRadius.circular(radius),
-          ),
-        ),
-      );
-    }
-
-    Widget shimmerCircle(double size) {
-      return Shimmer.fromColors(
-        baseColor: Colors.white.withValues(alpha: 0.18),
-        highlightColor: Colors.white.withValues(alpha: 0.34),
-        child: Container(
-          width: size,
-          height: size,
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            shape: BoxShape.circle,
-          ),
-        ),
-      );
-    }
+    final name =
+        isStudent ? homeController.fullName : homeController.parentName;
 
     return Stack(
       children: [
@@ -200,7 +160,6 @@ class HomePage extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Avatar
               Container(
                 width: 58,
                 height: 58,
@@ -213,36 +172,16 @@ class HomePage extends StatelessWidget {
                   ),
                 ),
                 child: ClipOval(
-                  child: isLoadingProfile
-                      ? Center(child: shimmerCircle(46))
-                      : (homeController.avatarUrl.isNotEmpty
-                            ? Image.network(
-                                Env.backendUrl + homeController.avatarUrl,
-                                fit: BoxFit.cover,
-                                // shimmer-ish placeholder while image loads
-                                loadingBuilder: (context, child, progress) {
-                                  if (progress == null) return child;
-                                  return Center(child: shimmerCircle(46));
-                                },
-                                errorBuilder: (_, __, ___) {
-                                  return const Icon(
-                                    Icons.person,
-                                    size: 34,
-                                    color: Colors.white,
-                                  );
-                                },
-                              )
-                            : const Icon(
-                                Icons.person,
-                                size: 34,
-                                color: Colors.white,
-                              )),
+                  child: homeController.avatarUrl.isNotEmpty
+                      ? Image.network(
+                          Env.backendUrl + homeController.avatarUrl,
+                          fit: BoxFit.cover,
+                        )
+                      : const Icon(Icons.person, size: 34, color: Colors.white),
                 ),
               ),
-
               const SizedBox(width: 12),
 
-              // Text area
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -255,21 +194,17 @@ class HomePage extends StatelessWidget {
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    const SizedBox(height: 6),
-
-                    if (isLoadingProfile)
-                      shimmerBlock(width: 170, height: 18, radius: 10)
-                    else
-                      Text(
-                        name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.white,
-                        ),
+                    const SizedBox(height: 4),
+                    Text(
+                      name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
                       ),
+                    ),
                   ],
                 ),
               ),
@@ -293,7 +228,9 @@ class HomePage extends StatelessWidget {
 
         const Positioned.fill(
           child: IgnorePointer(
-            child: RepaintBoundary(child: _SparklesOverlay()),
+            child: RepaintBoundary(
+              child: _SparklesOverlay(),
+            ),
           ),
         ),
       ],
