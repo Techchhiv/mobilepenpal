@@ -19,6 +19,9 @@ Route::prefix('profile')->group(function () {
     Route::put('/update-pin', [UserController::class, 'updateParentPin']);
     Route::post('/switch-mode', [UserController::class, 'switchMode']);
     Route::get('/check-pin', [UserController::class, 'checkParentPin']);
+    Route::get('/summary/daily', [UserController::class, 'dailySummary']);
+    Route::get('/summary/weekly', [UserController::class, 'weeklySummary']);
+    Route::get('/summary/monthly', [UserController::class, 'monthlySummary']);
 });
 
 Route::prefix('worlds')->group(function () {

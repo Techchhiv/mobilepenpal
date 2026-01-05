@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Student\V01;
 use App\Http\Requests\Student\V01\User\UpdateUserRequest;
 use App\Http\Resources\Student\V01\User\UserDetailResource;
 use App\Helpers\StudentProgress;
+use App\Helpers\StudentSummary;
 use App\Models\Student;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -155,6 +157,65 @@ class UserController extends Controller
         ]);
 
         $this->setResult('student', new UserDetailResource($student));
+        return $this->returnResponse();
+    }
+
+    public function dailySummary(Request $request): JsonResponse
+    {
+        /** @var Student|null $student */
+        $student = auth::guard('students')->user();
+
+        if (!$student) {
+            return $this->returnError('User not authenticated', 401);
+        }
+
+        // ?date=YYYY-MM-DD, default: today
+        $date = $request->query('date', Carbon::now()->toDateString());
+
+        $summary = StudentSummary::getDailySummary($student->id, $date);
+
+        $this->setResult('summary', $summary);
+        return $this->returnResponse();
+    }
+
+    public function weeklySummary(Request $request): JsonResponse
+    {
+        /** @var Student|null $student */
+        $student = auth::guard('students')->user();
+
+        if (!$student) {
+            return $this->returnError('User not authenticated', 401);
+        }
+
+        $fromDate = $request->query('from_date');
+        $toDate   = $request->query('to_date');
+
+        if (!$fromDate || !$toDate) {
+            $now = Carbon::now();
+            $fromDate = $now->copy()->startOfWeek()->toDateString();
+            $toDate   = $now->copy()->endOfWeek()->toDateString();
+        }
+
+        $summary = StudentSummary::getWeeklySummary($student->id, $fromDate, $toDate);
+
+        $this->setResult('summary', $summary);
+        return $this->returnResponse();
+    }
+
+    public function monthlySummary(Request $request): JsonResponse
+    {
+        /** @var Student|null $student */
+        $student = auth::guard('students')->user();
+
+        if (!$student) {
+            return $this->returnError('User not authenticated', 401);
+        }
+
+        $month = $request->query('month', Carbon::now()->format('Y-m'));
+
+        $summary = StudentSummary::getMonthlySummary($student->id, $month);
+
+        $this->setResult('summary', $summary);
         return $this->returnResponse();
     }
 }

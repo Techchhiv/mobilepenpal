@@ -13,6 +13,8 @@ use App\Models\Level;
 use App\Models\Stage;
 use App\Models\StageExercise;
 use App\Models\StudentExerciseAttempt;
+use App\Models\StudentSession;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -92,10 +94,16 @@ class WorldController extends Controller
             return $this->returnError('No attempts provided', 400);
         }
 
+        $durationSeconds = (int) $request->input('duration_seconds', 0);
+
         $summary = [];
         $progressService = new StudentProgress();
-
-        DB::transaction(function () use ($studentId, $attempts, $progressService, &$summary) {
+        Log::info('Submitting exercise batch', [
+            'student_id' => $studentId,
+            'attempts_count' => $attempts,
+            'duration_seconds' => $durationSeconds,
+        ]);
+        DB::transaction(function () use ($studentId, $attempts, $progressService, $durationSeconds, &$summary) {
             $firstAttempt = collect($attempts)->first();
 
             if (!is_array($firstAttempt) || !isset($firstAttempt['exercise_id'])) {
@@ -114,34 +122,54 @@ class WorldController extends Controller
                 StudentExerciseAttempt::create([
                     'student_id' => $studentId,
                     'exercise_id' => $attempt['exercise_id'],
-                    'user_answer' => $attempt['user_answer'],
+                    'user_answer' => $attempt['user_answer'] ?? null,
                     'is_correct' => $attempt['is_correct'],
-                    'stroke' => $attempt['stroke'],
-                    'label' => $attempt['label'],
+                    'stroke' => $attempt['stroke'] ?? null,
+                    'label' => $attempt['label'] ?? null,
                 ]);
 
                 $totalExercises++;
-                if ($attempt['is_correct']) {
+                if (!empty($attempt['is_correct'])) {
                     $correctAttempts++;
                 }
             }
 
+            if ($durationSeconds > 0 && $stageId) {
+                StudentSession::create([
+                    'student_id'       => $studentId,
+                    'stage_id'         => $stageId,
+                    'duration_seconds' => $durationSeconds,
+                    'started_at'       => now()->subSeconds($durationSeconds),
+                    'ended_at'         => now(),
+                ]);
+            }
+
+            $progressService->addDailyStatsFromSession(
+                studentId: $studentId,
+                stageId: $stageId,
+                totalExercises: $totalExercises,
+                correctAttempts: $correctAttempts,
+                durationSeconds: $durationSeconds,
+                date: Carbon::today()
+            );
+
             $results = [
-                'total_exercises' => $totalExercises,
+                'total_exercises'  => $totalExercises,
                 'correct_attempts' => $correctAttempts,
-                'stage_id' => $stageId
+                'stage_id'         => $stageId,
             ];
 
             $progressResult  = $progressService->updateStageProgress($studentId, $stageId, $results);
 
             $summary = [
-                'stars_earned' => $progressResult['stars_earned'],
-                'correct_answers' => $progressResult['correct_attempts'],
-                'total_questions' => $progressResult['total_exercises'],
-                'is_new_best' => $progressResult['is_new_best'] ?? false,
+                'stars_earned'     => $progressResult['stars_earned'],
+                'correct_answers'  => $progressResult['correct_attempts'],
+                'total_questions'  => $progressResult['total_exercises'],
+                'is_new_best'      => $progressResult['is_new_best'] ?? false,
                 'next_stage_id'    => $progressResult['next_stage_id'] ?? null,
             ];
         });
+
 
         $this->setResult('summary', $summary);
         return $this->returnResponse();

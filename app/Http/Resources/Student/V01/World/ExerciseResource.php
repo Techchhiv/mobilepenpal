@@ -27,8 +27,7 @@ class ExerciseResource extends JsonResource
             'hint' => $this->hint,
 
             'order_index' => $this->pivot->order_index,
-            'audio_url' => $this->audio_url,
-            'image_url' => $this->image_url,
+            'character_type' => $this->character_type,
         ];
     }
 }

@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Student\V01;
 
-use App\Helpers\ChangePhoneNumberFormat;
 use App\Http\Requests\Student\V01\Auth\LoginRequest;
 use App\Http\Requests\Student\V01\Auth\RegisterRequest;
 use App\Http\Requests\Student\V01\Auth\VerifyOtpRequest;
@@ -15,7 +14,6 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 
 use function App\Helpers\isKhmerPhone;
 use function App\Helpers\uploadImageBase64;
-use Kreait\Firebase\Factory;
 
 class AuthController extends Controller
 {

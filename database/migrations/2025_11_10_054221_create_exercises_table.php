@@ -30,8 +30,9 @@ return new class extends Migration
             // $table->integer('order_index')->default(1);
             // $table->integer('repeat_count')->default(1);
 
-            $table->string('audio_url')->nullable();
-            $table->string('image_url')->nullable();
+            $table->enum('character_type', ['digits', 'consonants', 'dependent_vowels','independent_vowels'])->default('consonants');
+            // $table->string('audio_url')->nullable();
+            // $table->string('image_url')->nullable();
             // $table->integer('max_points')->default(1);
             // $table->integer('time_limit')->nullable();
             // $table->enum('difficulty', ['easy', 'medium', 'hard'])->default('easy');

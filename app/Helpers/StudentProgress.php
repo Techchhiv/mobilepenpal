@@ -5,10 +5,12 @@ namespace App\Helpers;
 use App\Http\Resources\Student\V01\World\WorldIndexResource;
 use App\Models\Level;
 use App\Models\Stage;
+use App\Models\StudentDailyStat;
 use App\Models\StudentLevelProgress;
 use App\Models\StudentStageProgress;
 use App\Models\StudentWorldProgress;
 use App\Models\World;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -77,7 +79,8 @@ class StudentProgress
     {
         if ($score == 100) return $maxStars;
         if ($score >= 50) return 2;
-        return 1;
+        if ($score >= 25) return 1;
+        return 0;
     }
 
     private function checkAndUnlockNextContent($studentId, $stage)
@@ -144,20 +147,37 @@ class StudentProgress
             ->first();
 
         if ($nextLevel) {
-            StudentLevelProgress::updateOrCreate(
-                ['student_id' => $studentId, 'level_id' => $nextLevel->id],
-                ['is_unlocked' => true, 'is_completed' => false, 'total_stars' => 0]
-            );
+            $levelProgress = StudentLevelProgress::firstOrNew([
+                'student_id' => $studentId,
+                'level_id'   => $nextLevel->id,
+            ]);
+
+            $levelProgress->is_unlocked = true;
+            if (!$levelProgress->exists) {
+                $levelProgress->is_completed = false;
+                $levelProgress->total_stars  = 0;
+            }
+            $levelProgress->save();
 
             $firstStage = $nextLevel->stages()->orderBy('order_index')->first();
             if ($firstStage) {
-                StudentStageProgress::updateOrCreate(
-                    ['student_id' => $studentId, 'stage_id' => $firstStage->id],
-                    ['status' => 'unlocked', 'stars_earned' => 0]
-                );
+                $progress = StudentStageProgress::firstOrNew([
+                    'student_id' => $studentId,
+                    'stage_id'   => $firstStage->id,
+                ]);
+
+                if (!$progress->exists) {
+                    $progress->status = 'unlocked';
+                    $progress->stars_earned = 0;
+                    $progress->save();
+                } elseif ($progress->status === 'locked') {
+                    $progress->status = 'unlocked';
+                    $progress->save();
+                }
             }
         }
     }
+
 
     private function checkWorldCompletion($studentId, $world)
     {
@@ -210,16 +230,26 @@ class StudentProgress
             ->first();
 
         if ($nextStage) {
-            StudentStageProgress::updateOrCreate(
-                ['student_id' => $studentId, 'stage_id' => $nextStage->id],
-                ['status' => 'unlocked', 'stars_earned' => 0]
-            );
+            $progress = StudentStageProgress::firstOrNew([
+                'student_id' => $studentId,
+                'stage_id'   => $nextStage->id,
+            ]);
+
+            if (!$progress->exists) {
+                $progress->status = 'unlocked';
+                $progress->stars_earned = 0;
+                $progress->save();
+            } elseif ($progress->status === 'locked') {
+                $progress->status = 'unlocked';
+                $progress->save();
+            }
 
             return $nextStage->id;
         }
 
         return null;
     }
+
 
     public function unlockWorldForStudent($studentId)
     {
@@ -336,5 +366,65 @@ class StudentProgress
         }
 
         return false;
+    }
+
+    public function addDailyStatsFromSession(
+        int $studentId,
+        ?int $stageId,
+        int $totalExercises,
+        int $correctAttempts,
+        int $durationSeconds,
+        $date = null
+    ): void {
+        $date = $date
+            ? Carbon::parse($date)->toDateString()
+            : Carbon::today()->toDateString();
+
+        $incorrectAttempts = max($totalExercises - $correctAttempts, 0);
+
+        $sessionStars   = 0;
+        $stageCompleted = false;
+
+        // Compute session stars + completion based on this session only
+        if ($stageId && $totalExercises > 0) {
+            $stage = Stage::find($stageId);
+            $maxStars = $stage ? (int) $stage->max_stars : 3;
+
+            $score = ($correctAttempts / $totalExercises) * 100;
+
+            // Reuse your existing star logic concept
+            $sessionStars = $this->calculateStarsEarned($score, $maxStars);
+
+            if ($score >= 50) {
+                $stageCompleted = true;
+            }
+        }
+
+        /** @var StudentDailyStat $stat */
+        $stat = StudentDailyStat::firstOrNew([
+            'student_id' => $studentId,
+            'date'       => $date,
+        ]);
+
+        if (!$stat->exists) {
+            $stat->exercises_attempted = 0;
+            $stat->correct_attempts    = 0;
+            $stat->incorrect_attempts  = 0;
+            $stat->stages_completed    = 0;
+            $stat->stars_earned        = 0;
+            $stat->time_spent_seconds  = 0;
+        }
+
+        $stat->exercises_attempted += $totalExercises;
+        $stat->correct_attempts    += $correctAttempts;
+        $stat->incorrect_attempts  += $incorrectAttempts;
+        $stat->stars_earned        += $sessionStars;
+        $stat->time_spent_seconds  += $durationSeconds;
+
+        if ($stageCompleted) {
+            $stat->stages_completed += 1;
+        }
+
+        $stat->save();
     }
 }
