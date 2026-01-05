@@ -83,7 +83,7 @@ class LevelDetailPage extends GetView<LevelController> {
               if (controller.worldId > 0) {
                 await worldController.fetchWorldById(controller.worldId);
                 final worldRoute = RouteBuilder.build(AppRoutes.world, {
-                  'id': controller.worldId.toString(),
+                  'worldId': controller.worldId.toString(),
                 });
                 Get.offNamed(worldRoute);
               } else {

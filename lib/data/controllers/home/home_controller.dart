@@ -52,23 +52,23 @@ class HomeController extends GetxController {
 
   void loadInitialData() {
     setCurrentMode(_box.read('mode') ?? 'student');
-    loadCachedData();
     fetchStudentProfile();
+    // loadCachedData();
   }
 
-  void loadCachedData() {
-    final studentData = _box.read('student');
-    if (studentData != null && studentData is Map<String, dynamic>) {
-      student.value = Student.fromJson(studentData);
-    }
+  // void loadCachedData() {
+  //   final studentData = _box.read('student');
+  //   if (studentData != null && studentData is Map<String, dynamic>) {
+  //     student.value = Student.fromJson(studentData);
+  //   }
 
-    final progressData = _box.read('student_progress');
-    if (progressData != null && progressData is List<dynamic>) {
-      studentProgress.assignAll(
-        progressData.map((data) => StudentProgress.fromJson(data)).toList(),
-      );
-    }
-  }
+  //   final progressData = _box.read('student_progress');
+  //   if (progressData != null && progressData is List<dynamic>) {
+  //     studentProgress.assignAll(
+  //       progressData.map((data) => StudentProgress.fromJson(data)).toList(),
+  //     );
+  //   }
+  // }
 
   Future<void> fetchStudentProfile() async {
     if (isProfileLoading.value) return;
@@ -82,10 +82,10 @@ class HomeController extends GetxController {
 
         await _syncParentPin(student.value!);
 
-        await _saveToStorage(
-          student: response.data!.profile,
-          progress: response.data!.progress,
-        );
+        // await _saveToStorage(
+        //   student: response.data!.profile,
+        //   progress: response.data!.progress,
+        // );
       } else {
         Get.snackbar(
           'Error',
@@ -185,16 +185,6 @@ class HomeController extends GetxController {
     } finally {
       isMonthlyLoading.value = false;
     }
-  }
-
-  Future<void> _saveToStorage({
-    required Student student,
-    required List<StudentProgress> progress,
-  }) async {
-    await _box.write('student', student.toJson());
-
-    final progressList = progress.map((p) => p.toJson()).toList();
-    await _box.write('student_progress', progressList);
   }
 
   Future<void> requestModeChange(String newMode) async {

@@ -101,7 +101,7 @@ class StudentHome extends StatelessWidget {
 
     if (world != null && world.id == worldId) {
       final route = RouteBuilder.build(AppRoutes.world, {
-        'id': worldId.toString(),
+        'worldId': worldId.toString(),
       });
       Get.toNamed(route);
     } else {

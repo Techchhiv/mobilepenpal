@@ -162,7 +162,7 @@ class StageSummaryController extends GetxController
       await worldController.fetchWorldById(worldId);
 
       final worldRoute = RouteBuilder.build(AppRoutes.world, {
-        'id': worldId.toString(),
+        'worldId': worldId.toString(),
       });
       Get.offNamed(worldRoute);
     } catch (e) {
