@@ -24,7 +24,7 @@ return new class extends Migration
             $table->string('last_name')->nullable();
             $table->string('nickname')->nullable();
             $table->integer('age')->nullable();
-            $table->enum('gender', ['male','female','other']);
+            $table->enum('gender', ['male','female']);
             $table->date('date_of_birth');
             $table->string('avatar')->nullable();
 
@@ -38,10 +38,10 @@ return new class extends Migration
             $table->string('phone')->unique()->nullable();
             $table->string('password')->nullable();
 
-            $table->integer('level')->default(1);
-            $table->integer('streak')->default(0);
-            $table->integer('time_spent')->default(0);
-            $table->timestamp('last_played')->nullable();
+            // $table->integer('level')->default(1);
+            // $table->integer('streak')->default(0);
+            // $table->integer('time_spent')->default(0);
+            // $table->timestamp('last_played')->nullable();
 
             $table->string('address')->nullable();
             $table->string('enrollment_year')->nullable();

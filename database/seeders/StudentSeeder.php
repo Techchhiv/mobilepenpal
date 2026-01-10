@@ -27,9 +27,6 @@ class StudentSeeder extends Seeder
             'address' => 'Phnom Penh, Cambodia',
             'enrollment_year' => '2024',
             'mode' => 'student',
-            'level' => 1,
-            'streak' => 0,
-            'time_spent' => 0,
             'is_active' => true,
         ];
 
@@ -38,7 +35,6 @@ class StudentSeeder extends Seeder
             ->first();
 
         if ($existingStudent) {
-            Log::info("Student with email {$studentData['email']} or phone {$studentData['phone']} already exists.");
             return;
         }
 
@@ -59,9 +55,6 @@ class StudentSeeder extends Seeder
             'address' => $studentData['address'],
             'enrollment_year' => $studentData['enrollment_year'],
             'mode' => $studentData['mode'],
-            'level' => $studentData['level'],
-            'streak' => $studentData['streak'],
-            'time_spent' => $studentData['time_spent'],
             'is_active' => $studentData['is_active'],
         ]);
     }

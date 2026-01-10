@@ -11,12 +11,13 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use function App\Helpers\uploadImageBase64;
 
 class TeacherController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth:api');
+        require_once app_path('Helpers/UploadMedia.php');
     }
 
     public function index()
@@ -35,12 +36,10 @@ class TeacherController extends Controller
     {
         $authUser = auth()->user();
 
-        // Must belong to a school
         if (!$authUser->school_id) {
             return response()->json(['message' => 'You are not associated with a school.'], 403);
         }
 
-        // Load the school so we can copy the real school_key
         $school = School::find($authUser->school_id);
         if (!$school) {
             return response()->json(['message' => 'School not found.'], 404);
@@ -59,12 +58,10 @@ class TeacherController extends Controller
         }
 
         return DB::transaction(function () use ($request, $authUser, $school) {
-            // Build teacher data
             $teacherData = $request->only(['name', 'email', 'phone', 'subject']);
             $teacherData['school_id']  = $authUser->school_id;
             $teacherData['school_key'] = $school->school_key; // ← use real school key
 
-            // Unique teacher_id like TCH-XXXXXX
             do {
                 $candidate = 'TCH-' . strtoupper(Str::random(6));
             } while (Teacher::where('teacher_id', $candidate)->exists());
@@ -76,14 +73,12 @@ class TeacherController extends Controller
 
             $teacher = Teacher::create($teacherData);
 
-            // Create matching user for login
             $userAccount = User::create([
                 'name'      => $teacher->name,
                 'email'     => $teacher->email,
                 'password'  => Hash::make($request->password),
                 'school_id' => $authUser->school_id,
             ]);
-            // $userAccount->assignRole('teacher');
 
             return response()->json([
                 'teacher' => $teacher,
@@ -92,9 +87,8 @@ class TeacherController extends Controller
         });
     }
 
-    public function show($id)
+    public function show(Teacher $teacher)
     {
-        $teacher = Teacher::with('school')->find($id);
         if (!$teacher) {
             return response()->json(['message' => 'Teacher not found'], 404);
         }
@@ -106,18 +100,21 @@ class TeacherController extends Controller
         $teacher = Teacher::find($id);
         if (!$teacher) return response()->json(['message' => 'Teacher not found'], 404);
 
-        // Find the linked user to craft the proper unique rule
         $linkedUser = User::where('email', $teacher->email)->first();
 
         $validator = Validator::make($request->all(), [
             'name'     => 'sometimes|required|string|max:255',
-            // ignore the linked USER id (not teacher id)
             'email'    => 'sometimes|required|email|unique:users,email,' . optional($linkedUser)->id,
             'phone'    => 'nullable|string|max:20',
             'subject'  => 'nullable|string|max:100',
-            'photo'    => 'nullable|image|max:2048',
+
+            // ✅ base64 photo instead of file upload
+            'photo'    => 'nullable|string', // (optional) add regex below if you want strict validation
+            // 'photo' => ['nullable','string','regex:/^data:image\/(png|jpe?g);base64,/i'],
+
             'password' => 'nullable|string|min:6',
         ]);
+
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
@@ -125,21 +122,28 @@ class TeacherController extends Controller
         return DB::transaction(function () use ($request, $teacher, $linkedUser) {
             $data = $request->only(['name', 'phone', 'subject']);
 
-            // If email is changing, keep teacher.email in sync
             if ($request->filled('email')) {
                 $data['email'] = $request->email;
             }
 
-            if ($request->hasFile('photo')) {
-                if ($teacher->photo && Storage::disk('public')->exists($teacher->photo)) {
-                    Storage::disk('public')->delete($teacher->photo);
+            if ($request->filled('photo')) {
+                if (!empty($teacher->photo)) {
+                    $old = ltrim($teacher->photo, '/');
+                    if (Storage::disk('uploads')->exists($old)) {
+                        Storage::disk('uploads')->delete($old);
+                    }
                 }
-                $data['photo'] = $request->file('photo')->store('teachers', 'public');
+
+                $path = uploadImageBase64($request->photo);
+                if (!$path) {
+                    return response()->json(['message' => 'Incorrect Image type or wrong format'], 422);
+                }
+
+                $data['photo'] = $path;
             }
 
             $teacher->update($data);
 
-            // Sync login user
             if ($linkedUser) {
                 $userData = [];
                 if ($request->filled('name'))  $userData['name']  = $request->name;

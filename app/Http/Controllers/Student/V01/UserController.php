@@ -6,11 +6,14 @@ use App\Http\Requests\Student\V01\User\UpdateUserRequest;
 use App\Http\Resources\Student\V01\User\UserDetailResource;
 use App\Helpers\StudentProgress;
 use App\Helpers\StudentSummary;
+use App\Models\Classroom;
+use App\Models\ClassroomEnrollment;
 use App\Models\Student;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
 use function App\Helpers\uploadImageBase64;
@@ -169,7 +172,6 @@ class UserController extends Controller
             return $this->returnError('User not authenticated', 401);
         }
 
-        // ?date=YYYY-MM-DD, default: today
         $date = $request->query('date', Carbon::now()->toDateString());
 
         $summary = StudentSummary::getDailySummary($student->id, $date);
@@ -217,5 +219,41 @@ class UserController extends Controller
 
         $this->setResult('summary', $summary);
         return $this->returnResponse();
+    }
+
+    public function joinByCode(Request $request)
+    {
+        $student = auth('students')->user();
+
+        if (!$student) {
+            return $this->returnError('Unauthenticated.', 401);
+        }
+
+        $validated = $request->validate([
+            'join_code' => 'required|string|max:50',
+        ]);
+
+        $classroom = Classroom::where('join_code', $validated['join_code'])->first();
+        if (!$classroom) {
+            return $this->returnError('Invalid join code.', 404);
+        }
+
+        if (!$classroom->is_active) {
+            return $this->returnError('This classroom is inactive.', 422);
+        }
+
+        if (!empty($student->school_id) && (int) $student->school_id !== (int) $classroom->school_id) {
+            return $this->returnError('You cannot join a classroom from another school.', 403);
+        }
+
+        $enrollment = ClassroomEnrollment::updateOrCreate(
+            ['classroom_id' => $classroom->id, 'student_id' => $student->id],
+            ['status' => 'enrolled', 'enrolled_at' => now(), 'left_at' => null]
+        );
+
+        return response()->json([
+            'classroom' => $classroom,
+            'enrollment' => $enrollment,
+        ]);
     }
 }

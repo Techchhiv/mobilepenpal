@@ -2,62 +2,188 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Student\V01\Auth\RegisterRequest;
+use App\Http\Requests\Student\V01\User\UpdateUserRequest;
+use App\Models\School;
+use App\Models\Student;
+use App\Models\Teacher;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+
+use function App\Helpers\isKhmerPhone;
+use function App\Helpers\uploadImageBase64;
 
 class StudentController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index()
+    public function __construct()
     {
-        //
+        require_once app_path('Helpers/PhoneNumberValidation.php');
+        require_once app_path('Helpers/UploadMedia.php');
+    }
+    public function index(Request $request)
+    {
+        $user = auth()->user();
+
+        $schoolKey = null;
+
+        $teacher = Teacher::query()
+            ->select('school_key', 'school_id')
+            ->where('email', $user->email)
+            ->first();
+
+        if ($teacher) {
+            $schoolKey = $teacher->school_key;
+        } else {
+            $school = School::query()
+                ->select('school_key', 'id')
+                ->where('admin_email', $user->email)
+                ->first();
+
+            if ($school) {
+                $schoolKey = $school->school_key;
+            }
+        }
+
+        if (!$schoolKey) {
+            return response()->json([
+                'message' => 'Unable to determine your school. Please contact admin.'
+            ], 403);
+        }
+
+        $q = Student::query()->where('school_key', $schoolKey);
+
+        if ($request->filled('is_active')) {
+            $q->where('is_active', filter_var($request->is_active, FILTER_VALIDATE_BOOLEAN));
+        }
+
+        if ($request->filled('search')) {
+            $search = trim($request->search);
+            $q->where(function ($qq) use ($search) {
+                $qq->where('first_name', 'like', "%{$search}%")
+                    ->orWhere('last_name', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        $perPage = (int) $request->query('per_page', 15);
+        $students = $q->orderByDesc('id')->paginate(max(1, min($perPage, 100)));
+
+        return response()->json([
+            "student" => $students
+        ]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
+    public function store(RegisterRequest $request)
     {
-        //
+        $user = auth()->user();
+        $schoolId = $user->school_id;
+        $school = School::select('id', 'school_key')->find($schoolId);
+
+        $validated = $request->validated();
+
+        $validated['school_id'] = $schoolId;
+        $validated['school_key'] = $school->school_key;
+
+        if (!isKhmerPhone($validated['phone'])) {
+            return response()->json([
+                'message' => 'The phone number must be a valid Cambodian number.'
+            ], 422);
+        }
+
+        $validated['password'] = Hash::make($validated['password']);
+        if ($request->filled('avatar')) {
+            $validated['avatar'] = uploadImageBase64($request->input('avatar'));
+        }
+
+        $student = Student::create($validated);
+        return response()->json([
+            "student" => $student
+        ]);
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
+    public function show(Student $student)
     {
-        //
+        return response()->json([
+            "student" => $student
+        ]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, $id)
+
+    public function update(UpdateUserRequest $request, $id)
     {
-        //
+        $student = Student::find($id);
+        if (!$student) {
+            return $this->returnError('Student not found.', 404);
+        }
+
+        $validated = $request->validated();
+
+        if (array_key_exists('phone', $validated) && !empty($validated['phone']) && !isKhmerPhone($validated['phone'])) {
+            return $this->returnError("The phone number must be a valid Cambodian number.", 422);
+        }
+
+        if (!empty($validated['password'])) {
+            $validated['password'] = Hash::make($validated['password']);
+        } else {
+            unset($validated['password']);
+        }
+
+        if (array_key_exists('avatar', $validated)) {
+            if (empty($validated['avatar'])) {
+                $validated['avatar'] = null;
+            } else {
+                if (!empty($student->avatar)) {
+                    $previousPath = public_path($student->avatar);
+                    if (file_exists($previousPath)) {
+                        @unlink($previousPath);
+
+                        $folder = dirname($previousPath);
+                        while (
+                            $folder !== public_path('images') &&
+                            is_dir($folder) &&
+                            count(scandir($folder)) === 2
+                        ) {
+                            @rmdir($folder);
+                            $folder = dirname($folder);
+                        }
+                    }
+                }
+                $path = uploadImageBase64($validated['avatar']);
+                if (!$path) {
+                    return $this->returnError('Incorrect Image type or wrong format', 422);
+                }
+                $validated['avatar'] = $path;
+            }
+        }
+
+        $student->update($validated);
+        return response()->json($student);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function destroy($id)
     {
-        //
+        $student = Student::find($id);
+        if (!$student) {
+            return $this->returnError('Student not found.', 404);
+        }
+
+        if (!empty($student->avatar)) {
+            $previousPath = public_path($student->avatar);
+            if (file_exists($previousPath)) {
+                @unlink($previousPath);
+
+                $folder = dirname($previousPath);
+                while ($folder !== public_path('images') && is_dir($folder) && count(scandir($folder)) === 2) {
+                    @rmdir($folder);
+                    $folder = dirname($folder);
+                }
+            }
+        }
+
+        $student->delete();
+
+        return $this->returnSuccess('Deleted');
     }
 }

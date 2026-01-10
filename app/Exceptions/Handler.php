@@ -53,7 +53,7 @@ class Handler extends ExceptionHandler
     {
         // Validation errors
         $this->renderable(function (ValidationException $e, Request $request) {
-            if ($request->is('api/mobile/*')) {
+            if ($request->is(['api/mobile/*', 'api/teacher/*', 'api/*'])) {
                 return response()->json([
                     'code' => 400,
                     'message' => 'Validation Error',
@@ -65,7 +65,7 @@ class Handler extends ExceptionHandler
 
         // Not Found (URL not existing)
         $this->renderable(function (NotFoundHttpException $e, Request $request) {
-            if ($request->is('api/mobile/*')) {
+            if ($request->is(['api/mobile/*', 'api/teacher/*', 'api/*'])) {
                 return response()->json([
                     'code' => 404,
                     'message' => 'Not Found',
@@ -77,7 +77,7 @@ class Handler extends ExceptionHandler
 
         // Model not found
         $this->renderable(function (ModelNotFoundException $e, Request $request) {
-            if ($request->is('api/mobile/*')) {
+            if ($request->is(['api/mobile/*', 'api/teacher/*', 'api/*'])) {
                 return response()->json([
                     'code' => 404,
                     'message' => 'Not Found',
@@ -89,7 +89,7 @@ class Handler extends ExceptionHandler
 
         // Authorization (no permission)
         $this->renderable(function (AuthorizationException $e, Request $request) {
-            if ($request->is('api/mobile/*')) {
+            if ($request->is(['api/mobile/*', 'api/teacher/*', 'api/*'])) {
                 return response()->json([
                     'code' => 401,
                     'message' => 'Unauthorized',
@@ -101,7 +101,7 @@ class Handler extends ExceptionHandler
 
         // Authentication (not logged in)
         $this->renderable(function (AuthenticationException $e, Request $request) {
-            if ($request->is('api/mobile/*')) {
+            if ($request->is(['api/mobile/*', 'api/teacher/*', 'api/*'])) {
                 return response()->json([
                     'code' => 403,
                     'message' => 'Unauthenticated',
@@ -113,7 +113,7 @@ class Handler extends ExceptionHandler
 
         // General HTTP errors
         $this->renderable(function (HttpException $e, Request $request) {
-            if ($request->is('api/mobile/*')) {
+            if ($request->is(['api/mobile/*', 'api/teacher/*', 'api/*'])) {
                 $code = $e->getStatusCode();
                 $message = Response::$statusTexts[$code] ?? 'Error';
                 return response()->json([
@@ -127,7 +127,7 @@ class Handler extends ExceptionHandler
 
         // Catch-all fallback
         $this->renderable(function (Throwable $e, Request $request) {
-            if ($request->is('api/mobile/*')) {
+            if ($request->is(['api/mobile/*', 'api/teacher/*', 'api/*'])) {
                 return response()->json([
                     'code' => 500,
                     'message' => 'An Error Occurred',

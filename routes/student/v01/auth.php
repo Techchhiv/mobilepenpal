@@ -31,3 +31,7 @@ Route::prefix('worlds')->group(function () {
     Route::get('/level/stage/{stageId}', [WorldController::class, 'showStage']);
     Route::post('/exercise/submit', [WorldController::class, 'submitExerciseBatch']);
 });
+
+Route::prefix('classrooms')->group(function (){
+    Route::post('/join', [UserController::class, 'joinByCode']);
+});

@@ -14,8 +14,8 @@ class RegisterRequest extends FormRequest
     public function rules()
     {
         return [
-            'school_id' => 'required|exists:schools,id',
-            'school_key' => 'required|string|exists:schools,school_key',
+            // 'school_id' => 'required|exists:schools,id',
+            // 'school_key' => 'required|string|exists:schools,school_key',
             'first_name' => 'required|string|max:100',
             'last_name' => 'required|string|max:100',
             'age'=> 'required|int',

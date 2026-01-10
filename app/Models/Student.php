@@ -20,7 +20,7 @@ class Student extends Authenticatable
     ];
 
      protected $casts = [
-        'date_of_birth' => 'date',
+        // 'date_of_birth' => 'date',
         'enrollment_year' => 'date',
     ];
 

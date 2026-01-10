@@ -69,6 +69,7 @@ class RbacSeeder extends Seeder
         // Parents / Children
         'parents.view','parents.create','parents.update','parents.delete','parents.enable_disable','parents.create_children',
         'children.view','children.create','children.update','children.delete',
+        'student.view','student.create','student.update','student.delete','student.enable_disable',
 
         // Enrollments
         'enrollments.view','enrollments.create','enrollments.update','enrollments.disable',
@@ -209,7 +210,8 @@ class RbacSeeder extends Seeder
                 'school.dashboard.view',
             ],
             'student-manager' => [
-                'parents.view','parents.create','parents.update','parents.delete','parents.enable_disable','parents.create_children',
+                'student.view','student.create','student.update','student.delete','student.enable_disable',
+                // 'parents.view','parents.create','parents.update','parents.delete','parents.enable_disable','parents.create_children',
                 'children.view','children.create','children.update',
                 'enrollments.view','enrollments.create','enrollments.update','enrollments.disable',
                 'school.dashboard.view',

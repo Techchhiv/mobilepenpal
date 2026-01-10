@@ -48,7 +48,12 @@ return [
         'students' => [
             'driver' => 'sanctum',
             'provider' => 'students',
-        ]
+        ],
+
+        'teachers' => [
+            'driver' => 'sanctum',
+            'provider' => 'teachers',
+        ],
     ],
 
 
@@ -78,6 +83,11 @@ return [
         'students' => [
             'driver' => 'eloquent',
             'model' => App\Models\Student::class,
+        ],
+
+        'teachers' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\Teacher::class,
         ],
 
         // 'users' => [

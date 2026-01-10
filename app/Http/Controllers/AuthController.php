@@ -114,7 +114,7 @@ class AuthController extends Controller
             ->where('school_id', $school->id)
             ->where('is_active', 1)
             ->first();
-
+        Log::info($teacher);
         if (!$teacher) {
             return response()->json(['message' => 'Teacher not found for this school, or inactive'], 422);
         }

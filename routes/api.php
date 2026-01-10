@@ -8,6 +8,7 @@ use App\Http\Controllers\{
     AdminUserController,
     AdminRoleController,
     AdminPermissionController,
+    ClassroomController,
     SchoolController,
     SchoolDashboardController,
     SchoolPermissionController,
@@ -52,10 +53,9 @@ Route::middleware('auth:api')->group(function () {
         Route::middleware(['permission:menu.manage_clients'])->group(function () {
             Route::get('/schools/generate-key', [SchoolController::class, 'generateKey']);
             Route::apiResource('schools', SchoolController::class)->only(['index', 'store', 'update', 'destroy']);
-           
         });
 
-          Route::middleware(['permission:menu.payments'])->group(function () {
+        Route::middleware(['permission:menu.payments'])->group(function () {
             Route::get('/schools/{school}/subscriptions', [SubscriptionController::class, 'index']);
             Route::post('/schools/{school}/subscriptions', [SubscriptionController::class, 'store']);
         });
@@ -70,31 +70,45 @@ Route::middleware('auth:api')->group(function () {
 
 
 
-Route::prefix('school')->middleware('auth:api')->group(function() {
+    Route::prefix('school')->middleware('auth:api')->group(function () {
 
-    // School dashboard (any school-admin)
+        // School dashboard (any school-admin)
 
-    // Manage teachers (school-admin only)
-    Route::middleware('permission:teachers.view|teachers.create|teachers.update|teachers.delete')->group(function() {
-        Route::get('/teachers', [TeacherController::class, 'index']);
-        Route::post('/teachers', [TeacherController::class, 'store']);
-        Route::put('/teachers/{teacher}', [TeacherController::class, 'update']);
-        Route::delete('/teachers/{teacher}', [TeacherController::class, 'destroy']);
+        // Manage teachers (school-admin only)
+        Route::middleware('permission:teachers.view|teachers.create|teachers.update|teachers.delete')->group(function () {
+            Route::get('/teachers', [TeacherController::class, 'index']);
+            Route::get('/teachers/{teacher}', [TeacherController::class, 'show']);
+            Route::post('/teachers', [TeacherController::class, 'store']);
+            Route::put('/teachers/{teacher}', [TeacherController::class, 'update']);
+            Route::delete('/teachers/{teacher}', [TeacherController::class, 'destroy']);
+        });
+
+        // Manage students
+        Route::middleware('permission:parents.view|children.view|children.create|children.update')->group(function () {
+            Route::get('/students', [StudentController::class, 'index']);
+            Route::post('/students', [StudentController::class, 'store']);
+            Route::get('/students/{student}', [StudentController::class, 'show']);
+            Route::put('/students/{student}', [StudentController::class, 'update']);
+        });
+
+        // Manage Classroom
+        Route::middleware('permission:classrooms.view|classrooms.create|classrooms.update')->group(function () {
+            Route::get('classrooms', [ClassroomController::class, 'index']);
+            Route::post('classrooms', [ClassroomController::class, 'create']);
+            Route::get('classrooms/{classroom}', [ClassroomController::class, 'show']);
+            Route::put('classrooms/{classroom}', [ClassroomController::class, 'update']);
+            Route::delete('classrooms/{classroom}', [ClassroomController::class, 'archive']);
+
+            // manage enrollments
+            Route::get('classrooms/{classroom}/students/{student}', [ClassroomController::class, 'studentDetail']);
+            Route::post('classrooms/{classroom}/students/{student}/remove', [ClassroomController::class, 'removeStudent']);
+        });
+
+        // Manage school users / roles / permissions (school-admin only)
+        Route::middleware('permission:users.manage|roles.manage|permissions.manage')->group(function () {
+            Route::apiResource('users', SchoolUserController::class)->only(['index', 'store', 'update', 'destroy']);
+            Route::apiResource('roles', SchoolRoleController::class)->only(['index', 'store', 'update', 'destroy']);
+            Route::apiResource('permissions', SchoolPermissionController::class)->only(['index', 'store', 'update', 'destroy']);
+        });
     });
-
-    // Manage students
-    Route::middleware('permission:parents.view|children.view|children.create')->group(function() {
-        Route::get('/students', [StudentController::class, 'index']);
-        Route::post('/students', [StudentController::class, 'store']);
-    });
-
-    // Manage school users / roles / permissions (school-admin only)
-    Route::middleware('permission:users.manage|roles.manage|permissions.manage')->group(function () {
-        Route::apiResource('users', SchoolUserController::class)->only(['index','store','update','destroy']);
-        Route::apiResource('roles', SchoolRoleController::class)->only(['index','store','update','destroy']);
-        Route::apiResource('permissions', SchoolPermissionController::class)->only(['index','store','update','destroy']);
-    });
-});
-
-
 });

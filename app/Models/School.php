@@ -70,4 +70,8 @@ class School extends Model
     {
         return $this->hasMany(Subscription::class);
     }
+
+    public function branches(){
+        return $this->hasMany(Branch::class);
+    }
 }
