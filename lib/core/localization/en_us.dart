@@ -261,6 +261,17 @@ final Map<String, String> enUS = {
   'score': 'Score',
   'result': 'Result',
   'my_course': 'My Course',
+  'classroom': 'Classroom',
+  'no_classroom_yet': 'No classroom yet',
+  'join_classroom_desc':
+      'Join your child’s classroom to see classmates and progress.',
+  'enter_code': 'Enter code',
+  'example_code': 'Example: SCH-ABC12345',
+  'join': 'Join',
+  'joined': 'Joined',
+  'children': 'children',
+  'classmates': 'Classmates',
+  'no_classmates': 'No classmates found',
 
   // ===== Course & Progress =====
   'my_courses': 'My Courses',
@@ -376,5 +387,5 @@ final Map<String, String> enUS = {
   'flash_unavailable': 'Flashlight is not available on this device.',
 
   // ===== Summary Page =====
-  'answer': 'Execellent Jobs'
+  'answer': 'Execellent Jobs',
 };

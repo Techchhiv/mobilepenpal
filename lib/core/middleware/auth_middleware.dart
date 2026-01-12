@@ -9,18 +9,17 @@ class AuthMiddleware extends GetMiddleware {
   @override
   RouteSettings? redirect(String? route) {
     final isLoggedIn = box.read('is_logged_in') == true;
+    final hasToken = box.read('has_token') == true;
 
-    const publicRoutes = {
-      AppRoutes.splash,
-      AppRoutes.login,
-      AppRoutes.otp,
-    };
+    final authed = isLoggedIn && hasToken;
 
-    if (!isLoggedIn && !publicRoutes.contains(route)) {
+    const publicRoutes = {AppRoutes.splash, AppRoutes.login, AppRoutes.otp};
+
+    if (!authed && !publicRoutes.contains(route)) {
       return const RouteSettings(name: AppRoutes.login);
     }
 
-    if (isLoggedIn && publicRoutes.contains(route)) {
+    if (authed && publicRoutes.contains(route)) {
       return const RouteSettings(name: AppRoutes.home);
     }
 

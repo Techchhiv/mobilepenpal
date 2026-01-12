@@ -1,7 +1,10 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:mobilepenpal/core/config/env.dart';
 import 'package:mobilepenpal/data/models/api_response.dart';
+import 'package:mobilepenpal/presentation/routes/app_routes.dart';
 
 class ApiClient {
   static final ApiClient _instance = ApiClient._internal();
@@ -9,6 +12,7 @@ class ApiClient {
 
   late final Dio dio;
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
+  final GetStorage _box = GetStorage();
 
   ApiClient._internal() {
     dio = Dio(
@@ -26,9 +30,7 @@ class ApiClient {
     dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
-          final token = await _secureStorage.read(
-            key: Env.accessToken,
-          );
+          final token = await _secureStorage.read(key: Env.accessToken);
 
           if (token != null && token.isNotEmpty) {
             options.headers['Authorization'] = 'Bearer $token';
@@ -46,6 +48,13 @@ class ApiClient {
         onError: (DioException e, handler) async {
           if (e.response?.statusCode == 401) {
             await _secureStorage.delete(key: Env.accessToken);
+            await _box.write('has_token', false);
+            await _box.write('is_logged_in', false);
+
+            final current = Get.currentRoute;
+            if (current != AppRoutes.login && current != AppRoutes.splash) {
+              Get.offAllNamed(AppRoutes.login);
+            }
           }
           return handler.next(e);
         },
@@ -55,10 +64,16 @@ class ApiClient {
 
   Future<void> saveToken(String token) async {
     await _secureStorage.write(key: Env.accessToken, value: token);
+
+    await _box.write('has_token', true);
+    await _box.write('is_logged_in', true);
   }
 
   Future<void> clearToken() async {
     await _secureStorage.delete(key: Env.accessToken);
+
+    await _box.write('has_token', false);
+    await _box.write('is_logged_in', false);
   }
 
   Future<bool> isAuthenticated() async {

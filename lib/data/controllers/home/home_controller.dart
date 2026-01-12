@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:mobilepenpal/core/theme/app_colors.dart';
 import 'package:mobilepenpal/data/controllers/home/pin_controller.dart';
+import 'package:mobilepenpal/data/models/classroom/classroom.dart';
 import 'package:mobilepenpal/data/models/report/daily_summary.dart';
 import 'package:mobilepenpal/data/models/report/monthly_summary.dart';
 import 'package:mobilepenpal/data/models/report/weekly_summary.dart';
@@ -21,6 +22,9 @@ class HomeController extends GetxController {
 
   var isLoading = false.obs;
   var isProfileLoading = false.obs;
+  var isClassroomLoading = false.obs;
+  var isJoiningClassroom = false.obs;
+  var currentClassroom = Rxn<Classroom>();
   var student = Rxn<Student>();
   var currentMode = ''.obs;
   var studentProgress = <StudentProgress>[].obs;
@@ -187,6 +191,82 @@ class HomeController extends GetxController {
     }
   }
 
+  Future<void> fetchCurrentClassroom() async {
+    if (isClassroomLoading.value) return;
+
+    isClassroomLoading.value = true;
+    try {
+      // ✅ call your service
+      final res = await _homeService.getClassrooms();
+
+      if (res.code == 200 && res.data != null) {
+        final list = res.data!;
+        currentClassroom.value = list.isNotEmpty ? list.first : null;
+      } else {
+        currentClassroom.value = null;
+      }
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        e.toString(),
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    } finally {
+      isClassroomLoading.value = false;
+    }
+  }
+
+  Future<bool> joinClassroomByCode(String code) async {
+    if (isJoiningClassroom.value) return false;
+
+    final joinCode = code.trim();
+    if (joinCode.isEmpty) {
+      Get.snackbar(
+        'Error',
+        'enter_code'.tr,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      return false;
+    }
+
+    isJoiningClassroom.value = true;
+    try {
+      final res = await _homeService.joinClassroomByCode(joinCode);
+
+      if (res.code == 200) {
+        await fetchCurrentClassroom();
+
+        Get.snackbar(
+          'OK',
+          'joined'.tr,
+          backgroundColor: const Color(0xFF16A34A),
+          colorText: Colors.white,
+        );
+        return true;
+      }
+
+      Get.snackbar(
+        'Error',
+        res.message,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      return false;
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        e.toString(),
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      return false;
+    } finally {
+      isJoiningClassroom.value = false;
+    }
+  }
+
   Future<void> _saveToStorage({
     required Student student,
     required List<StudentProgress> progress,
@@ -295,6 +375,8 @@ class HomeController extends GetxController {
       await fetchStudentProfile();
 
       if (currentMode.value == 'parent') {
+        await fetchCurrentClassroom();
+
         if (summaryView.value == SummaryView.daily) {
           await fetchDailySummary();
         } else {

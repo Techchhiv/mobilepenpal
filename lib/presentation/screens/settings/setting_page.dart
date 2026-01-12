@@ -151,26 +151,30 @@ class SettingPage extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 16),
-        Obx(
-          () => Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                _isParentMode
-                    ? settingController.parentName
-                    : settingController.fullName,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
+        Expanded(
+          child: Obx(
+            () => Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _isParentMode
+                      ? settingController.parentName
+                      : settingController.fullName,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                _isParentMode ? 'parent'.tr : 'student'.tr,
-                style: const TextStyle(fontSize: 16, color: Colors.grey),
-              ),
-            ],
+                const SizedBox(height: 4),
+                Text(
+                  _isParentMode ? 'parent'.tr : 'student'.tr,
+                  style: const TextStyle(fontSize: 16, color: Colors.grey),
+                ),
+              ],
+            ),
           ),
         ),
       ],

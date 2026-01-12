@@ -90,8 +90,6 @@ flutter:
     - assets/images/decorations/
     - assets/images/consonants/
     - assets/images/digits/
-    - assets/images/independent_vowels/
-    - assets/images/dependent_vowels/
 
     - assets/animated/
 

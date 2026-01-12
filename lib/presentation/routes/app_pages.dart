@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import 'package:mobilepenpal/core/bindings/auth_binding.dart';
+import 'package:mobilepenpal/core/bindings/classroom_binding.dart';
 import 'package:mobilepenpal/core/bindings/home_binding.dart';
 import 'package:mobilepenpal/core/bindings/level_binding.dart';
 import 'package:mobilepenpal/core/bindings/otp_binding.dart';
@@ -12,6 +13,7 @@ import 'package:mobilepenpal/core/middleware/auth_middleware.dart';
 import 'package:mobilepenpal/presentation/screens/auth/login_page.dart';
 import 'package:mobilepenpal/presentation/screens/auth/otp_verification_page.dart';
 import 'package:mobilepenpal/presentation/screens/auth/splash_page.dart';
+import 'package:mobilepenpal/presentation/screens/classroom/classroom_page.dart';
 import 'package:mobilepenpal/presentation/screens/home/home_page.dart';
 import 'package:mobilepenpal/presentation/screens/report/report_detail_page.dart';
 import 'package:mobilepenpal/presentation/screens/settings/setting_page.dart';
@@ -79,6 +81,17 @@ class AppPages {
       name: AppRoutes.parentReport,
       page: () => ReportDetailPage(),
       binding: ReportBinding(),
+      middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      name: AppRoutes.classroom,
+      page: () {
+        final id = int.tryParse(Get.parameters['classroomId'] ?? '') ?? 0;
+        return ClassroomPage(
+          classroomId: id,
+        );
+      },
+      binding: ClassroomBinding(),
       middlewares: [AuthMiddleware()],
     ),
   ];

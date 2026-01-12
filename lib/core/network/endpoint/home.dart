@@ -14,4 +14,10 @@ class HomeEndpoints {
 
   // Check Student
   static const String switchMode = '$_base/switch-mode';
+
+  // Classroom
+  static const String classrooms = '$_base/classrooms';
+  static const String joinClassroom  = '$_base/classrooms/join';
+
+  static String getClassroomById(int id) => '$classrooms/$id';
 }

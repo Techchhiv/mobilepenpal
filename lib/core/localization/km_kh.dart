@@ -257,6 +257,16 @@ final Map<String, String> kmKH = {
   'score': 'ពិន្ទុ',
   'result': 'លទ្ធផល',
   'my_course': 'វគ្គសិក្សារបស់ខ្ញុំ',
+  'classroom': 'ថ្នាក់រៀន',
+  'no_classroom_yet': 'មិនទាន់មានថ្នាក់រៀនទេ',
+  'join_classroom_desc':
+      'ចូលរួមថ្នាក់រៀនរបស់កូន ដើម្បីមើលមិត្តរួមថ្នាក់ និងវឌ្ឍនភាព។',
+  'enter_code': 'បញ្ចូលកូដ',
+  'example_code': 'ឧទាហរណ៍៖ SCH-ABC12345',
+  'join': 'ចូលរួម',
+  'joined': 'បានចូលរួម',
+  'classmates': 'មិត្តរួមថ្នាក់',
+  'no_classmates': 'មិនមានមិត្តរួមថ្នាក់',
 
   // ===== Course & Progress =====
   'my_courses': 'វគ្គសិក្សារបស់ខ្ញុំ',
@@ -369,7 +379,7 @@ final Map<String, String> kmKH = {
   'invalid_qr': 'QR មិនត្រឹមត្រូវ',
   'scan_failed': 'មិនអាចស្កេនបានទេ',
   'flash_unavailable': 'មិនអាចប្រើភ្លើងលើឧបករណ៍នេះបានទេ',
-  
+
   // ===== Summary Page =====
-  'answer': 'ឆ្លើយបានត្រឹមត្រូវ'
+  'answer': 'ឆ្លើយបានត្រឹមត្រូវ',
 };

@@ -13,33 +13,49 @@ class StageSummaryPage extends GetView<StageSummaryController> {
       return LoadingOverlay(
         isLoading: controller.isContinuing.value,
         child: Scaffold(
-          body: Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Color(0xFF2B7A78),
-                  Color(0xFF6B9F8E),
-                  Color(0xFF8FB99F),
-                ],
+          body: Stack(
+            children: [
+              // Background image
+              Positioned.fill(
+                child: Image.asset(
+                  "assets/images/backgrounds/summary_background.png",
+                  fit: BoxFit.cover,
+                ),
               ),
-            ),
-            child: SafeArea(
-              child: Column(
-                children: [
-                  const SizedBox(height: 8),
-                  _buildTopBar(),
-                  const SizedBox(height: 24),
-                  _buildIcon(),
-                  const SizedBox(height: 24),
-                  _buildScore(),
-                  Expanded(child: _buildStarDisplay()),
-                  _buildBottomButtons(),
-                  const SizedBox(height: 8),
-                ],
+
+              Positioned.fill(
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Color(0xFF2B7A78).withValues(alpha: 1),
+                        Color(0xFF6B9F8E).withValues(alpha: 0.8),
+                        Color(0xFF8FB99F).withValues(alpha: 0.1),
+                      ],
+                    ),
+                  ),
+                ),
               ),
-            ),
+
+              // Your page content
+              SafeArea(
+                child: Column(
+                  children: [
+                    const SizedBox(height: 8),
+                    _buildTopBar(),
+                    const SizedBox(height: 24),
+                    _buildIcon(),
+                    const SizedBox(height: 24),
+                    _buildScore(),
+                    Expanded(child: _buildStarDisplay()),
+                    _buildBottomButtons(),
+                    const SizedBox(height: 8),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
       );
@@ -158,11 +174,7 @@ class StageSummaryPage extends GetView<StageSummaryController> {
                   ],
                 ),
                 child: Center(
-                  child: Icon(
-                    Icons.replay,
-                    color: Colors.white,
-                    size: 32,
-                  )
+                  child: Icon(Icons.replay, color: Colors.white, size: 32),
                 ),
               ),
             ),
@@ -185,11 +197,11 @@ class StageSummaryPage extends GetView<StageSummaryController> {
                   ],
                 ),
                 child: Center(
-                  child:Icon(
+                  child: Icon(
                     Icons.arrow_forward,
                     color: Colors.white,
                     size: 32,
-                  )
+                  ),
                 ),
               ),
             ),

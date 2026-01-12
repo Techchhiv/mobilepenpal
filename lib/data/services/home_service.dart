@@ -1,3 +1,5 @@
+import 'package:dio/dio.dart';
+import 'package:mobilepenpal/data/models/classroom/classroom.dart';
 import 'package:mobilepenpal/data/models/report/daily_summary.dart';
 import 'package:mobilepenpal/data/models/report/monthly_summary.dart';
 import 'package:mobilepenpal/data/models/report/weekly_summary.dart';
@@ -143,5 +145,74 @@ class HomeService {
     );
 
     return result;
+  }
+
+  Future<ApiResponse<List<Classroom>>> getClassrooms() async {
+    final result = await _apiClient.request<List<Classroom>>(
+      method: 'GET',
+      path: HomeEndpoints.classrooms,
+      fromData: (data) {
+        final list = (data['classrooms'] as List<dynamic>?) ?? [];
+        return list
+            .whereType<Map<String, dynamic>>()
+            .map((e) => Classroom.fromJson(e))
+            .toList();
+      },
+    );
+
+    return result;
+  }
+
+  Future<ApiResponse<Classroom>> joinClassroomByCode(String joinCode) async {
+    try {
+      final resp = await _apiClient.dio.request(
+        HomeEndpoints.joinClassroom,
+        data: {'join_code': joinCode},
+        options: Options(method: 'POST'),
+      );
+
+      final body = resp.data;
+
+      if (body is Map<String, dynamic> && body.containsKey('code')) {
+        return ApiResponse.fromJson(body, (d) {
+          final classroomJson =
+              (d['classroom'] as Map<String, dynamic>?) ?? <String, dynamic>{};
+          return Classroom.fromJson(classroomJson);
+        });
+      }
+
+      if (body is Map<String, dynamic> && body['classroom'] is Map) {
+        return ApiResponse<Classroom>(
+          code: 200,
+          message: 'OK',
+          data: Classroom.fromJson(
+            Map<String, dynamic>.from(body['classroom'] as Map),
+          ),
+        );
+      }
+
+      return ApiResponse<Classroom>(
+        code: 500,
+        message: 'Unexpected response from server',
+      );
+    } on DioException catch (e) {
+      if (e.response?.data is Map<String, dynamic>) {
+        final map = e.response!.data as Map<String, dynamic>;
+        if (map.containsKey('code')) {
+          return ApiResponse.fromJson(map, (d) {
+            final classroomJson =
+                (d['classroom'] as Map<String, dynamic>?) ??
+                <String, dynamic>{};
+            return Classroom.fromJson(classroomJson);
+          });
+        }
+      }
+      return ApiResponse<Classroom>(
+        code: e.response?.statusCode ?? 500,
+        message: e.message ?? 'Unexpected error',
+      );
+    } catch (e) {
+      return ApiResponse<Classroom>(code: 500, message: e.toString());
+    }
   }
 }

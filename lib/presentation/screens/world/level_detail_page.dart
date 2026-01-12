@@ -46,7 +46,7 @@ class LevelDetailPage extends GetView<LevelController> {
   Widget _buildBackground() {
     return Positioned.fill(
       child: Image.asset(
-        "assets/images/backgrounds/level_background.jpg",
+        "assets/images/backgrounds/level_background.png",
         fit: BoxFit.fill,
       ),
     );

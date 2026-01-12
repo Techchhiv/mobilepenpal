@@ -11,5 +11,7 @@ class AppRoutes {
 
   static const parentReport = '/parent/report';
 
+  static const classroom = '/classroom/:classroomId';
+
   static const setting = '/setting';
 }

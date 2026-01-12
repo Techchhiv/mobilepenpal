@@ -39,6 +39,10 @@ class StageAnimationController extends GetxController
   final _rng = Random();
   List<String>? _digitFruitAssets;
   final Map<int, String> _fruitByDigit = {};
+  Set<String>? _assetKeysCache;
+
+  final illustrationAssetPath = ''.obs;
+  final illustrationLabel = ''.obs;
 
   @override
   void onInit() {
@@ -240,22 +244,22 @@ class StageAnimationController extends GetxController
     }
 
     final lenPx = _totalLenByStroke[strokeIndex];
-    final speed = max(10.0, guideSpeedPxPerSec.value); // safety
+    final speed = max(10.0, guideSpeedPxPerSec.value);
 
     final rawMs = (lenPx / speed * 1000.0).round();
 
     return rawMs.clamp(minStrokeDurationMs.value, maxStrokeDurationMs.value);
   }
 
-  final illustrationAssetPath = ''.obs;
-  final illustrationLabel = ''.obs;
-
-  Map<String, dynamic>? _assetManifestCache;
-
   Future<void> _ensureAssetManifestLoaded() async {
-    if (_assetManifestCache != null) return;
-    final raw = await rootBundle.loadString('AssetManifest.json');
-    _assetManifestCache = jsonDecode(raw) as Map<String, dynamic>;
+    if (_assetKeysCache != null) return;
+
+    try {
+      final manifest = await AssetManifest.loadFromAssetBundle(rootBundle);
+      _assetKeysCache = manifest.listAssets().toSet();
+    } catch (e) {
+      _assetKeysCache = <String>{};
+    }
   }
 
   Future<void> resolveIllustration({
@@ -275,13 +279,12 @@ class StageAnimationController extends GetxController
       await _resolveDigitFruit(ch);
       return;
     }
-
     await _ensureAssetManifestLoaded();
-    final manifest = _assetManifestCache!;
+    final keys = _assetKeysCache ?? const <String>{};
 
     final prefix = 'assets/images/$type/${ch}_';
 
-    final matches = manifest.keys
+    final matches = keys
         .where((k) => k.startsWith(prefix) && k.toLowerCase().endsWith('.png'))
         .toList();
 
@@ -308,11 +311,12 @@ class StageAnimationController extends GetxController
 
   Future<List<String>> _loadDigitFruitAssets() async {
     if (_digitFruitAssets != null) return _digitFruitAssets!;
+
     await _ensureAssetManifestLoaded();
-    final manifest = _assetManifestCache!;
+    final keys = _assetKeysCache ?? const <String>{};
 
     const prefix = 'assets/images/digits/';
-    final matches = manifest.keys
+    final matches = keys
         .where((k) => k.startsWith(prefix) && k.toLowerCase().endsWith('.png'))
         .toList();
 
