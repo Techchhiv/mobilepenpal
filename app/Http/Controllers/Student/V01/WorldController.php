@@ -7,6 +7,8 @@ use App\Http\Resources\Student\V01\World\LevelWithStageResource;
 use App\Http\Resources\Student\V01\World\StageWithExercisesResource;
 use App\Http\Resources\Student\V01\World\WorldIndexResource;
 use App\Http\Resources\Student\V01\World\WorldWithLevelResource;
+use App\Models\Classroom;
+use App\Models\ClassroomEnrollment;
 use App\Models\Exercise;
 use App\Models\World;
 use App\Models\Level;
@@ -87,9 +89,29 @@ class WorldController extends Controller
 
     public function submitExerciseBatch(Request $request): JsonResponse
     {
-        $studentId = auth()->id();
-        $attempts = $request->input('attempts', []);
+        $student = auth('students')->user();
+        if (!$student) return $this->returnError('User not authenticated', 401);
 
+        $studentId = $student->id;
+        $classroomId = $student->current_classroom_id ?? null;
+
+        if ($classroomId) {
+            $isEnrolled = ClassroomEnrollment::where('classroom_id', $classroomId)
+                ->where('student_id', $studentId)
+                ->where('status', 'enrolled')
+                ->exists();
+
+            if (!$isEnrolled) {
+                return $this->returnError('You are not enrolled in this classroom.', 403);
+            }
+
+            $active = Classroom::whereKey($classroomId)->where('is_active', true)->exists();
+            if (!$active) {
+                return $this->returnError('This classroom is inactive.', 422);
+            }
+        }
+
+        $attempts = $request->input('attempts', []);
         if (empty($attempts)) {
             return $this->returnError('No attempts provided', 400);
         }
@@ -98,12 +120,8 @@ class WorldController extends Controller
 
         $summary = [];
         $progressService = new StudentProgress();
-        Log::info('Submitting exercise batch', [
-            'student_id' => $studentId,
-            'attempts_count' => $attempts,
-            'duration_seconds' => $durationSeconds,
-        ]);
-        DB::transaction(function () use ($studentId, $attempts, $progressService, $durationSeconds, &$summary) {
+
+        DB::transaction(function () use ($studentId, $classroomId, $attempts, $progressService, $durationSeconds, &$summary) {
             $firstAttempt = collect($attempts)->first();
 
             if (!is_array($firstAttempt) || !isset($firstAttempt['exercise_id'])) {
@@ -113,6 +131,7 @@ class WorldController extends Controller
             $exerciseId = $firstAttempt['exercise_id'];
 
             $stageId = StageExercise::where('exercise_id', $exerciseId)
+                ->orderBy('stage_id') // deterministic
                 ->value('stage_id');
 
             $totalExercises = 0;
@@ -120,23 +139,23 @@ class WorldController extends Controller
 
             foreach ($attempts as $attempt) {
                 StudentExerciseAttempt::create([
-                    'student_id' => $studentId,
-                    'exercise_id' => $attempt['exercise_id'],
-                    'user_answer' => $attempt['user_answer'] ?? null,
-                    'is_correct' => $attempt['is_correct'],
-                    'stroke' => $attempt['stroke'] ?? null,
-                    'label' => $attempt['label'] ?? null,
+                    'student_id'   => $studentId,
+                    'classroom_id' => $classroomId, // ✅ INJECT HERE
+                    'exercise_id'  => $attempt['exercise_id'],
+                    'user_answer'  => $attempt['user_answer'] ?? null,
+                    'is_correct'   => $attempt['is_correct'],
+                    'stroke'       => $attempt['stroke'] ?? null,
+                    'label'        => $attempt['label'] ?? null,
                 ]);
 
                 $totalExercises++;
-                if (!empty($attempt['is_correct'])) {
-                    $correctAttempts++;
-                }
+                if (!empty($attempt['is_correct'])) $correctAttempts++;
             }
 
             if ($durationSeconds > 0 && $stageId) {
                 StudentSession::create([
                     'student_id'       => $studentId,
+                    'classroom_id'     => $classroomId,
                     'stage_id'         => $stageId,
                     'duration_seconds' => $durationSeconds,
                     'started_at'       => now()->subSeconds($durationSeconds),
@@ -150,7 +169,8 @@ class WorldController extends Controller
                 totalExercises: $totalExercises,
                 correctAttempts: $correctAttempts,
                 durationSeconds: $durationSeconds,
-                date: Carbon::today()
+                date: Carbon::today(),
+                classroomId: $classroomId,
             );
 
             $results = [
@@ -159,7 +179,12 @@ class WorldController extends Controller
                 'stage_id'         => $stageId,
             ];
 
-            $progressResult  = $progressService->updateStageProgress($studentId, $stageId, $results);
+            $progressResult = $progressService->updateStageProgress(
+                $studentId,
+                $stageId,
+                $results,
+                $classroomId
+            );
 
             $summary = [
                 'stars_earned'     => $progressResult['stars_earned'],
@@ -169,7 +194,6 @@ class WorldController extends Controller
                 'next_stage_id'    => $progressResult['next_stage_id'] ?? null,
             ];
         });
-
 
         $this->setResult('summary', $summary);
         return $this->returnResponse();

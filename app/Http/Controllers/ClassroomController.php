@@ -187,7 +187,7 @@ class ClassroomController extends Controller
 
     public function students(Request $request, Classroom $classroom, Student $student)
     {
-        $user = $request->user(); // users table
+        $user = $request->user();
 
         if ((int) $classroom->school_id !== (int) $user->school_id) {
             return $this->returnError('Unauthorized', 403);
@@ -221,71 +221,168 @@ class ClassroomController extends Controller
             ? Carbon::parse($enrollment->enrolled_at)
             : Carbon::parse($enrollment->created_at);
 
-        $leftAt = $enrollment->left_at ? Carbon::parse($enrollment->left_at) : now();
+        $leftAt = $enrollment->left_at
+            ? Carbon::parse($enrollment->left_at)
+            : now();
 
-        $type = $request->query('type', 'weekly');
-        $date = $request->query('date');
-        $from = $request->query('from');
-        $to   = $request->query('to');
-        $month = $request->query('month');
+        $enrolledMoment = $enrolledAt->copy();
+        $leftMoment     = $leftAt->copy();
 
-        $clampDate = function (Carbon $d) use ($enrolledAt, $leftAt) {
-            if ($d->lt($enrolledAt)) return $enrolledAt->copy();
-            if ($d->gt($leftAt)) return $leftAt->copy();
-            return $d;
+        $intersectRange = function (Carbon $reqFrom, Carbon $reqTo)
+        use ($enrolledMoment, $leftMoment) {
+
+            $usedFrom = $reqFrom->copy();
+            $usedTo   = $reqTo->copy();
+
+            if ($usedFrom->lt($enrolledMoment)) {
+                $usedFrom = $enrolledMoment->copy();
+            }
+
+            if ($usedTo->gt($leftMoment)) {
+                $usedTo = $leftMoment->copy();
+            }
+
+            if ($usedFrom->gt($usedTo)) {
+                return [null, null];
+            }
+
+            return [$usedFrom, $usedTo];
         };
 
-        if ($type === 'daily') {
-            $d = $date ? Carbon::parse($date) : now();
-            $d = $clampDate($d);
+        $type  = $request->query('type', 'weekly');
+        $date  = $request->query('date');
+        $from  = $request->query('from');
+        $to    = $request->query('to');
+        $month = $request->query('month');
 
-            $summary = StudentSummary::getDailySummary($student->id, $d->toDateString());
+        $classroomId = (int) $classroom->id;
+        $summary = null;
+
+        if ($type === 'daily') {
+            $requested = $date
+                ? Carbon::parse($date)
+                : now();
+
+            $reqFrom = $requested->copy()->startOfDay();
+            $reqTo   = $requested->copy()->endOfDay();
+
+            [$usedFrom, $usedTo] = $intersectRange($reqFrom, $reqTo);
+
+            if (!$usedFrom || !$usedTo) {
+                $summary = [
+                    'student_id' => $student->id,
+                    'classroom_id' => $classroomId,
+                    'date' => $requested->toDateString(),
+                    'stars_earned' => 0,
+                    'stages_completed' => 0,
+                    'time_spent_seconds' => 0,
+                    'exercises_attempted' => 0,
+                    'correct_attempts' => 0,
+                    'accuracy' => 0,
+                    'characters_practiced' => [],
+                    'best_character' => null,
+                    'needs_attention' => null,
+                    'message' => 'Selected date is outside enrollment period.',
+                ];
+            } else {
+                $summary = StudentSummary::getDailySummary(
+                    $student->id,
+                    $usedFrom->toDateString(),
+                    $classroomId
+                );
+            }
+
             $summary['range'] = [
-                'enrolled_at' => $enrolledAt->toDateTimeString(),
-                'left_at' => $leftAt->toDateTimeString(),
-                'clamped_date' => $d->toDateString(),
+                'enrolled_at' => $enrolledMoment->toDateTimeString(),
+                'left_at'     => $leftMoment->toDateTimeString(),
+                'requested_date' => $requested->toDateString(),
+                'used_date'      => $usedFrom?->toDateString(),
             ];
         } elseif ($type === 'monthly') {
             $monthStr = $month ?: now()->format('Y-m');
-            $mFrom = Carbon::createFromFormat('Y-m', $monthStr)->startOfMonth();
-            $mTo = Carbon::createFromFormat('Y-m', $monthStr)->endOfMonth();
 
-            $cFrom = $clampDate($mFrom);
-            $cTo = $clampDate($mTo);
+            $reqFrom = Carbon::createFromFormat('Y-m', $monthStr)->startOfMonth()->startOfDay();
+            $reqTo   = Carbon::createFromFormat('Y-m', $monthStr)->endOfMonth()->endOfDay();
 
-            if ($cFrom->gt($cTo)) {
+            [$usedFrom, $usedTo] = $intersectRange($reqFrom, $reqTo);
+
+            if (!$usedFrom || !$usedTo) {
                 $summary = [
                     'student_id' => $student->id,
+                    'classroom_id' => $classroomId,
                     'month' => $monthStr,
                     'message' => 'No data in this month within enrollment period.',
                 ];
             } else {
-                $summary = StudentSummary::getWeeklySummary($student->id, $cFrom->toDateString(), $cTo->toDateString());
+                $summary = StudentSummary::getWeeklySummary(
+                    $student->id,
+                    $usedFrom->toDateString(),
+                    $usedTo->toDateString(),
+                    $classroomId
+                );
                 $summary['month'] = $monthStr;
-                $summary['range'] = [
-                    'enrolled_at' => $enrolledAt->toDateTimeString(),
-                    'left_at' => $leftAt->toDateTimeString(),
-                    'from_date' => $cFrom->toDateString(),
-                    'to_date' => $cTo->toDateString(),
+            }
+
+            $summary['range'] = [
+                'enrolled_at' => $enrolledMoment->toDateTimeString(),
+                'left_at'     => $leftMoment->toDateTimeString(),
+                'requested_from' => $reqFrom->toDateString(),
+                'requested_to'   => $reqTo->toDateString(),
+                'used_from'      => $usedFrom?->toDateString(),
+                'used_to'        => $usedTo?->toDateString(),
+            ];
+        } else {
+            $reqTo = $to
+                ? Carbon::parse($to)->endOfDay()
+                : now()->endOfDay();
+
+            $reqFrom = $from
+                ? Carbon::parse($from)->startOfDay()
+                : $reqTo->copy()->subDays(6)->startOfDay();
+
+            if ($reqFrom->gt($reqTo)) {
+                [$reqFrom, $reqTo] = [
+                    $reqTo->copy()->startOfDay(),
+                    $reqFrom->copy()->endOfDay()
                 ];
             }
-        } else {
-            $defaultTo = $clampDate(now());
-            $defaultFrom = $clampDate($defaultTo->copy()->subDays(6));
 
-            $fromDate = $from ? $clampDate(Carbon::parse($from))->toDateString() : $defaultFrom->toDateString();
-            $toDate = $to ? $clampDate(Carbon::parse($to))->toDateString() : $defaultTo->toDateString();
+            [$usedFrom, $usedTo] = $intersectRange($reqFrom, $reqTo);
 
-            if (Carbon::parse($fromDate)->gt(Carbon::parse($toDate))) {
-                [$fromDate, $toDate] = [$toDate, $fromDate];
+            if (!$usedFrom || !$usedTo) {
+                $summary = [
+                    'student_id' => $student->id,
+                    'classroom_id' => $classroomId,
+                    'from_date' => $reqFrom->toDateString(),
+                    'to_date' => $reqTo->toDateString(),
+                    'total_stars_earned' => 0,
+                    'total_stages_completed' => 0,
+                    'total_time_spent_seconds' => 0,
+                    'total_exercises_attempted' => 0,
+                    'total_correct_attempts' => 0,
+                    'accuracy' => 0,
+                    'practice_days' => 0,
+                    'characters_summary' => [],
+                    'top_mastered_characters' => [],
+                    'characters_to_review' => [],
+                    'message' => 'Selected range is outside enrollment period.',
+                ];
+            } else {
+                $summary = StudentSummary::getWeeklySummary(
+                    $student->id,
+                    $usedFrom->toDateString(),
+                    $usedTo->toDateString(),
+                    $classroomId
+                );
             }
 
-            $summary = StudentSummary::getWeeklySummary($student->id, $fromDate, $toDate);
             $summary['range'] = [
-                'enrolled_at' => $enrolledAt->toDateTimeString(),
-                'left_at' => $leftAt->toDateTimeString(),
-                'from_date' => $fromDate,
-                'to_date' => $toDate,
+                'enrolled_at' => $enrolledMoment->toDateTimeString(),
+                'left_at'     => $leftMoment->toDateTimeString(),
+                'requested_from' => $reqFrom->toDateString(),
+                'requested_to'   => $reqTo->toDateString(),
+                'used_from'      => $usedFrom?->toDateString(),
+                'used_to'        => $usedTo?->toDateString(),
             ];
         }
 
@@ -296,6 +393,7 @@ class ClassroomController extends Controller
             'summary'    => $summary,
         ]);
     }
+
 
     public function removeStudent(Request $request, Classroom $classroom, Student $student)
     {

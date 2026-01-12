@@ -174,7 +174,9 @@ class UserController extends Controller
 
         $date = $request->query('date', Carbon::now()->toDateString());
 
-        $summary = StudentSummary::getDailySummary($student->id, $date);
+        $classroomId = $student->current_classroom_id ? (int) $student->current_classroom_id : null;
+
+        $summary = StudentSummary::getDailySummary($student->id, $date, $classroomId);
 
         $this->setResult('summary', $summary);
         return $this->returnResponse();
@@ -198,7 +200,8 @@ class UserController extends Controller
             $toDate   = $now->copy()->endOfWeek()->toDateString();
         }
 
-        $summary = StudentSummary::getWeeklySummary($student->id, $fromDate, $toDate);
+        $classroomId = $student->current_classroom_id ? (int) $student->current_classroom_id : null;
+        $summary = StudentSummary::getWeeklySummary($student->id, $fromDate, $toDate, $classroomId);
 
         $this->setResult('summary', $summary);
         return $this->returnResponse();
@@ -219,41 +222,5 @@ class UserController extends Controller
 
         $this->setResult('summary', $summary);
         return $this->returnResponse();
-    }
-
-    public function joinByCode(Request $request)
-    {
-        $student = auth('students')->user();
-
-        if (!$student) {
-            return $this->returnError('Unauthenticated.', 401);
-        }
-
-        $validated = $request->validate([
-            'join_code' => 'required|string|max:50',
-        ]);
-
-        $classroom = Classroom::where('join_code', $validated['join_code'])->first();
-        if (!$classroom) {
-            return $this->returnError('Invalid join code.', 404);
-        }
-
-        if (!$classroom->is_active) {
-            return $this->returnError('This classroom is inactive.', 422);
-        }
-
-        if (!empty($student->school_id) && (int) $student->school_id !== (int) $classroom->school_id) {
-            return $this->returnError('You cannot join a classroom from another school.', 403);
-        }
-
-        $enrollment = ClassroomEnrollment::updateOrCreate(
-            ['classroom_id' => $classroom->id, 'student_id' => $student->id],
-            ['status' => 'enrolled', 'enrolled_at' => now(), 'left_at' => null]
-        );
-
-        return response()->json([
-            'classroom' => $classroom,
-            'enrollment' => $enrollment,
-        ]);
     }
 }

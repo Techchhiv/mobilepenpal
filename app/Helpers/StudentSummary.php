@@ -5,50 +5,46 @@ namespace App\Helpers;
 use Carbon\Carbon;
 use App\Models\StudentExerciseAttempt;
 use App\Models\StudentDailyStat;
+use App\Models\StudentSession;
 use Illuminate\Support\Collection;
 
 class StudentSummary
 {
-    public static function getDailySummary(int $studentId, $date): array
+    public static function getDailySummary(int $studentId, $date, ?int $classroomId = null)
     {
         $date = Carbon::parse($date)->toDateString();
 
-        /** @var StudentDailyStat|null $stat */
-        $stat = StudentDailyStat::forStudent($studentId)
-            ->forDate($date)
-            ->first();
-
-        $exercisesAttempted = $stat?->exercises_attempted ?? 0;
-        $correctAttempts = $stat?->correct_attempts ?? 0;
-        $timeSpentSeconds = $stat?->time_spent_seconds ?? 0;
-
-        $accuracy = $exercisesAttempted > 0
-            ? round($correctAttempts / $exercisesAttempted, 2)
-            : 0.0;
+        $timeSpentSeconds = StudentSession::where('student_id', $studentId)
+            ->where('classroom_id', $classroomId)
+            ->whereDate('created_at', $date)
+            ->sum('duration_seconds');
 
         $attempts = StudentExerciseAttempt::with('exercise.stages')
-            ->forStudent($studentId)
-            ->forDate($date)
+            ->where('student_id', $studentId)
+            ->where('classroom_id', $classroomId)
+            ->whereDate('created_at', $date)
             ->get();
 
+        $totalAttempts = $attempts->count();
+        $correctAttempts = $attempts->where('is_correct', true)->count();
+
+        $accuracy = $totalAttempts > 0
+            ? round($correctAttempts / $totalAttempts, 2)
+            : 0.0;
+
         $characterGroups = $attempts
-            ->groupBy(function ($attempt) {
-                return optional($attempt->exercise)->character;
-            })
+            ->groupBy(fn($attempt) => optional($attempt->exercise)->character)
             ->filter();
 
         $characters = $characterGroups->map(function ($group, $character) {
             $attemptsCount = $group->count();
             $correctCount  = $group->where('is_correct', true)->count();
-            $charAccuracy  = $attemptsCount > 0
-                ? round($correctCount / $attemptsCount, 2)
-                : 0.0;
 
             return [
                 'character' => $character,
                 'attempts' => $attemptsCount,
                 'correct_attempts' => $correctCount,
-                'accuracy' => $charAccuracy,
+                'accuracy' => $attemptsCount > 0 ? round($correctCount / $attemptsCount, 2) : 0.0,
             ];
         })->values();
 
@@ -56,22 +52,13 @@ class StudentSummary
         $needsAttention = null;
 
         foreach ($characters as $c) {
-            if ($c['attempts'] < 2) {
-                continue;
-            }
+            if ($c['attempts'] < 2) continue;
 
             if (!$best || $c['accuracy'] > $best['accuracy']) {
-                $best = [
-                    'character' => $c['character'],
-                    'accuracy' => $c['accuracy'],
-                ];
+                $best = ['character' => $c['character'], 'accuracy' => $c['accuracy']];
             }
-
             if (!$needsAttention || $c['accuracy'] < $needsAttention['accuracy']) {
-                $needsAttention = [
-                    'character' => $c['character'],
-                    'accuracy' => $c['accuracy'],
-                ];
+                $needsAttention = ['character' => $c['character'], 'accuracy' => $c['accuracy']];
             }
         }
 
@@ -79,45 +66,37 @@ class StudentSummary
             $needsAttention = null;
         }
 
-        $stageGroups = $attempts
-            ->groupBy(function ($attempt) {
-                $stage = optional($attempt->exercise)->stages->first();
-                return optional($stage)->id;
-            })
-            ->filter();
+        $stageGroups = $attempts->groupBy(function ($attempt) {
+            $stage = optional($attempt->exercise)->stages?->sortBy('id')->first();
+            return optional($stage)->id;
+        })->filter();
 
         $starsEarned = 0;
         $stagesCompleted = 0;
 
         foreach ($stageGroups as $stageId => $group) {
-            $stage = optional($group->first()->exercise)->stages->first();
-            if (!$stage) {
-                continue;
-            }
+            $stage = optional($group->first()->exercise)->stages?->sortBy('id')->first();
+            if (!$stage) continue;
 
             $attemptsCount = $group->count();
             $correctCount  = $group->where('is_correct', true)->count();
-            $score = $attemptsCount > 0
-                ? ($correctCount / $attemptsCount) * 100
-                : 0;
 
-            $sessionStars = self::calculateSessionStars($score, (int) $stage->max_stars);
-            $starsEarned += $sessionStars;
+            $score = $attemptsCount > 0 ? ($correctCount / $attemptsCount) * 100 : 0;
 
-            if ($score >= 50) {
-                $stagesCompleted++;
-            }
+            $starsEarned += self::calculateSessionStars($score, (int) $stage->max_stars);
+            if ($score >= 50) $stagesCompleted++;
         }
 
         return [
             'student_id' => $studentId,
+            'classroom_id' => $classroomId,
             'date' => $date,
 
             'stars_earned' => $starsEarned,
             'stages_completed' => $stagesCompleted,
-            'time_spent_seconds'  => $timeSpentSeconds,
+            'time_spent_seconds' => (int) $timeSpentSeconds,
 
-            'exercises_attempted' => $exercisesAttempted,
+            'exercises_attempted' => $totalAttempts,
             'correct_attempts' => $correctAttempts,
             'accuracy' => $accuracy,
 
@@ -126,6 +105,7 @@ class StudentSummary
             'needs_attention' => $needsAttention,
         ];
     }
+
 
     private static function calculateSessionStars(float $score, int $maxStars): int
     {
@@ -141,8 +121,7 @@ class StudentSummary
     }
 
 
-
-    public static function getWeeklySummary(int $studentId, $fromDate, $toDate): array
+    public static function getWeeklySummary(int $studentId, $fromDate, $toDate, ?int $classroomId = null)
     {
         $from = Carbon::parse($fromDate)->startOfDay();
         $to = Carbon::parse($toDate)->endOfDay();
@@ -150,119 +129,96 @@ class StudentSummary
         $fromDateStr = $from->toDateString();
         $toDateStr = $to->toDateString();
 
-        $aggregated = StudentDailyStat::forStudent($studentId)
-            ->betweenDates($fromDateStr, $toDateStr)
-            ->selectRaw('
-            COALESCE(SUM(exercises_attempted), 0) as total_exercises_attempted,
-            COALESCE(SUM(correct_attempts), 0) as total_correct_attempts,
-            COALESCE(SUM(time_spent_seconds), 0) as total_time_spent_seconds,
-            COUNT(*) as practice_days
-        ')
-            ->first();
+        // If StudentDailyStat DOES NOT have classroom_id, don't use it for classroom-specific weekly totals.
+        // Compute from attempts/sessions instead.
 
-        $totalAttempts   = (int) ($aggregated->total_exercises_attempted ?? 0);
-        $totalCorrect    = (int) ($aggregated->total_correct_attempts ?? 0);
-        $totalTimeSpent  = (int) ($aggregated->total_time_spent_seconds ?? 0);
-        $practiceDays    = (int) ($aggregated->practice_days ?? 0);
+        $attempts = StudentExerciseAttempt::with('exercise.stages')
+            ->where('student_id', $studentId)
+            ->where('classroom_id', $classroomId)
+            ->whereBetween('created_at', [$from, $to])
+            ->get();
+
+        $totalAttempts = $attempts->count();
+        $totalCorrect = $attempts->where('is_correct', true)->count();
 
         $accuracy = $totalAttempts > 0
             ? round($totalCorrect / $totalAttempts, 2)
             : 0.0;
 
-        $attempts = StudentExerciseAttempt::with('exercise.stages')
-            ->where('student_id', $studentId)
+        $totalTimeSpent = StudentSession::where('student_id', $studentId)
+            ->where('classroom_id', $classroomId)
             ->whereBetween('created_at', [$from, $to])
-            ->get();
+            ->sum('duration_seconds');
+
+        $practiceDays = StudentExerciseAttempt::where('student_id', $studentId)
+            ->where('classroom_id', $classroomId)
+            ->whereBetween('created_at', [$from, $to])
+            ->selectRaw("COUNT(DISTINCT DATE(created_at)) as days")
+            ->value('days') ?? 0;
 
         $characterGroups = $attempts
-            ->groupBy(function ($attempt) {
-                return optional($attempt->exercise)->character;
-            })
+            ->groupBy(fn($attempt) => optional($attempt->exercise)->character)
             ->filter();
 
         $characters = $characterGroups->map(function ($group, $character) {
             $attemptsCount = $group->count();
             $correctCount  = $group->where('is_correct', true)->count();
-            $charAccuracy  = $attemptsCount > 0
-                ? round($correctCount / $attemptsCount, 2)
-                : 0.0;
 
             return [
                 'character' => $character,
                 'attempts' => $attemptsCount,
                 'correct_attempts' => $correctCount,
-                'accuracy' => $charAccuracy,
+                'accuracy' => $attemptsCount > 0 ? round($correctCount / $attemptsCount, 2) : 0.0,
             ];
         })->values();
-
-        $charactersAttempted = $characters->count();
 
         $topMastered = [];
         $needsReview = [];
 
         foreach ($characters as $c) {
-            if ($c['attempts'] < 3) {
-                continue;
-            }
+            if ($c['attempts'] < 3) continue;
 
-            if ($c['accuracy'] >= 0.80) {
-                $topMastered[] = [
-                    'character' => $c['character'],
-                    'accuracy' => $c['accuracy'],
-                ];
-            }
-
-            if ($c['accuracy'] <= 0.50) {
-                $needsReview[] = [
-                    'character' => $c['character'],
-                    'accuracy' => $c['accuracy'],
-                ];
-            }
+            if ($c['accuracy'] >= 0.80) $topMastered[] = ['character' => $c['character'], 'accuracy' => $c['accuracy']];
+            if ($c['accuracy'] <= 0.50) $needsReview[] = ['character' => $c['character'], 'accuracy' => $c['accuracy']];
         }
 
-        $stageGroups = $attempts
-            ->groupBy(function ($attempt) {
-                $stage = optional($attempt->exercise)->stages->first();
-                return optional($stage)->id;
-            })
-            ->filter();
+        $stageGroups = $attempts->groupBy(function ($attempt) {
+            $stage = optional($attempt->exercise)->stages?->sortBy('id')->first();
+            return optional($stage)->id;
+        })->filter();
 
-        $totalStarsEarned     = 0;
+        $totalStarsEarned = 0;
         $totalStagesCompleted = 0;
 
         foreach ($stageGroups as $stageId => $group) {
-            $stage = optional($group->first()->exercise)->stages->first();
+            $stage = optional($group->first()->exercise)->stages?->sortBy('id')->first();
             if (!$stage) continue;
 
             $attemptsCount = $group->count();
             $correctCount  = $group->where('is_correct', true)->count();
-            $score         = $attemptsCount > 0
-                ? ($correctCount / $attemptsCount) * 100
-                : 0;
 
-            $sessionStars = self::calculateSessionStars($score, (int) $stage->max_stars);
-            $totalStarsEarned += $sessionStars;
+            $score = $attemptsCount > 0 ? ($correctCount / $attemptsCount) * 100 : 0;
 
-            if ($score >= 50) {
-                $totalStagesCompleted++;
-            }
+            $totalStarsEarned += self::calculateSessionStars($score, (int) $stage->max_stars);
+            if ($score >= 50) $totalStagesCompleted++;
         }
 
         return [
             'student_id' => $studentId,
+            'classroom_id' => $classroomId,
             'from_date' => $fromDateStr,
             'to_date' => $toDateStr,
 
             'total_stars_earned' => $totalStarsEarned,
             'total_stages_completed' => $totalStagesCompleted,
-            'total_time_spent_seconds' => $totalTimeSpent,
+            'total_time_spent_seconds' => (int) $totalTimeSpent,
 
             'total_exercises_attempted' => $totalAttempts,
             'total_correct_attempts' => $totalCorrect,
             'accuracy' => $accuracy,
 
-            'practice_days' => $practiceDays,
-            'characters_attempted' => $charactersAttempted,
+            'practice_days' => (int) $practiceDays,
+            'characters_attempted' => $characters->count(),
             'characters_summary' => $characters,
 
             'top_mastered_characters' => $topMastered,

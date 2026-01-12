@@ -100,7 +100,7 @@ Route::middleware('auth:api')->group(function () {
             Route::delete('classrooms/{classroom}', [ClassroomController::class, 'archive']);
 
             // manage enrollments
-            Route::get('classrooms/{classroom}/students/{student}', [ClassroomController::class, 'studentDetail']);
+            Route::get('classrooms/{classroom}/students/{student}', [ClassroomController::class, 'students']);
             Route::post('classrooms/{classroom}/students/{student}/remove', [ClassroomController::class, 'removeStudent']);
         });
 

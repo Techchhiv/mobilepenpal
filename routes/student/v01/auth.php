@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Student\V01\AuthController;
+use App\Http\Controllers\Student\V01\ClassroomController;
 use App\Http\Controllers\Student\V01\UserController;
 use App\Http\Controllers\Student\V01\WorldController;
 use Illuminate\Support\Facades\Route;
@@ -33,5 +34,7 @@ Route::prefix('worlds')->group(function () {
 });
 
 Route::prefix('classrooms')->group(function (){
-    Route::post('/join', [UserController::class, 'joinByCode']);
+    Route::get('', [ClassroomController::class, 'index']);
+    Route::get('{classroom}', [ClassroomController::class, 'show']);
+    Route::post('/join', [ClassroomController::class, 'joinByCode']);
 });

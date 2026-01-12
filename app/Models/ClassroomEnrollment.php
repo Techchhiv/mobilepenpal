@@ -20,4 +20,9 @@ class ClassroomEnrollment extends Model
     {
         return $this->belongsTo(Student::class);
     }
+
+    protected $casts = [
+        'enrolled_at' => 'datetime',
+        'left_at' => 'datetime',
+    ];
 }

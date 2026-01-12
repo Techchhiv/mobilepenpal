@@ -15,7 +15,8 @@ return new class extends Migration
     {
         Schema::create('students', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('school_id')->constrained('schools');
+            $table->foreignId('school_id')->nullable()->constrained('schools')->nullOnDelete();
+            $table->foreignId('current_classroom_id')->nullable()->constrained('classrooms')->nullOnDelete();
             // $table->foreignId('branch_id')->nullable()->constrained('branches');
             $table->string('firebase_uid')->nullable();
             $table->string('school_key');
@@ -24,11 +25,11 @@ return new class extends Migration
             $table->string('last_name')->nullable();
             $table->string('nickname')->nullable();
             $table->integer('age')->nullable();
-            $table->enum('gender', ['male','female']);
+            $table->enum('gender', ['male', 'female']);
             $table->date('date_of_birth');
             $table->string('avatar')->nullable();
 
-            $table->enum('mode', ['student','parent'])->default('student');
+            $table->enum('mode', ['student', 'parent'])->default('student');
             $table->string('parent_pin')->nullable();
             // $table->timestamp('last_mode_switched')->nullable();
 

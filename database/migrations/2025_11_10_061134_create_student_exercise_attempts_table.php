@@ -16,6 +16,7 @@ return new class extends Migration
         Schema::create('student_exercise_attempts', function (Blueprint $table) {
             $table->id();
             $table->foreignId('student_id')->constrained('students');
+            $table->foreignId('classroom_id')->nullable()->constrained('classrooms');
             $table->foreignId('exercise_id')->constrained('exercises');
 
             $table->string('user_answer')->nullable();

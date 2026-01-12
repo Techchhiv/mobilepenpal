@@ -37,9 +37,9 @@ class StudentProgress
         return WorldIndexResource::collection($worlds);
     }
 
-    public function updateStageProgress($studentId, $stageId, $results)
+    public function updateStageProgress($studentId, $stageId, $results, ?int $classroomId = null)
     {
-        return DB::transaction(function () use ($studentId, $stageId, $results) {
+        return DB::transaction(function () use ($studentId, $stageId, $results, $classroomId) {
             $stage = Stage::with(['level.world'])->find($stageId);
             if (!$stage) return null;
 
@@ -49,17 +49,15 @@ class StudentProgress
             $newStarsEarned = $this->calculateStarsEarned($score, $stage->max_stars);
             $stageProgress = StudentStageProgress::where('student_id', $studentId)
                 ->where('stage_id', $stageId)
+                ->where('classroom_id', $classroomId)
                 ->first();
 
             $currentStars = $stageProgress->stars_earned ?? 0;
 
             if ($newStarsEarned > $currentStars) {
                 $stageProgress = StudentStageProgress::updateOrCreate(
-                    ['student_id' => $studentId, 'stage_id' => $stageId],
-                    [
-                        'stars_earned' => $newStarsEarned,
-                        'status' => 'completed',
-                    ]
+                    ['student_id' => $studentId, 'stage_id' => $stageId, 'classroom_id' => $classroomId],
+                    ['stars_earned' => $newStarsEarned, 'status' => 'completed']
                 );
                 $stageProgress->refresh();
             }
@@ -374,7 +372,8 @@ class StudentProgress
         int $totalExercises,
         int $correctAttempts,
         int $durationSeconds,
-        $date = null
+        $date = null,
+        ?int $classroomId = null
     ): void {
         $date = $date
             ? Carbon::parse($date)->toDateString()
@@ -404,6 +403,7 @@ class StudentProgress
         $stat = StudentDailyStat::firstOrNew([
             'student_id' => $studentId,
             'date'       => $date,
+            'classroom_id' => $classroomId
         ]);
 
         if (!$stat->exists) {
