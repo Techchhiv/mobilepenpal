@@ -28,6 +28,16 @@ import SchoolPermissionsPage from "./pages/school/page/SchoolPermissionsPage";
 import TeacherList from "./pages/school/page/Teacher/TeacherList";
 import TeacherCreate from "./pages/school/page/Teacher/TeacherCreate";
 import ClassRoomsList from "./pages/school/page/ClassRooms/ClassRoomsList";
+import StudentList from "./pages/school/page/Student/StudentList";
+import StudentCreate from "./pages/school/page/Student/StudentCreate";
+import StudentEdit from "./pages/school/page/Student/StudentEdit";
+import ClassroomCreate from "./pages/school/page/ClassRooms/ClassroomCreate";
+import StudentView from "./pages/school/page/Student/StudentView";
+import TeacherEdit from "./pages/school/page/Teacher/TeacherEdit";
+import TeacherView from "./pages/school/page/Teacher/TeacherView";
+import ClassroomView from "./pages/school/page/ClassRooms/ClassromView";
+import ClassroomEdit from "./pages/school/page/ClassRooms/ClassroomEdit";
+import ClassroomStudentProgress from "./pages/school/page/ClassRooms/ClassroomStudentProgress";
 
 export default function App() {
   return (
@@ -42,52 +52,87 @@ export default function App() {
         <Route path="/access-denied" element={<AccessDeniedPage />} />
 
         {/* ---------- Admin Dashboard (all logged-in users) ---------- */}
-        <Route path="/admin" element={<Gate><HomePageOne /></Gate>} />
+        <Route
+          path="/admin"
+          element={
+            <Gate>
+              <HomePageOne />
+            </Gate>
+          }
+        />
 
         {/* ---------- Users / Roles / Permissions (Super Admin / Admin only) ---------- */}
         <Route
           element={
-            <Gate anyPerm={["users.manage", "roles.manage", "permissions.manage"]} />}>
+            <Gate
+              anyPerm={["users.manage", "roles.manage", "permissions.manage"]}
+            />
+          }
+        >
           <Route path="/admin/users" element={<AdminUsersPage />} />
           <Route path="/admin/roles" element={<AdminRolesPage />} />
           <Route path="/admin/permissions" element={<AdminPermissionsPage />} />
         </Route>
 
-
         {/* ---------- Manage Clients (Client Manager only) ---------- */}
-        <Route
-          element={<Gate anyPerm={["menu.manage_clients"]} />}
-        >
+        <Route element={<Gate anyPerm={["menu.manage_clients"]} />}>
           <Route path="/admin/schools" element={<ManageClientsPage />} />
         </Route>
 
         {/* ---------- Payments (Payment Manager only) ---------- */}
-        <Route
-          element={<Gate anyPerm={["menu.payments"]} />}
-        >
+        <Route element={<Gate anyPerm={["menu.payments"]} />}>
           <Route path="/admin/payments" element={<ManagePaymentsPage />} />
-          <Route path="/admin/schools/:schoolId/payments" element={<SchoolPayments />} />
+          <Route
+            path="/admin/schools/:schoolId/payments"
+            element={<SchoolPayments />}
+          />
         </Route>
 
-
-
-        <Route path="/school" element={<Gate><SchoolDashboard /></Gate>} />
+        <Route
+          path="/school"
+          element={
+            <Gate>
+              <SchoolDashboard />
+            </Gate>
+          }
+        />
 
         {/* ---------- School Routes ---------- */}
-        <Route element={<Gate anyPerm={["users.manage", "roles.manage", "permissions.manage"]} />}>
+        <Route
+          element={
+            <Gate
+              anyPerm={["users.manage", "roles.manage", "permissions.manage"]}
+            />
+          }
+        >
           <Route path="/school/users" element={<SchoolUsersPage />} />
           <Route path="/school/roles" element={<SchoolRolesPage />} />
-          <Route path="/school/permissions" element={<SchoolPermissionsPage />} />
+          <Route
+            path="/school/permissions"
+            element={<SchoolPermissionsPage />}
+          />
+        </Route>
+        <Route element={<Gate anyPerm={["teachers.view", "classroom.view", "teachers.update", "teachers.create"]} />}>
+          <Route path="/school/teachers" element={<TeacherList />} />
+          <Route path="/school/teachers/create" element={<TeacherCreate />} />
+          <Route path="/school/teachers/:id" element={<TeacherView />} />
+          <Route path="/school/teachers/:id/edit" element={<TeacherEdit />} />
+        </Route>
+        <Route element={<Gate anyPerm={["children.view", "children.create", "children.update"]} />}>
+          <Route path="/school/students" element={<StudentList />} />
+          <Route path="/school/students/create" element={<StudentCreate />} />
+          <Route path="/school/students/:id" element={<StudentView />} />
+          <Route path="/school/students/:id/edit" element={<StudentEdit />} />
+        </Route>
+        <Route element={<Gate anyPerm={["classrooms.view", "classrooms.create", "classrooms.update"]} />}>
+          <Route path="/school/classrooms" element={<ClassRoomsList />} />
+          <Route path="/school/classrooms/:id" element={<ClassroomView />} />
+          <Route path="/school/classrooms/create" element={<ClassroomCreate />} />
+          <Route path="/school/classrooms/:id/edit" element={<ClassroomEdit />} />
+          <Route path="/school/classrooms/:classroomId/students/:studentId/progress" element={<ClassroomStudentProgress />} />
         </Route>
 
-        <Route element={<Gate anyPerm={["teachers.view"]} />}>
-          <Route path="/school/teachers_list" element={<TeacherList />} />
-          <Route path="/school/teachers_create" element={<TeacherCreate />} />
-        </Route>
-        <Route element={<Gate anyPerm={["classrooms.view"]} />}>
-          <Route path="/school/classroomslist" element={<ClassRoomsList />} />
-        </Route>
-
+        <Route path="/" element={<Navigate to="/sign-in-school" replace />} />
 
         {/* ---------- Fallback ---------- */}
         <Route path="*" element={<Navigate to="/access-denied" replace />} />

@@ -1,0 +1,37 @@
+.overlay::after {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 0;
+  height: 100vh !important;
+  background-color: #000 !important;
+  opacity: 0.3 !important;
+  transition: all 0.3s !important;
+  z-index: 9990 !important;
+  pointer-events: none !important;
+}
+
+.overlay.active::after {
+  width: 100%;
+  pointer-events: auto !important;
+}
+
+.sidebar {
+  position: fixed !important;
+  z-index: 9999 !important;
+}
+
+@media (max-width: 991.98px) {
+  .sidebar {
+    left: 0 !important;
+    top: 0 !important;
+    height: 100vh !important;
+    display: block !important;
+    visibility: visible !important;
+
+    transform: translateX(-100%) !important;
+  }
+
+  .sidebar.active {
+    transform: translateX(0) !important;
+  }
+}
