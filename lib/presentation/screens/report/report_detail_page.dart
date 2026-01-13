@@ -296,7 +296,6 @@ class ReportDetailPage extends StatelessWidget {
                     ),
                   ),
 
-                  // sort icon
                   Obx(() {
                     final desc = c.sortAccuracyDesc.value;
                     return InkWell(
@@ -338,7 +337,7 @@ class ReportDetailPage extends StatelessWidget {
                   const SizedBox.shrink()
                 else
                   SizedBox(
-                    height: 5 * 60.0, // tighter height
+                    height: 5 * 60.0,
                     child: ListView.separated(
                       physics: const BouncingScrollPhysics(),
                       itemCount: all.length,

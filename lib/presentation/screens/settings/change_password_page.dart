@@ -13,7 +13,6 @@ class ChangePasswordPage extends StatelessWidget {
   final _newPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
-  // Method to dismiss keyboard
   void _dismissKeyboard(BuildContext context) {
     FocusScope.of(context).unfocus();
   }
@@ -57,7 +56,6 @@ class ChangePasswordPage extends StatelessWidget {
           padding: const EdgeInsets.all(20),
           child: Column(
             children: [
-              // Current Password
               Obx(
                 () => _buildPasswordField(
                   context: context,
@@ -71,7 +69,6 @@ class ChangePasswordPage extends StatelessWidget {
               ),
               const SizedBox(height: 20),
 
-              // New Password
               Obx(
                 () => _buildPasswordField(
                   context: context,
@@ -85,7 +82,6 @@ class ChangePasswordPage extends StatelessWidget {
               ),
               const SizedBox(height: 20),
 
-              // Confirm New Password
               Obx(
                 () => _buildPasswordField(
                   context: context,
@@ -100,7 +96,6 @@ class ChangePasswordPage extends StatelessWidget {
 
               const SizedBox(height: 40),
 
-              // Update Button
               Obx(
                 () => SizedBox(
                   width: double.infinity,
@@ -109,7 +104,6 @@ class ChangePasswordPage extends StatelessWidget {
                     onPressed: controller.isLoading.value
                         ? null
                         : () {
-                            // Dismiss keyboard first
                             _dismissKeyboard(context);
                             controller.changePassword(
                               currentPassword: _currentPasswordController.text,

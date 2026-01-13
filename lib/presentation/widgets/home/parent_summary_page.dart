@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:mobilepenpal/core/utils/report_format.dart';
 import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
 import 'package:mobilepenpal/data/models/report/daily_summary.dart';
-import 'package:mobilepenpal/data/models/report/weekly_summary.dart'; // rename if yours differs
+import 'package:mobilepenpal/data/models/report/weekly_summary.dart';
 import 'package:shimmer/shimmer.dart';
 
 class ParentSummaryCard extends StatelessWidget {
@@ -395,12 +395,7 @@ class ParentSummaryCard extends StatelessWidget {
     return chars.isEmpty ? '—' : chars.join(' • ');
   }
 
-  // =========================
-  // Shared UI builders
-  // =========================
-
   Widget _buildMetricGrid({required List<Widget> children}) {
-    // expects 4 children
     return Column(
       children: [
         Row(
@@ -532,11 +527,6 @@ class ParentSummaryCard extends StatelessWidget {
     );
   }
 }
-
-// =========================
-// Shimmer kept as a tiny class (optional)
-// If you want ZERO classes, I can inline this into a method too.
-// =========================
 
 class _SummaryShimmer extends StatelessWidget {
   const _SummaryShimmer({super.key});

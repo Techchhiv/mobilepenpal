@@ -21,7 +21,6 @@ class StageAudioController extends GetxController {
 
     _player.setReleaseMode(ReleaseMode.stop);
 
-    // Track playing state (optional)
     _player.onPlayerStateChanged.listen((state) {
       isPlaying.value = state == PlayerState.playing;
     });

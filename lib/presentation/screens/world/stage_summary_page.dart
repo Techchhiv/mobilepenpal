@@ -15,7 +15,6 @@ class StageSummaryPage extends GetView<StageSummaryController> {
         child: Scaffold(
           body: Stack(
             children: [
-              // Background image
               Positioned.fill(
                 child: Image.asset(
                   "assets/images/backgrounds/summary_background.png",
@@ -39,7 +38,6 @@ class StageSummaryPage extends GetView<StageSummaryController> {
                 ),
               ),
 
-              // Your page content
               SafeArea(
                 child: Column(
                   children: [

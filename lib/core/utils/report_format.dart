@@ -1,8 +1,4 @@
 extension StudyTimeFormat on int {
-  /// API gives seconds.
-  /// <60s => "45s"
-  /// <60m => "1m 16s"
-  /// >=60m => "1h 10m"
   String toStudyTime() {
     if (this <= 0) return '0m';
 
@@ -18,7 +14,6 @@ extension StudyTimeFormat on int {
 }
 
 extension StudyDateFormat on String? {
-  /// ISO date "YYYY-MM-DD" -> "dd/MM/yy"
   String toDdMmYy() {
     final iso = this;
     if (iso == null || iso.isEmpty) return '—';

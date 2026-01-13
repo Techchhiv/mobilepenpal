@@ -13,7 +13,6 @@ class PinController extends GetxController {
   PinController({HomeService? homeService})
     : homeService = homeService ?? HomeService();
 
-  // Reactive variables
   final RxBool _isConfirmStep = false.obs;
   final RxBool _loading = false.obs;
   final RxString _error = ''.obs;

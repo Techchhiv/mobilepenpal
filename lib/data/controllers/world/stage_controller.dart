@@ -111,6 +111,8 @@ class StageController extends GetxController {
     if (currentStage.value != null && currentStage.value!.id == stageId) return;
 
     if (stageId > 0) fetchStageDetail();
+
+    anim.resetStars();
   }
 
   @override
@@ -165,7 +167,7 @@ class StageController extends GetxController {
     stageId = newStageId;
     if (newWorldId != null) worldId = newWorldId;
     if (newLevelId != null) levelId = newLevelId;
-
+    anim.resetStars();
     _resetSessionState(clearGuide: true);
     await fetchStageDetail();
   }
@@ -282,8 +284,6 @@ class StageController extends GetxController {
     onPointerUp();
   }
 
-  // ---------------- Check / Submit ----------------
-
   Future<void> checkDrawing() async {
     final exercise = currentExercise;
     if (exercise == null) return;
@@ -317,7 +317,7 @@ class StageController extends GetxController {
       return;
     }
 
-    anim.showCorrect();
+    anim.showCorrect(starIndex: currentExerciseIndex.value);
 
     attempts.add({
       'exercise_id': exercise.id,
@@ -392,6 +392,7 @@ class StageController extends GetxController {
   void resetForRetry() {
     attempts.clear();
     currentExerciseIndex.value = 0;
+    anim.resetStars();
 
     if (exercises.isNotEmpty) {
       selectedCharacter.value = exercises[0].character;
@@ -400,7 +401,7 @@ class StageController extends GetxController {
       selectedCharacter.value = '';
       anim.setGuideFromPx(strokesPx: const []);
     }
-
+  
     clearBoard();
   }
 

@@ -182,7 +182,6 @@ class UpdateProfilePage extends StatelessWidget {
             onChanged: (value) => controller.parentLastName.value = value,
           ),
 
-          // Additional Information
           _buildSectionHeader('additional_information'.tr),
           _buildTextField(
             label: 'address'.tr,

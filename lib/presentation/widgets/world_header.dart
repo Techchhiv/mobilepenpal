@@ -64,7 +64,6 @@ class WorldHeader extends StatelessWidget {
               ),
               const SizedBox(width: 12),
 
-              // World icon
               _buildWorldIcon(world.iconUrl),
             ],
           ),

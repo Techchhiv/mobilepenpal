@@ -188,16 +188,12 @@ class _WorldMapState extends State<WorldMap> {
         ? 0.0
         : (scrollOffset / maxScroll).clamp(0.0, 1.0);
 
-    // Focus line moves with scroll:
-    // - when at top => focus near top (25% of screen)
-    // - when at bottom => focus near bottom (75% of screen)
     final double focusFrac = lerpDouble(0.35, 1, t)!;
     final double focusY = viewportH * focusFrac;
 
-    // Scaling behavior
-    const double minScale = 0.4; // was 0.45
+    const double minScale = 0.4;
     const double maxScale = 1.00;
-    final double falloff = viewportH * 0.75; // was 0.85 (too wide)
+    final double falloff = viewportH * 0.75;
 
     return Stack(
       children: [
@@ -207,19 +203,14 @@ class _WorldMapState extends State<WorldMap> {
               final double rawX = _levelPositions[i]['x']! * scaleFactor;
               final double rawY = _levelPositions[i]['y']! * scaleFactor;
 
-              // Where the level currently is inside the viewport
               final double yInView = rawY - scrollOffset;
 
-              // Distance from moving focus line
               final double d = (yInView - focusY).abs();
 
-              // Normalize 0..1 (0 = at focus, 1 = far)
               final double n = (d / falloff).clamp(0.0, 1.0);
 
-              // Non-linear falloff feels nicer than linear
-              // (keeps things bigger near focus, shrinks faster near edges)
               final double eased =
-                  n * n; // you can try n*n*n for stronger falloff
+                  n * n;
 
               final double perspectiveScale =
                   (maxScale - (maxScale - minScale) * eased).clamp(

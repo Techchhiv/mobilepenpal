@@ -19,7 +19,6 @@ class MonthlySummary {
   final List<Map<String, dynamic>> topMasteredCharacters;
   final List<Map<String, dynamic>> charactersToReview;
 
-  // ✅ monthly chart grouped by week (from API: weekly_chart)
   final List<Map<String, dynamic>> weeklyChart;
 
   final String? summaryText;
@@ -76,7 +75,6 @@ class MonthlySummary {
           .map((e) => Map<String, dynamic>.from(e as Map))
           .toList(),
 
-      // ✅ this is the key change (API returns weekly_chart)
       weeklyChart: (json['weekly_chart'] as List? ?? [])
           .map((e) => Map<String, dynamic>.from(e as Map))
           .toList(),

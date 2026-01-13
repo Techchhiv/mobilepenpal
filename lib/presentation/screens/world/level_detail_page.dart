@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:lottie/lottie.dart';
 import 'package:mobilepenpal/core/network/route_builder.dart';
 import 'package:mobilepenpal/core/theme/app_colors.dart';
+import 'package:mobilepenpal/core/utils/number_format_utils.dart';
 import 'package:mobilepenpal/data/controllers/world/level_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/world_controller.dart';
@@ -212,7 +213,7 @@ class LevelDetailPage extends GetView<LevelController> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        '$stageNumber/$totalStages',
+                        NumberFormatUtils.fraction(stageNumber, totalStages),
                         style: TextStyle(
                           fontSize: 18,
                           color: Colors.grey.shade600,

@@ -2,7 +2,10 @@ import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_drawing_board/flutter_drawing_board.dart';
 import 'package:get/get.dart';
+import 'package:lottie/lottie.dart';
 import 'package:mobilepenpal/core/network/route_builder.dart';
+import 'package:mobilepenpal/core/theme/app_colors.dart';
+import 'package:mobilepenpal/core/utils/number_format_utils.dart';
 import 'package:mobilepenpal/data/controllers/world/level_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_animation_controller.dart';
@@ -60,7 +63,7 @@ class StageDetailPage extends GetView<StageController> {
                       _buildTopBar(Get.context!),
                       const SizedBox(height: 20),
                       _buildIllustration(),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 30),
                       _buildDrawingBoard(),
                       const SizedBox(height: 16),
                       _buildCharacterOptions(),
@@ -80,7 +83,7 @@ class StageDetailPage extends GetView<StageController> {
 
   Widget _buildTopBar(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: EdgeInsets.only(left: 16, right: 16, top: 8),
       child: Row(
         children: [
           Container(
@@ -95,48 +98,52 @@ class StageDetailPage extends GetView<StageController> {
           const SizedBox(width: 12),
           Expanded(
             child: Container(
-              height: 40,
+              height: 44,
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(22),
               ),
               child: Obx(() {
                 final total = controller.exercises.length;
-                final currentIndex = controller.currentExerciseIndex.value;
+                final scale = controller.anim.starScale.value;
+                final completed = controller.anim.completedStarCount.value;
 
-                if (total == 0) {
-                  return const SizedBox.shrink();
-                }
+                if (total == 0) return const SizedBox.shrink();
 
                 return Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: List.generate(total, (index) {
-                    final isCompleted = index < currentIndex;
-                    final isCurrent = index == currentIndex;
+                    final isCompleted = index < completed;
+                    final isAnimating =
+                        controller.anim.animatingStarIndex.value == index;
 
-                    IconData icon;
-                    Color color;
-
-                    if (isCompleted) {
-                      icon = Icons.circle;
-                      color = Colors.green.shade400;
-                    } else if (isCurrent) {
-                      icon = Icons.circle;
-                      color = Colors.pink.shade300;
-                    } else {
-                      icon = Icons.circle_outlined;
-                      color = Colors.grey.shade400;
-                    }
+                    final asset = isCompleted
+                        ? 'assets/animated/star.json'
+                        : 'assets/animated/star_border.json';
 
                     return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: Icon(icon, color: color, size: 18),
+                      padding: EdgeInsets.symmetric(horizontal: 4),
+                      child: AnimatedScale(
+                        scale: isAnimating ? scale : 1.0,
+                        duration: Duration(milliseconds: 250),
+                        curve: Curves.easeOut,
+                        child: SizedBox(
+                          width: 48,
+                          height: 48,
+                          child: Lottie.asset(
+                            asset,
+                            repeat: false,
+                            fit: BoxFit.contain,
+                          ),
+                        ),
+                      ),
                     );
                   }),
                 );
               }),
             ),
           ),
+
           const SizedBox(width: 12),
 
           GestureDetector(
@@ -145,10 +152,14 @@ class StageDetailPage extends GetView<StageController> {
               width: 40,
               height: 40,
               decoration: const BoxDecoration(
-                color: Colors.white,
+                color: Colors.white60,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.pause, color: Colors.blue, size: 28),
+              child: const Icon(
+                Icons.pause,
+                color: AppColors.buttonPrimary,
+                size: 28,
+              ),
             ),
           ),
         ],
@@ -157,29 +168,6 @@ class StageDetailPage extends GetView<StageController> {
   }
 
   Widget _buildIllustration() {
-    int? parseKhmerDigit(String raw) {
-      final s = raw.trim();
-      if (s.isEmpty) return null;
-
-      final ascii = int.tryParse(s);
-      if (ascii != null) return ascii;
-
-      const map = {
-        '០': 0,
-        '១': 1,
-        '២': 2,
-        '៣': 3,
-        '៤': 4,
-        '៥': 5,
-        '៦': 6,
-        '៧': 7,
-        '៨': 8,
-        '៩': 9,
-      };
-      if (s.length == 1) return map[s];
-      return null;
-    }
-
     return SizedBox(
       height: 150,
       child: Column(
@@ -189,18 +177,16 @@ class StageDetailPage extends GetView<StageController> {
             child: Obx(() {
               final path = controller.anim.illustrationAssetPath.value;
               final ch = controller.selectedCharacter.value;
-              final digit = parseKhmerDigit(ch);
+              final digit = NumberFormatUtils.parseSingleDigitAny(ch);
 
               if (digit != null) {
                 final count = digit == 0 ? 1 : digit;
 
                 double itemSize;
-                if (count <= 3) {
-                  itemSize = 54;
-                } else if (count <= 5) {
-                  itemSize = 42;
-                } else {
-                  itemSize = 32;
+                if (count <= 4) {
+                  itemSize = 64;
+                } else{
+                  itemSize = 52;
                 }
 
                 final spacing = count > 5 ? 6.0 : 8.0;
@@ -231,15 +217,11 @@ class StageDetailPage extends GetView<StageController> {
                                 ),
                                 child: ClipRRect(
                                   borderRadius: BorderRadius.circular(12),
-                                  child: Container(
+                                  child: SizedBox(
                                     width: itemSize,
                                     height: itemSize,
-                                    color: Colors.white.withValues(alpha: 0.10),
                                     child: path.isEmpty
-                                        ? Icon(
-                                            Icons.image_outlined,
-                                            color: Colors.grey.shade300,
-                                          )
+                                        ? SizedBox.shrink()
                                         : Image.asset(
                                             path,
                                             fit: BoxFit.contain,
@@ -267,17 +249,11 @@ class StageDetailPage extends GetView<StageController> {
                                   ),
                                   child: ClipRRect(
                                     borderRadius: BorderRadius.circular(12),
-                                    child: Container(
+                                    child: SizedBox(
                                       width: itemSize,
                                       height: itemSize,
-                                      color: Colors.white.withValues(
-                                        alpha: 0.10,
-                                      ),
                                       child: path.isEmpty
-                                          ? Icon(
-                                              Icons.image_outlined,
-                                              color: Colors.grey.shade300,
-                                            )
+                                          ? SizedBox.shrink()
                                           : Image.asset(
                                               path,
                                               fit: BoxFit.contain,
@@ -310,14 +286,10 @@ class StageDetailPage extends GetView<StageController> {
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(10),
                     child: path.isEmpty
-                        ? Icon(
-                            Icons.image_outlined,
-                            size: 44,
-                            color: Colors.grey.shade600,
-                          )
+                        ? SizedBox.shrink()
                         : Image.asset(
                             path,
-                            fit: BoxFit.cover,
+                            fit: BoxFit.contain,
                             errorBuilder: (_, __, ___) => Icon(
                               Icons.image_not_supported_outlined,
                               size: 44,
@@ -332,14 +304,14 @@ class StageDetailPage extends GetView<StageController> {
 
           Obx(() {
             final ch = controller.selectedCharacter.value;
-            final digit = parseKhmerDigit(ch);
+            final digit = NumberFormatUtils.parseSingleDigitAny(ch);
             if (digit != null) return const SizedBox.shrink();
 
             final label = controller.anim.illustrationLabel.value;
             if (label.isEmpty) return const SizedBox.shrink();
 
             return Padding(
-              padding: const EdgeInsets.only(top: 6),
+              padding: EdgeInsets.symmetric(vertical: 6),
               child: Text(
                 label,
                 style: const TextStyle(
@@ -767,104 +739,155 @@ class StageDetailPage extends GetView<StageController> {
     showDialog(
       context: context,
       barrierDismissible: true,
+      barrierColor: Colors.black.withOpacity(0.35),
       builder: (ctx) {
         return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 18,
+            vertical: 18,
           ),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 90,
-                  height: 90,
-                  decoration: BoxDecoration(
-                    color: Colors.orange.shade100,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.pets,
-                    size: 56,
-                    color: Colors.orange.shade700,
-                  ),
-                ),
-
-                const SizedBox(height: 48),
-
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blue.shade400,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(24),
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                        ),
-                        onPressed: () async {
-                          Navigator.of(ctx).pop();
-
-                          controller.isSubmitting.value = true;
-
-                          try {
-                            controller.clearBoard();
-                            controller.attempts.clear();
-
-                            final levelController = Get.find<LevelController>();
-
-                            await levelController.fetchLevelDetail();
-
-                            final level = levelController.currentLevel.value;
-
-                            if (level == null ||
-                                level.id != controller.levelId) {
-                              Get.snackbar(
-                                'Error',
-                                'Failed to load level'.tr,
-                                snackPosition: SnackPosition.BOTTOM,
-                              );
-                              return;
-                            }
-
-                            final levelRoute =
-                                RouteBuilder.build(AppRoutes.level, {
-                                  'worldId': controller.worldId.toString(),
-                                  'levelId': controller.levelId.toString(),
-                                });
-
-                            Get.offNamed(levelRoute);
-                          } finally {
-                            controller.isSubmitting.value = false;
-                          }
-                        },
-                        child: const Icon(Icons.home, size: 32),
-                      ),
-                    ),
-
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green.shade400,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(24),
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                        ),
-                        onPressed: () {
-                          Navigator.of(ctx).pop();
-                        },
-                        child: const Icon(Icons.play_arrow, size: 32),
-                      ),
-                    ),
-                  ],
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(28),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [const Color(0xFFFFFBF3), const Color(0xFFFFF4E1)],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.22),
+                  blurRadius: 26,
+                  offset: const Offset(0, 16),
                 ),
               ],
+            ),
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 32, vertical: 18),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 92,
+                    height: 92,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Colors.orange.shade200,
+                          Colors.orange.shade500,
+                        ],
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.orange.withOpacity(0.35),
+                          blurRadius: 18,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.pause_rounded,
+                      size: 56,
+                      color: Colors.white,
+                    ),
+                  ),
+
+                  const SizedBox(height: 22),
+
+                  Container(
+                    width: 56,
+                    height: 6,
+                    decoration: BoxDecoration(
+                      color: Colors.orange.shade200.withOpacity(0.6),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+
+                  const SizedBox(height: 22),
+
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            elevation: 0,
+                            backgroundColor: Colors.white,
+                            foregroundColor: Colors.blue.shade600,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(22),
+                              side: BorderSide(
+                                color: Colors.blue.shade100,
+                                width: 2,
+                              ),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                          ),
+                          onPressed: () async {
+                            Navigator.of(ctx).pop();
+
+                            controller.isSubmitting.value = true;
+
+                            try {
+                              controller.clearBoard();
+                              controller.attempts.clear();
+
+                              final levelController =
+                                  Get.find<LevelController>();
+                              await levelController.fetchLevelDetail();
+
+                              final level = levelController.currentLevel.value;
+
+                              if (level == null ||
+                                  level.id != controller.levelId) {
+                                Get.snackbar(
+                                  'Error',
+                                  'Failed to load level'.tr,
+                                  snackPosition: SnackPosition.BOTTOM,
+                                );
+                                return;
+                              }
+
+                              final levelRoute =
+                                  RouteBuilder.build(AppRoutes.level, {
+                                    'worldId': controller.worldId.toString(),
+                                    'levelId': controller.levelId.toString(),
+                                  });
+
+                              Get.offNamed(levelRoute);
+                            } finally {
+                              controller.isSubmitting.value = false;
+                            }
+                          },
+                          child: const Icon(Icons.home_rounded, size: 34),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            elevation: 0,
+                            backgroundColor: Colors.green.shade500,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(22),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                          ),
+                          onPressed: () {
+                            Navigator.of(ctx).pop();
+                          },
+                          child: const Icon(Icons.play_arrow_rounded, size: 34),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         );

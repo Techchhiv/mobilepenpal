@@ -196,7 +196,6 @@ class HomeController extends GetxController {
 
     isClassroomLoading.value = true;
     try {
-      // ✅ call your service
       final res = await _homeService.getClassrooms();
 
       if (res.code == 200 && res.data != null) {

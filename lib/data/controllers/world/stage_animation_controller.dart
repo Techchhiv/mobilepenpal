@@ -1,9 +1,10 @@
-import 'dart:convert';
+import 'dart:async';
 import 'dart:math';
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:mobilepenpal/core/utils/number_format_utils.dart';
 
 enum DrawFeedback { none, correct, wrong }
 
@@ -23,6 +24,19 @@ class StageAnimationController extends GetxController
   final guideCirclePx = Rxn<Offset>();
   final isGuiding = true.obs;
 
+  final guideTotalDurationMs = 4000.obs;
+  final pauseBetweenStrokesMs = 180.obs;
+
+  final List<int> _durationMsByStroke = [];
+  final List<double> _lenByStroke = [];
+  double _totalLenAll = 0.0;
+
+  Timer? _betweenStrokeTimer;
+
+  final animatingStarIndex = RxnInt();
+  final completedStarCount = 0.obs;
+  final starScale = 1.0.obs;
+
   double _boardW = 340;
   double _boardH = 340;
 
@@ -30,8 +44,6 @@ class StageAnimationController extends GetxController
 
   final List<List<double>> _cumLenByStroke = [];
   final List<double> _totalLenByStroke = [];
-
-  final guideSpeedPxPerSec = 250.0.obs;
 
   final minStrokeDurationMs = 450.obs;
   final maxStrokeDurationMs = 2600.obs;
@@ -73,15 +85,31 @@ class StageAnimationController extends GetxController
           )
           ..addListener(_updateGuideCircle)
           ..addStatusListener((status) {
-            if (status == AnimationStatus.completed) {
-              _advanceGuideStroke();
-              if (isGuiding.value) guideController.forward(from: 0);
+            if (status != AnimationStatus.completed) return;
+
+            _advanceGuideStroke();
+            if (!isGuiding.value) return;
+
+            _betweenStrokeTimer?.cancel();
+            final pause = pauseBetweenStrokesMs.value;
+
+            if (pause <= 0) {
+              guideController.forward(from: 0);
+              return;
             }
+
+            _betweenStrokeTimer = Timer(Duration(milliseconds: pause), () {
+              if (!isGuiding.value) return;
+              guideController.forward(from: 0);
+            });
           });
   }
 
   @override
   void onClose() {
+    _betweenStrokeTimer?.cancel();
+    _betweenStrokeTimer = null;
+
     _shakeController.dispose();
     confettiController.dispose();
     guideController.dispose();
@@ -104,6 +132,11 @@ class StageAnimationController extends GetxController
 
       _cumLenByStroke.clear();
       _totalLenByStroke.clear();
+      _durationMsByStroke.clear();
+      _lenByStroke.clear();
+      _totalLenAll = 0.0;
+      _betweenStrokeTimer?.cancel();
+      _betweenStrokeTimer = null;
       return;
     }
 
@@ -115,6 +148,16 @@ class StageAnimationController extends GetxController
     _totalLenByStroke
       ..clear()
       ..addAll(_cumLenByStroke.map((c) => c.isEmpty ? 0.0 : c.last));
+
+    _lenByStroke
+      ..clear()
+      ..addAll(_totalLenByStroke);
+
+    _totalLenAll = _lenByStroke.fold(0.0, (a, b) => a + b);
+
+    _durationMsByStroke
+      ..clear()
+      ..addAll(_buildStrokeDurationsConstantTotal());
 
     currentGuideStrokeIndex.value = 0;
     guideCirclePx.value = cleaned.first.first;
@@ -137,22 +180,31 @@ class StageAnimationController extends GetxController
   void startGuide() {
     if (guideStrokesPx.isEmpty) return;
 
+    _betweenStrokeTimer?.cancel();
+    _betweenStrokeTimer = null;
+
     isGuiding.value = true;
+
     guideController.duration = Duration(
-      milliseconds: _durationForStrokeMs(currentGuideStrokeIndex.value),
+      milliseconds: _strokeDurationMs(currentGuideStrokeIndex.value),
     );
+
     guideController.forward(from: 0);
   }
 
   void stopGuide() {
     isGuiding.value = false;
+    _betweenStrokeTimer?.cancel();
+    _betweenStrokeTimer = null;
     guideController.stop();
   }
 
-  void showCorrect() {
+  void showCorrect({required int starIndex}) {
     feedback.value = DrawFeedback.correct;
     praiseText.value = ['ល្អណាស់!', 'ធ្វើបានល្អ 👍'][Random().nextInt(2)];
     confettiController.play();
+    completedStarCount.value++;
+    playStarPop(starIndex);
   }
 
   Future<void> showWrongAndReset({required VoidCallback onAfterReset}) async {
@@ -179,7 +231,7 @@ class StageAnimationController extends GetxController
     guideCirclePx.value = stroke.isNotEmpty ? stroke.first : null;
 
     guideController.duration = Duration(
-      milliseconds: _durationForStrokeMs(currentGuideStrokeIndex.value),
+      milliseconds: _strokeDurationMs(currentGuideStrokeIndex.value),
     );
   }
 
@@ -236,19 +288,6 @@ class StageAnimationController extends GetxController
     final a = pts[i - 1];
     final b = pts[i];
     return Offset(a.dx + (b.dx - a.dx) * localT, a.dy + (b.dy - a.dy) * localT);
-  }
-
-  int _durationForStrokeMs(int strokeIndex) {
-    if (strokeIndex < 0 || strokeIndex >= _totalLenByStroke.length) {
-      return minStrokeDurationMs.value;
-    }
-
-    final lenPx = _totalLenByStroke[strokeIndex];
-    final speed = max(10.0, guideSpeedPxPerSec.value);
-
-    final rawMs = (lenPx / speed * 1000.0).round();
-
-    return rawMs.clamp(minStrokeDurationMs.value, maxStrokeDurationMs.value);
   }
 
   Future<void> _ensureAssetManifestLoaded() async {
@@ -326,7 +365,7 @@ class StageAnimationController extends GetxController
   }
 
   Future<void> _resolveDigitFruit(String digitChar) async {
-    final d = _parseDigitAny(digitChar);
+    final d = NumberFormatUtils.parseSingleDigitAny(digitChar);
     if (d == null) {
       illustrationAssetPath.value = '';
       illustrationLabel.value = '';
@@ -335,7 +374,6 @@ class StageAnimationController extends GetxController
 
     final fruits = await _loadDigitFruitAssets();
     if (fruits.isEmpty) {
-      // nothing found in AssetManifest
       illustrationAssetPath.value = '';
       illustrationLabel.value = digitChar.trim();
       return;
@@ -350,36 +388,61 @@ class StageAnimationController extends GetxController
     illustrationLabel.value = digitChar.trim();
   }
 
-  int? _parseDigitAny(String raw) {
-    final s = raw.trim();
-    if (s.isEmpty) return null;
+  List<int> _buildStrokeDurationsConstantTotal() {
+    final totalMs = guideTotalDurationMs.value;
 
-    final ascii = int.tryParse(s);
-    if (ascii != null) return ascii;
-
-    const kh = {
-      '០': 0,
-      '១': 1,
-      '២': 2,
-      '៣': 3,
-      '៤': 4,
-      '៥': 5,
-      '៦': 6,
-      '៧': 7,
-      '៨': 8,
-      '៩': 9,
-    };
-
-    if (s.length == 1 && kh.containsKey(s)) return kh[s];
-
-    int acc = 0;
-    bool ok = false;
-    for (final ch in s.characters) {
-      final v = kh[ch];
-      if (v == null) return null;
-      ok = true;
-      acc = acc * 10 + v;
+    if (_lenByStroke.isEmpty || _totalLenAll <= 0) {
+      return <int>[
+        totalMs.clamp(minStrokeDurationMs.value, maxStrokeDurationMs.value),
+      ];
     }
-    return ok ? acc : null;
+
+    final out = <int>[];
+    int assigned = 0;
+
+    for (int i = 0; i < _lenByStroke.length; i++) {
+      final share = _lenByStroke[i] / _totalLenAll;
+      int ms = (totalMs * share).round();
+
+      ms = ms.clamp(minStrokeDurationMs.value, maxStrokeDurationMs.value);
+
+      out.add(ms);
+      assigned += ms;
+    }
+
+    if (out.isNotEmpty) {
+      final fix = totalMs - assigned;
+      out[out.length - 1] = (out.last + fix).clamp(
+        minStrokeDurationMs.value,
+        maxStrokeDurationMs.value,
+      );
+    }
+
+    return out;
+  }
+
+  int _strokeDurationMs(int idx) {
+    if (idx < 0 || idx >= _durationMsByStroke.length) {
+      return minStrokeDurationMs.value;
+    }
+    return _durationMsByStroke[idx];
+  }
+
+  void resetStars() {
+    completedStarCount.value = 0;
+    animatingStarIndex.value = null;
+    starScale.value = 1.0;
+  }
+
+  Future<void> playStarPop(int index) async {
+    animatingStarIndex.value = index;
+
+    starScale.value = 2.5;
+    await Future.delayed(const Duration(milliseconds: 380));
+
+    starScale.value = 1.0;
+    await Future.delayed(const Duration(milliseconds: 400));
+
+    animatingStarIndex.value = null;
   }
 }

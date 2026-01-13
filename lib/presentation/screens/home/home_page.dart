@@ -200,7 +200,6 @@ class HomePage extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Avatar
               Container(
                 width: 58,
                 height: 58,
@@ -219,7 +218,6 @@ class HomePage extends StatelessWidget {
                             ? Image.network(
                                 Env.backendUrl + homeController.avatarUrl,
                                 fit: BoxFit.cover,
-                                // shimmer-ish placeholder while image loads
                                 loadingBuilder: (context, child, progress) {
                                   if (progress == null) return child;
                                   return Center(child: shimmerCircle(46));
@@ -302,21 +300,23 @@ class HomePage extends StatelessWidget {
 
   Widget _buildModeCard() {
     return Container(
-      padding: const EdgeInsets.all(12),
+      margin: EdgeInsets.symmetric(vertical: 10),
+      // padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.85),
-        borderRadius: BorderRadius.circular(20),
+        // color: Colors.white.withValues(alpha: 0.85),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(25),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 14,
             offset: const Offset(0, 8),
           ),
         ],
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.9),
-          width: 1,
-        ),
+        // border: Border.all(
+        //   color: Colors.white.withValues(alpha: 0.9),
+        //   width: 1,
+        // ),
       ),
       child: ModeSwitcher(
         currentMode: homeController.currentMode,

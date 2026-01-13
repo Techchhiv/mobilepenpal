@@ -59,7 +59,6 @@ class AchievementCard extends StatelessWidget {
             ),
             child: Row(
               children: [
-                // Icon Container
                 Container(
                   width: 48,
                   height: 48,
