@@ -215,6 +215,7 @@ export default function TeacherCreate() {
                             Full Name <Required />
                           </label>
                           <input
+                            name="fullname"
                             className="form-control"
                             placeholder="Enter full name"
                             value={name}
@@ -229,6 +230,7 @@ export default function TeacherCreate() {
                             Email <Required />
                           </label>
                           <input
+                            name="email"
                             type="email"
                             className="form-control"
                             placeholder="Enter email"
@@ -242,6 +244,7 @@ export default function TeacherCreate() {
                         <div className="col-md-6">
                           <label className="form-label">Phone</label>
                           <input
+                          name="khphone"
                             type="text"
                             className="form-control"
                             placeholder="+855 000 000"
@@ -254,6 +257,7 @@ export default function TeacherCreate() {
                         <div className="col-md-6">
                           <label className="form-label">Subject</label>
                           <input
+                            name="subject"
                             type="text"
                             className="form-control"
                             placeholder="e.g. Khmer Writing"
@@ -279,6 +283,7 @@ export default function TeacherCreate() {
                             Password <Required />
                           </label>
                           <input
+                            name="password"
                             type="password"
                             className="form-control"
                             placeholder="Enter password"
@@ -295,6 +300,7 @@ export default function TeacherCreate() {
                             Confirm Password <Required />
                           </label>
                           <input
+                            name="password"
                             type="password"
                             className="form-control"
                             placeholder="Confirm password"

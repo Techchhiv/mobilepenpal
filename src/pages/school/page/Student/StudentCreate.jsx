@@ -255,6 +255,7 @@ export default function StudentCreate() {
                                                     First Name <Required />
                                                 </label>
                                                 <input
+                                                    name="first_name"
                                                     className="form-control"
                                                     placeholder="Enter student's first name"
                                                     value={firstName}
@@ -268,6 +269,7 @@ export default function StudentCreate() {
                                                     Last Name <Required />
                                                 </label>
                                                 <input
+                                                    name="last_name"
                                                     className="form-control"
                                                     placeholder="Enter student's last name"
                                                     value={lastName}
@@ -281,6 +283,7 @@ export default function StudentCreate() {
                                                     Age <Required />
                                                 </label>
                                                 <input
+                                                    name="age"
                                                     type="number"
                                                     className="form-control"
                                                     placeholder="e.g., 10"
@@ -312,6 +315,7 @@ export default function StudentCreate() {
                                                     Date of Birth <Required />
                                                 </label>
                                                 <input
+                                                    name="date"
                                                     type="date"
                                                     className="form-control"
                                                     value={dateOfBirth}
@@ -326,6 +330,7 @@ export default function StudentCreate() {
                                                     Phone Number <Required />
                                                 </label>
                                                 <input
+                                                    name="khphone"
                                                     type="tel"
                                                     className="form-control"
                                                     placeholder="e.g., 0123456789"
@@ -339,6 +344,7 @@ export default function StudentCreate() {
                                             <div className="col-md-6">
                                                 <label className="form-label">Enrollment Year</label>
                                                 <input
+                                                    name="year"
                                                     type="number"
                                                     className="form-control"
                                                     placeholder="e.g., 2024"
@@ -367,6 +373,7 @@ export default function StudentCreate() {
                                             <div className="col-md-4">
                                                 <label className="form-label">Parent First Name</label>
                                                 <input
+                                                    name="first_name"
                                                     className="form-control"
                                                     placeholder="Parent's first name"
                                                     value={parentFirstName}
@@ -377,6 +384,7 @@ export default function StudentCreate() {
                                             <div className="col-md-4">
                                                 <label className="form-label">Parent Last Name</label>
                                                 <input
+                                                    name="last_name"
                                                     className="form-control"
                                                     placeholder="Parent's last name"
                                                     value={parentLastName}
@@ -387,6 +395,7 @@ export default function StudentCreate() {
                                             <div className="col-md-4">
                                                 <label className="form-label">Email</label>
                                                 <input
+                                                    name="email"
                                                     type="email"
                                                     className="form-control"
                                                     placeholder="student@example.com"
