@@ -228,40 +228,40 @@ class ClassroomController extends Controller
         $enrolledMoment = $enrolledAt->copy();
         $leftMoment     = $leftAt->copy();
 
-        $intersectRange = function (Carbon $reqFrom, Carbon $reqTo)
-        use ($enrolledMoment, $leftMoment) {
-
+        $intersectRange = function (Carbon $reqFrom, Carbon $reqTo) use ($enrolledMoment, $leftMoment) {
             $usedFrom = $reqFrom->copy();
             $usedTo   = $reqTo->copy();
 
-            if ($usedFrom->lt($enrolledMoment)) {
-                $usedFrom = $enrolledMoment->copy();
-            }
+            if ($usedFrom->lt($enrolledMoment)) $usedFrom = $enrolledMoment->copy();
+            if ($usedTo->gt($leftMoment))       $usedTo   = $leftMoment->copy();
 
-            if ($usedTo->gt($leftMoment)) {
-                $usedTo = $leftMoment->copy();
-            }
-
-            if ($usedFrom->gt($usedTo)) {
-                return [null, null];
-            }
-
+            if ($usedFrom->gt($usedTo)) return [null, null];
             return [$usedFrom, $usedTo];
         };
 
-        $type  = $request->query('type', 'weekly');
+        // ✅ Accept both:
+        // - frontend: day/week/month
+        // - legacy/mobile: daily/weekly/monthly
+        $rawType = strtolower((string) $request->query('type', 'week'));
+        $type = match ($rawType) {
+            'daily', 'day'     => 'day',
+            'weekly', 'week'   => 'week',
+            'monthly', 'month' => 'month',
+            default            => 'week',
+        };
+
         $date  = $request->query('date');
         $from  = $request->query('from');
         $to    = $request->query('to');
         $month = $request->query('month');
 
-        $classroomId = (int) $classroom->id;
+        // ✅ Global summaries for now
+        $classroomId = null;
+
         $summary = null;
 
-        if ($type === 'daily') {
-            $requested = $date
-                ? Carbon::parse($date)
-                : now();
+        if ($type === 'day') {
+            $requested = $date ? Carbon::parse($date) : now();
 
             $reqFrom = $requested->copy()->startOfDay();
             $reqTo   = $requested->copy()->endOfDay();
@@ -271,7 +271,6 @@ class ClassroomController extends Controller
             if (!$usedFrom || !$usedTo) {
                 $summary = [
                     'student_id' => $student->id,
-                    'classroom_id' => $classroomId,
                     'date' => $requested->toDateString(),
                     'stars_earned' => 0,
                     'stages_completed' => 0,
@@ -293,12 +292,12 @@ class ClassroomController extends Controller
             }
 
             $summary['range'] = [
-                'enrolled_at' => $enrolledMoment->toDateTimeString(),
-                'left_at'     => $leftMoment->toDateTimeString(),
-                'requested_date' => $requested->toDateString(),
-                'used_date'      => $usedFrom?->toDateString(),
+                'enrolled_at'     => $enrolledMoment->toDateTimeString(),
+                'left_at'         => $leftMoment->toDateTimeString(),
+                'requested_date'  => $requested->toDateString(),
+                'used_date'       => $usedFrom?->toDateString(),
             ];
-        } elseif ($type === 'monthly') {
+        } elseif ($type === 'month') {
             $monthStr = $month ?: now()->format('Y-m');
 
             $reqFrom = Carbon::createFromFormat('Y-m', $monthStr)->startOfMonth()->startOfDay();
@@ -309,33 +308,25 @@ class ClassroomController extends Controller
             if (!$usedFrom || !$usedTo) {
                 $summary = [
                     'student_id' => $student->id,
-                    'classroom_id' => $classroomId,
                     'month' => $monthStr,
                     'message' => 'No data in this month within enrollment period.',
                 ];
             } else {
-                $summary = StudentSummary::getWeeklySummary(
-                    $student->id,
-                    $usedFrom->toDateString(),
-                    $usedTo->toDateString(),
-                    $classroomId
-                );
-                $summary['month'] = $monthStr;
+                // ✅ monthly summary
+                $summary = StudentSummary::getMonthlySummary($student->id, $monthStr);
             }
 
             $summary['range'] = [
-                'enrolled_at' => $enrolledMoment->toDateTimeString(),
-                'left_at'     => $leftMoment->toDateTimeString(),
-                'requested_from' => $reqFrom->toDateString(),
-                'requested_to'   => $reqTo->toDateString(),
-                'used_from'      => $usedFrom?->toDateString(),
-                'used_to'        => $usedTo?->toDateString(),
+                'enrolled_at'     => $enrolledMoment->toDateTimeString(),
+                'left_at'         => $leftMoment->toDateTimeString(),
+                'requested_from'  => $reqFrom->toDateString(),
+                'requested_to'    => $reqTo->toDateString(),
+                'used_from'       => $usedFrom?->toDateString(),
+                'used_to'         => $usedTo?->toDateString(),
             ];
         } else {
-            $reqTo = $to
-                ? Carbon::parse($to)->endOfDay()
-                : now()->endOfDay();
-
+            // week
+            $reqTo = $to ? Carbon::parse($to)->endOfDay() : now()->endOfDay();
             $reqFrom = $from
                 ? Carbon::parse($from)->startOfDay()
                 : $reqTo->copy()->subDays(6)->startOfDay();
@@ -343,7 +334,7 @@ class ClassroomController extends Controller
             if ($reqFrom->gt($reqTo)) {
                 [$reqFrom, $reqTo] = [
                     $reqTo->copy()->startOfDay(),
-                    $reqFrom->copy()->endOfDay()
+                    $reqFrom->copy()->endOfDay(),
                 ];
             }
 
@@ -352,7 +343,6 @@ class ClassroomController extends Controller
             if (!$usedFrom || !$usedTo) {
                 $summary = [
                     'student_id' => $student->id,
-                    'classroom_id' => $classroomId,
                     'from_date' => $reqFrom->toDateString(),
                     'to_date' => $reqTo->toDateString(),
                     'total_stars_earned' => 0,
@@ -377,12 +367,12 @@ class ClassroomController extends Controller
             }
 
             $summary['range'] = [
-                'enrolled_at' => $enrolledMoment->toDateTimeString(),
-                'left_at'     => $leftMoment->toDateTimeString(),
-                'requested_from' => $reqFrom->toDateString(),
-                'requested_to'   => $reqTo->toDateString(),
-                'used_from'      => $usedFrom?->toDateString(),
-                'used_to'        => $usedTo?->toDateString(),
+                'enrolled_at'     => $enrolledMoment->toDateTimeString(),
+                'left_at'         => $leftMoment->toDateTimeString(),
+                'requested_from'  => $reqFrom->toDateString(),
+                'requested_to'    => $reqTo->toDateString(),
+                'used_from'       => $usedFrom?->toDateString(),
+                'used_to'         => $usedTo?->toDateString(),
             ];
         }
 
@@ -393,7 +383,6 @@ class ClassroomController extends Controller
             'summary'    => $summary,
         ]);
     }
-
 
     public function removeStudent(Request $request, Classroom $classroom, Student $student)
     {

@@ -16,7 +16,7 @@ return new class extends Migration
         Schema::create('students', function (Blueprint $table) {
             $table->id();
             $table->foreignId('school_id')->nullable()->constrained('schools')->nullOnDelete();
-            $table->foreignId('current_classroom_id')->nullable()->constrained('classrooms')->nullOnDelete();
+            // $table->foreignId('current_classroom_id')->nullable()->constrained('classrooms')->nullOnDelete();
             // $table->foreignId('branch_id')->nullable()->constrained('branches');
             $table->string('firebase_uid')->nullable();
             $table->string('school_key');

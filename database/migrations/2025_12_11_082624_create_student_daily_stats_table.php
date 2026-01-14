@@ -11,11 +11,6 @@ return new class extends Migration
         Schema::create('student_daily_stats', function (Blueprint $table) {
             $table->id();
 
-            $table->foreignId('classroom_id')
-                ->nullable()
-                ->constrained('classrooms')
-                ->nullOnDelete(); // safer than cascade if you want to keep stats history
-
             $table->foreignId('student_id')
                 ->constrained('students')
                 ->cascadeOnDelete();
@@ -33,12 +28,12 @@ return new class extends Migration
             $table->timestamps();
 
             $table->unique(
-                ['student_id', 'classroom_id', 'date'],
+                ['student_id', 'date'],
                 'student_daily_stats_student_classroom_date_unique'
             );
 
             $table->index(['student_id', 'date'], 'student_daily_stats_student_date_idx');
-            $table->index(['classroom_id', 'date'], 'student_daily_stats_classroom_date_idx');
+            // $table->index(['classroom_id', 'date'], 'student_daily_stats_classroom_date_idx');
         });
     }
 

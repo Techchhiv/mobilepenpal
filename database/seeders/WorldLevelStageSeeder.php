@@ -26,25 +26,51 @@ class WorldLevelStageSeeder extends Seeder
             DB::table('worlds')->delete();
 
             $consonants = [
-                'ក', 'ខ', 'គ', 'ឃ', 'ង',
-                'ច', 'ឆ', 'ជ', 'ឈ', 'ញ',
-                'ដ', 'ឋ', 'ឌ', 'ឍ', 'ណ',
-                'ត', 'ថ', 'ទ', 'ធ', 'ន',
-                'ប', 'ផ', 'ព', 'ភ', 'ម',
-                'យ', 'រ', 'ល', 'វ',
-                'ស', 'ហ', 'ឡ', 'អ',
+                'ក',
+                'ខ',
+                'គ',
+                'ឃ',
+                'ង',
+                'ច',
+                'ឆ',
+                'ជ',
+                'ឈ',
+                'ញ',
+                'ដ',
+                'ឋ',
+                'ឌ',
+                'ឍ',
+                'ណ',
+                'ត',
+                'ថ',
+                'ទ',
+                'ធ',
+                'ន',
+                'ប',
+                'ផ',
+                'ព',
+                'ភ',
+                'ម',
+                'យ',
+                'រ',
+                'ល',
+                'វ',
+                'ស',
+                'ហ',
+                'ឡ',
+                'អ',
             ];
 
-            $digits = ['០','១','២','៣','៤','៥','៦','៧','៨','៩'];
+            $digits = ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'];
 
-            $independentVowels = ['ឥ','ឦ','ឧ','ឩ','ឪ','ឫ','ឬ','ឭ','ឮ','ឯ','ឰ','ឱ','ឲ','ឪ'];
+            $independentVowels = ['ឥ', 'ឦ', 'ឧ', 'ឩ', 'ឪ', 'ឫ', 'ឬ', 'ឭ', 'ឮ', 'ឯ', 'ឰ', 'ឱ', 'ឲ', 'ឪ'];
 
-            $dependentVowels = ['ា','ិ','ី','ឹ','ឺ','ុ','ូ','ួ','ើ','ឿ','ៀ','េ','ែ','ៃ','ោ','ៅ','ុំ','ំ','ាំ','ះ','ិះ','ុះ','េះ','ោះ'];
+            $dependentVowels = ['ា', 'ិ', 'ី', 'ឹ', 'ឺ', 'ុ', 'ូ', 'ួ', 'ើ', 'ឿ', 'ៀ', 'េ', 'ែ', 'ៃ', 'ោ', 'ៅ', 'ុំ', 'ំ', 'ាំ', 'ះ', 'ិះ', 'ុះ', 'េះ', 'ោះ'];
 
             $worlds = [
                 [
                     'key' => 'consonants',
-                    'name' => 'ព្យញ្ជនៈខ្មែរ',
+                    'name' => 'ព្យញ្ជនៈ',
                     'description' => 'រៀនគូរព្យញ្ជនៈខ្មែរ',
                     'theme_color' => '#4CAF50',
                     'order_index' => 1,
@@ -54,7 +80,7 @@ class WorldLevelStageSeeder extends Seeder
                 ],
                 [
                     'key' => 'digits',
-                    'name' => 'លេខខ្មែរ',
+                    'name' => 'លេខ',
                     'description' => 'រៀនគូរលេខខ្មែរ',
                     'theme_color' => '#2196F3',
                     'order_index' => 2,
@@ -89,7 +115,7 @@ class WorldLevelStageSeeder extends Seeder
                     'name'         => $w['name'],
                     'description'  => $w['description'],
                     'icon_url'     => null,
-                    'map_image_url'=> null,
+                    'map_image_url' => null,
                     'theme_color'  => $w['theme_color'],
                     'order_index'  => $w['order_index'],
                     'is_active'    => true,
@@ -110,9 +136,11 @@ class WorldLevelStageSeeder extends Seeder
                     ]);
 
                     foreach ($levelChars as $stageIndex => $ch) {
+                        $stageName = $this->makeStageName($w['character_type'], $ch);
+
                         $stage = Stage::create([
                             'level_id'    => $level->id,
-                            'name'        => "រៀន {$ch}",
+                            'name'        => $stageName,
                             'description' => "Practice session for {$ch}",
                             'instruction' => "Trace {$ch} following the guided path",
                             'order_index' => $stageIndex + 1,
@@ -143,7 +171,7 @@ class WorldLevelStageSeeder extends Seeder
                 'instruction'   => "Follow the stroke order to draw {$character}",
                 'hint'          => "Follow the guided path",
                 'example'       => $this->buildExampleForCharacter($character, $characterType),
-                'character_type'=> $characterType,
+                'character_type' => $characterType,
             ]);
         }
 
@@ -170,9 +198,19 @@ class WorldLevelStageSeeder extends Seeder
         return match ($worldKey) {
             'consonants' => "{$first} - {$last}",
             'digits' => "លេខ {$first} - {$last}",
-            'independent_vowels' => "ស្រៈឯករាជ្យ {$first} - {$last}",
-            'dependent_vowels' => "ស្រៈព្យួរ {$first} - {$last}",
+            'independent_vowels' => "ស្រៈ {$first} - {$last}",
+            'dependent_vowels' => "ស្រៈ {$first} - {$last}",
             default => "Level " . ($levelIndex + 1),
+        };
+    }
+
+    private function makeStageName(string $characterType, string $ch): string
+    {
+        return match ($characterType) {
+            'consonants' => "រៀនអក្សរ {$ch}",
+            'digits' => "រៀន {$ch}",
+            'independent_vowels', 'dependent_vowels' => "រៀនស្រៈ {$ch}",
+            default => "រៀន {$ch}",
         };
     }
 

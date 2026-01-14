@@ -16,7 +16,7 @@ return new class extends Migration
         Schema::create('student_stage_progress', function (Blueprint $table) {
             $table->id();
             $table->foreignId('student_id')->constrained('students');
-            $table->foreignId('classroom_id')->nullable()->constrained('classrooms');
+            // $table->foreignId('classroom_id')->nullable()->constrained('classrooms');
             $table->foreignId('stage_id')->constrained('stages');
 
             $table->integer('stars_earned')->default(0);

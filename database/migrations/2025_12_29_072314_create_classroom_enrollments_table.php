@@ -33,7 +33,7 @@ return new class extends Migration
 
             $table->timestamps();
 
-            $table->unique(['classroom_id', 'student_id']);
+            $table->unique(['student_id']);
         });
     }
 
