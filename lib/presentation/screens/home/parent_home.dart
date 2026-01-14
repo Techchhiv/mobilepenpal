@@ -79,7 +79,10 @@ class ParentHome extends StatelessWidget {
           icon: Icons.qr_code,
           label: 'scan'.tr,
           onTap: () async {
+            if (homeController.isJoiningClassroom.value) return;
+
             final result = await Get.to(() => const QrScannerPage());
+
             if (result != null) {
               await homeController.joinClassroomByCode(result.toString());
             }
@@ -208,6 +211,7 @@ class ParentHome extends StatelessWidget {
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: () async {
+                    if (homeController.isJoiningClassroom.value) return;
                     final result = await Get.to(() => const QrScannerPage());
                     if (result != null) {
                       await homeController.joinClassroomByCode(

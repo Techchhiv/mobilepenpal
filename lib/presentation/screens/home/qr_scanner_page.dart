@@ -10,41 +10,102 @@ class QrScannerPage extends StatefulWidget {
   State<QrScannerPage> createState() => _QrScannerPageState();
 }
 
-class _QrScannerPageState extends State<QrScannerPage> {
-  final MobileScannerController _controller = MobileScannerController(
-    detectionSpeed: DetectionSpeed.normal,
-    facing: CameraFacing.back,
-    torchEnabled: false,
-  );
+class _QrScannerPageState extends State<QrScannerPage>
+    with WidgetsBindingObserver {
+  late final MobileScannerController _controller;
 
   final ImagePicker _picker = ImagePicker();
 
   bool _handled = false;
   bool _torchOn = false;
+  bool _starting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+
+    _controller = MobileScannerController(
+      // Helps devices that fail on fast reopen
+      autoStart: false,
+      detectionSpeed: DetectionSpeed.normal,
+      facing: CameraFacing.back,
+      torchEnabled: false,
+      formats: const [BarcodeFormat.qrCode],
+    );
+
+    _startCamera();
+  }
+
+  Future<void> _startCamera() async {
+    if (_starting || _handled) return;
+    _starting = true;
+
+    await Future.delayed(const Duration(milliseconds: 250));
+    if (!mounted) return;
+
+    try {
+      await _controller.start();
+    } catch (_) {
+      // ignore - you can show a snackbar if needed
+    } finally {
+      _starting = false;
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.inactive || state == AppLifecycleState.paused) {
+      _controller.stop();
+    } else if (state == AppLifecycleState.resumed) {
+      _startCamera();
+    }
+  }
+
+  @override
+  void deactivate() {
+    // ensure camera is released when leaving the page
+    _controller.stop();
+    super.deactivate();
+  }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _controller.dispose();
     super.dispose();
   }
 
+  Future<void> _finish(String raw) async {
+    if (_handled) return;
+    _handled = true;
+
+    try {
+      await _controller.stop();
+    } catch (_) {}
+
+    if (!mounted) return;
+
+    // IMPORTANT: avoid Get.back() here (it triggers snackbar close bug)
+    Navigator.of(context).pop(raw);
+  }
+
   void _onDetect(BarcodeCapture capture) {
     if (_handled) return;
-
     if (capture.barcodes.isEmpty) return;
 
     final raw = capture.barcodes.first.rawValue;
     if (raw == null || raw.isEmpty) return;
 
-    _handled = true;
-    Get.back(result: raw);
+    _finish(raw);
   }
 
   Future<void> _toggleTorch() async {
     try {
       await _controller.toggleTorch();
-      setState(() => _torchOn = !_torchOn);
+      if (mounted) setState(() => _torchOn = !_torchOn);
     } catch (_) {
+      // It's OK to keep Get.snackbar here, it won't crash if Get is set up properly.
       Get.snackbar('scan_qr_title'.tr, 'flash_unavailable'.tr);
     }
   }
@@ -60,22 +121,21 @@ class _QrScannerPageState extends State<QrScannerPage> {
 
       if (capture == null || capture.barcodes.isEmpty) {
         Get.snackbar('scan_qr_title'.tr, 'no_qr_found'.tr);
-        await _controller.start();
+        await _startCamera();
         return;
       }
 
-      final String? rawValue = capture.barcodes.first.rawValue;
+      final rawValue = capture.barcodes.first.rawValue;
       if (rawValue == null || rawValue.isEmpty) {
         Get.snackbar('scan_qr_title'.tr, 'invalid_qr'.tr);
-        await _controller.start();
+        await _startCamera();
         return;
       }
 
-      _handled = true;
-      Get.back(result: rawValue);
+      await _finish(rawValue);
     } catch (_) {
       Get.snackbar('scan_qr_title'.tr, 'scan_failed'.tr);
-      await _controller.start();
+      await _startCamera();
     }
   }
 

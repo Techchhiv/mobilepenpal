@@ -235,8 +235,12 @@ class HomeController extends GetxController {
       final res = await _homeService.joinClassroomByCode(joinCode);
 
       if (res.code == 200) {
-        await fetchCurrentClassroom();
-
+        // ✅ instant UI update
+        if (res.data != null) {
+          currentClassroom.value = res.data!;
+        } else {
+          await fetchCurrentClassroom();
+        }
         Get.snackbar(
           'OK',
           'joined'.tr,
