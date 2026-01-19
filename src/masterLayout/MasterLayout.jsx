@@ -1,4 +1,3 @@
-// src/masterLayout/MasterLayout.jsx
 import React, { useEffect, useState } from "react";
 import { Icon } from "@iconify/react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
@@ -22,6 +21,7 @@ const MasterLayout = ({ children }) => {
   const showManageUsers = isSuperAdmin || hasPermission("users.manage");
   const showRoles = isSuperAdmin || hasPermission("roles.manage");
   const showPermissions = isSuperAdmin || hasPermission("permissions.manage");
+  const showWorldManage = isSuperAdmin
 
   useEffect(() => {
     const p = location.pathname;
@@ -29,6 +29,13 @@ const MasterLayout = ({ children }) => {
       setOpenDropdownKey("access");
     } else if (p.startsWith("/admin/schools") || p.startsWith("/admin/payments")) {
       setOpenDropdownKey("management");
+    } else if (
+      p.startsWith("/admin/worlds") ||
+      p.startsWith("/admin/levels") ||
+      p.startsWith("/admin/stages") ||
+      p.startsWith("/admin/exercises")
+    ) {
+      setOpenDropdownKey("world");
     } else {
       setOpenDropdownKey(null);
     }
@@ -71,6 +78,42 @@ const MasterLayout = ({ children }) => {
               </li>
             )}
 
+            {showWorldManage && (
+              <li>
+                <NavLink to="/admin/worlds">
+                  <Icon icon="mdi:account-multiple" className="menu-icon" />
+                  <span>Manage Worlds</span>
+                </NavLink>
+              </li>
+            )}
+
+            {showWorldManage && (
+              <li>
+                <NavLink to="/admin/levels">
+                  <Icon icon="mdi:account-multiple" className="menu-icon" />
+                  <span>Manage Level</span>
+                </NavLink>
+              </li>
+            )}
+
+            {showWorldManage && (
+              <li>
+                <NavLink to="/admin/stages">
+                  <Icon icon="mdi:account-multiple" className="menu-icon" />
+                  <span>Manage Stage</span>
+                </NavLink>
+              </li>
+            )}
+
+            {showWorldManage && (
+              <li>
+                <NavLink to="/admin/exercises">
+                  <Icon icon="mdi:account-multiple" className="menu-icon" />
+                  <span>Manage Exercise</span>
+                </NavLink>
+              </li>
+            )}
+
             {showPayments && (
               <li>
                 <NavLink to="/admin/payments">
@@ -104,9 +147,8 @@ const MasterLayout = ({ children }) => {
               >
                 <a
                   href="#access"
-                  className={`menu-trigger ${
-                    openDropdownKey === "access" ? "active-page" : ""
-                  }`}
+                  className={`menu-trigger ${openDropdownKey === "access" ? "active-page" : ""
+                    }`}
                   onClick={(e) => {
                     e.preventDefault();
                     setOpenDropdownKey((prev) =>
