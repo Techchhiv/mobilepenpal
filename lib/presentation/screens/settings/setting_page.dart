@@ -6,7 +6,7 @@ import 'package:mobilepenpal/data/controllers/home/pin_controller.dart';
 import 'package:mobilepenpal/data/controllers/settings/setting_controller.dart';
 import 'package:mobilepenpal/presentation/screens/settings/change_password_page.dart';
 import 'package:mobilepenpal/presentation/screens/settings/update_profile_page.dart';
-import 'package:mobilepenpal/presentation/widgets/pin_entry_widget.dart';
+import 'package:mobilepenpal/presentation/widgets/home/pin_entry_widget.dart';
 
 class SettingPage extends StatelessWidget {
   SettingPage({super.key});

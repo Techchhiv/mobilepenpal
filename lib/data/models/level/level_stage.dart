@@ -21,14 +21,14 @@ class LevelStage {
 
   factory LevelStage.fromJson(Map<String, dynamic> json) {
     return LevelStage(
-      id: json['id'] as int,
-      name: json['name'] as String,
-      instruction: json['instruction'] as String,
-      description: json['description'] as String,
-      orderIndex: json['order_index'] as int,
-      maxStars: json['max_stars'] as int,
-      starsEarned: json['stars_earned'] as int,
-      status: json['status'] as String,
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      name: (json['name'] ?? '').toString(),
+      instruction: (json['instruction'] ?? '').toString(),
+      description: (json['description'] ?? '').toString(),
+      orderIndex: (json['order_index'] as num?)?.toInt() ?? 0,
+      maxStars: (json['max_stars'] as num?)?.toInt() ?? 0,
+      starsEarned: (json['stars_earned'] as num?)?.toInt() ?? 0,
+      status: (json['status'] ?? 'locked').toString(),
     );
   }
 

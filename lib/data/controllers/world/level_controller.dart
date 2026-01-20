@@ -8,6 +8,7 @@ class LevelController extends GetxController {
 
   var isLoading = false.obs;
   var currentLevel = Rxn<Level>();
+  var lastError = RxnString();
 
   final initialStageIndex = 0.obs;
 
@@ -43,6 +44,8 @@ class LevelController extends GetxController {
 
   Future<void> fetchLevelDetail() async {
     isLoading.value = true;
+    lastError.value = null;
+
     try {
       final response = await _worldService.getLevelById(levelId);
       if (response.code == 200) {
@@ -51,10 +54,10 @@ class LevelController extends GetxController {
         final stages = response.data?.stages ?? <LevelStage>[];
         initialStageIndex.value = _computeNextStageIndex(stages);
       } else {
-        Get.snackbar('Error', response.message);
+        lastError.value = response.message;
       }
     } catch (e) {
-      Get.snackbar('Error', 'Failed to load level details: $e');
+      lastError.value = 'Failed to load level details: $e';
     } finally {
       isLoading.value = false;
     }

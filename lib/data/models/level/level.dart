@@ -21,14 +21,17 @@ class Level {
 
   factory Level.fromJson(Map<String, dynamic> json) {
     return Level(
-      id: json['id'] as int,
-      name: json['name'] as String,
-      description: json['description'] as String,
-      orderIndex: json['order_index'] as int,
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      name: (json['name'] ?? '').toString(),
+      description: (json['description'] ?? '').toString(),
+      orderIndex: (json['order_index'] as num?)?.toInt() ?? 0,
       backgroundImage: json['background_image'] as String?,
-      worldName: json['world_name'] as String,
-      stages: (json['stages'] as List)
-          .map((stageJson) => LevelStage.fromJson(stageJson))
+      worldName: (json['world_name'] ?? '').toString(),
+      stages: (json['stages'] as List<dynamic>? ?? [])
+          .map(
+            (stageJson) =>
+                LevelStage.fromJson(stageJson as Map<String, dynamic>),
+          )
           .toList(),
     );
   }

@@ -13,7 +13,7 @@ import 'package:mobilepenpal/data/models/student/student.dart';
 import 'package:mobilepenpal/presentation/screens/home/parent_home.dart';
 import 'package:mobilepenpal/presentation/screens/home/student_home.dart';
 import 'package:mobilepenpal/presentation/widgets/loading_overly.dart';
-import 'package:mobilepenpal/presentation/widgets/mode_switcher.dart';
+import 'package:mobilepenpal/presentation/widgets/home/mode_switcher.dart';
 import 'package:shimmer/shimmer.dart';
 
 class HomePage extends StatelessWidget {

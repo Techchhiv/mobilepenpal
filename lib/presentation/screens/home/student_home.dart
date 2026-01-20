@@ -4,7 +4,7 @@ import 'package:mobilepenpal/core/network/route_builder.dart';
 import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/world_controller.dart';
 import 'package:mobilepenpal/presentation/routes/app_routes.dart';
-import 'package:mobilepenpal/presentation/widgets/course_card.dart';
+import 'package:mobilepenpal/presentation/widgets/home/course_card.dart';
 
 class StudentHome extends StatelessWidget {
   final HomeController homeController;

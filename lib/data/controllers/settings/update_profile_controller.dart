@@ -49,7 +49,7 @@ class UpdateProfileController extends GetxController {
     if (currentStudent == null) return;
 
     firstName.value = currentStudent.firstName;
-    lastName.value = currentStudent.lastName;
+    lastName.value = currentStudent.lastName ?? '';
     nickname.value = currentStudent.nickname ?? '';
     age.value = currentStudent.age?.toString() ?? '';
     gender.value = currentStudent.gender ?? '';

@@ -73,4 +73,45 @@ class AuthService {
 
     return result;
   }
+
+  Future<ApiResponse<Map<String, dynamic>>> registerParent({
+    required String studentFirstName,
+    String? studentLastName,
+    required String parentFirstName,
+    required String parentLastName,
+    required String phone,
+    required String password,
+    String? email,
+  }) async {
+    final result = await _apiClient.request<Map<String, dynamic>>(
+      method: 'POST',
+      path: AuthEndpoints.register,
+      data: {
+        "first_name": studentFirstName,
+        if (studentLastName != null && studentLastName.trim().isNotEmpty)
+          "last_name": studentLastName.trim(),
+        "parent_first_name": parentFirstName,
+        "parent_last_name": parentLastName,
+
+        "phone": phone,
+        "password": password,
+
+        if (email != null && email.trim().isNotEmpty) "email": email.trim(),
+      },
+      fromData: (data) {
+        final token = data['token'];
+        final student = data['student'];
+        return {"token": token, "student": student};
+      },
+    );
+
+    if (result.code == 200) {
+      final token = result.data?['token'];
+      if (token is String && token.trim().isNotEmpty) {
+        await _apiClient.saveToken(token);
+      }
+    }
+
+    return result;
+  }
 }

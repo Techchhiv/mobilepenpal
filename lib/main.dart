@@ -11,6 +11,7 @@ import 'package:mobilepenpal/core/theme/app_theme.dart';
 import 'package:mobilepenpal/core/theme/theme_controller.dart';
 import 'package:mobilepenpal/presentation/routes/app_pages.dart';
 import 'package:mobilepenpal/presentation/routes/app_routes.dart';
+import 'package:mobilepenpal/presentation/widgets/app_snackbar.dart';
 import 'core/localization/app_translations.dart';
 
 void main() async {
@@ -43,6 +44,9 @@ class MyApp extends StatelessWidget {
       // ========= Transition ==========
       defaultTransition: Transition.cupertinoDialog,
       transitionDuration: Duration(milliseconds: 250),
+
+      // ====== Message ======
+      scaffoldMessengerKey: AppSnackbar.messengerKey,
 
       // ===== Translation =====
       translations: AppTranslations(),

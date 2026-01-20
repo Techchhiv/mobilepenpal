@@ -1,6 +1,7 @@
 import 'dart:convert';
 
-StageExercise stageExerciseFromJson(String str) => StageExercise.fromJson(json.decode(str));
+StageExercise stageExerciseFromJson(String str) =>
+    StageExercise.fromJson(json.decode(str));
 String stageExerciseToJson(StageExercise data) => json.encode(data.toJson());
 
 class StageExercise {
@@ -14,8 +15,6 @@ class StageExercise {
   final String hint;
   final int orderIndex;
   final String? characterType;
-  // final String? audioUrl;
-  // final String? imageUrl;
 
   StageExercise({
     required this.id,
@@ -28,41 +27,38 @@ class StageExercise {
     required this.hint,
     required this.orderIndex,
     this.characterType,
-    // this.audioUrl,
-    // this.imageUrl,
   });
 
   factory StageExercise.fromJson(Map<String, dynamic> json) {
     List<String> parsedOptions = [];
-    
+
     try {
-      if (json['options'] != null) {
-        if (json['options'] is String) {
-          final optionsString = json['options'] as String;
-          final cleanedString = optionsString.replaceAll(r'\"', '"');
-          final decodedList = jsonDecode(cleanedString) as List;
-          parsedOptions = decodedList.map((e) => e.toString()).toList();
-        } else if (json['options'] is List) {
-          parsedOptions = (json['options'] as List).map((e) => e.toString()).toList();
+      final v = json['options'];
+      if (v is List) {
+        parsedOptions = v.map((e) => e.toString()).toList();
+      } else if (v is String && v.isNotEmpty) {
+        final decoded = jsonDecode(v);
+        if (decoded is List) {
+          parsedOptions = decoded.map((e) => e.toString()).toList();
+        } else {
+          parsedOptions = [v];
         }
       }
-    } catch (e) {
-      parsedOptions = []; 
+    } catch (_) {
+      parsedOptions = [];
     }
 
     return StageExercise(
-      id: json['id'] as int,
-      prompt: json['prompt'] as String,
-      character: json['character'] as String,
-      example: json['example'] as String,
-      question: json['question'] as String,
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      prompt: (json['prompt'] ?? '').toString(),
+      character: (json['character'] ?? '').toString(),
+      example: json['example']?.toString(),
+      question: (json['question'] ?? '').toString(),
       options: parsedOptions,
-      instruction: json['instruction'] as String,
-      hint: json['hint'] as String,
-      orderIndex: json['order_index'] as int,
-      characterType: json['character_type'] as String?,
-      // audioUrl: json['audio_url'] as String?,
-      // imageUrl: json['image_url'] as String?,
+      instruction: (json['instruction'] ?? '').toString(),
+      hint: (json['hint'] ?? '').toString(),
+      orderIndex: (json['order_index'] as num?)?.toInt() ?? 0,
+      characterType: json['character_type']?.toString(),
     );
   }
 
@@ -78,8 +74,6 @@ class StageExercise {
       'hint': hint,
       'order_index': orderIndex,
       'character_type': characterType,
-      // 'audio_url': audioUrl,
-      // 'image_url': imageUrl,
     };
   }
 

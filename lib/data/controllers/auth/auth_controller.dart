@@ -6,6 +6,7 @@ import 'package:get_storage/get_storage.dart';
 import 'package:mobilepenpal/core/config/env.dart';
 import 'package:mobilepenpal/data/services/auth_service.dart';
 import 'package:mobilepenpal/presentation/routes/app_routes.dart';
+import 'package:mobilepenpal/presentation/widgets/app_snackbar.dart';
 
 class AuthController extends GetxController {
   final AuthService _authService = AuthService();
@@ -75,11 +76,10 @@ class AuthController extends GetxController {
     if (phoneError.value.isNotEmpty ||
         // schoolIdError.value.isNotEmpty ||
         passwordError.value.isNotEmpty) {
-      Get.snackbar(
-        "error".tr,
+      AppSnackbar.show(
         "fill_all_fields_correctly".tr,
+        title: "error".tr,
         backgroundColor: Colors.orange,
-        colorText: Colors.white,
       );
       return;
     }
@@ -87,11 +87,10 @@ class AuthController extends GetxController {
     if (phoneController.text.isEmpty ||
         // schoolIdController.text.isEmpty ||
         passwordController.text.isEmpty) {
-      Get.snackbar(
-        "error".tr,
+      AppSnackbar.show(
         "fill_all_fields".tr,
+        title: "error".tr,
         backgroundColor: Colors.orange,
-        colorText: Colors.white,
       );
       return;
     }
@@ -135,11 +134,10 @@ class AuthController extends GetxController {
         //   );
         // }
       } else {
-        Get.snackbar(
-          "error".tr,
+        AppSnackbar.show(
           response.message,
+          title: "error".tr,
           backgroundColor: Colors.red,
-          colorText: Colors.white,
         );
       }
     } finally {

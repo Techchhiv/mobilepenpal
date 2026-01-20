@@ -37,16 +37,15 @@ class WorldLevel {
   factory WorldLevel.fromJson(Map<String, dynamic> json) {
     return WorldLevel(
       id: json['id'],
-      name: json['name'],
-      description: json['description'],
+      name: (json['name'] ?? '') as String,
+      description: (json['description'] ?? '') as String,
       orderIndex: json['order_index'] ?? 0,
-      backgroundImage: json['background_image'] ?? '',
+      backgroundImage: (json['background_image'] ?? '') as String,
       requiredStars: json['required_stars'] ?? 0,
       totalStages: json['total_stages'] ?? 0,
       completedStages: json['completed_stages'] ?? 0,
       completionPercentage: json['completion_percentage'] ?? 0,
       totalStars: json['total_stars'] ?? 0,
-
       isCompleted: WorldLevel._toBool(json['is_completed']),
       isUnlocked: WorldLevel._toBool(json['is_unlocked']),
     );

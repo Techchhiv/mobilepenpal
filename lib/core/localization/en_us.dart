@@ -145,8 +145,7 @@ final Map<String, String> enUS = {
       'Last name cannot exceed 100 characters',
   'age_must_be_a_number': 'Age must be a number',
   'age_must_be_between_1_and_100': 'Age must be between 1 and 100',
-  'gender_must_be_male_female_or_other':
-      'Gender must be male, female, or other',
+  'gender_must_be_male_or_female': 'Gender must be male or female',
   'failed_to_load_profile': 'Failed to load profile',
   'nickname': 'Nickname',
   'yyyy-mm-dd': 'YYYY-MM-DD',
@@ -386,6 +385,29 @@ final Map<String, String> enUS = {
   'scan_failed': 'Could not scan that image.',
   'flash_unavailable': 'Flashlight is not available on this device.',
 
+  // ===== Report / Parent Report =====
+  'report_detail_title': 'Report Details',
+  'monthly_summary': 'Monthly Summary',
+  'total_exercises': 'Total Exercises',
+  'total_study_time': 'Total Study Time',
+  'weekly_exercises_in_month': 'Weekly Exercises (This Month)',
+  'character_performance': 'Character Performance',
+  'week': 'Week',
+  'attempts': 'Attempts',
+  'times': 'times',
+
   // ===== Summary Page =====
-  'answer': 'Execellent Jobs',
+  'summary_perfect': 'Excellent job!',
+  'summary_great': 'Great job!',
+  'summary_good_try': 'Good try! Keep practicing!',
+
+  // ===== Offline =====
+  'offline': 'Offline',
+  'no_internet_connection': 'No internet connection',
+  'internet_required_to_continue':
+      'This app requires an internet connection to continue.\nPlease check your Wi-Fi or mobile data.',
+  'open_settings': 'Open Settings',
+  'tip_public_wifi_sign_in':
+      'Tip: If you’re on public Wi-Fi, you may need to sign in first.',
+  'still_offline': 'Still no internet connection.',
 };

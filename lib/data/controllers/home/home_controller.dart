@@ -11,7 +11,7 @@ import 'package:mobilepenpal/data/models/student/student.dart';
 import 'package:mobilepenpal/data/models/student/student_progress.dart';
 import 'package:mobilepenpal/data/services/home_service.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:mobilepenpal/presentation/widgets/pin_entry_widget.dart';
+import 'package:mobilepenpal/presentation/widgets/home/pin_entry_widget.dart';
 
 enum SummaryView { daily, weekly }
 

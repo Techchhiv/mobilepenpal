@@ -380,6 +380,29 @@ final Map<String, String> kmKH = {
   'scan_failed': 'មិនអាចស្កេនបានទេ',
   'flash_unavailable': 'មិនអាចប្រើភ្លើងលើឧបករណ៍នេះបានទេ',
 
+  // ===== Report / Parent Report =====
+  'report_detail_title': 'របាយការណ៍លម្អិត',
+  'monthly_summary': 'សង្ខេបប្រចាំខែ',
+  'total_exercises': 'លំហាត់សរុប',
+  'total_study_time': 'ពេលវេលាសិក្សាសរុប',
+  'weekly_exercises_in_month': 'លំហាត់ប្រចាំសប្ដាហ៍ (ក្នុងខែនេះ)',
+  'character_performance': 'សមត្ថភាពតាមអក្សរ',
+  'week': 'សប្ដាហ៍',
+  'attempts': 'លើក',
+  'times': 'លើក',
+
   // ===== Summary Page =====
-  'answer': 'ឆ្លើយបានត្រឹមត្រូវ',
+  'summary_perfect': 'ឆ្លើយបានត្រឹមត្រូវ',
+  'summary_great': 'អស្ចារ្យណាស់!',
+  'summary_good_try': 'ព្យាយាមល្អណាស់! បន្តហាត់បន្តិចទៀត!',
+
+  // ===== Offline =====
+  'offline': 'អុហ្វឡាញ',
+  'no_internet_connection': 'គ្មានការតភ្ជាប់អ៊ីនធឺណិត',
+  'internet_required_to_continue':
+      'កម្មវិធីនេះត្រូវការការតភ្ជាប់អ៊ីនធឺណិតដើម្បីបន្ត។\nសូមពិនិត្យ Wi-Fi ឬទិន្នន័យទូរស័ព្ទរបស់អ្នក។',
+  'open_settings': 'បើកការកំណត់',
+  'tip_public_wifi_sign_in':
+      'គន្លឹះ៖ ប្រសិនបើអ្នកប្រើ Wi-Fi សាធារណៈ អ្នកអាចត្រូវចូល (Sign in) ជាមុនសិន។',
+  'still_offline': 'នៅតែគ្មានអ៊ីនធឺណិត។',
 };

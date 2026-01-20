@@ -1,76 +1,93 @@
 class Student {
   final int id;
+  final int? schoolId;
+  final String? schoolKey;
   final String firstName;
-  final String lastName;
+  final String? lastName;
   final String? nickname;
   final int? age;
   final String? gender;
   final String? dateOfBirth;
   final String? avatar;
-  final String? mode;
+
   final String? parentPin;
   final String? parentFirstName;
   final String? parentLastName;
+
   final String? email;
-  final String phone;
-  final int? level;
-  final int? streak;
-  final int? timeSpent;
-  final String? lastPlayed;
+  final String? phone;
+
   final String? address;
-  final String? enrollmentYear;
+  final int? enrollmentYear;
+
+  final bool isActive;
 
   Student({
     required this.id,
+    this.schoolId,
+    this.schoolKey,
     required this.firstName,
-    required this.lastName,
+    this.lastName,
     this.nickname,
     this.age,
     this.gender,
     this.dateOfBirth,
     this.avatar,
-    this.mode,
     this.parentPin,
     this.parentFirstName,
     this.parentLastName,
     this.email,
-    required this.phone,
-    this.level,
-    this.streak,
-    this.timeSpent,
-    this.lastPlayed,
+    this.phone,
     this.address,
     this.enrollmentYear,
+    required this.isActive,
   });
+
+  static int? _toInt(dynamic v) {
+    if (v == null) return null;
+    if (v is int) return v;
+    return int.tryParse(v.toString());
+  }
+
+  static String? _toStringOrNull(dynamic v) {
+    if (v == null) return null;
+    return v.toString();
+  }
+
+  static bool _toBool(dynamic v) {
+    if (v is bool) return v;
+    if (v is int) return v == 1;
+    return v.toString() == '1' || v.toString().toLowerCase() == 'true';
+  }
 
   factory Student.fromJson(Map<String, dynamic> json) {
     return Student(
-      id: json['id'] ?? 0,
-      firstName: json['first_name'] ?? '',
-      lastName: json['last_name'] ?? '',
-      nickname: json['nickname'],
-      age: json['age'],
-      gender: json['gender'],
-      dateOfBirth: json['date_of_birth'],
-      avatar: json['avatar'],
-      mode: json['mode'],
-      parentPin: json['parent_pin'],
-      parentFirstName: json['parent_first_name'],
-      parentLastName: json['parent_last_name'],
-      email: json['email'],
-      phone: json['phone'] ?? '',
-      level: json['level'],
-      streak: json['streak'] ?? 0,
-      timeSpent: json['time_spent'] ?? 0,
-      lastPlayed: json['last_played'],
-      address: json['address'],
-      enrollmentYear: json['enrollment_year'],
+      id: _toInt(json['id']) ?? 0,
+      schoolId: _toInt(json['school_id']),
+      schoolKey: _toStringOrNull(json['school_key']),
+      firstName: _toStringOrNull(json['first_name']) ?? '',
+      lastName: _toStringOrNull(json['last_name']),
+      nickname: _toStringOrNull(json['nickname']),
+      age: _toInt(json['age']),
+      gender: _toStringOrNull(json['gender']),
+      dateOfBirth: _toStringOrNull(json['date_of_birth']),
+      avatar: _toStringOrNull(json['avatar']),
+      parentPin: _toStringOrNull(json['parent_pin']),
+      parentFirstName: _toStringOrNull(json['parent_first_name']),
+      parentLastName: _toStringOrNull(json['parent_last_name']),
+      email: _toStringOrNull(json['email']),
+      phone: _toStringOrNull(json['phone']),
+      address: _toStringOrNull(json['address']),
+      enrollmentYear: _toInt(json['enrollment_year']),
+      isActive: _toBool(json['is_active']),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
+      'school_id': schoolId,
+      'school_key': schoolKey,
       'first_name': firstName,
       'last_name': lastName,
       'nickname': nickname,
@@ -78,18 +95,14 @@ class Student {
       'gender': gender,
       'date_of_birth': dateOfBirth,
       'avatar': avatar,
-      'mode': mode,
       'parent_pin': parentPin,
       'parent_first_name': parentFirstName,
       'parent_last_name': parentLastName,
       'email': email,
       'phone': phone,
-      'level': level,
-      'streak': streak,
-      'time_spent': timeSpent,
-      'last_played': lastPlayed,
       'address': address,
       'enrollment_year': enrollmentYear,
+      'is_active': isActive,
     };
   }
 }

@@ -10,7 +10,7 @@ class Env {
 
   static const String aiApiBaseUrl = String.fromEnvironment(
     'AI_API_BASE_URL',
-    defaultValue: 'https://api.khmerpenpal.com/api/predict',
+    defaultValue: 'https://api.khmerpenpal.com/predict',
   );
 
   static const String backendUrl = String.fromEnvironment(

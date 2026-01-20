@@ -24,17 +24,18 @@ class Stage {
   });
 
   factory Stage.fromJson(Map<String, dynamic> json) {
-    final exercisesList = (json['exercises'] as List)
-        .map((exerciseJson) => StageExercise.fromJson(exerciseJson))
+    final rawExercises = json['exercises'];
+    final exercisesList = (rawExercises is List ? rawExercises : const [])
+        .map((e) => StageExercise.fromJson(e as Map<String, dynamic>))
         .toList();
 
     return Stage(
-      id: json['id'] as int,
-      name: json['name'] as String,
-      instruction: json['instruction'] as String,
-      description: json['description'] as String,
-      orderIndex: json['order_index'] as int,
-      maxStars: json['max_stars'] as int,
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      name: (json['name'] ?? '').toString(),
+      instruction: (json['instruction'] ?? '').toString(), // ✅ was null
+      description: (json['description'] ?? '').toString(), // ✅ was null
+      orderIndex: (json['order_index'] as num?)?.toInt() ?? 0,
+      maxStars: (json['max_stars'] as num?)?.toInt() ?? 0,
       exercises: exercisesList,
     );
   }

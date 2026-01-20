@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lottie/lottie.dart';
+import 'package:mobilepenpal/core/utils/number_format_utils.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_summary_controller.dart';
 import 'package:mobilepenpal/presentation/widgets/loading_overly.dart';
 
@@ -93,24 +94,35 @@ class StageSummaryPage extends GetView<StageSummaryController> {
   }
 
   Widget _buildScore() {
+    final rawScore =
+        '${controller.correctAnswers}/${controller.totalQuestions}';
+    final score = NumberFormatUtils.digitsByLocale(rawScore);
+
+    final msgKey = _encouragementKey(
+      stars: controller.starsEarned,
+      correct: controller.correctAnswers,
+      total: controller.totalQuestions,
+    );
+
     return Column(
       children: [
         Text(
-          '${controller.correctAnswers}/${controller.totalQuestions}',
-          style: TextStyle(
+          score,
+          style: const TextStyle(
             fontSize: 36,
             fontWeight: FontWeight.w900,
             color: Colors.white,
           ),
         ),
-        SizedBox(height: 8),
+        const SizedBox(height: 8),
         Text(
-          'answer'.tr,
-          style: TextStyle(
+          msgKey.tr,
+          style: const TextStyle(
             fontSize: 16,
             color: Colors.white70,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.w600,
           ),
+          textAlign: TextAlign.center,
         ),
       ],
     );
@@ -207,5 +219,21 @@ class StageSummaryPage extends GetView<StageSummaryController> {
         ],
       ),
     );
+  }
+
+  String _encouragementKey({
+    required int stars,
+    required int correct,
+    required int total,
+  }) {
+    if (total <= 0) return 'summary_good_try';
+
+    final accuracy = correct / total;
+
+    if (stars >= 3 || accuracy >= 0.999) return 'summary_perfect';
+
+    if (stars == 2 || accuracy >= 0.70) return 'summary_great';
+
+    return 'summary_good_try';
   }
 }

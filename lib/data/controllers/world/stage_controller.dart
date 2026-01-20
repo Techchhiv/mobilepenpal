@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_drawing_board/flutter_drawing_board.dart';
@@ -13,6 +14,7 @@ import 'package:mobilepenpal/data/models/stage/stage.dart';
 import 'package:mobilepenpal/data/models/stage/stage_exercise.dart';
 import 'package:mobilepenpal/data/services/world_service.dart';
 import 'package:mobilepenpal/presentation/routes/app_routes.dart';
+import 'package:mobilepenpal/presentation/widgets/app_snackbar.dart';
 
 class StageController extends GetxController {
   StageController({WorldService? worldService})
@@ -25,6 +27,13 @@ class StageController extends GetxController {
 
   final currentStage = Rxn<Stage>();
   final exercises = <StageExercise>[].obs;
+  final lastError = RxnString();
+
+  static const int maxAttemptsPerExercise = 3;
+  final attemptLeft = maxAttemptsPerExercise.obs;
+
+  CancelToken? _cancelToken;
+  int _redId = 0;
 
   late int worldId;
   late int levelId;
@@ -53,7 +62,6 @@ class StageController extends GetxController {
 
   final List<List<Map<String, dynamic>>> _rawStrokes = [];
   List<Map<String, dynamic>>? _currentStroke;
-  int? _t0Ms;
 
   bool hasDrawnStroke = false;
   Timer? idle;
@@ -67,11 +75,6 @@ class StageController extends GetxController {
 
   bool get _isLastExercise =>
       currentExerciseIndex.value >= exercises.length - 1;
-
-  int _relTimeMs() {
-    _t0Ms ??= DateTime.now().millisecondsSinceEpoch;
-    return DateTime.now().millisecondsSinceEpoch - _t0Ms!;
-  }
 
   int get _sessionDurationSeconds {
     if (_sessionStart == null) return 0;
@@ -132,16 +135,18 @@ class StageController extends GetxController {
 
   Future<void> fetchStageDetail() async {
     isLoading.value = true;
+    lastError.value = null;
+
     try {
       final response = await _worldService.getStageById(stageId);
       if (response.code != 200) {
-        Get.snackbar('Error', response.message);
+        lastError.value = response.message;
         return;
       }
 
       final stage = response.data;
       if (stage == null) {
-        Get.snackbar('Error', 'Stage data is empty');
+        lastError.value = 'Stage data is empty';
         return;
       }
 
@@ -153,7 +158,7 @@ class StageController extends GetxController {
       _startAtExercise(0, playAudioAfter: true);
       _sessionStart = DateTime.now();
     } catch (e) {
-      Get.snackbar('Error', 'Failed to load stage details: $e');
+      lastError.value = 'Failed to load stage details: $e';
     } finally {
       isLoading.value = false;
     }
@@ -198,6 +203,7 @@ class StageController extends GetxController {
   void _startAtExercise(int index, {bool playAudioAfter = false}) async {
     currentExerciseIndex.value = index;
     selectedCharacter.value = exercises[index].character;
+    attemptLeft.value = maxAttemptsPerExercise;
 
     clearBoard();
     setGuideForCharacter(selectedCharacter.value);
@@ -236,13 +242,13 @@ class StageController extends GetxController {
 
     _rawStrokes.clear();
     _currentStroke = null;
-    _t0Ms = null;
   }
 
   void onPointerDown() {
     hasDrawnStroke = true;
     idle?.cancel();
     anim.stopGuide();
+    _cancelPredictIfAny();
   }
 
   Future<void> onPointerUp() async {
@@ -251,7 +257,7 @@ class StageController extends GetxController {
     hasDrawnStroke = false;
     idle?.cancel();
 
-    idle = Timer(const Duration(milliseconds: 1500), () async {
+    idle = Timer(const Duration(milliseconds: 1200), () async {
       await checkDrawing();
       hasDrawnStroke = false;
     });
@@ -259,20 +265,22 @@ class StageController extends GetxController {
 
   void onRawPointerDown(PointerDownEvent e) {
     _currentStroke = [];
+    final now = DateTime.now().millisecondsSinceEpoch;
     _currentStroke!.add({
       "x": e.localPosition.dx,
       "y": e.localPosition.dy,
-      "time": _relTimeMs(),
+      "time": now,
     });
     onPointerDown();
   }
 
   void onRawPointerMove(PointerMoveEvent e) {
     if (_currentStroke == null) return;
+    final now = DateTime.now().millisecondsSinceEpoch;
     _currentStroke!.add({
       "x": e.localPosition.dx,
       "y": e.localPosition.dy,
-      "time": _relTimeMs(),
+      "time": now,
     });
   }
 
@@ -288,32 +296,78 @@ class StageController extends GetxController {
     final exercise = currentExercise;
     if (exercise == null) return;
 
+    _cancelPredictIfAny();
+    final myReqId = ++_redId;
+    final cancelToken = CancelToken();
+    _cancelToken = cancelToken;
+
     final modelType = _mapCharacterTypeToModelType(exercise.characterType);
 
-    // ====== AI verify (currently disabled / API down) ======
-    // bool isCorrect = false;
-    // String? prediction;
-    //
-    // try {
-    //   final payload = getYXWithTime(modelType: modelType);
-    //   final data = await _worldService.predictDrawing(payload);
-    //
-    //   prediction = (data['prediction'] ?? '').toString().trim();
-    //   isCorrect = prediction == (exercise.character ?? '').trim();
-    // } catch (e) {
-    //   // Fallback while AI is down
-    //   isCorrect = Random().nextDouble() <= 0.9;
-    // }
+    bool isCorrect = false;
+    String prediction = '';
 
-    final bool isCorrect = Random().nextDouble() <= 0.9;
+    try {
+      final payload = getXYStrokeWithTime(modelType: modelType);
+
+      final strokes = (payload['strokes'] as List).cast<Map<String, dynamic>>();
+
+      final data = await _worldService.predictDrawingVector(
+        strokes: strokes,
+        modelType: payload['model_type'] as String,
+        cancelToken: cancelToken,
+      );
+
+      if (myReqId != _redId) return;
+
+      prediction = (data['prediction'] ?? '').toString().trim();
+      final expected = (exercise.character).trim();
+      isCorrect = prediction == expected;
+    } on DioException catch (e) {
+      if (CancelToken.isCancel(e)) return;
+    } catch (e) {
+      lastError.value = 'Predict failed: $e';
+      isCorrect = Random().nextDouble() <= 0.9;
+    } finally {
+      if (myReqId == _redId) {
+        _cancelToken = null;
+      }
+    }
 
     if (!isCorrect) {
+      attemptLeft.value = (attemptLeft.value - 1).clamp(
+        0,
+        maxAttemptsPerExercise,
+      );
+
       await anim.showWrongAndReset(
         onAfterReset: () {
           clearBoard();
           hasDrawnStroke = false;
         },
       );
+
+      if (attemptLeft.value > 0) {
+        return;
+      }
+
+      attempts.add({
+        'exercise_id': exercise.id,
+        'user_answer': prediction,
+        'label': exercise.character,
+        'stroke': getXYStrokes(),
+        'is_correct': false,
+      });
+
+      await Future.delayed(const Duration(milliseconds: 300));
+      anim.feedback.value = DrawFeedback.none;
+      anim.clearPraise();
+
+      if (_isLastExercise) {
+        await _finishStageIfLast();
+      } else {
+        nextExercise();
+        clearBoard();
+      }
       return;
     }
 
@@ -321,7 +375,7 @@ class StageController extends GetxController {
 
     attempts.add({
       'exercise_id': exercise.id,
-      'user_answer': exercise.character,
+      'user_answer': prediction.isNotEmpty ? prediction : exercise.character,
       'label': exercise.character,
       'stroke': getXYStrokes(),
       'is_correct': true,
@@ -393,6 +447,7 @@ class StageController extends GetxController {
     attempts.clear();
     currentExerciseIndex.value = 0;
     anim.resetStars();
+    attemptLeft.value = maxAttemptsPerExercise;
 
     if (exercises.isNotEmpty) {
       selectedCharacter.value = exercises[0].character;
@@ -401,7 +456,7 @@ class StageController extends GetxController {
       selectedCharacter.value = '';
       anim.setGuideFromPx(strokesPx: const []);
     }
-  
+
     clearBoard();
   }
 
@@ -413,11 +468,16 @@ class StageController extends GetxController {
     try {
       final response = await _worldService.submitExerciseBatch(
         attempts,
+        stageId: stageId,
         durationSeconds: durationSeconds,
       );
 
       if (response.code != 200) {
-        Get.snackbar('Error', response.message);
+        AppSnackbar.show(
+          response.message.isNotEmpty ? response.message : 'Request failed',
+          title: 'Error',
+          backgroundColor: Colors.redAccent,
+        );
         return null;
       }
 
@@ -605,6 +665,13 @@ class StageController extends GetxController {
 
     clearBoard();
     if (clearGuide) anim.setGuideFromPx(strokesPx: const []);
+  }
+
+  void _cancelPredictIfAny() {
+    if (_cancelToken != null && !(_cancelToken!.isCancelled)) {
+      _cancelToken!.cancel();
+    }
+    _cancelToken = null;
   }
 
   String _mapCharacterTypeToModelType(String? characterType) {

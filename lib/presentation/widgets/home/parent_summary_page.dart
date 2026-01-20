@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:mobilepenpal/core/utils/number_format_utils.dart';
 import 'package:mobilepenpal/core/utils/report_format.dart';
 import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
 import 'package:mobilepenpal/data/models/report/daily_summary.dart';
@@ -13,13 +14,17 @@ class ParentSummaryCard extends StatelessWidget {
   static const Color _brand = Color(0xFF00897B);
   static const double _metricBottomHeight = 6;
   static const double _metricBottomSpacing = 10;
+  String _d(String s) => NumberFormatUtils.digitsByLocale(s);
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text("summary".tr, style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+        Text(
+          "summary".tr,
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+        ),
         SizedBox(height: 24),
         Obx(() {
           final showDaily =
@@ -41,10 +46,12 @@ class ParentSummaryCard extends StatelessWidget {
               children: [
                 _buildHeader(
                   showDaily: showDaily,
-                  dailyDate: daily == null ? '—' : daily.date.toDdMmYy(),
+                  dailyDate: daily == null ? '—' : _d(daily.date.toDdMmYy()),
                   weeklyRange: weekly == null
                       ? '—'
-                      : '${weekly.fromDate.toDdMmYy()}  →  ${weekly.toDate.toDdMmYy()}',
+                      : _d(
+                          '${weekly.fromDate.toDdMmYy()}  →  ${weekly.toDate.toDdMmYy()}',
+                        ),
                   isBusy: showDaily ? dailyLoading : weeklyLoading,
                 ),
                 SizedBox(height: 14),
@@ -244,25 +251,29 @@ class ParentSummaryCard extends StatelessWidget {
           children: [
             _buildMetricTile(
               title: "lesson_completed".tr,
-              value: daily == null ? '—' : '${daily.stagesCompleted}',
+              value: daily == null ? '—' : _d('${daily.stagesCompleted}'),
               icon: Icons.menu_book_rounded,
               tint: _brand,
             ),
             _buildMetricTile(
               title: "stars".tr,
-              value: daily == null ? '—' : '${daily.starsEarned}',
+              value: daily == null ? '—' : _d('${daily.starsEarned}'),
               icon: Icons.star_rounded,
               tint: Color(0xFFF59E0B),
             ),
             _buildMetricTile(
               title: "time".tr,
-              value: daily == null ? '—' : daily.timeSpentSeconds.toStudyTime(),
+              value: daily == null
+                  ? '—'
+                  : _d(daily.timeSpentSeconds.toStudyTime()),
               icon: Icons.schedule_rounded,
               tint: Color(0xFF22C55E),
             ),
             _buildMetricTile(
               title: "accuracy".tr,
-              value: daily == null ? '—' : '${(daily.accuracy * 100).round()}%',
+              value: daily == null
+                  ? '—'
+                  : _d('${(daily.accuracy * 100).round()}%'),
               icon: Icons.verified_rounded,
               tint: Color(0xFF3B82F6),
               bottom: daily == null
@@ -307,7 +318,7 @@ class ParentSummaryCard extends StatelessWidget {
     final c = insight['character']?.toString() ?? '—';
     final a = insight['accuracy'];
     final p = a == null ? null : ((a as num).toDouble() * 100).round();
-    return p == null ? c : '$c  •  $p%';
+    return p == null ? c : _d('$c  •  $p%');
   }
 
   Widget _buildWeeklyBody({
@@ -324,19 +335,21 @@ class ParentSummaryCard extends StatelessWidget {
           children: [
             _buildMetricTile(
               title: "lesson_completed".tr,
-              value: weekly == null ? '—' : '${weekly.totalStagesCompleted}',
+              value: weekly == null
+                  ? '—'
+                  : _d('${weekly.totalStagesCompleted}'),
               icon: Icons.menu_book_rounded,
               tint: _brand,
             ),
             _buildMetricTile(
               title: "stars".tr,
-              value: weekly == null ? '—' : '${weekly.totalStarsEarned}',
+              value: weekly == null ? '—' : _d('${weekly.totalStarsEarned}'),
               icon: Icons.star_rounded,
               tint: Color(0xFFF59E0B),
             ),
             _buildMetricTile(
               title: "practice_days".tr,
-              value: weekly == null ? '—' : '${weekly.practiceDays}',
+              value: weekly == null ? '—' : _d('${weekly.practiceDays}'),
               icon: Icons.calendar_today_rounded,
               tint: Color(0xFF22C55E),
             ),
@@ -344,7 +357,7 @@ class ParentSummaryCard extends StatelessWidget {
               title: "accuracy".tr,
               value: weekly == null
                   ? '—'
-                  : '${(weekly.accuracy * 100).round()}%',
+                  : _d('${(weekly.accuracy * 100).round()}%'),
               icon: Icons.verified_rounded,
               tint: Color(0xFF3B82F6),
               bottom: weekly == null

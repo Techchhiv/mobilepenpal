@@ -1,3 +1,5 @@
+import 'package:dio/dio.dart';
+import 'package:mobilepenpal/core/config/env.dart';
 import 'package:mobilepenpal/core/network/endpoint/world.dart';
 import 'package:mobilepenpal/data/models/api_response.dart';
 import 'package:mobilepenpal/core/network/api_client.dart';
@@ -7,6 +9,14 @@ import 'package:mobilepenpal/data/models/world/world.dart';
 
 class WorldService {
   final ApiClient _apiClient = ApiClient();
+  final Dio dio = Dio(
+    BaseOptions(
+      connectTimeout: const Duration(seconds: 6),
+      receiveTimeout: const Duration(seconds: 10),
+      sendTimeout: const Duration(seconds: 10),
+      headers: const {'Content-Type': 'application/json'},
+    ),
+  );
 
   Future<ApiResponse<List<World>>> getWorlds() async {
     final result = await _apiClient.request<List<World>>(
@@ -70,9 +80,13 @@ class WorldService {
 
   Future<ApiResponse<Map<String, dynamic>>> submitExerciseBatch(
     List<Map<String, dynamic>> attempts, {
+    required int stageId,
     int? durationSeconds,
   }) async {
-    final Map<String, dynamic> payload = {'attempts': attempts};
+    final Map<String, dynamic> payload = {
+      'stage_id': stageId,
+      'attempts': attempts,
+    };
 
     if (durationSeconds != null && durationSeconds > 0) {
       payload['duration_seconds'] = durationSeconds;
@@ -88,28 +102,28 @@ class WorldService {
     return result;
   }
 
-  // Future<Map<String, dynamic>> predictDrawing(
-  //   Map<String, dynamic> payload,
-  // ) async {
-  //   final uri = Uri.parse(Env.aiApiBaseUrl);
-  //
-  //   final response = await http.post(
-  //     uri,
-  //     headers: const {'Content-Type': 'application/json'},
-  //     body: jsonEncode(payload),
-  //   );
-  //
-  //   if (response.statusCode != 200) {
-  //     throw Exception(
-  //       'AI API error: ${response.statusCode} ${response.body}',
-  //     );
-  //   }
-  //
-  //   final data = jsonDecode(response.body);
-  //   if (data is! Map<String, dynamic>) {
-  //     throw Exception('Invalid AI API response format');
-  //   }
-  //
-  //   return data;
-  // }
+  Future<Map<String, dynamic>> predictDrawingVector({
+    required List<Map<String, dynamic>> strokes,
+    required String modelType,
+    CancelToken? cancelToken,
+  }) async {
+    final payload = {'strokes': strokes, 'model_type': modelType};
+
+    final res = await dio.post(
+      Env.aiApiBaseUrl,
+      data: payload,
+      cancelToken: cancelToken,
+    );
+
+    if (res.statusCode != 200) {
+      throw Exception('Predict API error: ${res.statusCode} ${res.data}');
+    }
+
+    final data = res.data;
+    if (data is! Map<String, dynamic>) {
+      throw Exception('Invalid predict response format');
+    }
+
+    return Map<String, dynamic>.from(data);
+  }
 }

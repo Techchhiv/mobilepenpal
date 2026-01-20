@@ -66,9 +66,7 @@ class LoginPage extends StatelessWidget {
                         color: Colors.grey[100],
                         shape: BoxShape.circle,
                       ),
-                      child:Image.asset(
-                        'assets/images/logos/parent.png'
-                      )
+                      child: Image.asset('assets/images/logos/parent.png'),
                     ),
                     const SizedBox(height: 16),
                     Text(
@@ -274,6 +272,33 @@ class LoginPage extends StatelessWidget {
                 ),
               ),
               SizedBox(height: 12),
+              Obx(
+                () => Align(
+                  alignment: Alignment.centerRight,
+                  child: InkWell(
+                    onTap: authController.isLoading.value
+                        ? null
+                        : () => Get.toNamed(AppRoutes.register),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 6,
+                      ),
+                      child: Text(
+                        'register'.tr,
+                        style: TextStyle(
+                          color: authController.isLoading.value
+                              ? AppColors.text.withValues(alpha: 0.5)
+                              : AppColors.primary,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
               // Obx(
               //   () => Row(
               //     mainAxisAlignment: MainAxisAlignment.end,

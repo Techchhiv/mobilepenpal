@@ -1,17 +1,3 @@
-class LoginResponse {
-  final String token;
-  final Student student;
-
-  LoginResponse({required this.token, required this.student});
-
-  factory LoginResponse.fromJson(Map<String, dynamic> json) {
-    return LoginResponse(
-      token: (json['token'] as String?) ?? '',
-      student: Student.fromJson(json['student'] ?? {}),
-    );
-  }
-}
-
 class Student {
   int? id;
   int? schoolId;
@@ -26,7 +12,7 @@ class Student {
   String? parentEmail;
   String? parentPhone;
   String? address;
-  String? dateOfEnrollment;
+  int? enrollmentYear;
   int? isActive;
   String? schoolKey;
   String? createdAt;
@@ -46,36 +32,41 @@ class Student {
     this.parentEmail,
     this.parentPhone,
     this.address,
-    this.dateOfEnrollment,
+    this.enrollmentYear,
     this.isActive,
     this.schoolKey,
     this.createdAt,
     this.updatedAt,
   });
 
+  static String? _s(dynamic v) => v == null ? null : v.toString();
+  static int? _i(dynamic v) =>
+      v == null ? null : (v is int ? v : int.tryParse(v.toString()));
+
   factory Student.fromJson(Map<String, dynamic> json) {
     return Student(
-      id: json['id'],
-      schoolId: json['school_id'],
-      firstName: json['first_name'],
-      lastName: json['last_name'],
-      dateOfBirth: json['date_of_birth'],
-      gender: json['gender'],
-      email: json['email'],
-      phone: json['phone'],
-      parentFirstName: json['parent_first_name'],
-      parentLastName: json['parent_last_name'],
-      parentEmail: json['parent_email'],
-      parentPhone: json['parent_phone'],
-      address: json['address'],
-      dateOfEnrollment: json['data_of_enrollment'],
-      isActive: json['is_active'],
-      schoolKey: json['school_key'],
-      createdAt: json['created_at'],
-      updatedAt: json['updated_at'],
+      id: _i(json['id']),
+      schoolId: _i(json['school_id']),
+      firstName: _s(json['first_name']),
+      lastName: _s(json['last_name']),
+      dateOfBirth: _s(json['date_of_birth']),
+      gender: _s(json['gender']),
+      email: _s(json['email']),
+      phone: _s(json['phone']),
+      parentFirstName: _s(json['parent_first_name']),
+      parentLastName: _s(json['parent_last_name']),
+      parentEmail: _s(json['parent_email']),
+      parentPhone: _s(json['parent_phone']),
+      address: _s(json['address']),
+      enrollmentYear: _i(json['enrollment_year']),
+      isActive: _i(json['is_active']),
+      schoolKey: _s(json['school_key']),
+      createdAt: _s(json['created_at']),
+      updatedAt: _s(json['updated_at']),
     );
   }
 
-  String get fullName => '$firstName $lastName';
-  String get parentFullName => '$parentFirstName $parentLastName';
+  String get fullName => '${firstName ?? ''} ${lastName ?? ''}'.trim();
+  String get parentFullName =>
+      '${parentFirstName ?? ''} ${parentLastName ?? ''}'.trim();
 }

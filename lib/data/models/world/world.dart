@@ -32,10 +32,10 @@ class World {
   factory World.fromJson(Map<String, dynamic> json) {
     return World(
       id: json['id'],
-      name: json['name'],
-      description: json['description'],
-      image: json['image'] ?? '',
-      backgroundImage: json['background_image'] ?? '',
+      name: (json['name'] ?? '') as String,
+      description: (json['description'] ?? '') as String,
+      image: (json['image'] ?? '') as String,
+      backgroundImage: json['background_image'],
       iconUrl: json['icon_url'],
       mapImageUrl: json['map_image_url'],
       themeColor: json['theme_color'],
@@ -43,7 +43,7 @@ class World {
       levelsTotal: json['levels_total'] ?? 0,
       levelsRemaining: json['levels_remaining'] ?? 0,
       levels: (json['levels'] as List<dynamic>? ?? [])
-          .map((level) => WorldLevel.fromJson(level))
+          .map((level) => WorldLevel.fromJson(level as Map<String, dynamic>))
           .toList(),
     );
   }

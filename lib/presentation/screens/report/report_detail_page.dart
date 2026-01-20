@@ -1,6 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:mobilepenpal/core/utils/number_format_utils.dart';
 import 'package:shimmer/shimmer.dart';
 
 import 'package:mobilepenpal/core/theme/app_colors.dart';
@@ -9,6 +10,8 @@ import 'package:mobilepenpal/data/controllers/report/report_controller.dart';
 class ReportDetailPage extends StatelessWidget {
   const ReportDetailPage({super.key});
 
+  String _d(String s) => NumberFormatUtils.digitsByLocale(s);
+
   @override
   Widget build(BuildContext context) {
     final c = Get.find<ReportController>();
@@ -16,24 +19,31 @@ class ReportDetailPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F6FA),
       body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: c.fetchMonthly,
-          child: CustomScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            slivers: [
-              SliverToBoxAdapter(child: _buildHeader(c)),
-              const SliverToBoxAdapter(child: SizedBox(height: 14)),
+        child: Column(
+          children: [
+            _buildHeader(c),
+            const SizedBox(height: 14),
 
-              SliverToBoxAdapter(child: _buildSummaryCards(c)),
-              const SliverToBoxAdapter(child: SizedBox(height: 14)),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: c.fetchMonthly,
+                child: ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: EdgeInsets.zero,
+                  children: [
+                    _buildSummaryCards(c),
+                    const SizedBox(height: 14),
 
-              SliverToBoxAdapter(child: _buildChartCard(c)),
-              const SliverToBoxAdapter(child: SizedBox(height: 14)),
+                    _buildChartCard(c),
+                    const SizedBox(height: 14),
 
-              SliverToBoxAdapter(child: _buildCharacterCard(c)),
-              const SliverToBoxAdapter(child: SizedBox(height: 24)),
-            ],
-          ),
+                    _buildCharacterCard(c),
+                    const SizedBox(height: 24),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -46,12 +56,12 @@ class ReportDetailPage extends StatelessWidget {
         children: [
           IconButton(
             onPressed: () => Get.offNamed('/home'),
-            icon: const Icon(Icons.arrow_back_ios_new_rounded),
+            icon: Icon(Icons.arrow_back_ios_new_rounded),
           ),
-          const SizedBox(width: 6),
-          const Expanded(
+          SizedBox(width: 6),
+          Expanded(
             child: Text(
-              'របាយការណ៍លម្អិត',
+              'report_detail_title'.tr,
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
             ),
           ),
@@ -123,17 +133,17 @@ class ReportDetailPage extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'សង្ខេបប្រចាំខែ',
+            Text(
+              'monthly_summary'.tr,
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
                   child: _MetricCard(
-                    title: 'លំហាត់សរុប',
-                    value: '$attempts',
+                    title: 'total_exercises'.tr,
+                    value: _d('$attempts'),
                     icon: Icons.menu_book_rounded,
                     tint: const Color(0xFF00897B),
                   ),
@@ -142,7 +152,7 @@ class ReportDetailPage extends StatelessWidget {
                 Expanded(
                   child: _MetricCard(
                     title: 'ផ្កាយ',
-                    value: '$stars',
+                    value: _d('$stars'),
                     icon: Icons.star_rounded,
                     tint: const Color(0xFFF59E0B),
                   ),
@@ -154,8 +164,8 @@ class ReportDetailPage extends StatelessWidget {
               children: [
                 Expanded(
                   child: _MetricCard(
-                    title: 'ថ្ងៃអនុវត្ត',
-                    value: '$days',
+                    title: 'practice_days'.tr,
+                    value: _d('$days'),
                     icon: Icons.calendar_today_rounded,
                     tint: const Color(0xFF22C55E),
                   ),
@@ -163,8 +173,8 @@ class ReportDetailPage extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: _MetricCard(
-                    title: 'ភាពត្រឹមត្រូវ',
-                    value: '${(accuracy * 100).round()}%',
+                    title: 'accuracy'.tr,
+                    value: _d('${(accuracy * 100).round()}%'),
                     icon: Icons.verified_rounded,
                     tint: const Color(0xFF3B82F6),
                     bottom: ClipRRect(
@@ -181,8 +191,8 @@ class ReportDetailPage extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             _WideCard(
-              title: 'ពេលវេលាសិក្សាសរុប',
-              value: time,
+              title: 'total_study_time'.tr,
+              value: _d(time),
               icon: Icons.schedule_rounded,
             ),
           ],
@@ -210,12 +220,12 @@ class ReportDetailPage extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
-                children: const [
+                children: [
                   _CardIcon(icon: Icons.bar_chart_rounded),
                   SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      'លំហាត់ប្រចាំសប្ដាហ៍ (ក្នុងខែនេះ)',
+                      'weekly_exercises_in_month'.tr,
                       style: TextStyle(
                         fontWeight: FontWeight.w800,
                         fontSize: 16,
@@ -224,7 +234,7 @@ class ReportDetailPage extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
 
               if (loading)
                 Shimmer.fromColors(
@@ -239,7 +249,7 @@ class ReportDetailPage extends StatelessWidget {
                   ),
                 )
               else if (weekly.isEmpty)
-                const SizedBox.shrink()
+                SizedBox.shrink()
               else
                 SizedBox(
                   height: 190,
@@ -284,11 +294,11 @@ class ReportDetailPage extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  const _CardIcon(icon: Icons.insights_rounded),
-                  const SizedBox(width: 10),
-                  const Expanded(
+                  _CardIcon(icon: Icons.insights_rounded),
+                  SizedBox(width: 10),
+                  Expanded(
                     child: Text(
-                      'សមត្ថភាពតាមអក្សរ',
+                      'character_performance'.tr,
                       style: TextStyle(
                         fontWeight: FontWeight.w800,
                         fontSize: 16,
@@ -385,7 +395,7 @@ class ReportDetailPage extends StatelessWidget {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      '$pct%  •  $attempts លើក',
+                                      _d('$pct%  •  $attempts') + 'times'.tr,
                                       style: const TextStyle(
                                         fontWeight: FontWeight.w800,
                                         fontSize: 13,
@@ -398,7 +408,7 @@ class ReportDetailPage extends StatelessWidget {
                                         value: accuracy,
                                         minHeight: 6,
                                         backgroundColor: Colors.black
-                                            .withValues( alpha: 0.06),
+                                            .withValues(alpha: 0.06),
                                       ),
                                     ),
                                   ],
@@ -479,7 +489,7 @@ class _MonthSwitcher extends StatelessWidget {
           const SizedBox(width: 6),
           Obx(
             () => Text(
-              label(),
+              NumberFormatUtils.digitsByLocale(label()),
               style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
             ),
           ),
@@ -653,7 +663,10 @@ class _WideCard extends StatelessWidget {
               ),
             ),
           ),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.w900)),
+          Text(
+            NumberFormatUtils.digitsByLocale(value),
+            style: const TextStyle(fontWeight: FontWeight.w900),
+          ),
         ],
       ),
     );
@@ -706,7 +719,7 @@ class _WeeklyAttemptsBarChart extends StatelessWidget {
               reservedSize: 32,
               interval: maxY <= 5 ? 1 : null,
               getTitlesWidget: (value, meta) => Text(
-                value.toInt().toString(),
+                NumberFormatUtils.digitsByLocale(value.toInt().toString()),
                 style: TextStyle(fontSize: 10, color: Colors.grey[700]),
               ),
             ),
@@ -720,7 +733,7 @@ class _WeeklyAttemptsBarChart extends StatelessWidget {
                 return Padding(
                   padding: const EdgeInsets.only(top: 6),
                   child: Text(
-                    'Week $w',
+                    NumberFormatUtils.digitsByLocale('${'week'.tr} $w'),
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
@@ -737,12 +750,15 @@ class _WeeklyAttemptsBarChart extends StatelessWidget {
           touchTooltipData: BarTouchTooltipData(
             getTooltipItem: (group, groupIndex, rod, rodIndex) {
               return BarTooltipItem(
-                'Week ${group.x}\n',
-                const TextStyle(
-                  fontWeight: FontWeight.w800,
-                  color: Colors.white,
-                ),
-                children: [TextSpan(text: '${rod.toY.toInt()} attempts')],
+                NumberFormatUtils.digitsByLocale('${'week'.tr} ${group.x}\n'),
+                TextStyle(fontWeight: FontWeight.w800, color: Colors.white),
+                children: [
+                  TextSpan(
+                    text: NumberFormatUtils.digitsByLocale(
+                      '${rod.toY.toInt()} ${'attempts'.tr}',
+                    ),
+                  ),
+                ],
               );
             },
           ),

@@ -4,8 +4,8 @@ import 'package:mobilepenpal/data/controllers/world/level_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/world_controller.dart';
 import 'package:mobilepenpal/data/models/world/world.dart';
 import 'package:mobilepenpal/presentation/widgets/loading_overly.dart';
-import 'package:mobilepenpal/presentation/widgets/world_header.dart';
-import 'package:mobilepenpal/presentation/widgets/world_map.dart';
+import 'package:mobilepenpal/presentation/widgets/world/world_header.dart';
+import 'package:mobilepenpal/presentation/widgets/world/world_map.dart';
 
 class WorldDetailPage extends StatelessWidget {
   const WorldDetailPage({super.key});
