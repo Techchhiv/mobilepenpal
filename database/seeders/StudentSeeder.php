@@ -11,8 +11,8 @@ class StudentSeeder extends Seeder
     public function run(): void
     {
         $studentData = [
-            'school_id' => 1,
-            'school_key' => 'GHS2024',
+            // 'school_id' => 1,
+            // 'school_key' => 'GHS2024',
             'first_name' => 'Julian',
             'last_name' => 'Thorne',
             'nickname' => 'Julian',
@@ -26,7 +26,7 @@ class StudentSeeder extends Seeder
             'password' => 'password123',
             'address' => 'Phnom Penh, Cambodia',
             'enrollment_year' => '2024',
-            'mode' => 'student',
+            // 'mode' => 'student',
             'is_active' => true,
         ];
 
@@ -39,8 +39,8 @@ class StudentSeeder extends Seeder
         }
 
         Student::create([
-            'school_id' => $studentData['school_id'],
-            'school_key' => $studentData['school_key'],
+            // 'school_id' => $studentData['school_id'],
+            // 'school_key' => $studentData['school_key'],
             'first_name' => $studentData['first_name'],
             'last_name' => $studentData['last_name'],
             'nickname' => $studentData['nickname'],
@@ -54,7 +54,7 @@ class StudentSeeder extends Seeder
             'password' => Hash::make($studentData['password']),
             'address' => $studentData['address'],
             'enrollment_year' => $studentData['enrollment_year'],
-            'mode' => $studentData['mode'],
+            // 'mode' => $studentData['mode'],
             'is_active' => $studentData['is_active'],
         ]);
     }

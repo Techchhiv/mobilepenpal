@@ -15,73 +15,18 @@ class RbacSeeder extends Seeder
     /** Guard used by Spatie Permission */
     private const GUARD = 'api';
 
-    /** Safe permissions a school-scoped (tenant) role may receive */
+    /**
+     * ✅ School-scoped (tenant) roles may ONLY receive these permissions.
+     * NOTE: Curriculum/world management is ADMIN-ONLY, so it is NOT included here.
+     */
     private array $schoolPermWhitelist = [
         'teachers.view','teachers.create','teachers.update','teachers.delete','teachers.enable_disable',
         'student.view','student.create','student.update','student.delete','student.enable_disable',
         'parents.view','parents.create','parents.update','parents.delete','parents.enable_disable','parents.create_children',
-        'children.view','children.create','children.update',
-        'enrollments.view','enrollments.create','enrollments.update','enrollments.disable',
-        'classrooms.view','classrooms.create','classrooms.update','classrooms.delete','classrooms.enable_disable',
-        'school.dashboard.view',
-    ];
-
-    /** Global permission catalog */
-    private array $allPermissions = [
-        // Console / Core mgmt
-        'console.view',
-        'users.manage', 'roles.manage', 'permissions.manage',
-        'manage_clients.manage', 'payments.manage', 'analytics.manage', 'reports.manage',
-
-        // Roles / Permissions CRUD
-        'roles.view','roles.create','roles.update','roles.delete','roles.enable_disable',
-        'permissions.view','permissions.create','permissions.update','permissions.delete','permissions.enable_disable',
-
-        // Clients
-        'manage_clients.view','manage_clients.create','manage_clients.update','manage_clients.delete','manage_clients.enable_disable',
-
-        // Payments
-        'payments.view','payments.create','payments.update','payments.delete','payments.enable_disable',
-
-        // Analytics
-        'analytics.view','analytics.create','analytics.update','analytics.delete','analytics.enable_disable',
-
-        // Reports
-        'reports.view','reports.create','reports.update','reports.delete','reports.enable_disable',
-
-        // Users
-        'users.view','users.create','users.update','users.delete','users.enable_disable',
-
-        // Orgs
-        'schools.view','schools.create','schools.update','schools.delete','schools.enable_disable',
-        'branches.view','branches.create','branches.update','branches.delete','branches.enable_disable',
-
-        // School admins
-        'school_admins.view','school_admins.create','school_admins.update','school_admins.delete','school_admins.enable_disable',
-        'school_admins.reassign_school','school_admins.reset_password',
-
-        // Dashboards / HQ
-        'support.dashboard.view','hq.summary.view',
-
-        // Teachers
-        'teachers.view','teachers.create','teachers.update','teachers.delete','teachers.enable_disable','teachers.assign_branch',
-
-        // Parents / Children
-        'parents.view','parents.create','parents.update','parents.delete','parents.enable_disable','parents.create_children',
         'children.view','children.create','children.update','children.delete',
-        'student.view','student.create','student.update','student.delete','student.enable_disable',
-
-        // Enrollments
         'enrollments.view','enrollments.create','enrollments.update','enrollments.disable',
-
-        // Classrooms
         'classrooms.view','classrooms.create','classrooms.update','classrooms.delete','classrooms.enable_disable',
-
-        // School dashboard
         'school.dashboard.view',
-
-        // Menus
-        'menu.manage_clients','menu.payments','menu.analytics','menu.reports',
     ];
 
     public function run(): void
@@ -90,7 +35,7 @@ class RbacSeeder extends Seeder
         app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
 
         // 1) Seed GLOBAL permissions
-        foreach ($this->allPermissions as $name) {
+        foreach ($this->allPermissions() as $name) {
             Permission::findOrCreate($name, self::GUARD);
         }
 
@@ -108,6 +53,88 @@ class RbacSeeder extends Seeder
         $this->command->info('✅ RBAC seeding completed.');
     }
 
+    /** Small helper to generate standard CRUD + enable/disable permissions */
+    private function crud(string $prefix): array
+    {
+        return [
+            "{$prefix}.view",
+            "{$prefix}.create",
+            "{$prefix}.update",
+            "{$prefix}.delete",
+            "{$prefix}.enable_disable",
+        ];
+    }
+
+    /** Global permission catalog (single source of truth) */
+    private function allPermissions(): array
+    {
+        $perms = [];
+
+        // Console / Core mgmt
+        $perms[] = 'console.view';
+        $perms = array_merge($perms, [
+            'users.manage', 'roles.manage', 'permissions.manage',
+            'manage_clients.manage', 'payments.manage', 'analytics.manage', 'reports.manage',
+        ]);
+
+        // CRUD resources
+        $perms = array_merge($perms, $this->crud('roles'));
+        $perms = array_merge($perms, $this->crud('permissions'));
+        $perms = array_merge($perms, $this->crud('manage_clients'));
+        $perms = array_merge($perms, $this->crud('payments'));
+        $perms = array_merge($perms, $this->crud('analytics'));
+        $perms = array_merge($perms, $this->crud('reports'));
+        $perms = array_merge($perms, $this->crud('users'));
+        $perms = array_merge($perms, $this->crud('schools'));
+        $perms = array_merge($perms, $this->crud('branches'));
+        $perms = array_merge($perms, $this->crud('school_admins'));
+        $perms = array_merge($perms, $this->crud('teachers'));
+        $perms = array_merge($perms, $this->crud('parents'));
+        $perms = array_merge($perms, $this->crud('children'));
+        $perms = array_merge($perms, $this->crud('student'));
+        $perms = array_merge($perms, $this->crud('classrooms'));
+
+        // Special-case (your existing schema)
+        $perms = array_merge($perms, [
+            'teachers.assign_branch',
+            'parents.create_children',
+
+            'enrollments.view','enrollments.create','enrollments.update','enrollments.disable',
+
+            'school_admins.reassign_school',
+            'school_admins.reset_password',
+
+            'support.dashboard.view',
+            'hq.summary.view',
+
+            'school.dashboard.view',
+        ]);
+
+        // ✅ Curriculum / World management (ADMIN-ONLY)
+        // (We seed these permissions globally, but DO NOT whitelist them for school roles.)
+        $perms = array_merge($perms, $this->crud('worlds'));
+        $perms = array_merge($perms, $this->crud('levels'));
+        $perms = array_merge($perms, $this->crud('stages'));
+        $perms = array_merge($perms, $this->crud('exercises'));
+        $perms = array_merge($perms, $this->crud('stage_exercises'));
+
+        // Menus
+        $perms = array_merge($perms, [
+            'menu.manage_clients',
+            'menu.payments',
+            'menu.analytics',
+            'menu.reports',
+            // Optional if your frontend wants it; safe to seed even if unused:
+            'menu.curriculum',
+        ]);
+
+        // unique & reindex
+        $perms = array_values(array_unique($perms));
+        sort($perms);
+
+        return $perms;
+    }
+
     /** Create/update a role and sync its permissions (by names or collection) */
     private function upsertRole(string $name, $permissions, ?int $schoolId = null): Role
     {
@@ -117,10 +144,10 @@ class RbacSeeder extends Seeder
             'school_id'  => $schoolId, // null = global
         ]);
 
-        // Accept either a Permission Collection or array of names
         if (is_array($permissions)) {
             $permissions = Permission::whereIn('name', $permissions)->get();
         }
+
         $role->syncPermissions($permissions);
         return $role;
     }
@@ -129,45 +156,52 @@ class RbacSeeder extends Seeder
     private function seedGlobalRoles(): void
     {
         $map = [
+            // ✅ Super Admin has everything (including curriculum/world management)
             'super-admin' => Permission::all(),
 
+            // NOTE: school-admin role exists globally here, but it does NOT receive curriculum perms.
+            // (So "school users" can't manage worlds/levels/stages/exercises.)
             'school-admin' => [
-                'teachers.view','teachers.create','teachers.update','teachers.delete','teachers.enable_disable',
-                'student.view','student.create','student.update','student.delete','student.enable_disable',
-                'parents.view','parents.create','parents.update','parents.delete','parents.enable_disable','parents.create_children',
-                'children.view','children.create','children.update',
+                ...$this->crud('teachers'),
+                ...$this->crud('student'),
+                ...$this->crud('parents'),
+                ...$this->crud('children'),
                 'enrollments.view','enrollments.create','enrollments.update','enrollments.disable',
-                'classrooms.view','classrooms.create','classrooms.update','classrooms.delete','classrooms.enable_disable',
+                ...$this->crud('classrooms'),
                 'school.dashboard.view',
+
+                // admin tools (as you had)
                 'users.manage','roles.manage','permissions.manage',
             ],
 
             'payment-manager' => [
-                'payments.view','payments.create','payments.update','payments.delete','payments.enable_disable','menu.payments'
+                ...$this->crud('payments'),
+                'menu.payments',
             ],
 
             'teacher' => [
-                'teachers.view','teachers.create','teachers.update','teachers.delete','teachers.enable_disable',
+                ...$this->crud('teachers'),
             ],
 
             'student' => [
-                'student.view','student.create','student.update','student.delete','student.enable_disable',
+                ...$this->crud('student'),
             ],
 
             'client-manager' => [
-                'manage_clients.view','manage_clients.create','manage_clients.update','manage_clients.delete','manage_clients.enable_disable','menu.manage_clients'
+                ...$this->crud('manage_clients'),
+                'menu.manage_clients',
             ],
 
             'user-manager' => [
                 'users.manage','roles.manage','permissions.manage',
-                'users.view','users.create','users.update','users.delete',
-                'roles.view','roles.create','roles.update','roles.delete',
-                'permissions.view','permissions.create','permissions.update','permissions.delete',
+                ...$this->crud('users'),
+                ...$this->crud('roles'),
+                ...$this->crud('permissions'),
             ],
 
-            // Optional global: enrollments-manager
             'enrollments-manager' => [
-                'enrollments.view','enrollments.create','enrollments.update','enrollments.disable','school.dashboard.view',
+                'enrollments.view','enrollments.create','enrollments.update','enrollments.disable',
+                'school.dashboard.view',
             ],
         ];
 
@@ -203,6 +237,7 @@ class RbacSeeder extends Seeder
             return;
         }
 
+        // Tenant role blueprints (MUST be whitelisted by $schoolPermWhitelist)
         $blueprints = [
             'teacher-manager' => [
                 'teachers.view','teachers.create','teachers.update','teachers.delete','teachers.enable_disable',
@@ -211,8 +246,7 @@ class RbacSeeder extends Seeder
             ],
             'student-manager' => [
                 'student.view','student.create','student.update','student.delete','student.enable_disable',
-                // 'parents.view','parents.create','parents.update','parents.delete','parents.enable_disable','parents.create_children',
-                'children.view','children.create','children.update',
+                'children.view','children.create','children.update','children.delete',
                 'enrollments.view','enrollments.create','enrollments.update','enrollments.disable',
                 'school.dashboard.view',
             ],

@@ -27,4 +27,9 @@ class Exercise extends Model
     {
         return $this->hasMany(StudentExerciseAttempt::class);
     }
+
+    public function stageExercises()
+    {
+        return $this->hasMany(StageExercise::class);
+    }
 }

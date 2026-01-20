@@ -16,10 +16,16 @@ class Stage extends Model
         return $this->belongsTo(Level::class);
     }
 
+    public function stageExercises()
+    {
+        return $this->hasMany(StageExercise::class, 'stage_id');
+    }
+
     public function exercises()
     {
-        return $this->belongsToMany(Exercise::class, StageExercise::class)
-            ->withPivot(['order_index', 'repeat_count'])
+        return $this->belongsToMany(Exercise::class, 'stage_exercises')
+            ->withPivot(['order_index', 'repeat_count', 'is_active'])
+            ->wherePivot('is_active', true)
             ->orderBy('stage_exercises.order_index');
     }
 

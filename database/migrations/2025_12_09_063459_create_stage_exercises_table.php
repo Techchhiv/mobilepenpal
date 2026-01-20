@@ -18,9 +18,12 @@ return new class extends Migration
             $table->foreignId('stage_id')->constrained('stages');
             $table->foreignId('exercise_id')->constrained('exercises');
 
+            $table->boolean('is_active')->default(true);
             $table->integer('order_index')->default(1);
             $table->integer('repeat_count')->default(3);
 
+            $table->unique(['stage_id', 'exercise_id']);
+            $table->index(['stage_id', 'is_active', 'order_index']);
             $table->timestamps();
         });
     }

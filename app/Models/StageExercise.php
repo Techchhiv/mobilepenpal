@@ -10,4 +10,14 @@ class StageExercise extends Model
     use HasFactory;
 
     protected $guarded = [];
+
+    public function exercise()
+    {
+        return $this->belongsTo(Exercise::class);
+    }
+
+    public function stage()
+    {
+        return $this->belongsTo(Stage::class);
+    }
 }

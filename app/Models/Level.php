@@ -15,6 +15,12 @@ class Level extends Model
         'is_completed' => 'boolean',
         'is_unlocked' => 'boolean',
     ];
+    public function activeStages()
+    {
+        return $this->hasMany(Stage::class)
+            ->where('is_active', true)
+            ->orderBy('order_index');
+    }
 
     public function world()
     {

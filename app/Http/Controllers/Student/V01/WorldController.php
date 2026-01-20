@@ -28,16 +28,23 @@ class WorldController extends Controller
     public function index()
     {
         $progressService = new StudentProgress();
-
         $progressService->unlockWorldForStudent(Auth::id());
 
-        $worlds = World::withCount([
-            'levels',
-            'studentLevelProgress as completed_levels_count' => function ($query) {
-                $query->where('is_completed', true);
-            }
-        ])->with('studentProgress')
+        $worlds = World::query()
             ->where('is_active', true)
+            ->with('studentProgress')
+            ->withCount([
+                'levels as levels_count' => function ($q) {
+                    $q->where('is_active', true);
+                },
+
+                'studentLevelProgress as completed_levels_count' => function ($q) {
+                    $q->where('is_completed', true)
+                        ->whereHas('level', function ($levelQ) {
+                            $levelQ->where('is_active', true);
+                        });
+                },
+            ])
             ->orderBy('order_index')
             ->get();
 
@@ -45,39 +52,64 @@ class WorldController extends Controller
         return $this->returnResponse();
     }
 
+
     public function showWorld($id): JsonResponse
     {
-        $world = World::with("levels")->find($id);
+        $world = World::query()
+            ->where('is_active', true)
+            ->with([
+                'levels' => function ($q) {
+                    $q->where('is_active', true)
+                        ->orderBy('order_index');
+                },
+            ])
+            ->find($id);
 
         if (!$world) {
             return $this->returnError('World not found', 404);
         }
 
         $this->setResult('world', new WorldWithLevelResource($world));
-
         return $this->returnResponse();
     }
+
 
     public function showLevel($levelId): JsonResponse
     {
         $studentId = auth()->id();
 
-        $level = Level::with(['stages.studentProgress' => function ($query) use ($studentId) {
-            $query->where('student_id', $studentId);
-        }])->find($levelId);
+        $level = Level::query()
+            ->where('is_active', true)
+            ->with([
+                'stages' => function ($q) {
+                    $q->where('is_active', true)
+                        ->orderBy('order_index');
+                },
+
+                'stages.studentProgress' => function ($q) use ($studentId) {
+                    $q->where('student_id', $studentId);
+                },
+            ])
+            ->find($levelId);
 
         if (!$level) {
             return $this->returnError('Level not found', 404);
         }
 
         $this->setResult('level', new LevelWithStageResource($level));
-
         return $this->returnResponse();
     }
 
     public function showStage($stageId): JsonResponse
     {
-        $stage = Stage::with('exercises')->find($stageId);
+        $stage = Stage::query()
+            ->where('is_active', true)
+            ->whereHas('level', function ($q) {
+                $q->where('is_active', true)
+                    ->whereHas('world', fn($w) => $w->where('is_active', true));
+            })
+            ->with('exercises')
+            ->find($stageId);
 
         if (!$stage) {
             return $this->returnError('Stage not found', 404);
@@ -96,26 +128,37 @@ class WorldController extends Controller
             return $this->returnError('No attempts provided', 400);
         }
 
+        $stageId = (int) $request->input('stage_id', 0);
+        if ($stageId <= 0) {
+            return $this->returnError('Missing stage_id', 422);
+        }
+
         $durationSeconds = (int) $request->input('duration_seconds', 0);
 
         $summary = [];
         $progressService = new StudentProgress();
-        Log::info('Submitting exercise batch', [
-            'student_id' => $studentId,
-            'attempts_count' => $attempts,
-            'duration_seconds' => $durationSeconds,
-        ]);
-        DB::transaction(function () use ($studentId, $attempts, $progressService, $durationSeconds, &$summary) {
-            $firstAttempt = collect($attempts)->first();
 
+        DB::transaction(function () use ($studentId, $attempts, $progressService, $durationSeconds, $stageId, &$summary) {
+            $firstAttempt = collect($attempts)->first();
             if (!is_array($firstAttempt) || !isset($firstAttempt['exercise_id'])) {
                 throw new \InvalidArgumentException('Invalid attempts payload: missing exercise_id');
             }
 
-            $exerciseId = $firstAttempt['exercise_id'];
+            $exerciseIds = collect($attempts)
+                ->pluck('exercise_id')
+                ->map(fn($v) => (int) $v)
+                ->unique()
+                ->values();
 
-            $stageId = StageExercise::where('exercise_id', $exerciseId)
-                ->value('stage_id');
+            $mappedCount = StageExercise::query()
+                ->where('stage_id', $stageId)
+                ->where('is_active', true)
+                ->whereIn('exercise_id', $exerciseIds)
+                ->count();
+
+            if ($mappedCount !== $exerciseIds->count()) {
+                throw new \InvalidArgumentException('One or more exercises do not belong to this stage');
+            }
 
             $totalExercises = 0;
             $correctAttempts = 0;
@@ -123,9 +166,9 @@ class WorldController extends Controller
             foreach ($attempts as $attempt) {
                 StudentExerciseAttempt::create([
                     'student_id' => $studentId,
-                    'exercise_id' => $attempt['exercise_id'],
+                    'exercise_id' => (int) $attempt['exercise_id'],
                     'user_answer' => $attempt['user_answer'] ?? null,
-                    'is_correct' => $attempt['is_correct'],
+                    'is_correct' => !empty($attempt['is_correct']),
                     'stroke' => $attempt['stroke'] ?? null,
                     'label' => $attempt['label'] ?? null,
                 ]);
@@ -136,7 +179,7 @@ class WorldController extends Controller
                 }
             }
 
-            if ($durationSeconds > 0 && $stageId) {
+            if ($durationSeconds > 0) {
                 StudentSession::create([
                     'student_id'       => $studentId,
                     'stage_id'         => $stageId,
@@ -161,17 +204,16 @@ class WorldController extends Controller
                 'stage_id'         => $stageId,
             ];
 
-            $progressResult  = $progressService->updateStageProgress($studentId, $stageId, $results);
+            $progressResult = $progressService->updateStageProgress($studentId, $stageId, $results);
 
             $summary = [
-                'stars_earned'     => $progressResult['stars_earned'],
-                'correct_answers'  => $progressResult['correct_attempts'],
-                'total_questions'  => $progressResult['total_exercises'],
+                'stars_earned'     => $progressResult['stars_earned'] ?? 0,
+                'correct_answers'  => $progressResult['correct_attempts'] ?? 0,
+                'total_questions'  => $progressResult['total_exercises'] ?? 0,
                 'is_new_best'      => $progressResult['is_new_best'] ?? false,
                 'next_stage_id'    => $progressResult['next_stage_id'] ?? null,
             ];
         });
-
 
         $this->setResult('summary', $summary);
         return $this->returnResponse();

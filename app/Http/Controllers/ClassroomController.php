@@ -27,7 +27,7 @@ class ClassroomController extends Controller
 
         $query = Classroom::query()
             ->where('school_id', $user->school_id)
-            ->with(['teacher']) // keep teacher info
+            ->with(['teacher'])
             ->withCount([
                 'enrollments as students_count' => function ($q) {
                     $q->where('status', 'enrolled');
@@ -239,9 +239,6 @@ class ClassroomController extends Controller
             return [$usedFrom, $usedTo];
         };
 
-        // ✅ Accept both:
-        // - frontend: day/week/month
-        // - legacy/mobile: daily/weekly/monthly
         $rawType = strtolower((string) $request->query('type', 'week'));
         $type = match ($rawType) {
             'daily', 'day'     => 'day',
@@ -255,7 +252,6 @@ class ClassroomController extends Controller
         $to    = $request->query('to');
         $month = $request->query('month');
 
-        // ✅ Global summaries for now
         $classroomId = null;
 
         $summary = null;
@@ -312,7 +308,6 @@ class ClassroomController extends Controller
                     'message' => 'No data in this month within enrollment period.',
                 ];
             } else {
-                // ✅ monthly summary
                 $summary = StudentSummary::getMonthlySummary($student->id, $monthStr);
             }
 
@@ -325,7 +320,6 @@ class ClassroomController extends Controller
                 'used_to'         => $usedTo?->toDateString(),
             ];
         } else {
-            // week
             $reqTo = $to ? Carbon::parse($to)->endOfDay() : now()->endOfDay();
             $reqFrom = $from
                 ? Carbon::parse($from)->startOfDay()

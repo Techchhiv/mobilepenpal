@@ -21,7 +21,7 @@ class Student extends Authenticatable
 
      protected $casts = [
         // 'date_of_birth' => 'date',
-        'enrollment_year' => 'date',
+        'enrollment_year' => 'integer',
     ];
 
     public function levelProgress()

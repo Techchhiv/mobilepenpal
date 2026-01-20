@@ -92,7 +92,7 @@ class StudentExerciseAttemptSeeder extends Seeder
                 'student_id'  => $studentId,
                 'exercise_id' => $exerciseId,
                 'user_answer' => null,
-                'stroke'      => null, // or json_encode([])
+                'stroke'      => null,
                 'label'       => null,
                 'is_correct'  => false,
                 'created_at'  => $now,

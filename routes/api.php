@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Admin\V01\LevelController;
+use App\Http\Controllers\Admin\V01\WorldController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\{
     AuthController,
@@ -18,6 +20,9 @@ use App\Http\Controllers\{
     SubscriptionController,
     TeacherController
 };
+use App\Http\Controllers\Admin\V01\ExerciseController;
+use App\Http\Controllers\Admin\V01\StageController;
+use App\Http\Controllers\Admin\V01\StageExerciseController;
 
 /* -------------------------------
    Public Routes
@@ -66,8 +71,60 @@ Route::middleware('auth:api')->group(function () {
             Route::apiResource('roles', AdminRoleController::class)->only(['index', 'store', 'update', 'destroy']);
             Route::apiResource('permissions', AdminPermissionController::class)->only(['index', 'store', 'update', 'destroy']);
         });
-    });
 
+        Route::prefix('worlds')->group(function () {
+            Route::get('', [WorldController::class, 'index']);
+            Route::post('', [WorldController::class, 'store']);
+            Route::get('/{id}', [WorldController::class, 'show']);
+            Route::put('/{id}', [WorldController::class, 'update']);
+            Route::put('/{id}/toggle', [WorldController::class, 'toggle']);
+            Route::put('/{id}/reorder', [WorldController::class, 'reorder']);
+            Route::post('/{id}/unlock-student', [WorldController::class, 'unlockForStudent']);
+
+            Route::get('{worldId}/levels', [LevelController::class, 'index']);
+            Route::post('{worldId}/levels', [LevelController::class, 'store']);
+        });
+
+        Route::prefix('levels')->group(function () {
+            Route::get('', [LevelController::class, 'indexGlobal']);
+            Route::post('', [LevelController::class, 'storeGlobal']);
+
+            Route::get('/{id}', [LevelController::class, 'show']);
+            Route::put('/{id}', [LevelController::class, 'update']);
+            Route::put('/{id}/toggle', [LevelController::class, 'toggle']);
+            Route::put('/{id}/reorder', [LevelController::class, 'reorder']);
+
+            Route::get('/{levelId}/stages', [StageController::class, 'index']);
+            Route::post('/{levelId}/stages', [StageController::class, 'store']);
+        });
+
+        Route::prefix('stages')->group(function () {
+            Route::get('', [StageController::class, 'indexGlobal']);
+            Route::post('', [StageController::class, 'storeGlobal']);
+
+            Route::get('/{id}', [StageController::class, 'show']);
+            Route::put('/{id}', [StageController::class, 'update']);
+            Route::put('/{id}/toggle', [StageController::class, 'toggle']);
+            Route::put('/{id}/reorder', [StageController::class, 'reorder']);
+
+            Route::get('/{stageId}/exercises', [StageExerciseController::class, 'index']);
+            Route::post('/{stageId}/exercises', [StageExerciseController::class, 'store']);
+        });
+
+        Route::prefix('exercises')->group(function () {
+            Route::get('', [ExerciseController::class, 'index']);
+            Route::post('', [ExerciseController::class, 'store']);
+            Route::get('/{id}', [ExerciseController::class, 'show']);
+            Route::put('/{id}', [ExerciseController::class, 'update']);
+        });
+
+        Route::prefix('stage-exercises')->group(function () {
+            Route::get('/{id}', [StageExerciseController::class, 'show']);
+            Route::put('/{id}', [StageExerciseController::class, 'update']);
+            Route::put('/{id}/toggle', [StageExerciseController::class, 'toggle']);
+            Route::put('/{id}/reorder', [StageExerciseController::class, 'reorder']);
+        });
+    });
 
 
     Route::prefix('school')->middleware('auth:api')->group(function () {

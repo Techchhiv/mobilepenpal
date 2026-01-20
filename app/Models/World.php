@@ -11,6 +11,13 @@ class World extends Model
 
     protected $guarded = [];
 
+    public function activeLevels()
+    {
+        return $this->hasMany(Level::class)
+            ->where('is_active', true)
+            ->orderBy('order_index');
+    }
+
     public function levels()
     {
 

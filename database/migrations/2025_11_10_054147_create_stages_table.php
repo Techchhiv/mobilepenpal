@@ -17,6 +17,9 @@ return new class extends Migration
             $table->id();
             $table->foreignId('level_id')->constrained()->onDelete('cascade');
 
+            $table->boolean('is_unlocked_by_default')->default(false);
+            $table->boolean('is_active')->default(true);
+
             $table->string('name');
             $table->text('instruction')->nullable();
             $table->text('description')->nullable();
