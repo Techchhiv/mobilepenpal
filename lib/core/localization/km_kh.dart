@@ -58,6 +58,7 @@ final Map<String, String> kmKH = {
   'are_you_sure_you_want_to_logout': 'តើអ្នកប្រាកដថាចង់ចាកចេញពីគណនីរបស់អ្នកទេ?',
   'dont_have_account': 'មិនមានគណនី?',
   'already_have_account': 'មានគណនីរួចហើយ?',
+  'account_created_successfully': 'បានបង្កើតគណនីដោយជោគជ័យ',
   'confirm_password': 'បញ្ជាក់ពាក្យសម្ងាត់',
   'reset_password': 'កំណត់ពាក្យសម្ងាត់ឡើងវិញ',
   'change_password': 'ផ្លាស់ប្តូរពាក្យសម្ងាត់',

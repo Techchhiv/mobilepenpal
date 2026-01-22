@@ -58,6 +58,7 @@ final Map<String, String> enUS = {
   'are_you_sure_you_want_to_logout': 'Are you sure you want to logout?',
   'dont_have_account': "Don't have an account?",
   'already_have_account': 'Already have an account?',
+  'account_created_successfully': 'Account created successfully',
   'confirm_password': 'Confirm Password',
   'reset_password': 'Reset Password',
   'change_password': 'Change Password',

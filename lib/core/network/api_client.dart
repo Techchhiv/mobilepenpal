@@ -46,7 +46,7 @@ class ApiClient {
           return handler.next(response);
         },
         onError: (DioException e, handler) async {
-          if (e.response?.statusCode == 401) {
+          if (e.response?.statusCode == 403) {
             await _secureStorage.delete(key: Env.accessToken);
             await _box.write('has_token', false);
             await _box.write('is_logged_in', false);
