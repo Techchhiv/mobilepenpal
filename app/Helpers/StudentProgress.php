@@ -550,7 +550,7 @@ class StudentProgress
                 ->first();
 
             if ($firstStage) {
-                $this->ensureStageUnlocked($studentId, (int)$stage->id);
+                $this->ensureStageUnlocked($studentId, (int)$firstStage->id);
             }
         }
     }

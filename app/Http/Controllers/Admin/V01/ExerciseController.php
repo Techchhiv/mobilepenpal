@@ -15,7 +15,7 @@ class ExerciseController extends Controller
         $perPage = max(1, min($perPage, 200));
 
         $q = Exercise::query()
-            ->orderByDesc('id')
+            ->orderBy('id')
             ->withCount([
                 'stageExercises as used_count',
             ]);
