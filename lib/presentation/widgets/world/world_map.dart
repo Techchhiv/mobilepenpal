@@ -1,4 +1,4 @@
-import 'dart:ui';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobilepenpal/core/network/route_builder.dart';
@@ -17,53 +17,74 @@ class WorldMap extends StatefulWidget {
 }
 
 class _WorldMapState extends State<WorldMap> {
-  late ScrollController _scrollController;
+  late final ScrollController _scrollController;
 
-  static const double _originalMapWidth = 440.0;
-  static const double _originalMapHeight = 1325.0;
+  static const double _tileOriginalWidth = 440.0;
+  static const double _tileOriginalHeight = 1325.0;
 
-  final List<Map<String, double>> _levelPositions = [
-    {'x': 269, 'y': 1266},
-    {'x': 199, 'y': 1164},
-    {'x': 134, 'y': 1048},
-    {'x': 83, 'y': 921},
-    {'x': 144, 'y': 812},
-    {'x': 263, 'y': 787},
-    {'x': 360, 'y': 728},
-    {'x': 273, 'y': 647},
-    {'x': 187, 'y': 594},
-    {'x': 284, 'y': 499},
+  static const List<String> _bgTiles = [
+    "assets/images/backgrounds/map_background.png",
+    // "assets/images/backgrounds/map_background_2.png",
+    // "assets/images/backgrounds/map_background_3.png",
+    // "assets/images/backgrounds/map_background_4.png",
+    // "assets/images/backgrounds/map_background_5.png",
   ];
+
+  /// Ensure user can scroll even if few levels.
+  static const int _minTiles = 1;
+
+  /// Distance between each level center
+  static const double _levelSpacingDesign = 240.0;
+
+  /// How far Level 1 center is from the very bottom of the scroll content.
+  static const double _bottomInsetDesign = 150.0;
+
+  /// Extra padding at the very top so last level isn't glued to edge.
+  static const double _topInsetDesign = 260.0;
+
+  /// LevelCircle size approximation for centering.
+  static const double _bubbleSize = 72.0;
 
   @override
   void initState() {
     super.initState();
     _scrollController = ScrollController();
-    _scrollController.addListener(() {
-      setState(() {});
-    });
-    _scrollToCurrentLevel();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToCurrentLevel());
   }
 
-  void _scrollToCurrentLevel() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!_scrollController.hasClients) return;
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
-      final levels = widget.world.levels;
-      final targetIndex = _findCurrentLevelIndex(levels);
 
-      final screenWidth = MediaQuery.of(context).size.width;
-      final scaleFactor = screenWidth / _originalMapWidth;
+  double _scaleFactor(double screenWidth) => screenWidth / _tileOriginalWidth;
+  double _tileHeight(double screenWidth) =>
+      _tileOriginalHeight * _scaleFactor(screenWidth);
 
-      final targetY = _levelPositions[targetIndex]['y']! * scaleFactor;
-      final targetPosition = targetY - (MediaQuery.of(context).size.height / 2);
+  double _scaled(double designValue, double screenWidth) =>
+      designValue * _scaleFactor(screenWidth);
 
-      _scrollController.animateTo(
-        targetPosition.clamp(0.0, _scrollController.position.maxScrollExtent),
-        duration: const Duration(milliseconds: 900),
-        curve: Curves.easeInOut,
-      );
-    });
+  double _requiredContentHeight({
+    required int levelCount,
+    required double screenWidth,
+  }) {
+    final tileH = _tileHeight(screenWidth);
+    if (levelCount <= 0) return tileH;
+
+    final spacing = _scaled(_levelSpacingDesign, screenWidth);
+    final bottomInset = _scaled(_bottomInsetDesign, screenWidth);
+    final topInset = _scaled(_topInsetDesign, screenWidth);
+
+    return bottomInset + topInset + (levelCount - 1) * spacing;
+  }
+
+  int _tileCountForHeight({
+    required double contentHeight,
+    required double tileHeight,
+  }) {
+    return max(_minTiles, (contentHeight / tileHeight).ceil());
   }
 
   int _findCurrentLevelIndex(List<WorldLevel> levels) {
@@ -75,6 +96,54 @@ class _WorldMapState extends State<WorldMap> {
       if (isUnlocked && !isCompleted) return i;
     }
     return levels.isEmpty ? 0 : levels.length - 1;
+  }
+
+  double _levelCenterY({
+    required int levelIndex,
+    required double contentHeight,
+    required double bottomInset,
+    required double spacing,
+  }) {
+    return contentHeight - bottomInset - (levelIndex * spacing);
+  }
+
+  void _scrollToCurrentLevel() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_scrollController.hasClients) return;
+
+      final levels = widget.world.levels;
+      if (levels.isEmpty) return;
+
+      final screenW = MediaQuery.of(context).size.width;
+      final tileH = _tileHeight(screenW);
+
+      final neededH =
+          _requiredContentHeight(levelCount: levels.length, screenWidth: screenW);
+      final tileCount = _tileCountForHeight(contentHeight: neededH, tileHeight: tileH);
+
+      final contentH = tileCount * tileH;
+
+      final spacing = _scaled(_levelSpacingDesign, screenW);
+      final bottomInset = _scaled(_bottomInsetDesign, screenW);
+
+      final idx = _findCurrentLevelIndex(levels);
+      final targetY = _levelCenterY(
+        levelIndex: idx,
+        contentHeight: contentH,
+        bottomInset: bottomInset,
+        spacing: spacing,
+      );
+
+      final viewportH = MediaQuery.of(context).size.height;
+      final targetOffset = (targetY - viewportH * 0.55)
+          .clamp(0.0, _scrollController.position.maxScrollExtent);
+
+      _scrollController.animateTo(
+        targetOffset,
+        duration: const Duration(milliseconds: 900),
+        curve: Curves.easeInOut,
+      );
+    });
   }
 
   Future<void> _onLevelTap(WorldLevel level) async {
@@ -101,6 +170,7 @@ class _WorldMapState extends State<WorldMap> {
       'worldId': widget.world.id.toString(),
       'levelId': level.id.toString(),
     });
+
     await Future.delayed(Duration.zero);
     Get.toNamed(route);
   }
@@ -116,124 +186,111 @@ class _WorldMapState extends State<WorldMap> {
   }
 
   @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final scaleFactor = screenWidth / _originalMapWidth;
-    final scaledMapHeight = _originalMapHeight * scaleFactor;
-
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Colors.blue.shade100, Colors.green.shade100],
-        ),
-      ),
-      child: SingleChildScrollView(
-        controller: _scrollController,
-        physics: const ClampingScrollPhysics(),
-        child: SizedBox(
-          width: screenWidth,
-          height: scaledMapHeight,
-          child: Stack(
-            children: [
-              _buildMapBackground(scaledMapHeight, screenWidth),
-              _buildLevels(scaleFactor),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMapBackground(double height, double width) {
-    return Image.asset(
-      "assets/images/backgrounds/map_background.png",
-      width: width,
-      height: height,
-      fit: BoxFit.fitWidth,
-      errorBuilder: (_, __, ___) {
-        return Container(
-          color: Colors.grey[200],
-          child: const Icon(Icons.landscape, size: 120, color: Colors.grey),
-        );
-      },
-    );
-  }
-
-  Widget _buildLevels(double scaleFactor) {
     final levels = widget.world.levels;
-    final currentIdx = _findCurrentLevelIndex(levels);
 
-    const double baseSize = 74.0;
-    const double halfSize = baseSize / 2;
+    final screenW = MediaQuery.of(context).size.width;
+    final tileH = _tileHeight(screenW);
 
-    final double scrollOffset = _scrollController.hasClients
-        ? _scrollController.offset
-        : 0.0;
+    final neededH =
+        _requiredContentHeight(levelCount: levels.length, screenWidth: screenW);
+    final tileCount = _tileCountForHeight(contentHeight: neededH, tileHeight: tileH);
 
-    final double viewportH = MediaQuery.of(context).size.height;
+    final contentH = tileCount * tileH;
 
-    final double maxScroll = _scrollController.hasClients
-        ? _scrollController.position.maxScrollExtent
-        : 0.0;
+    return SingleChildScrollView(
+      controller: _scrollController,
+      physics: const ClampingScrollPhysics(),
+      child: SizedBox(
+        width: screenW,
+        height: contentH,
+        child: Stack(
+          children: [
+            _buildTiledBackground(
+              width: screenW,
+              tileHeight: tileH,
+              tileCount: tileCount,
+            ),
+            _buildLevelsContinuous(
+              levels: levels,
+              width: screenW,
+              contentHeight: contentH,
+              screenWidth: screenW,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
-    final double t = maxScroll <= 0
-        ? 0.0
-        : (scrollOffset / maxScroll).clamp(0.0, 1.0);
-
-    final double focusFrac = lerpDouble(0.35, 1, t)!;
-    final double focusY = viewportH * focusFrac;
-
-    const double minScale = 0.4;
-    const double maxScale = 1.00;
-    final double falloff = viewportH * 0.75;
-
+  Widget _buildTiledBackground({
+    required double width,
+    required double tileHeight,
+    required int tileCount,
+  }) {
     return Stack(
-      children: [
-        for (int i = 0; i < levels.length && i < _levelPositions.length; i++)
-          Builder(
-            builder: (context) {
-              final double rawX = _levelPositions[i]['x']! * scaleFactor;
-              final double rawY = _levelPositions[i]['y']! * scaleFactor;
+      children: List.generate(tileCount, (i) {
+        final asset = _bgTiles.isEmpty ? null : _bgTiles[i % _bgTiles.length];
 
-              final double yInView = rawY - scrollOffset;
-
-              final double d = (yInView - focusY).abs();
-
-              final double n = (d / falloff).clamp(0.0, 1.0);
-
-              final double eased =
-                  n * n;
-
-              final double perspectiveScale =
-                  (maxScale - (maxScale - minScale) * eased).clamp(
-                    minScale,
-                    maxScale,
-                  );
-
-              return Positioned(
-                left: rawX - halfSize,
-                top: rawY - halfSize,
-                child: Transform.scale(
-                  scale: perspectiveScale,
-                  alignment: Alignment.center,
-                  child: LevelCircle(
-                    level: levels[i],
-                    isCurrent: i == currentIdx,
-                    onTap: _onLevelTap,
+        return Positioned(
+          left: 0,
+          right: 0,
+          top: i * tileHeight,
+          height: tileHeight,
+          child: asset == null
+              ? Container(color: Colors.grey.shade200)
+              : Image.asset(
+                  asset,
+                  width: width,
+                  height: tileHeight,
+                  fit: BoxFit.fitWidth,
+                  errorBuilder: (_, __, ___) => Container(
+                    color: Colors.grey.shade200,
+                    child: const Center(
+                      child: Icon(Icons.landscape, size: 120, color: Colors.grey),
+                    ),
                   ),
                 ),
-              );
-            },
+        );
+      }),
+    );
+  }
+
+  Widget _buildLevelsContinuous({
+    required List<WorldLevel> levels,
+    required double width,
+    required double contentHeight,
+    required double screenWidth,
+  }) {
+    if (levels.isEmpty) return const SizedBox();
+
+    final currentIdx = _findCurrentLevelIndex(levels);
+
+    final spacing = _scaled(_levelSpacingDesign, screenWidth);
+    final bottomInset = _scaled(_bottomInsetDesign, screenWidth);
+
+    final centerX = width * 0.5;
+    final left = centerX - (_bubbleSize / 2);
+
+    return Stack(
+      children: List.generate(levels.length, (i) {
+        final y = _levelCenterY(
+          levelIndex: i,
+          contentHeight: contentHeight,
+          bottomInset: bottomInset,
+          spacing: spacing,
+        );
+
+        return Positioned(
+          left: left,
+          top: y - (_bubbleSize / 2),
+          child: LevelCircle(
+            level: levels[i],
+            isCurrent: i == currentIdx,
+            onTap: _onLevelTap,
           ),
-      ],
+        );
+      }),
     );
   }
 }
@@ -253,10 +310,7 @@ class LevelCircle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isUnlocked = level.isUnlocked == 1 || level.isUnlocked == true;
-    final double progress = (level.completionPercentage / 100.0).clamp(
-      0.0,
-      1.0,
-    );
+    final double progress = (level.completionPercentage / 100.0).clamp(0.0, 1.0);
     final bool isCompleted = progress >= 1.0;
 
     const double ring = 72;
@@ -280,9 +334,7 @@ class LevelCircle extends StatelessWidget {
               isUnlocked: isUnlocked,
             ),
           ),
-
           if (isCurrent && isUnlocked) _CleanHalo(size: halo),
-
           SizedBox(
             width: ring,
             height: ring,
@@ -293,7 +345,6 @@ class LevelCircle extends StatelessWidget {
               valueColor: AlwaysStoppedAnimation<Color>(progressColor),
             ),
           ),
-
           Material(
             color: Colors.transparent,
             shape: const CircleBorder(),
@@ -323,29 +374,19 @@ class LevelCircle extends StatelessWidget {
                               ),
                             ),
                             if (isCurrent && !isCompleted)
-                              Icon(
-                                Icons.play_arrow_rounded,
-                                size: 18,
-                                color: Colors.green.shade600,
-                              )
+                              Icon(Icons.play_arrow_rounded,
+                                  size: 18, color: Colors.green.shade600)
                             else if (isCompleted)
-                              Icon(
-                                Icons.star,
-                                size: 16,
-                                color: Colors.orange.shade600,
-                              ),
+                              Icon(Icons.star,
+                                  size: 16, color: Colors.orange.shade600),
                           ],
                         )
-                      : const Icon(
-                          Icons.lock_rounded,
-                          color: Colors.white,
-                          size: 22,
-                        ),
+                      : const Icon(Icons.lock_rounded,
+                          color: Colors.white, size: 22),
                 ),
               ),
             ),
           ),
-
           if (isCompleted)
             Positioned(
               right: 2,
@@ -416,9 +457,8 @@ class _FloatingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bg = Colors.white;
-    final borderColor = isCurrent
-        ? Colors.yellow.shade700
-        : Colors.black.withValues(alpha: 0.10);
+    final borderColor =
+        isCurrent ? Colors.yellow.shade700 : Colors.black.withValues(alpha: 0.10);
 
     final fg = isUnlocked ? Colors.black : Colors.black.withValues(alpha: 0.65);
 
