@@ -11,6 +11,7 @@ import 'package:mobilepenpal/data/models/student/student.dart';
 import 'package:mobilepenpal/data/models/student/student_progress.dart';
 import 'package:mobilepenpal/data/services/home_service.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:mobilepenpal/presentation/widgets/app_snackbar.dart';
 import 'package:mobilepenpal/presentation/widgets/home/pin_entry_widget.dart';
 
 enum SummaryView { daily, weekly }
@@ -91,11 +92,10 @@ class HomeController extends GetxController {
           progress: response.data!.progress,
         );
       } else {
-        Get.snackbar(
-          'Error',
+        AppSnackbar.show(
+          title: 'error'.tr,
           response.message,
           backgroundColor: Colors.red,
-          colorText: Colors.white,
         );
       }
     } finally {
@@ -113,19 +113,17 @@ class HomeController extends GetxController {
       if (res.code == 200 && res.data != null) {
         dailySummary.value = res.data!;
       } else {
-        Get.snackbar(
-          'Error',
+        AppSnackbar.show(
+          title: 'error'.tr,
           res.message,
           backgroundColor: Colors.red,
-          colorText: Colors.white,
         );
       }
     } catch (e) {
-      Get.snackbar(
-        'Error',
+      AppSnackbar.show(
+        title: 'error'.tr,
         e.toString(),
         backgroundColor: Colors.red,
-        colorText: Colors.white,
       );
     } finally {
       isSummaryLoading.value = false;
@@ -144,11 +142,10 @@ class HomeController extends GetxController {
       if (res.code == 200 && res.data != null) {
         weeklySummary.value = res.data!;
       } else {
-        Get.snackbar(
-          'Error',
+        AppSnackbar.show(
+          title: 'error'.tr,
           res.message,
           backgroundColor: Colors.red,
-          colorText: Colors.white,
         );
       }
     } finally {
@@ -172,19 +169,17 @@ class HomeController extends GetxController {
           selectedMonth.value = res.data!.month;
         }
       } else {
-        Get.snackbar(
-          'Error',
+        AppSnackbar.show(
+          title: 'error'.tr,
           res.message,
           backgroundColor: Colors.red,
-          colorText: Colors.white,
         );
       }
     } catch (e) {
-      Get.snackbar(
-        'Error',
+      AppSnackbar.show(
+        title: 'error'.tr,
         e.toString(),
         backgroundColor: Colors.red,
-        colorText: Colors.white,
       );
     } finally {
       isMonthlyLoading.value = false;
@@ -205,11 +200,10 @@ class HomeController extends GetxController {
         currentClassroom.value = null;
       }
     } catch (e) {
-      Get.snackbar(
-        'Error',
+      AppSnackbar.show(
+        title: 'error'.tr,
         e.toString(),
         backgroundColor: Colors.red,
-        colorText: Colors.white,
       );
     } finally {
       isClassroomLoading.value = false;
@@ -221,11 +215,10 @@ class HomeController extends GetxController {
 
     final joinCode = code.trim();
     if (joinCode.isEmpty) {
-      Get.snackbar(
-        'Error',
+      AppSnackbar.show(
+        title: 'error'.tr,
         'enter_code'.tr,
         backgroundColor: Colors.red,
-        colorText: Colors.white,
       );
       return false;
     }
@@ -235,34 +228,30 @@ class HomeController extends GetxController {
       final res = await _homeService.joinClassroomByCode(joinCode);
 
       if (res.code == 200) {
-        // ✅ instant UI update
         if (res.data != null) {
           currentClassroom.value = res.data!;
         } else {
           await fetchCurrentClassroom();
         }
-        Get.snackbar(
-          'OK',
+        AppSnackbar.show(
+          title: 'success'.tr,
           'joined'.tr,
           backgroundColor: const Color(0xFF16A34A),
-          colorText: Colors.white,
         );
         return true;
       }
 
-      Get.snackbar(
-        'Error',
+      AppSnackbar.show(
+        title: 'error'.tr,
         res.message,
         backgroundColor: Colors.red,
-        colorText: Colors.white,
       );
       return false;
     } catch (e) {
-      Get.snackbar(
-        'Error',
+      AppSnackbar.show(
+        title: 'error'.tr,
         e.toString(),
         backgroundColor: Colors.red,
-        colorText: Colors.white,
       );
       return false;
     } finally {

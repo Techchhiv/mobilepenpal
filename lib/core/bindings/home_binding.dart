@@ -7,9 +7,9 @@ import 'package:mobilepenpal/data/controllers/world/world_controller.dart';
 class HomeBinding extends Bindings {
   @override
   void dependencies() {
-    Get.lazyPut<HomeController>(() => HomeController());
-    Get.lazyPut<HomeAnimationController>(() => HomeAnimationController());
-    Get.lazyPut<AuthController>(() => AuthController());
-    Get.lazyPut<WorldController>(() => WorldController());
+    Get.lazyPut<HomeController>(() => HomeController(), fenix: true);
+    Get.lazyPut<HomeAnimationController>(() => HomeAnimationController(), fenix: true);
+    Get.lazyPut<AuthController>(() => AuthController(), fenix: true);
+    Get.lazyPut<WorldController>(() => WorldController(), fenix: true);
   }
 }

@@ -10,6 +10,7 @@ import 'package:mobilepenpal/data/controllers/world/level_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_animation_controller.dart';
 import 'package:mobilepenpal/presentation/routes/app_routes.dart';
+import 'package:mobilepenpal/presentation/widgets/app_snackbar.dart';
 import 'package:mobilepenpal/presentation/widgets/loading_overly.dart';
 import 'package:mobilepenpal/presentation/widgets/world/letter_painter.dart';
 
@@ -185,7 +186,7 @@ class StageDetailPage extends GetView<StageController> {
                 double itemSize;
                 if (count <= 4) {
                   itemSize = 64;
-                } else{
+                } else {
                   itemSize = 52;
                 }
 
@@ -844,10 +845,10 @@ class StageDetailPage extends GetView<StageController> {
 
                               if (level == null ||
                                   level.id != controller.levelId) {
-                                Get.snackbar(
-                                  'Error',
+                                AppSnackbar.show(
+                                  title: 'error'.tr,
                                   'Failed to load level'.tr,
-                                  snackPosition: SnackPosition.BOTTOM,
+                                  backgroundColor: Colors.red,
                                 );
                                 return;
                               }

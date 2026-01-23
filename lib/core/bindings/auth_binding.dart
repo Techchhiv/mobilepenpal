@@ -7,7 +7,7 @@ class AuthBinding extends Bindings {
   @override
   void dependencies() {
     Get.lazyPut<AuthService>(() => AuthService());
-    Get.lazyPut<AuthController>(() => AuthController());
+    Get.lazyPut<AuthController>(() => AuthController(), fenix: true);
     Get.lazyPut<HomeController>(() => HomeController());
   }
 }

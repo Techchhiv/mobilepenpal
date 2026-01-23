@@ -123,12 +123,12 @@ class StageController extends GetxController {
     idle?.cancel();
     drawingController.dispose();
 
-    if (_ownsAnim && Get.isRegistered<StageAnimationController>()) {
-      Get.delete<StageAnimationController>();
-    }
-    if (_ownsAudio && Get.isRegistered<StageAudioController>()) {
-      Get.delete<StageAudioController>();
-    }
+    // if (_ownsAnim && Get.isRegistered<StageAnimationController>()) {
+    //   Get.delete<StageAnimationController>();
+    // }
+    // if (_ownsAudio && Get.isRegistered<StageAudioController>()) {
+    //   Get.delete<StageAudioController>();
+    // }
 
     super.onClose();
   }
@@ -257,7 +257,7 @@ class StageController extends GetxController {
     hasDrawnStroke = false;
     idle?.cancel();
 
-    idle = Timer(const Duration(milliseconds: 1200), () async {
+    idle = Timer(const Duration(milliseconds: 1800), () async {
       await checkDrawing();
       hasDrawnStroke = false;
     });

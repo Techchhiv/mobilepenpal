@@ -7,9 +7,9 @@ import 'package:mobilepenpal/data/controllers/world/world_controller.dart';
 class StageSummaryBinding extends Bindings {
   @override
   void dependencies() {
-    Get.lazyPut<StageController>(() => StageController());
+    // Get.lazyPut<StageController>(() => StageController());
     Get.lazyPut<StageSummaryController>(() => StageSummaryController());
-    Get.lazyPut<LevelController>(() => LevelController());
-    Get.lazyPut<WorldController>(() => WorldController());
+    // Get.lazyPut<LevelController>(() => LevelController());
+    // Get.lazyPut<WorldController>(() => WorldController());
   }
 }

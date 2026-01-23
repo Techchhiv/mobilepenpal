@@ -9,6 +9,7 @@ import 'package:mobilepenpal/data/controllers/world/stage_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/world_controller.dart';
 import 'package:mobilepenpal/data/models/level/level_stage.dart';
 import 'package:mobilepenpal/presentation/routes/app_routes.dart';
+import 'package:mobilepenpal/presentation/widgets/app_snackbar.dart';
 import 'package:mobilepenpal/presentation/widgets/loading_overly.dart';
 
 class LevelDetailPage extends GetView<LevelController> {
@@ -316,35 +317,38 @@ class LevelDetailPage extends GetView<LevelController> {
     );
   }
 
- Future<void> _navigateToStage(int stageId) async {
-  final StageController stageController = Get.find<StageController>();
+  Future<void> _navigateToStage(int stageId) async {
+    final StageController stageController = Get.find<StageController>();
 
-  controller.isLoading.value = true;
-  try {
-    await stageController.loadStage(
-      newStageId: stageId,
-      newWorldId: controller.worldId,
-      newLevelId: controller.levelId,
-    );
+    controller.isLoading.value = true;
+    try {
+      await stageController.loadStage(
+        newStageId: stageId,
+        newWorldId: controller.worldId,
+        newLevelId: controller.levelId,
+      );
 
-    if (stageController.currentStage.value == null) {
-      Get.snackbar('Error', 'Stage not found');
-      return;
+      if (stageController.currentStage.value == null) {
+        AppSnackbar.show(
+          title: 'error'.tr,
+          'stage_not_found'.tr,
+          backgroundColor: Colors.red,
+        );
+        return;
+      }
+
+      final route = RouteBuilder.build(AppRoutes.stage, {
+        'worldId': controller.worldId.toString(),
+        'levelId': controller.levelId.toString(),
+        'stageId': stageId.toString(),
+      });
+
+      controller.isLoading.value = false;
+      await Future.delayed(Duration.zero);
+
+      Get.toNamed(route);
+    } finally {
+      controller.isLoading.value = false;
     }
-
-    final route = RouteBuilder.build(AppRoutes.stage, {
-      'worldId': controller.worldId.toString(),
-      'levelId': controller.levelId.toString(),
-      'stageId': stageId.toString(),
-    });
-
-    controller.isLoading.value = false;
-    await Future.delayed(Duration.zero);
-
-    Get.toNamed(route);
-  } finally {
-    controller.isLoading.value = false;
   }
-}
-
 }
