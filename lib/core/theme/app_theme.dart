@@ -59,7 +59,8 @@ class AppTheme {
     if (languageCode == 'km') {
       return GoogleFonts.battambangTextTheme();
     } else {
-      return GoogleFonts.robotoTextTheme();
+      TextTheme baseTheme = GoogleFonts.robotoTextTheme();
+      return baseTheme;
     }
   }
 
@@ -80,6 +81,10 @@ class AppTheme {
         fontSize: fontSize,
         fontWeight: fontWeight,
         color: color,
+      ).copyWith(
+        fontFamilyFallback: [
+          GoogleFonts.battambang().fontFamily!,
+        ],
       );
     }
   }

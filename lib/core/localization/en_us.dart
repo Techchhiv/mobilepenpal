@@ -278,6 +278,7 @@ final Map<String, String> enUS = {
   'in_progress': 'In Progress',
   'start': 'Start',
   "locked": 'Locked',
+  'level_locked': "This level is locked 🔒",
   'progress': 'Progress',
   'lessons': 'lessons',
   'stars': 'Stars',

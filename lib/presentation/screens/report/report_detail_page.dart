@@ -151,7 +151,7 @@ class ReportDetailPage extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: _MetricCard(
-                    title: 'ផ្កាយ',
+                    title: 'stars'.tr,
                     value: _d('$stars'),
                     icon: Icons.star_rounded,
                     tint: const Color(0xFFF59E0B),

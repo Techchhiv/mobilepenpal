@@ -33,20 +33,20 @@ class StageDetailPage extends GetView<StageController> {
               ),
 
               Positioned.fill(
-                child: Container(color: Colors.black.withValues(alpha: 0.25)),
-              ),
-
-              Positioned.fill(
                 child: Container(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [
-                        Color(0xFF2B7A78).withValues(alpha: 0.55),
-                        Color(0xFF6B9F8E).withValues(alpha: 0.35),
-                        Color(0xFF8FB99F).withValues(alpha: 0.15),
+                        Color(0xFF2B7A78).withValues(alpha: 1),
+                        Color(0xFF6B9F8E).withValues(alpha: 0.0),
+                        // Color(0xFF8FB99F).withValues(alpha: 0.0),
                       ],
+                      stops: [
+                        0.15,
+                        0.45,
+                      ]
                     ),
                   ),
                 ),
@@ -281,7 +281,7 @@ class StageDetailPage extends GetView<StageController> {
                   width: 100,
                   height: 100,
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.0),
+                    color: AppColors.primary.withValues(alpha: 0.8),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: ClipRRect(
@@ -362,7 +362,7 @@ class StageDetailPage extends GetView<StageController> {
                   width: controller.boardWidth,
                   height: controller.boardHeight,
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: Colors.white.withValues(alpha: 0.9),
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
@@ -387,10 +387,9 @@ class StageDetailPage extends GetView<StageController> {
                           final p = controller.anim.guideCirclePx.value;
                           final guiding = controller.anim.isGuiding.value;
 
-                          return Container(
+                          return SizedBox(
                             width: controller.boardWidth,
                             height: controller.boardHeight,
-                            color: Colors.white,
                             child: Stack(
                               children: [
                                 if (letter.isNotEmpty)
@@ -528,129 +527,168 @@ class StageDetailPage extends GetView<StageController> {
         padding: const EdgeInsets.symmetric(horizontal: 32),
         child: SizedBox(
           height: 64,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              Align(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+
+              return Stack(
                 alignment: Alignment.center,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 10,
-                    horizontal: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: forms.map((char) {
-                      return SizedBox(
-                        width: 40,
-                        height: 37,
-                        child: Center(
-                          child: Text(
-                            char,
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.grey.shade700,
+                children: [
+                  Align(
+                    alignment: Alignment.center,
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        const double itemW = 40;
+                        const double itemH = 37;
+                        const double padH = 10;
+                        const double audioBtnW = 48;
+                        const double gapToAudio = 12;
+
+                        final availableW =
+                            (constraints.maxWidth - audioBtnW - gapToAudio)
+                                .clamp(0.0, constraints.maxWidth);
+
+                        final naturalW = (padH * 2) + (forms.length * itemW);
+
+                        final pillW = naturalW < availableW
+                            ? naturalW
+                            : availableW;
+
+                        return SizedBox(
+                          width: pillW,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 10,
+                              horizontal: padH,
                             ),
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ),
-              ),
-
-              Align(
-                alignment: Alignment.centerRight,
-                child: Obx(() {
-                  final isPlaying = controller.audio.isPlaying.value;
-
-                  return TweenAnimationBuilder<double>(
-                    tween: Tween(begin: 1.0, end: isPlaying ? 1.15 : 1.0),
-                    duration: const Duration(milliseconds: 700),
-                    curve: Curves.easeInOut,
-                    builder: (context, scale, child) {
-                      return AnimatedScale(
-                        scale: scale,
-                        duration: const Duration(milliseconds: 90),
-                        curve: Curves.easeOut,
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            if (isPlaying)
-                              TweenAnimationBuilder<double>(
-                                tween: Tween(begin: 0.9, end: 1.2),
-                                duration: const Duration(milliseconds: 500),
-                                curve: Curves.easeOut,
-                                builder: (_, ringScale, __) {
-                                  return Opacity(
-                                    opacity: 0.35,
-                                    child: Transform.scale(
-                                      scale: ringScale,
-                                      child: Container(
-                                        width: 54,
-                                        height: 54,
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          border: Border.all(
-                                            color: Colors.white,
-                                            width: 2,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: SizedBox(
+                                height: itemH,
+                                child: SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  physics: const BouncingScrollPhysics(),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: forms.map((char) {
+                                      return SizedBox(
+                                        width: itemW,
+                                        height: itemH,
+                                        child: Center(
+                                          child: Text(
+                                            char,
+                                            style: TextStyle(
+                                              fontSize: 24,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.grey.shade700,
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-
-                            Material(
-                              color: Colors.transparent,
-                              shape: const CircleBorder(),
-                              child: Ink(
-                                width: 48,
-                                height: 48,
-                                decoration: BoxDecoration(
-                                  color: Colors.orange.shade400,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: InkWell(
-                                  customBorder: const CircleBorder(),
-                                  onTap: controller.playCurrentCharacterAudio,
-                                  child: Center(
-                                    child: AnimatedSwitcher(
-                                      duration: const Duration(
-                                        milliseconds: 200,
-                                      ),
-                                      transitionBuilder: (c, anim) =>
-                                          ScaleTransition(
-                                            scale: anim,
-                                            child: c,
-                                          ),
-                                      child: Icon(
-                                        isPlaying
-                                            ? Icons.graphic_eq
-                                            : Icons.volume_up,
-                                        key: ValueKey(isPlaying),
-                                        color: Colors.white,
-                                        size: 26,
-                                      ),
-                                    ),
+                                      );
+                                    }).toList(),
                                   ),
                                 ),
                               ),
                             ),
-                          ],
-                        ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Obx(() {
+                      final isPlaying = controller.audio.isPlaying.value;
+
+                      return TweenAnimationBuilder<double>(
+                        tween: Tween(begin: 1.0, end: isPlaying ? 1.15 : 1.0),
+                        duration: const Duration(milliseconds: 700),
+                        curve: Curves.easeInOut,
+                        builder: (context, scale, child) {
+                          return AnimatedScale(
+                            scale: scale,
+                            duration: Duration(milliseconds: 90),
+                            curve: Curves.easeOut,
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                if (isPlaying)
+                                  TweenAnimationBuilder<double>(
+                                    tween: Tween(begin: 0.9, end: 1.2),
+                                    duration: Duration(milliseconds: 500),
+                                    curve: Curves.easeOut,
+                                    builder: (_, ringScale, __) {
+                                      return Opacity(
+                                        opacity: 0.35,
+                                        child: Transform.scale(
+                                          scale: ringScale,
+                                          child: Container(
+                                            width: 54,
+                                            height: 54,
+                                            decoration: BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              border: Border.all(
+                                                color: Colors.white,
+                                                width: 2,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+
+                                Material(
+                                  color: Colors.transparent,
+                                  shape: const CircleBorder(),
+                                  child: Ink(
+                                    width: 48,
+                                    height: 48,
+                                    decoration: BoxDecoration(
+                                      color: AppColors.buttonSecondary,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: InkWell(
+                                      customBorder: const CircleBorder(),
+                                      onTap:
+                                          controller.playCurrentCharacterAudio,
+                                      child: Center(
+                                        child: AnimatedSwitcher(
+                                          duration: Duration(
+                                            milliseconds: 200,
+                                          ),
+                                          transitionBuilder: (c, anim) =>
+                                              ScaleTransition(
+                                                scale: anim,
+                                                child: c,
+                                              ),
+                                          child: Icon(
+                                            isPlaying
+                                                ? Icons.graphic_eq
+                                                : Icons.volume_up,
+                                            key: ValueKey(isPlaying),
+                                            color: Colors.white,
+                                            size: 26,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
                       );
-                    },
-                  );
-                }),
-              ),
-            ],
+                    }),
+                  ),
+                ],
+              );
+            },
           ),
         ),
       );
@@ -715,7 +753,7 @@ class StageDetailPage extends GetView<StageController> {
             child: buildActionButton(
               onTap: controller.clearBoard,
               bg: Colors.white,
-              fg: Colors.pink,
+              fg: Colors.red.shade400,
               icon: Icons.delete,
               label: "delete".tr,
               borderColor: Colors.pink.shade200,
@@ -725,7 +763,7 @@ class StageDetailPage extends GetView<StageController> {
           Expanded(
             child: buildActionButton(
               onTap: controller.skipCurrentExercise,
-              bg: Colors.orange.shade400,
+              bg: AppColors.buttonPrimary,
               fg: Colors.white,
               icon: Icons.skip_next,
               label: "skip".tr,
@@ -740,7 +778,7 @@ class StageDetailPage extends GetView<StageController> {
     showDialog(
       context: context,
       barrierDismissible: true,
-      barrierColor: Colors.black.withOpacity(0.35),
+      barrierColor: Colors.black.withValues(alpha: 0.35),
       builder: (ctx) {
         return Dialog(
           elevation: 0,
@@ -759,7 +797,7 @@ class StageDetailPage extends GetView<StageController> {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.22),
+                  color: Colors.black.withValues(alpha: 0.22),
                   blurRadius: 26,
                   offset: const Offset(0, 16),
                 ),
@@ -785,7 +823,7 @@ class StageDetailPage extends GetView<StageController> {
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.orange.withOpacity(0.35),
+                          color: Colors.orange.withValues(alpha: 0.35),
                           blurRadius: 18,
                           offset: const Offset(0, 10),
                         ),
@@ -798,18 +836,18 @@ class StageDetailPage extends GetView<StageController> {
                     ),
                   ),
 
-                  const SizedBox(height: 22),
+                  SizedBox(height: 22),
 
                   Container(
                     width: 56,
                     height: 6,
                     decoration: BoxDecoration(
-                      color: Colors.orange.shade200.withOpacity(0.6),
+                      color: Colors.orange.shade200.withValues(alpha: 0.6),
                       borderRadius: BorderRadius.circular(999),
                     ),
                   ),
 
-                  const SizedBox(height: 22),
+                  SizedBox(height: 22),
 
                   Row(
                     children: [
