@@ -137,7 +137,7 @@ class UpdateProfilePage extends StatelessWidget {
               Expanded(
                 child: _buildTextField(
                   label: 'age'.tr,
-                  hintText: 'age'.tr,
+                  hintText: 'enter_age'.tr,
                   initialValue: controller.age.value,
                   onChanged: (value) => controller.age.value = value,
                   validator: controller.validateAge,

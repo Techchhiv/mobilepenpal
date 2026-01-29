@@ -76,7 +76,7 @@ class _WorldDetailContent extends StatelessWidget {
   Widget _buildSuccessState(World world) {
     return Stack(
       children: [
-        WorldMap(world: world),
+        Positioned.fill(child: WorldMap(world: world)),
         const WorldHeader(),
       ],
     );

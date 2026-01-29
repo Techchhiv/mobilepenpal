@@ -13,7 +13,7 @@ class WorldHeader extends StatelessWidget {
     if (world == null) return const SizedBox();
 
     return Positioned(
-      top: MediaQuery.of(context).padding.top + 24,
+      top: MediaQuery.of(context).padding.top + 12,
       left: 16,
       right: 16,
       child: Material(

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:mobilepenpal/core/theme/app_colors.dart';
 import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
 import 'package:mobilepenpal/presentation/screens/home/qr_scanner_page.dart';
 import 'package:mobilepenpal/presentation/widgets/home/parent_summary_page.dart';
+import 'package:mobilepenpal/presentation/widgets/input_modal.dart';
 import 'package:shimmer/shimmer.dart';
 
 class ParentHome extends StatelessWidget {
@@ -23,7 +25,8 @@ class ParentHome extends StatelessWidget {
             homeController.fetchDailySummary();
           }
 
-          if (homeController.currentClassroom.value == null &&
+          if (homeController.hasSchool &&
+              homeController.currentClassroom.value == null &&
               !homeController.isClassroomLoading.value) {
             await homeController.fetchCurrentClassroom();
           }
@@ -47,8 +50,17 @@ class ParentHome extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildClassroomSection(),
-                      const SizedBox(height: 24),
+                      Obx(() {
+                        final c = Get.find<HomeController>();
+                        if (!c.hasSchool) return const SizedBox.shrink();
+
+                        return Column(
+                          children: [
+                            _buildClassroomSection(),
+                            const SizedBox(height: 24),
+                          ],
+                        );
+                      }),
                       ParentSummaryCard(homeController: homeController),
                       const SizedBox(height: 24),
                     ],
@@ -63,33 +75,49 @@ class ParentHome extends StatelessWidget {
   }
 
   Widget _buildTopActionsRow() {
-    return Row(
-      children: [
-        _buildTopActionBox(
+    return Obx(() {
+      final hasSchool = homeController.hasSchool;
+
+      Widget action({
+        required IconData icon,
+        required String label,
+        VoidCallback? onTap,
+      }) {
+        return Expanded(
+          child: _buildTopActionBox(icon: icon, label: label, onTap: onTap),
+        );
+      }
+
+      final children = <Widget>[
+        action(
           icon: Icons.settings,
           label: 'setting'.tr,
           onTap: () => Get.toNamed('/setting'),
         ),
-        _buildTopActionBox(
+        const SizedBox(width: 12),
+        action(
           icon: Icons.bar_chart_outlined,
           label: 'reports'.tr,
           onTap: () => Get.toNamed('/parent/report'),
         ),
-        _buildTopActionBox(
-          icon: Icons.qr_code,
-          label: 'scan'.tr,
-          onTap: () async {
-            if (homeController.isJoiningClassroom.value) return;
+        if (hasSchool) ...[
+          const SizedBox(width: 12),
+          action(
+            icon: Icons.qr_code,
+            label: 'scan'.tr,
+            onTap: () async {
+              if (homeController.isJoiningClassroom.value) return;
+              final result = await Get.to(() => const QrScannerPage());
+              if (result != null) {
+                await homeController.joinClassroomByCode(result.toString());
+              }
+            },
+          ),
+        ],
+      ];
 
-            final result = await Get.to(() => const QrScannerPage());
-
-            if (result != null) {
-              await homeController.joinClassroomByCode(result.toString());
-            }
-          },
-        ),
-      ],
-    );
+      return Row(children: children);
+    });
   }
 
   Widget _buildClassroomSection() {
@@ -340,32 +368,26 @@ class ParentHome extends StatelessWidget {
   }
 
   Future<String?> _showJoinCodeDialog() {
-    final controller = TextEditingController();
-
     return Get.dialog<String?>(
-      Builder(
-        builder: (context) => AlertDialog(
-          title: Text('enter_code'.tr),
-          content: TextField(
-            controller: controller,
-            textInputAction: TextInputAction.done,
-            decoration: InputDecoration(
-              hintText: 'example_code'.tr,
-              border: const OutlineInputBorder(),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(null),
-              child: Text('cancel'.tr),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.of(context).pop(controller.text),
-              child: Text('join'.tr),
-            ),
-          ],
+      InputModal(
+        icon: const Icon(
+          Icons.class_rounded,
+          size: 28,
+          color: AppColors.primary,
         ),
+        title: 'enter_code'.tr,
+        primaryText: 'join'.tr,
+        secondaryText: 'cancel'.tr,
+        uppercase: true,
+        maxLength: 50,
+        validator: (v) {
+          if (v.trim().isEmpty) return 'enter_code'.tr;
+          if (v.trim().length < 4) return 'Code is too short'.tr;
+          return null;
+        },
       ),
+      barrierDismissible: true,
+      barrierColor: Colors.black.withValues(alpha: 0.55),
     );
   }
 
@@ -374,44 +396,42 @@ class ParentHome extends StatelessWidget {
     required String label,
     VoidCallback? onTap,
   }) {
-    return Expanded(
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(16),
-          child: Container(
-            height: 74,
-            margin: const EdgeInsets.symmetric(horizontal: 4),
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 3),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          height: 74,
+          margin: const EdgeInsets.symmetric(horizontal: 4),
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: _brand, size: 26),
+              const SizedBox(height: 8),
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  height: 1.1,
                 ),
-              ],
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(icon, color: _brand, size: 26),
-                const SizedBox(height: 8),
-                Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    height: 1.1,
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),

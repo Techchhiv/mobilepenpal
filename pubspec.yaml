@@ -105,14 +105,14 @@ flutter:
     - assets/audios/independent_vowels/
     - assets/audios/dependent_vowels/
 
-    - assets/models/best_consonant.onnx
-    - assets/models/best_dependent_vowel.onnx
-    - assets/models/best_independent_vowel.onnx
-    - assets/models/best_digit.onnx
-    - assets/models/best_consonant.onnx.data
-    - assets/models/best_dependent_vowel.onnx.data
-    - assets/models/best_independent_vowel.onnx.data
-    - assets/models/best_digit.onnx.data
+    # - assets/models/best_consonant.onnx
+    # - assets/models/best_dependent_vowel.onnx
+    # - assets/models/best_independent_vowel.onnx
+    # - assets/models/best_digit.onnx
+    # - assets/models/best_consonant.onnx.data
+    # - assets/models/best_dependent_vowel.onnx.data
+    # - assets/models/best_independent_vowel.onnx.data
+    # - assets/models/best_digit.onnx.data
     
     - assets/strokes/strokes.json
     # - assets/icons/logo.png

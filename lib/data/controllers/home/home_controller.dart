@@ -12,6 +12,7 @@ import 'package:mobilepenpal/data/models/student/student_progress.dart';
 import 'package:mobilepenpal/data/services/home_service.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:mobilepenpal/presentation/widgets/app_snackbar.dart';
+import 'package:mobilepenpal/presentation/widgets/confirm_modal.dart';
 import 'package:mobilepenpal/presentation/widgets/home/pin_entry_widget.dart';
 
 enum SummaryView { daily, weekly }
@@ -44,6 +45,12 @@ class HomeController extends GetxController {
 
   String get avatarUrl => student.value?.avatar ?? '';
 
+  bool get hasSchool {
+    final id = student.value?.schoolId;
+    if (id == null) return false;
+    return int.tryParse(id.toString()) != null && int.parse(id.toString()) > 0;
+  }
+
   @override
   void onInit() {
     super.onInit();
@@ -57,22 +64,7 @@ class HomeController extends GetxController {
 
   void loadInitialData() {
     setCurrentMode(_box.read('mode') ?? 'student');
-    loadCachedData();
     fetchStudentProfile();
-  }
-
-  void loadCachedData() {
-    final studentData = _box.read('student');
-    if (studentData != null && studentData is Map<String, dynamic>) {
-      student.value = Student.fromJson(studentData);
-    }
-
-    final progressData = _box.read('student_progress');
-    if (progressData != null && progressData is List<dynamic>) {
-      studentProgress.assignAll(
-        progressData.map((data) => StudentProgress.fromJson(data)).toList(),
-      );
-    }
   }
 
   Future<void> fetchStudentProfile() async {
@@ -87,10 +79,11 @@ class HomeController extends GetxController {
 
         await _syncParentPin(student.value!);
 
-        await _saveToStorage(
-          student: response.data!.profile,
-          progress: response.data!.progress,
-        );
+        if (currentMode.value == 'parent' && hasSchool) {
+          await fetchCurrentClassroom();
+        } else {
+          currentClassroom.value = null;
+        }
       } else {
         AppSnackbar.show(
           title: 'error'.tr,
@@ -187,6 +180,10 @@ class HomeController extends GetxController {
   }
 
   Future<void> fetchCurrentClassroom() async {
+    if (!hasSchool) {
+      currentClassroom.value = null;
+      return;
+    }
     if (isClassroomLoading.value) return;
 
     isClassroomLoading.value = true;
@@ -211,6 +208,14 @@ class HomeController extends GetxController {
   }
 
   Future<bool> joinClassroomByCode(String code) async {
+    if (!hasSchool) {
+      AppSnackbar.show(
+        title: 'error'.tr,
+        'Your account is not linked to a school. Please contact your school admin.',
+        backgroundColor: Colors.red,
+      );
+      return false;
+    }
     if (isJoiningClassroom.value) return false;
 
     final joinCode = code.trim();
@@ -257,16 +262,6 @@ class HomeController extends GetxController {
     } finally {
       isJoiningClassroom.value = false;
     }
-  }
-
-  Future<void> _saveToStorage({
-    required Student student,
-    required List<StudentProgress> progress,
-  }) async {
-    await _box.write('student', student.toJson());
-
-    final progressList = progress.map((p) => p.toJson()).toList();
-    await _box.write('student_progress', progressList);
   }
 
   Future<void> requestModeChange(String newMode) async {
@@ -332,26 +327,29 @@ class HomeController extends GetxController {
 
   Future<bool?> _showCreatePinPrompt() {
     return Get.dialog<bool>(
-      AlertDialog(
+      ConfirmModal(
+        icon: const Icon(
+          Icons.lock_rounded,
+          color: AppColors.primary,
+          size: 28,
+        ),
         title: Text('set_pin'.tr),
-        backgroundColor: AppColors.textWhiteOff,
-        content: Text("set_parent_pin_prompt".tr),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(Get.overlayContext!).pop(false);
-            },
-            child: Text('no'.tr),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.of(Get.overlayContext!).pop(true);
-            },
-            child: Text('yes'.tr),
-          ),
-        ],
+        message: Text('set_parent_pin_prompt'.tr),
+
+        secondaryText: 'no'.tr,
+        primaryText: 'yes'.tr,
+
+        primaryColor: AppColors.primary,
+        primaryTextColor: Colors.white,
+        secondaryTextColor: const Color(0xFF111827),
+
+        onSecondary: () => Get.back(result: false),
+        onPrimary: () async => Get.back(result: true),
+
+        showCloseButton: false,
       ),
       barrierDismissible: false,
+      barrierColor: Colors.black.withValues(alpha: 0.55),
     );
   }
 
@@ -367,7 +365,11 @@ class HomeController extends GetxController {
       await fetchStudentProfile();
 
       if (currentMode.value == 'parent') {
-        await fetchCurrentClassroom();
+        if (hasSchool) {
+          await fetchCurrentClassroom();
+        } else {
+          currentClassroom.value = null;
+        }
 
         if (summaryView.value == SummaryView.daily) {
           await fetchDailySummary();

@@ -129,12 +129,14 @@ class _WorldMapState extends State<WorldMap> {
         levelCount: levels.length,
         screenWidth: screenW,
       );
+
       final tileCount = _tileCountForHeight(
         contentHeight: neededH,
         tileHeight: tileH,
       );
 
-      final contentH = tileCount * tileH;
+      final viewportH = MediaQuery.of(context).size.height;
+      final contentH = max(tileCount * tileH, viewportH);
 
       final spacing = _scaled(_levelSpacingDesign, screenW);
       final bottomInset = _scaled(_bottomInsetDesign, screenW);
@@ -147,7 +149,6 @@ class _WorldMapState extends State<WorldMap> {
         spacing: spacing,
       );
 
-      final viewportH = MediaQuery.of(context).size.height;
       final targetOffset = (targetY - viewportH * 0.55).clamp(
         0.0,
         _scrollController.position.maxScrollExtent,
@@ -211,12 +212,16 @@ class _WorldMapState extends State<WorldMap> {
       levelCount: levels.length,
       screenWidth: screenW,
     );
+
+    // ✅ Tile count should be based on the content you actually need for levels
     final tileCount = _tileCountForHeight(
       contentHeight: neededH,
       tileHeight: tileH,
     );
 
-    final contentH = tileCount * tileH;
+    // ✅ But the overall content must still fill the viewport (no green gap)
+    final viewportH = MediaQuery.of(context).size.height;
+    final contentH = max(tileCount * tileH, viewportH);
 
     return SingleChildScrollView(
       controller: _scrollController,
@@ -250,33 +255,38 @@ class _WorldMapState extends State<WorldMap> {
     required int tileCount,
     required double contentHeight,
   }) {
+    final asset = _bgTiles.isEmpty ? null : _bgTiles.first;
+
+    if (tileCount <= 1) {
+      return Positioned.fill(
+        child: asset == null
+            ? Container(color: Colors.grey.shade200)
+            : Image.asset(
+                asset,
+                fit: BoxFit.cover,
+                alignment: Alignment.bottomCenter,
+              ),
+      );
+    }
+
     return Stack(
       children: List.generate(tileCount, (i) {
-        final asset = _bgTiles.isEmpty ? null : _bgTiles[i % _bgTiles.length];
+        final a = _bgTiles[i % _bgTiles.length];
 
         return Positioned(
           left: 0,
           right: 0,
           bottom: i * tileHeight,
           height: tileHeight,
-          child: asset == null
-              ? Container(color: Colors.grey.shade200)
-              : Image.asset(
-                  asset,
-                  width: width,
-                  height: tileHeight,
-                  fit: BoxFit.fitWidth,
-                  errorBuilder: (_, __, ___) => Container(
-                    color: Colors.grey.shade200,
-                    child: const Center(
-                      child: Icon(
-                        Icons.landscape,
-                        size: 120,
-                        color: Colors.grey,
-                      ),
-                    ),
-                  ),
-                ),
+          child: Image.asset(
+            a,
+            width: width,
+            height: tileHeight,
+            fit: BoxFit.cover,
+            alignment: Alignment.bottomCenter,
+            errorBuilder: (_, __, ___) =>
+                Container(color: Colors.grey.shade200),
+          ),
         );
       }),
     );

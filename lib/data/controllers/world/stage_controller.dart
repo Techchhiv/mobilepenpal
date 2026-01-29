@@ -81,6 +81,11 @@ class StageController extends GetxController {
     return DateTime.now().difference(_sessionStart!).inSeconds;
   }
 
+  bool get showIllustration {
+    final t = (currentExercise?.characterType ?? '').trim().toLowerCase();
+    return t == 'consonants' || t == 'digits';
+  }
+
   @override
   void onInit() {
     super.onInit();
@@ -153,8 +158,9 @@ class StageController extends GetxController {
       currentStage.value = stage;
       exercises.assignAll(stage.exercises);
 
-      if (exercises.isEmpty) return;
+      anim.resetStars(total: exercises.length);
 
+      if (exercises.isEmpty) return;
       _startAtExercise(0, playAudioAfter: true);
       _sessionStart = DateTime.now();
     } catch (e) {
@@ -175,6 +181,7 @@ class StageController extends GetxController {
     anim.resetStars();
     _resetSessionState(clearGuide: true);
     await fetchStageDetail();
+    anim.resetStars(total: exercises.length);
   }
 
   void selectExerciseByIndex(int index) {
@@ -242,6 +249,7 @@ class StageController extends GetxController {
 
     _rawStrokes.clear();
     _currentStroke = null;
+    anim.restartGuideFromStart();
   }
 
   void onPointerDown() {
@@ -316,7 +324,7 @@ class StageController extends GetxController {
         modelType: payload['model_type'] as String,
         cancelToken: cancelToken,
       );
-
+      print(data);
       if (myReqId != _redId) return;
 
       prediction = (data['prediction'] ?? '').toString().trim();
@@ -343,12 +351,16 @@ class StageController extends GetxController {
         onAfterReset: () {
           clearBoard();
           hasDrawnStroke = false;
+          anim.restartGuideFromStart();
         },
       );
 
       if (attemptLeft.value > 0) {
         return;
       }
+
+      anim.markWrong(currentExerciseIndex.value);
+      await anim.playStarPop(currentExerciseIndex.value);
 
       attempts.add({
         'exercise_id': exercise.id,
@@ -405,6 +417,9 @@ class StageController extends GetxController {
       'is_correct': false,
     });
 
+    anim.markWrong(currentExerciseIndex.value);
+    await anim.playStarPop(currentExerciseIndex.value);
+
     await anim.showWrongAndReset(
       onAfterReset: () {
         clearBoard();
@@ -446,7 +461,7 @@ class StageController extends GetxController {
   void resetForRetry() {
     attempts.clear();
     currentExerciseIndex.value = 0;
-    anim.resetStars();
+    anim.resetStars(total: exercises.length);
     attemptLeft.value = maxAttemptsPerExercise;
 
     if (exercises.isNotEmpty) {
@@ -527,16 +542,42 @@ class StageController extends GetxController {
     };
   }
 
-  String get characterVowelFormsRaw => currentExercise?.example ?? 'កា/កិ/កី';
+  String get characterVowelFormsRaw => currentExercise?.example ?? '';
 
   List<String> get characterVowelFormsList {
-    final raw = characterVowelFormsRaw;
+    final raw = characterVowelFormsRaw.trim();
     if (raw.isEmpty) return const [];
-    return raw
+
+    final ex = currentExercise;
+    final t = (ex?.characterType ?? '').trim().toLowerCase();
+    final target = (ex?.character ?? selectedCharacter.value).trim();
+
+    String prefixForType() {
+      if (t == 'digits') return 'លេខ ';
+      if (t == 'dependent_vowels' || t == 'independent_vowels') return 'ស្រៈ ';
+      return '';
+    }
+
+    final prefix = prefixForType();
+
+    final parts = raw
         .split('/')
         .map((e) => e.trim())
         .where((e) => e.isNotEmpty)
+        .map((token) {
+          if (token.startsWith('លេខ') || token.startsWith('ស្រៈ')) return token;
+
+          if (prefix.isNotEmpty && token == target) return '$prefix$token';
+
+          return token;
+        })
         .toList();
+
+    final out = <String>[];
+    for (final s in parts) {
+      if (!out.contains(s)) out.add(s);
+    }
+    return out;
   }
 
   Future<void> loadStrokeDb() async {

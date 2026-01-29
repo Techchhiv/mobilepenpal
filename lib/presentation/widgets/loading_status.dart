@@ -65,7 +65,7 @@ class LoadingStatus extends StatelessWidget {
                       ),
                       const SizedBox(height: 24),
                       Text(
-                        successText ?? 'ជោគជ័យរួចរាល់ជោគជ័យហើយ',
+                        successText ?? 'updated_successfully'.tr,
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 16,

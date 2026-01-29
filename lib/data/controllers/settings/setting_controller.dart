@@ -10,6 +10,8 @@ import 'package:mobilepenpal/data/models/student/student.dart';
 import 'package:mobilepenpal/data/services/auth_service.dart';
 import 'package:mobilepenpal/data/services/home_service.dart';
 import 'package:mobilepenpal/presentation/routes/app_routes.dart';
+import 'package:mobilepenpal/presentation/widgets/app_snackbar.dart';
+import 'package:mobilepenpal/presentation/widgets/confirm_modal.dart';
 
 class SettingController extends GetxController {
   final AuthService authService = AuthService();
@@ -51,100 +53,82 @@ class SettingController extends GetxController {
         imageQuality: 80,
       );
 
-      if (image != null) {
-        final fileSize = await image.length();
-        const maxSize = 2 * 1024 * 1024;
+      if (image == null) return;
 
-        if (fileSize > maxSize) {
-          Get.snackbar(
-            'warning'.tr,
-            'image_too_large'.tr,
-            backgroundColor: Colors.orange,
-            colorText: Colors.white,
-            duration: Duration(seconds: 3),
-          );
-          return;
-        }
+      final fileSize = await image.length();
+      const maxSize = 2 * 1024 * 1024;
 
-        isLoading.value = true;
+      if (fileSize > maxSize) {
+        AppSnackbar.show(
+          'image_too_large'.tr,
+          title: 'warning'.tr,
+          backgroundColor: Colors.orange,
+        );
+        return;
+      }
 
-        final bytes = await image.readAsBytes();
-        final String base64Image = base64Encode(bytes);
-        final String imageData = 'data:image/jpeg;base64,$base64Image';
+      isLoading.value = true;
 
-        final response = await homeService.uploadAvatar(imageData);
+      final bytes = await image.readAsBytes();
+      final base64Image = base64Encode(bytes);
 
-        isLoading.value = false;
+      final ext = (image.name.split('.').last).toLowerCase();
+      final mime = (ext == 'png') ? 'image/png' : 'image/jpeg';
 
-        if (response.code == 200 && response.data != null) {
-          student.value = response.data;
-          box.write('student', student.value?.toJson());
+      final imageData = 'data:$mime;base64,$base64Image';
 
-          Get.snackbar(
-            'success'.tr,
-            'Profile picture updated successfully'.tr,
-            backgroundColor: Colors.green,
-            colorText: Colors.white,
-          );
-        } else {
-          Get.snackbar(
-            'Error'.tr,
-            response.message,
-            backgroundColor: Colors.red,
-            colorText: Colors.white,
-          );
-        }
+      final response = await homeService.uploadAvatar(imageData);
+
+      isLoading.value = false;
+
+      if (response.code == 200 && response.data != null) {
+        student.value = response.data;
+        box.write('student', student.value?.toJson());
+
+        AppSnackbar.show(
+          'Profile picture updated successfully'.tr,
+          title: 'success'.tr,
+          backgroundColor: Colors.green,
+        );
+      } else {
+        AppSnackbar.show(
+          response.message,
+          title: 'error'.tr,
+          backgroundColor: Colors.red,
+        );
       }
     } catch (e) {
       isLoading.value = false;
-      Get.snackbar(
-        'Error'.tr,
-        'Failed to pick image: $e'.tr,
+      AppSnackbar.show(
+        'Failed to pick image: $e',
+        title: 'error'.tr,
         backgroundColor: Colors.red,
-        colorText: Colors.white,
       );
     }
   }
 
   void logout() {
-    Get.dialog(
-      AlertDialog(
-        backgroundColor: Colors.white,
+    showConfirmModal(
+      modal: ConfirmModal(
+        icon: const Icon(Icons.logout_rounded, color: Colors.red, size: 28),
         title: Text('logout'.tr),
-        content: Text('are_you_sure_you_want_to_logout'.tr),
-        actions: [
-          TextButton(
-            style: TextButton.styleFrom(
-              backgroundColor: Color(0xFFF5F5F5),
-              foregroundColor: Colors.black,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(18),
-              ),
-              padding: EdgeInsets.symmetric(horizontal: 12),
-            ),
-            child: Text('cancel'.tr),
-            onPressed: () => Get.back(),
-          ),
-          SizedBox(width: 4),
-          TextButton(
-            style: TextButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(18),
-              ),
-              padding: EdgeInsets.symmetric(horizontal: 12),
-            ),
-            child: Text('confirmed'.tr),
-            onPressed: () async {
-              Get.back();
-              await authService.logout();
-              box.remove("student");
-              await GetStorage().write('is_logged_in', false);
-              Get.offAllNamed(AppRoutes.login);
-            },
-          ),
-        ],
+        message: Text('are_you_sure_you_want_to_logout'.tr),
+        primaryText: 'confirmed'.tr,
+        secondaryText: 'cancel'.tr,
+
+        primaryColor: Colors.red,
+        primaryTextColor: Colors.white,
+
+        secondaryTextColor: const Color(0xFF111827),
+        secondaryBorderColor: const Color(0xFFE5E7EB),
+
+        onPrimary: () async {
+          Get.back();
+          await authService.logout();
+          box.remove("student");
+          await GetStorage().write('is_logged_in', false);
+          Get.offAllNamed(AppRoutes.login);
+        },
       ),
     );
   }

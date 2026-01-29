@@ -60,8 +60,33 @@ class StageDetailPage extends GetView<StageController> {
                       const SizedBox(height: 20),
                       _buildTopBar(Get.context!),
                       const SizedBox(height: 20),
-                      _buildIllustration(),
-                      const SizedBox(height: 30),
+                      Obx(() {
+                        final show = controller.showIllustration;
+                        return AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 220),
+                          switchInCurve: Curves.easeOut,
+                          switchOutCurve: Curves.easeIn,
+                          transitionBuilder: (child, anim) => SizeTransition(
+                            sizeFactor: anim,
+                            axisAlignment: -1.0,
+                            child: child,
+                          ),
+                          child: show
+                              ? Column(
+                                  key: const ValueKey('illus'),
+                                  children: [
+                                    _buildIllustration(),
+                                    const SizedBox(height: 30),
+                                  ],
+                                )
+                              : const SizedBox(key: ValueKey('no_illus')),
+                        );
+                      }),
+                      Obx(
+                        () => controller.showIllustration
+                            ? const SizedBox.shrink()
+                            : const Spacer(),
+                      ),
                       _buildDrawingBoard(),
                       const SizedBox(height: 16),
                       _buildCharacterOptions(),
@@ -529,75 +554,60 @@ class StageDetailPage extends GetView<StageController> {
           height: 64,
           child: LayoutBuilder(
             builder: (context, constraints) {
+              const double padH = 12;
+              const double audioBtnW = 140;
+              const double gapToAudio = 12;
+
+              final availableW = (constraints.maxWidth - audioBtnW - gapToAudio)
+                  .clamp(0.0, constraints.maxWidth);
+
               return Stack(
                 alignment: Alignment.center,
                 children: [
                   Align(
                     alignment: Alignment.center,
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        const double itemW = 40;
-                        const double itemH = 37;
-                        const double padH = 10;
-                        const double audioBtnW = 48;
-                        const double gapToAudio = 12;
-
-                        final availableW =
-                            (constraints.maxWidth - audioBtnW - gapToAudio)
-                                .clamp(0.0, constraints.maxWidth);
-
-                        final naturalW = (padH * 2) + (forms.length * itemW);
-
-                        final pillW = naturalW < availableW
-                            ? naturalW
-                            : availableW;
-
-                        return SizedBox(
-                          width: pillW,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 10,
-                              horizontal: padH,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: SizedBox(
-                                height: itemH,
-                                child: SingleChildScrollView(
-                                  scrollDirection: Axis.horizontal,
-                                  physics: const BouncingScrollPhysics(),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: forms.map((char) {
-                                      return SizedBox(
-                                        width: itemW,
-                                        height: itemH,
-                                        child: Center(
-                                          child: Text(
-                                            char,
-                                            style: TextStyle(
-                                              fontSize: 24,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.grey.shade700,
-                                            ),
-                                          ),
-                                        ),
-                                      );
-                                    }).toList(),
-                                  ),
-                                ),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(maxWidth: availableW),
+                      child: IntrinsicWidth(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 10,
+                            horizontal: padH,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              physics: const BouncingScrollPhysics(),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: forms.map((char) {
+                                  return Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                    ),
+                                    child: Text(
+                                      char,
+                                      softWrap: false,
+                                      style: TextStyle(
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.w800,
+                                        color: Colors.grey.shade700,
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
                               ),
                             ),
                           ),
-                        );
-                      },
+                        ),
+                      ),
                     ),
                   ),
-
                   Align(
                     alignment: Alignment.centerRight,
                     child: Obx(() {
