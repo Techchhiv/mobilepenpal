@@ -43,10 +43,7 @@ class StageDetailPage extends GetView<StageController> {
                         Color(0xFF6B9F8E).withValues(alpha: 0.0),
                         // Color(0xFF8FB99F).withValues(alpha: 0.0),
                       ],
-                      stops: [
-                        0.15,
-                        0.45,
-                      ]
+                      stops: [0.15, 0.45],
                     ),
                   ),
                 ),
@@ -106,27 +103,30 @@ class StageDetailPage extends GetView<StageController> {
               ),
               child: Obx(() {
                 final total = controller.exercises.length;
-                final scale = controller.anim.starScale.value;
-                final completed = controller.anim.completedStarCount.value;
-
-                if (total == 0) return const SizedBox.shrink();
+                final states = controller.anim.starStates;
 
                 return Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: List.generate(total, (index) {
-                    final isCompleted = index < completed;
                     final isAnimating =
                         controller.anim.animatingStarIndex.value == index;
+                    final scale = controller.anim.starScale.value;
 
-                    final asset = isCompleted
-                        ? 'assets/animated/star.json'
-                        : 'assets/animated/star_border.json';
+                    final state = (index < states.length)
+                        ? states[index]
+                        : StarState.pending;
+
+                    final asset = switch (state) {
+                      StarState.correct => 'assets/animated/star.json',
+                      StarState.wrong => 'assets/animated/star_red.json',
+                      StarState.pending => 'assets/animated/star_border.json',
+                    };
 
                     return Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 4),
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
                       child: AnimatedScale(
                         scale: isAnimating ? scale : 1.0,
-                        duration: Duration(milliseconds: 250),
+                        duration: const Duration(milliseconds: 250),
                         curve: Curves.easeOut,
                         child: SizedBox(
                           width: 48,
@@ -529,7 +529,6 @@ class StageDetailPage extends GetView<StageController> {
           height: 64,
           child: LayoutBuilder(
             builder: (context, constraints) {
-
               return Stack(
                 alignment: Alignment.center,
                 children: [
@@ -658,9 +657,7 @@ class StageDetailPage extends GetView<StageController> {
                                           controller.playCurrentCharacterAudio,
                                       child: Center(
                                         child: AnimatedSwitcher(
-                                          duration: Duration(
-                                            milliseconds: 200,
-                                          ),
+                                          duration: Duration(milliseconds: 200),
                                           transitionBuilder: (c, anim) =>
                                               ScaleTransition(
                                                 scale: anim,

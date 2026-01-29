@@ -8,6 +8,8 @@ import 'package:mobilepenpal/core/utils/number_format_utils.dart';
 
 enum DrawFeedback { none, correct, wrong }
 
+enum StarState { pending, correct, wrong }
+
 class StageAnimationController extends GetxController
     with GetTickerProviderStateMixin {
   final feedback = DrawFeedback.none.obs;
@@ -55,6 +57,8 @@ class StageAnimationController extends GetxController
 
   final illustrationAssetPath = ''.obs;
   final illustrationLabel = ''.obs;
+
+  final starStates = <StarState>[].obs;
 
   @override
   void onInit() {
@@ -199,11 +203,21 @@ class StageAnimationController extends GetxController
     guideController.stop();
   }
 
+  void restartGuideFromStart() {
+    if (guideStrokesPx.isEmpty) return;
+    currentGuideStrokeIndex.value = 0;
+    guideCirclePx.value = guideStrokesPx.first.isNotEmpty
+        ? guideStrokesPx.first.first
+        : null;
+    startGuide();
+  }
+
   void showCorrect({required int starIndex}) {
     feedback.value = DrawFeedback.correct;
     praiseText.value = ['ល្អណាស់!', 'ធ្វើបានល្អ 👍'][Random().nextInt(2)];
     confettiController.play();
-    completedStarCount.value++;
+
+    markCorrect(starIndex);
     playStarPop(starIndex);
   }
 
@@ -428,7 +442,18 @@ class StageAnimationController extends GetxController
     return _durationMsByStroke[idx];
   }
 
-  void resetStars() {
+  void resetStars({int? total}) {
+    if (total != null) {
+      starStates.assignAll(List.filled(total, StarState.pending));
+    } else {
+      if (starStates.isNotEmpty) {
+        for (int i = 0; i < starStates.length; i++) {
+          starStates[i] = StarState.pending;
+        }
+        starStates.refresh();
+      }
+    }
+
     completedStarCount.value = 0;
     animatingStarIndex.value = null;
     starScale.value = 1.0;
@@ -444,5 +469,25 @@ class StageAnimationController extends GetxController
     await Future.delayed(const Duration(milliseconds: 400));
 
     animatingStarIndex.value = null;
+  }
+
+  void markCorrect(int index) {
+    if (index < 0) return;
+    if (index >= starStates.length) return;
+
+    starStates[index] = StarState.correct;
+    starStates.refresh();
+
+    completedStarCount.value = starStates
+        .where((s) => s == StarState.correct)
+        .length;
+  }
+
+  void markWrong(int index) {
+    if (index < 0) return;
+    if (index >= starStates.length) return;
+
+    starStates[index] = StarState.wrong;
+    starStates.refresh();
   }
 }
