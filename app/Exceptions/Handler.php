@@ -91,11 +91,11 @@ class Handler extends ExceptionHandler
         $this->renderable(function (AuthorizationException $e, Request $request) {
             if ($request->is(['api/mobile/*', 'api/teacher/*', 'api/*'])) {
                 return response()->json([
-                    'code' => 401,
+                    'code' => 403,
                     'message' => 'Unauthorized',
                     'data' => null,
                     'error' => null
-                ], 401);
+                ], 403);
             }
         });
 
@@ -103,11 +103,11 @@ class Handler extends ExceptionHandler
         $this->renderable(function (AuthenticationException $e, Request $request) {
             if ($request->is(['api/mobile/*', 'api/teacher/*', 'api/*'])) {
                 return response()->json([
-                    'code' => 403,
+                    'code' => 401,
                     'message' => 'Unauthenticated',
                     'data' => null,
                     'error' => null
-                ], 403);
+                ], 401);
             }
         });
 

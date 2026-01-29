@@ -50,9 +50,20 @@ class TeacherController extends Controller
             'email'    => 'required|email|unique:users,email',
             'phone'    => 'nullable|string|max:20',
             'subject'  => 'nullable|string|max:100',
-            'photo'    => 'nullable|image|max:2048',
+            'photo'    => 'nullable|string',
             'password' => 'required|string|min:6',
         ]);
+
+        $validator->after(function ($validator) use ($request) {
+            if ($request->hasFile('photo')) return;
+
+            if ($request->filled('photo')) {
+                if (!is_string($request->photo) || !preg_match('/^data:image\/(png|jpe?g|webp);base64,/i', $request->photo)) {
+                    $validator->errors()->add('photo', 'Photo must be an image file or a base64 data URL.');
+                }
+            }
+        });
+
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
@@ -60,7 +71,7 @@ class TeacherController extends Controller
         return DB::transaction(function () use ($request, $authUser, $school) {
             $teacherData = $request->only(['name', 'email', 'phone', 'subject']);
             $teacherData['school_id']  = $authUser->school_id;
-            $teacherData['school_key'] = $school->school_key; // ← use real school key
+            $teacherData['school_key'] = $school->school_key;
 
             do {
                 $candidate = 'TCH-' . strtoupper(Str::random(6));
@@ -69,7 +80,14 @@ class TeacherController extends Controller
 
             if ($request->hasFile('photo')) {
                 $teacherData['photo'] = $request->file('photo')->store('teachers', 'public');
+            } elseif ($request->filled('photo')) {
+                $path = uploadImageBase64($request->photo);
+                if (!$path) {
+                    return response()->json(['message' => 'Incorrect Image type or wrong format'], 422);
+                }
+                $teacherData['photo'] = $path;
             }
+
 
             $teacher = Teacher::create($teacherData);
 
@@ -107,10 +125,7 @@ class TeacherController extends Controller
             'email'    => 'sometimes|required|email|unique:users,email,' . optional($linkedUser)->id,
             'phone'    => 'nullable|string|max:20',
             'subject'  => 'nullable|string|max:100',
-
-            // ✅ base64 photo instead of file upload
-            'photo'    => 'nullable|string', // (optional) add regex below if you want strict validation
-            // 'photo' => ['nullable','string','regex:/^data:image\/(png|jpe?g);base64,/i'],
+            'photo'    => 'nullable|string',
 
             'password' => 'nullable|string|min:6',
         ]);

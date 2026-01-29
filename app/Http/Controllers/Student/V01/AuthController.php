@@ -79,6 +79,8 @@ class AuthController extends Controller
             return $this->returnError('The provided credentials are incorrect.', 401);
         }
 
+        $student->tokens()->delete();
+
         $token = $student->createToken('student_token')->plainTextToken;
 
         $this->setResult("student", new UserDetailResource($student));

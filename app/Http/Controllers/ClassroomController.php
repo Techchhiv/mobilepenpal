@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\ClassroomJoinCode;
 use App\Helpers\StudentSummary;
 use App\Http\Controllers\Student\V01\Controller;
 use App\Http\Requests\Teacher\V01\StoreClassroomRequest;
@@ -13,6 +14,7 @@ use App\Models\Student;
 use App\Models\Teacher;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class ClassroomController extends Controller
@@ -184,6 +186,96 @@ class ClassroomController extends Controller
             'classroom' => $classroom,
         ]);
     }
+
+    public function completeStudent(Request $request, Classroom $classroom, Student $student)
+    {
+        $user = $request->user();
+
+        if ((int) $classroom->school_id !== (int) $user->school_id) {
+            return $this->returnError('Unauthorized', 403);
+        }
+
+        $school = School::select('id', 'admin_email')->find($classroom->school_id);
+
+        $userEmail  = strtolower(trim((string) $user->email));
+        $adminEmail = strtolower(trim((string) ($school->admin_email ?? '')));
+
+        $isAdmin = $adminEmail && $userEmail === $adminEmail;
+
+        if (!$isAdmin) {
+            $teacher = Teacher::where('school_id', $user->school_id)
+                ->whereRaw('LOWER(email) = ?', [$userEmail])
+                ->first();
+
+            if (!$teacher || (int) $teacher->id !== (int) $classroom->teacher_id) {
+                return $this->returnError('Unauthorized', 403);
+            }
+        }
+
+        $enrollment = ClassroomEnrollment::where('classroom_id', $classroom->id)
+            ->where('student_id', $student->id)
+            ->first();
+
+        if (!$enrollment) {
+            return $this->returnError('Enrollment not found.', 404);
+        }
+
+        if ($enrollment->status === 'completed') {
+            $this->setResult('enrollment', $enrollment);
+            return $this->returnResponse();
+        }
+
+        $enrollment->status = 'completed';
+        $enrollment->left_at = now();
+        $enrollment->save();
+
+        $this->setResult('enrollment', $enrollment);
+        return $this->returnResponse();
+    }
+
+
+    public function regenerateJoinCode(Request $request, Classroom $classroom)
+    {
+        $user = $request->user();
+
+        if ((int) $classroom->school_id !== (int) $user->school_id) {
+            return $this->returnError('Unauthorized', 403);
+        }
+
+        $school = School::select('id', 'admin_email')->find($classroom->school_id);
+
+        $userEmail  = strtolower(trim((string) $user->email));
+        $adminEmail = strtolower(trim((string) ($school->admin_email ?? '')));
+
+        $isAdmin = $adminEmail && $userEmail === $adminEmail;
+
+        if (!$isAdmin) {
+            $teacher = Teacher::where('school_id', $user->school_id)
+                ->whereRaw('LOWER(email) = ?', [$userEmail])
+                ->first();
+
+            if (!$teacher || (int) $teacher->id !== (int) $classroom->teacher_id) {
+                return $this->returnError('Unauthorized', 403);
+            }
+        }
+
+        DB::transaction(function () use ($classroom) {
+            do {
+                $newCode = ClassroomJoinCode::generate((int) $classroom->school_id);
+            } while (Classroom::where('join_code', $newCode)->exists());
+
+            $classroom->join_code = $newCode;
+            $classroom->save();
+        });
+
+        $classroom->load(['teacher:id,name'])->loadCount([
+            'enrollments as students_count' => fn($q) => $q->where('status', 'enrolled')
+        ]);
+
+        $this->setResult('classroom', $classroom);
+        return $this->returnResponse();
+    }
+
 
     public function students(Request $request, Classroom $classroom, Student $student)
     {
@@ -380,13 +472,27 @@ class ClassroomController extends Controller
 
     public function removeStudent(Request $request, Classroom $classroom, Student $student)
     {
-        $teacher = $request->user();
+        $user = $request->user();
 
-        if (
-            (int)$classroom->teacher_id !== (int)$teacher->id ||
-            (int)$classroom->school_id !== (int)$teacher->school_id
-        ) {
+        if ((int) $classroom->school_id !== (int) $user->school_id) {
             return $this->returnError('Unauthorized', 403);
+        }
+
+        $school = School::select('id', 'admin_email')->find($classroom->school_id);
+
+        $userEmail  = strtolower(trim((string) $user->email));
+        $adminEmail = strtolower(trim((string) ($school->admin_email ?? '')));
+
+        $isAdmin = $adminEmail && $userEmail === $adminEmail;
+
+        if (!$isAdmin) {
+            $teacher = Teacher::where('school_id', $user->school_id)
+                ->whereRaw('LOWER(email) = ?', [$userEmail])
+                ->first();
+
+            if (!$teacher || (int) $teacher->id !== (int) $classroom->teacher_id) {
+                return $this->returnError('Unauthorized', 403);
+            }
         }
 
         $enrollment = ClassroomEnrollment::where('classroom_id', $classroom->id)
@@ -397,7 +503,7 @@ class ClassroomController extends Controller
             return $this->returnError('Enrollment not found.', 404);
         }
 
-        if ($enrollment->status === 'removed') {
+        if ($enrollment->status !== 'enrolled') {
             $this->setResult('enrollment', $enrollment);
             return $this->returnResponse();
         }
@@ -412,12 +518,10 @@ class ClassroomController extends Controller
 
     private function generateUniqueJoinCode(int $schoolId): string
     {
-        $schoolKey = School::where('id', $schoolId)->value('school_key');
-        $prefix = $schoolKey ? strtoupper($schoolKey) : 'SCH';
+        $expiredDays = 1;
 
         do {
-            $random = strtoupper(Str::random(8));
-            $code = "{$prefix}-{$random}";
+            $code = ClassroomJoinCode::generate($schoolId, $expiredDays);
         } while (Classroom::where('join_code', $code)->exists());
 
         return $code;

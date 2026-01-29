@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers\Student\V01;
 
+use App\Helpers\ClassroomJoinCode;
 use App\Http\Resources\Student\V01\Classroom\ClassroomDetailResource;
 use App\Http\Resources\Student\V01\Classroom\ClassroomResource;
 use App\Models\Classroom;
 use App\Models\ClassroomEnrollment;
 use App\Models\Student;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ClassroomController extends Controller
 {
@@ -106,39 +108,63 @@ class ClassroomController extends Controller
             'join_code' => 'required|string|max:50',
         ]);
 
-        $joinCode = trim($validated['join_code']);
+        $joinCode = strtoupper(trim($validated['join_code']));
 
-        $classroom = Classroom::where('join_code', $joinCode)->first();
-        if (!$classroom) return $this->returnError('Invalid join code.', 404);
-        if (!$classroom->is_active) return $this->returnError('This classroom is inactive.', 422);
+        return DB::transaction(function () use ($student, $joinCode) {
 
-        if (!empty($student->school_id) && (int)$student->school_id !== (int)$classroom->school_id) {
-            return $this->returnError('You cannot join a classroom from another school.', 403);
-        }
+            $studentLocked = Student::whereKey($student->id)->lockForUpdate()->first();
 
-        $enrollment = ClassroomEnrollment::updateOrCreate(
-            ['classroom_id' => $classroom->id, 'student_id' => $student->id],
-            ['status' => 'enrolled', 'enrolled_at' => now(), 'left_at' => null]
-        );
+            if (empty($studentLocked->school_id)) {
+                return $this->returnError(
+                    'Your account is not linked to a school. Please contact your school admin.',
+                    403
+                );
+            }
 
-        if (empty($student->school_id)) {
-            $student->school_id = $classroom->school_id;
-            $student->save();
-        }
+            $classroom = Classroom::where('join_code', $joinCode)
+                ->where('school_id', $studentLocked->school_id)
+                ->first();
 
-        $classroom->load(['teacher:id,name'])->loadCount([
-            'enrollments as students_count' => fn($q) => $q->where('status', 'enrolled')
-        ]);
+            if (!$classroom) return $this->returnError('Invalid join code.', 404);
+            if (!$classroom->is_active) return $this->returnError('This classroom is inactive.', 422);
 
-        $classroom->setRelation('enrollment', $enrollment);
+            $check = ClassroomJoinCode::validate($classroom->join_code, (int) $classroom->school_id);
 
-        return response()->json([
-            'code' => 200,
-            'message' => 'OK',
-            'data' => [
-                'classroom' => new ClassroomResource($classroom),
-            ],
-            'error' => null,
-        ]);
+            if ($check && !$check['ok']) {
+                return $this->returnError($check['reason'] ?? 'Invalid join code.', 422);
+            }
+
+            if ($check && !empty($check['expired'])) {
+                return $this->returnError(
+                    'This join code has expired. Please ask your teacher for a new one.',
+                    410
+                );
+            }
+
+            $activeEnrollment = ClassroomEnrollment::where('student_id', $studentLocked->id)
+                ->where('status', 'enrolled')
+                ->lockForUpdate()
+                ->first();
+
+            if ($activeEnrollment && (int)$activeEnrollment->classroom_id !== (int)$classroom->id) {
+                return $this->returnError(
+                    'You are already enrolled in another classroom. Please leave it first.',
+                    409
+                );
+            }
+            $enrollment = ClassroomEnrollment::updateOrCreate(
+                ['classroom_id' => $classroom->id, 'student_id' => $studentLocked->id],
+                ['status' => 'enrolled', 'enrolled_at' => now(), 'left_at' => null]
+            );
+
+            $classroom->load(['teacher:id,name'])->loadCount([
+                'enrollments as students_count' => fn($q) => $q->where('status', 'enrolled')
+            ]);
+
+            $classroom->setRelation('enrollment', $enrollment);
+
+            $this->setResult('classroom', new ClassroomResource($classroom));
+            return $this->returnResponse();
+        });
     }
 }

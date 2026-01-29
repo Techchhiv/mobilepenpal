@@ -156,6 +156,9 @@ Route::middleware('auth:api')->group(function () {
             Route::put('classrooms/{classroom}', [ClassroomController::class, 'update']);
             Route::delete('classrooms/{classroom}', [ClassroomController::class, 'archive']);
 
+            Route::post('classrooms/{classroom}/regenerate-join-code', [ClassroomController::class, 'regenerateJoinCode']);
+            Route::post('classrooms/{classroom}/students/{student}/complete', [ClassroomController::class, 'completeStudent']);
+
             // manage enrollments
             Route::get('classrooms/{classroom}/students/{student}', [ClassroomController::class, 'students']);
             Route::post('classrooms/{classroom}/students/{student}/remove', [ClassroomController::class, 'removeStudent']);

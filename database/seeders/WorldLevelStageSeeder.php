@@ -61,11 +61,46 @@ class WorldLevelStageSeeder extends Seeder
                 'អ',
             ];
 
-            $digits = ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'];
+            $digits = [
+                '០',
+                '១',
+                '២',
+                // '៣', '៤', '៥', '៦', '៧', '៨', '៩'
+            ];
 
-            $independentVowels = ['ឥ', 'ឦ', 'ឧ', 'ឩ', 'ឪ', 'ឫ', 'ឬ', 'ឭ', 'ឮ', 'ឯ', 'ឰ', 'ឱ', 'ឲ', 'ឪ'];
+            $independentVowels = [
+                'ឥ',
+                'ឦ',
+                'ឧ',
+                // 'ឩ', 'ឪ', 'ឫ', 'ឬ', 'ឭ', 'ឮ', 'ឯ', 'ឰ', 'ឱ', 'ឲ', 'ឪ'
+            ];
 
-            $dependentVowels = ['ា', 'ិ', 'ី', 'ឹ', 'ឺ', 'ុ', 'ូ', 'ួ', 'ើ', 'ឿ', 'ៀ', 'េ', 'ែ', 'ៃ', 'ោ', 'ៅ', 'ុំ', 'ំ', 'ាំ', 'ះ', 'ិះ', 'ុះ', 'េះ', 'ោះ'];
+            $dependentVowels = [
+                'ា',
+                'ិ',
+                'ី',
+                'ឹ',
+                'ឺ',
+                'ុ',
+                'ូ',
+                'ួ',
+                'ើ',
+                'ឿ',
+                'ៀ',
+                'េ',
+                'ែ',
+                'ៃ',
+                'ោ',
+                'ៅ',
+                'ុំ',
+                'ំ',
+                'ាំ',
+                'ះ',
+                'ិះ',
+                'ុះ',
+                'េះ',
+                'ោះ'
+            ];
 
             $worlds = [
                 [
@@ -208,11 +243,12 @@ class WorldLevelStageSeeder extends Seeder
     {
         return match ($characterType) {
             'consonants' => "រៀនអក្សរ {$ch}",
-            'digits' => "រៀន {$ch}",
+            'digits' => "រៀនលេខ {$ch}",
             'independent_vowels', 'dependent_vowels' => "រៀនស្រៈ {$ch}",
             default => "រៀន {$ch}",
         };
     }
+
 
     private function buildExampleForCharacter(string $character, string $characterType): string
     {
@@ -221,9 +257,32 @@ class WorldLevelStageSeeder extends Seeder
         }
 
         if ($characterType === 'digits') {
+            return $this->buildDigitExample($character); // returns "១ / 1"
+        }
+
+        // ✅ vowels: just the vowel itself (UI will show prefix "ស្រៈ")
+        if ($characterType === 'dependent_vowels' || $characterType === 'independent_vowels') {
             return "{$character}";
         }
 
         return "{$character}";
+    }
+
+    private function buildDigitExample(string $khmerDigit): string
+    {
+        $map = [
+            '០' => '0',
+            '១' => '1',
+            '២' => '2',
+            '៣' => '3',
+            '៤' => '4',
+            '៥' => '5',
+            '៦' => '6',
+            '៧' => '7',
+            '៨' => '8',
+            '៩' => '9',
+        ];
+        $latin = $map[$khmerDigit] ?? null;
+        return $latin ? "{$khmerDigit} / {$latin}" : "{$khmerDigit}";
     }
 }

@@ -15,8 +15,8 @@ class UserDetailResource extends JsonResource
     public function toArray($request)
     {
         return collect(parent::toArray($request))->except([
-            'school_id',
-            'school_key',
+            // 'school_id',
+            // 'school_key',
             // 'enrollment_year',
             'is_active',
             'created_at',
