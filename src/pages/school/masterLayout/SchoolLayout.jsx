@@ -5,7 +5,7 @@ import ThemeToggleButton from "../../../helper/ThemeToggleButton";
 import API from "../../../helper/api";
 import { useAuth } from "../../../context/AuthContext";
 import penLogo from "../../../assets/images/pen_logo.png";
-import "../../../assets/css/SchoolLayout.css";
+import "../../../assets/css/Layout.css";
 
 
 const SchoolLayout = ({ children }) => {

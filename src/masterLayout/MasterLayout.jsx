@@ -5,6 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import ThemeToggleButton from "../helper/ThemeToggleButton";
 import API from "../helper/api";
 import penLogo from "../assets/images/pen_logo.png";
+import "../assets/css/Layout.css";
 
 const MasterLayout = ({ children }) => {
   const { user, loading, logout, hasRole, hasPermission, isSuperAdmin } = useAuth();
@@ -47,12 +48,27 @@ const MasterLayout = ({ children }) => {
     logout();
   };
 
+  const closeMobileSidebar = () => {
+    setMobileMenu(false);
+    setSidebarActive(false);
+    setOpenDropdownKey(null);
+  };
+
+
   return (
-    <section className={mobileMenu ? "overlay active" : "overlay"}>
+    <section className={mobileMenu ? "overlay active" : "overlay"}
+      onClick={(e) => {
+        if (!mobileMenu) return;
+        if (e.target.closest(".sidebar")) return;
+        closeMobileSidebar();
+      }}>
       {/* Sidebar */}
-      <aside className={sidebarActive ? "sidebar active" : "sidebar"}>
+      <aside className={sidebarActive || mobileMenu ? "sidebar active" : "sidebar"}>
         <button
-          onClick={() => setMobileMenu(false)}
+          onClick={() => {
+            setMobileMenu(false);
+            setSidebarActive(false);
+          }}
           type="button"
           className="sidebar-close-btn"
         >
@@ -79,38 +95,71 @@ const MasterLayout = ({ children }) => {
             )}
 
             {showWorldManage && (
-              <li>
-                <NavLink to="/admin/worlds">
-                  <Icon icon="mdi:account-multiple" className="menu-icon" />
-                  <span>Manage Worlds</span>
-                </NavLink>
-              </li>
-            )}
+              <li className={`dropdown ${openDropdownKey === "world" ? "open" : ""}`}>
+                <a
+                  href="#world"
+                  className={`menu-trigger ${openDropdownKey === "world" ? "active-page" : ""}`}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setOpenDropdownKey((prev) => (prev === "world" ? null : "world"));
+                  }}
+                >
+                  <Icon icon="mdi:earth" className="menu-icon" />
+                  <span>World Management</span>
+                  <Icon
+                    icon={openDropdownKey === "world" ? "mdi:chevron-up" : "mdi:chevron-down"}
+                    className="caret ms-auto"
+                  />
+                </a>
 
-            {showWorldManage && (
-              <li>
-                <NavLink to="/admin/levels">
-                  <Icon icon="mdi:account-multiple" className="menu-icon" />
-                  <span>Manage Level</span>
-                </NavLink>
-              </li>
-            )}
+                <ul
+                  className="sidebar-submenu"
+                  style={{
+                    maxHeight: openDropdownKey === "world" ? "600px" : "0px",
+                    overflow: "hidden",
+                    transition: "max-height .25s ease",
+                  }}
+                >
+                  <li>
+                    <NavLink
+                      to="/admin/worlds"
+                      className={({ isActive }) => (isActive ? "active-page" : "")}
+                    >
+                      <i className="ri-circle-fill circle-icon text-primary-600 w-auto" />
+                      Manage Worlds
+                    </NavLink>
+                  </li>
 
-            {showWorldManage && (
-              <li>
-                <NavLink to="/admin/stages">
-                  <Icon icon="mdi:account-multiple" className="menu-icon" />
-                  <span>Manage Stage</span>
-                </NavLink>
-              </li>
-            )}
+                  <li>
+                    <NavLink
+                      to="/admin/levels"
+                      className={({ isActive }) => (isActive ? "active-page" : "")}
+                    >
+                      <i className="ri-circle-fill circle-icon text-warning-main w-auto" />
+                      Manage Levels
+                    </NavLink>
+                  </li>
 
-            {showWorldManage && (
-              <li>
-                <NavLink to="/admin/exercises">
-                  <Icon icon="mdi:account-multiple" className="menu-icon" />
-                  <span>Manage Exercise</span>
-                </NavLink>
+                  <li>
+                    <NavLink
+                      to="/admin/stages"
+                      className={({ isActive }) => (isActive ? "active-page" : "")}
+                    >
+                      <i className="ri-circle-fill circle-icon text-info-main w-auto" />
+                      Manage Stages
+                    </NavLink>
+                  </li>
+
+                  <li>
+                    <NavLink
+                      to="/admin/exercises"
+                      className={({ isActive }) => (isActive ? "active-page" : "")}
+                    >
+                      <i className="ri-circle-fill circle-icon text-success-main w-auto" />
+                      Manage Exercises
+                    </NavLink>
+                  </li>
+                </ul>
               </li>
             )}
 

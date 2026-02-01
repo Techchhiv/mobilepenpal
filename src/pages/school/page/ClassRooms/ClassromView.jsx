@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Icon } from "@iconify/react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import QRCode from "react-qr-code";
 
 import API from "../../../../helper/api";
 import API_BASE_URL from "../../../../helper/Base_urls";
@@ -20,23 +19,10 @@ const ClassroomView = () => {
   const [error, setError] = useState("");
   const [flash, setFlash] = useState("");
 
-  const [qrModal, setQrModal] = useState({ open: false, value: "", title: "" });
-  const [qrCopied, setQrCopied] = useState(false);
-
   const canView = hasPermission("classrooms.view");
   const canEdit = hasPermission("classrooms.update");
   const canDelete = hasPermission("classrooms.delete");
-
-  const closeQr = () => {
-    setQrModal({ open: false, value: "", title: "" });
-    setQrCopied(false);
-  };
-
-  useEffect(() => {
-    const onKeyDown = (e) => e.key === "Escape" && closeQr();
-    if (qrModal.open) window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [qrModal.open]);
+  
 
   const avatarUrl = (path) => {
     if (!path) return null;
@@ -62,15 +48,6 @@ const ClassroomView = () => {
     return code ? String(code) : "";
   }, [classroom]);
 
-  const openQr = () => {
-    setQrModal({
-      open: true,
-      value: joinCode || "",
-      title: `${classroom?.name || "Classroom"}${joinCode ? ` (${joinCode})` : ""}`,
-    });
-    setQrCopied(false);
-  };
-
   const copyText = async (text) => {
     const c = String(text || "").trim();
     if (!c) return false;
@@ -87,49 +64,6 @@ const ClassroomView = () => {
       document.body.removeChild(ta);
       return true;
     }
-  };
-
-  const copyQrValue = async () => {
-    const ok = await copyText(qrModal.value);
-    if (!ok) return;
-    setQrCopied(true);
-    window.setTimeout(() => setQrCopied(false), 1000);
-  };
-
-  const downloadQrPng = () => {
-    const svg = document.getElementById("classroom-qr-svg");
-    if (!svg) return;
-
-    const serializer = new XMLSerializer();
-    const svgString = serializer.serializeToString(svg);
-
-    const canvas = document.createElement("canvas");
-    const size = 512;
-    canvas.width = size;
-    canvas.height = size;
-
-    const ctx = canvas.getContext("2d");
-    const img = new Image();
-
-    const svgBlob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
-    const url = URL.createObjectURL(svgBlob);
-
-    img.onload = () => {
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, 0, size, size);
-      ctx.drawImage(img, 0, 0, size, size);
-      URL.revokeObjectURL(url);
-
-      const pngUrl = canvas.toDataURL("image/png");
-      const a = document.createElement("a");
-      a.href = pngUrl;
-      a.download = `classroom-qr-${(qrModal.title || "code").replace(/\s+/g, "-")}.png`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-    };
-
-    img.src = url;
   };
 
   const fetchClassroom = async () => {
@@ -193,17 +127,6 @@ const ClassroomView = () => {
                 <Icon icon="mdi:arrow-left" />
                 <span className="btn-label">Back</span>
               </Link>
-
-              {!!(classroom?.is_active && joinCode) && (
-                <button
-                  type="button"
-                  onClick={openQr}
-                  className="btn btn-info d-inline-flex align-items-center gap-2"
-                >
-                  <Icon icon="mdi:qrcode" />
-                  <span className="btn-label">QR Code</span>
-                </button>
-              )}
 
               {!!(canEdit && classroom?.is_active) && (
                 <Link
@@ -418,67 +341,6 @@ const ClassroomView = () => {
           )}
         </div>
       </div>
-
-      {/* QR Modal */}
-      {qrModal.open && (
-        <div
-          className="position-fixed top-0 start-0 w-100 h-100"
-          style={{
-            background: "rgba(0,0,0,0.75)",
-            zIndex: 1055,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: 16,
-          }}
-          onClick={closeQr}
-          role="dialog"
-          aria-modal="true"
-        >
-          <div
-            className="bg-white radius-12 p-16"
-            style={{ width: "min(420px, 95vw)" }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="d-flex justify-content-between align-items-center mb-12">
-              <div className="fw-semibold">{qrModal.title || "QR Code"}</div>
-              <button
-                type="button"
-                className="d-flex align-items-center btn btn-sm btn-outline-secondary"
-                onClick={closeQr}
-                title="Close"
-              >
-                <Icon icon="mdi:close" />
-              </button>
-            </div>
-
-            <div
-              className="d-flex align-items-center justify-content-center border radius-12 p-16"
-              style={{ background: "#fff" }}
-            >
-              <QRCode id="classroom-qr-svg" value={qrModal.value || ""} size={220} />
-            </div>
-
-            <div className="d-flex gap-2 mt-14">
-              <button type="button" className="btn btn-primary flex-grow-1" onClick={downloadQrPng}>
-                <Icon icon="mdi:download" className="me-6" />
-                Download QR
-              </button>
-
-              <button
-                type="button"
-                className={`d-flex align-items-center btn ${qrCopied ? "btn-success" : "btn-outline-secondary"
-                  }`}
-                onClick={copyQrValue}
-                disabled={!qrModal.value}
-              >
-                <Icon icon={qrCopied ? "mdi:check" : "mdi:content-copy"} className="me-6" />
-                {qrCopied ? "Copied!" : "Copy"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </SchoolLayout>
   );
 };

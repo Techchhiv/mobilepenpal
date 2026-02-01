@@ -28,6 +28,17 @@ const WorldView = () => {
     const canEdit = hasPermission("worlds.update");
     const canToggle = hasPermission("worlds.enable_disable");
 
+    const canCreateLevel = hasPermission("levels.create") || hasPermission("worlds.update");
+
+    const [insertLevelOpen, setInsertLevelOpen] = useState(false);
+    const [insertLevelLoading, setInsertLevelLoading] = useState(false);
+    const [insertLevelError, setInsertLevelError] = useState("");
+
+    const [newLevelName, setNewLevelName] = useState("");
+    const [newLevelDescription, setNewLevelDescription] = useState("");
+    const [newLevelActive, setNewLevelActive] = useState(true);
+    const [newLevelUnlockedByDefault, setNewLevelUnlockedByDefault] = useState(false);
+
     const fetchWorld = async () => {
         setLoading(true);
         setError("");
@@ -42,6 +53,53 @@ const WorldView = () => {
             setError(err?.response?.data?.message || "Failed to load world.");
         } finally {
             setLoading(false);
+        }
+    };
+
+
+    const openInsertLevel = () => {
+        setInsertLevelError("");
+        setNewLevelName("");
+        setNewLevelDescription("");
+        setNewLevelActive(true);
+        setNewLevelUnlockedByDefault(false);
+        setInsertLevelOpen(true);
+    };
+
+    const closeInsertLevel = () => {
+        setInsertLevelOpen(false);
+        setInsertLevelError("");
+    };
+
+    const submitInsertLevel = async () => {
+        setInsertLevelLoading(true);
+        setInsertLevelError("");
+        setError("");
+        setMessage("");
+
+        try {
+            const payload = {
+                name: newLevelName.trim(),
+                description: newLevelDescription.trim() || null,
+                is_active: newLevelActive ? 1 : 0,
+                is_unlocked_by_default: newLevelUnlockedByDefault ? 1 : 0,
+            };
+
+            if (!payload.name) {
+                setInsertLevelError("Level name is required.");
+                return;
+            }
+
+            await API.post(`/admin/worlds/${id}/levels`, payload);
+
+            setMessage("Level created.");
+            closeInsertLevel();
+            await fetchWorld();
+        } catch (err) {
+            console.error("Create level failed:", err);
+            setInsertLevelError(err?.response?.data?.message || "Failed to create level.");
+        } finally {
+            setInsertLevelLoading(false);
         }
     };
 
@@ -247,16 +305,8 @@ const WorldView = () => {
                                         <div className="row g-3">
                                             <InfoItem label="Name" value={normalized.name} />
                                             <InfoItem
-                                                label="Theme Color"
-                                                value={normalized.theme_color || "—"}
-                                            />
-                                            <InfoItem
                                                 label="Default Unlocked"
                                                 value={normalized.is_unlocked_by_default ? "Yes" : "No"}
-                                            />
-                                            <InfoItem
-                                                label="Order Index"
-                                                value={normalized.order_index ?? "—"}
                                             />
                                             <InfoItem
                                                 label="Description"
@@ -286,10 +336,21 @@ const WorldView = () => {
                                 </div>
 
                                 <div className="card border mt-3">
-                                    <div className="card-header d-flex justify-content-between align-items-center">
+                                    <div className="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
                                         <h6 className="mb-0">Levels</h6>
-                                        {/* Later: Add Level button */}
+
+                                        {canCreateLevel && (
+                                            <button
+                                                type="button"
+                                                className="btn btn-primary d-flex align-items-center"
+                                                onClick={openInsertLevel}
+                                            >
+                                                <Icon icon="mdi:plus" className="me-6" />
+                                                Insert Level
+                                            </button>
+                                        )}
                                     </div>
+
                                     <div className="card-body">
                                         {normalized.levels.length === 0 ? (
                                             <div className="text-muted">No levels.</div>
@@ -302,6 +363,7 @@ const WorldView = () => {
                                                             <th>Name</th>
                                                             <th>Status</th>
                                                             <th>Stages</th>
+                                                            <th style={{ width: 120 }} className="text-center">Action</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
@@ -326,6 +388,18 @@ const WorldView = () => {
                                                                         <td>
                                                                             {l.active_stages_count}/{l.stages_count}
                                                                         </td>
+                                                                        <td className="text-center align-middle">
+                                                                            <Link
+                                                                                to={`/admin/levels/${l.id}`}
+                                                                                state={{ from: `/admin/worlds/${id}` }}
+                                                                                title="View Level"
+                                                                                className="bg-primary-focus text-primary-main rounded-circle d-inline-flex align-items-center justify-content-center border-0"
+                                                                                style={{ textDecoration: "none" }}
+                                                                            >
+                                                                                <Icon icon="mdi:eye-outline" />
+                                                                            </Link>
+                                                                        </td>
+
                                                                     </tr>
                                                                 );
                                                             })}
@@ -339,6 +413,124 @@ const WorldView = () => {
                         </div>
                     )}
                 </div>
+
+                {insertLevelOpen && (
+                    <div
+                        className="position-fixed top-0 start-0 w-100 h-100"
+                        style={{
+                            background: "rgba(0,0,0,0.55)",
+                            zIndex: 1055,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            padding: 16,
+                        }}
+                        onClick={closeInsertLevel}
+                        role="dialog"
+                        aria-modal="true"
+                    >
+                        <div
+                            className="card"
+                            style={{ width: "min(760px, 96vw)", maxHeight: "90vh", overflow: "hidden" }}
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <div className="card-header d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 className="mb-0">Insert Level</h6>
+                                    <small className="text-muted">Create a new level for this world</small>
+                                </div>
+
+                                <button className="btn btn-light d-flex" type="button" onClick={closeInsertLevel} title="Close">
+                                    <Icon icon="radix-icons:cross-2" />
+                                </button>
+                            </div>
+
+                            <div className="card-body" style={{ overflow: "auto" }}>
+                                {insertLevelError && <div className="alert alert-danger">{insertLevelError}</div>}
+
+                                <div className="row g-3">
+                                    <div className="col-12">
+                                        <label className="form-label">Level Name *</label>
+                                        <input
+                                            className="form-control"
+                                            value={newLevelName}
+                                            onChange={(e) => setNewLevelName(e.target.value)}
+                                            placeholder="e.g. ក - ង"
+                                        />
+                                    </div>
+
+                                    <div className="col-12">
+                                        <label className="form-label">Description</label>
+                                        <textarea
+                                            className="form-control"
+                                            rows={3}
+                                            value={newLevelDescription}
+                                            onChange={(e) => setNewLevelDescription(e.target.value)}
+                                            placeholder="Optional"
+                                        />
+                                    </div>
+
+                                    <div className="col-12 col-md-6">
+                                        <div className="form-check d-flex align-items-center gap-2">
+                                            <input
+                                                className="form-check-input m-0"
+                                                type="checkbox"
+                                                id="newLevelActive"
+                                                checked={!!newLevelActive}
+                                                onChange={(e) => setNewLevelActive(e.target.checked)}
+                                                style={{ marginTop: 0 }}
+                                            />
+                                            <label className="form-check-label mb-0" htmlFor="newLevelActive">
+                                                Active
+                                            </label>
+                                        </div>
+
+                                        <small className="text-muted d-block">
+                                            If unchecked, this level will be hidden from students.
+                                        </small>
+                                    </div>
+
+                                    <div className="col-12 col-md-6">
+                                        <div className="form-check d-flex align-items-center gap-2">
+                                            <input
+                                                className="form-check-input m-0"
+                                                type="checkbox"
+                                                id="newLevelUnlockedByDefault"
+                                                checked={!!newLevelUnlockedByDefault}
+                                                onChange={(e) => setNewLevelUnlockedByDefault(e.target.checked)}
+                                                style={{ marginTop: 0 }}
+                                            />
+                                            <label className="form-check-label mb-0" htmlFor="newLevelUnlockedByDefault">
+                                                Unlocked by default
+                                            </label>
+                                        </div>
+
+                                        <small className="text-muted d-block">
+                                            Students start with this level unlocked.
+                                        </small>
+                                    </div>
+
+                                </div>
+                            </div>
+
+                            <div className="card-footer d-flex justify-content-end gap-2">
+                                <button type="button" className="btn btn-secondary" onClick={closeInsertLevel} disabled={insertLevelLoading}>
+                                    Cancel
+                                </button>
+
+                                <button
+                                    type="button"
+                                    className="btn btn-primary"
+                                    onClick={submitInsertLevel}
+                                    disabled={insertLevelLoading}
+                                >
+                                    {insertLevelLoading ? "Saving..." : "Create"}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
             </div>
         </MasterLayout>
     );

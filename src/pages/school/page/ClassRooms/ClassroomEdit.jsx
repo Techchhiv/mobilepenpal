@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Icon } from "@iconify/react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
@@ -42,18 +42,6 @@ export default function ClassroomEdit() {
     const dd = String(dt.getDate()).padStart(2, "0");
     return `${yyyy}-${mm}-${dd}`;
   };
-
-  const prettyDate = (d) => {
-    if (!d) return "—";
-    const dt = new Date(d);
-    if (Number.isNaN(dt.getTime())) return String(d);
-    return dt.toLocaleDateString();
-  };
-
-  const joinCode = useMemo(() => {
-    const code = classroom?.join_code || classroom?.code || "";
-    return code ? String(code) : "";
-  }, [classroom]);
 
   const fetchClassroom = async () => {
     setLoading(true);

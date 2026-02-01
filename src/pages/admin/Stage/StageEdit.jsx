@@ -508,7 +508,7 @@ const StageEdit = () => {
                         </div>
 
                         <div className="col-12">
-                          <div className="form-check mt-2">
+                          <div className="form-check mt-2 d-flex align-items-center">
                             <input
                               className="form-check-input"
                               type="checkbox"
@@ -547,7 +547,7 @@ const StageEdit = () => {
 
                     <button
                       type="button"
-                      className="btn btn-outline-secondary"
+                      className="btn btn-outline-secondary d-flex align-items-center"
                       onClick={resetForm}
                       disabled={saving}
                       title="Reset to last loaded values"

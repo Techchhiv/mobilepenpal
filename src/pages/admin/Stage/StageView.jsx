@@ -27,9 +27,7 @@ const StageView = () => {
     const canEdit = hasPermission("stages.update");
     const canToggle = hasPermission("stages.enable_disable");
 
-    // stage-exercises permissions (adjust names if yours differ)
     const canAttachExercise = hasPermission("stage_exercises.create") || hasPermission("stages.update");
-    const canViewExercises = hasPermission("exercises.view") || hasPermission("stages.view");
 
     const from = location.state?.from || "/admin/stages";
 
@@ -39,7 +37,6 @@ const StageView = () => {
     const [message, setMessage] = useState("");
     const [error, setError] = useState("");
 
-    // ✅ stage exercises separate fetch
     const [loadingSE, setLoadingSE] = useState(false);
     const [stageExercises, setStageExercises] = useState([]);
 

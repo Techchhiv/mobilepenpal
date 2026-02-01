@@ -407,7 +407,7 @@ const StageCreate = () => {
 
                     {/* Active */}
                     <div className="col-12">
-                      <div className="form-check">
+                      <div className="form-check d-flex align-items-center">
                         <input
                           className="form-check-input"
                           type="checkbox"
@@ -426,7 +426,7 @@ const StageCreate = () => {
                       <div className="d-flex justify-content-end gap-2">
                         <button
                           type="button"
-                          className="btn btn-secondary"
+                          className="d-flex align-items-center btn btn-secondary"
                           onClick={resetForm}
                           disabled={saving}
                         >
@@ -436,7 +436,7 @@ const StageCreate = () => {
 
                         <button
                           type="submit"
-                          className="btn btn-primary-600"
+                          className="d-flex align-items-center btn btn-primary-600"
                           disabled={saving || levelsLoading}
                         >
                           <Icon icon="mdi:plus" className="me-2" />

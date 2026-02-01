@@ -15,7 +15,13 @@ const formatDate = (d) => {
     return dt.toLocaleDateString();
 };
 
-const toYMD = (d) => d.toISOString().slice(0, 10);
+const toYMD = (d) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+};
+
 
 const startOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
 
@@ -39,6 +45,7 @@ const monthName = (m) =>
 const buildWeeksForMonth = (year, month) => {
     const firstDay = new Date(year, month - 1, 1);
     const lastDay = new Date(year, month, 0);
+
     const weeks = [];
     let cursor = startOfWeekMonday(firstDay);
 
@@ -46,13 +53,10 @@ const buildWeeksForMonth = (year, month) => {
         const weekStart = startOfDay(cursor);
         const weekEnd = endOfWeekSunday(weekStart);
 
-        const from = new Date(Math.max(weekStart.getTime(), firstDay.getTime()));
-        const to = new Date(Math.min(weekEnd.getTime(), lastDay.getTime()));
-
         weeks.push({
-            label: `Week ${weeks.length + 1} (${from.toLocaleDateString()} – ${to.toLocaleDateString()})`,
-            from: toYMD(from),
-            to: toYMD(to),
+            label: `Week ${weeks.length + 1} (${weekStart.toLocaleDateString()} – ${weekEnd.toLocaleDateString()})`,
+            from: toYMD(weekStart),
+            to: toYMD(weekEnd),
         });
 
         cursor.setDate(cursor.getDate() + 7);
@@ -60,7 +64,6 @@ const buildWeeksForMonth = (year, month) => {
 
     return weeks;
 };
-
 
 const formatDuration = (seconds) => {
     const s = Math.max(0, parseInt(seconds || 0, 10));

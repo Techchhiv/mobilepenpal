@@ -81,7 +81,6 @@ const StudentView = () => {
 
     useEffect(() => {
         fetchStudent();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [id]);
 
     const normalized = useMemo(() => {

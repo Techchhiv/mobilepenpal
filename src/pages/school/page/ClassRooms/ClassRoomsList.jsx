@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import QRCode from "react-qr-code";
 import $ from "jquery";
 import "datatables.net-dt/js/dataTables.dataTables.js";
@@ -14,8 +14,15 @@ const ClassRoomsList = () => {
 
   const [message, setMessage] = useState("");
 
-  const [qrModal, setQrModal] = useState({ open: false, value: "", title: "" });
+  const [qrModal, setQrModal] = useState({
+    open: false,
+    classroomId: null,
+    value: "",
+    title: "",
+  });
+
   const [qrCopied, setQrCopied] = useState(false);
+  const [regenLoading, setRegenLoading] = useState(false);
 
   const [copiedRowId, setCopiedRowId] = useState(null);
 
@@ -50,8 +57,8 @@ const ClassRoomsList = () => {
       const rows = Array.isArray(res.data?.classrooms)
         ? res.data.classrooms
         : Array.isArray(res.data)
-        ? res.data
-        : [];
+          ? res.data
+          : [];
       setClassrooms(rows.map(normalize));
     } catch (err) {
       console.error("Fetch classrooms failed:", err);
@@ -59,21 +66,60 @@ const ClassRoomsList = () => {
     }
   };
 
+  const regenerateJoinCode = async () => {
+    if (!qrModal.classroomId) return;
+
+    try {
+      setRegenLoading(true);
+
+      const res = await API.post(`/school/classrooms/${qrModal.classroomId}/regenerate-join-code`);
+
+      const raw = res?.data?.data?.classroom;
+      const updated = raw ? normalize(raw) : null;
+      if (!updated?.join_code || updated.join_code === "—") {
+        setMessage("Regenerated, but no join code returned");
+        return;
+      }
+
+      setClassrooms((prev) => prev.map((c) => (c.id === updated.id ? { ...c, join_code: updated.join_code } : c)));
+
+      setQrModal((prev) => ({
+        ...prev,
+        value: updated.join_code,
+        title: `${updated?.name || "Classroom"} (${updated.join_code})`,
+      }));
+
+      setQrCopied(false);
+      setMessage("Join code regenerated");
+    } catch (err) {
+      console.error(err);
+      setMessage(err?.response?.data?.message || "Failed to regenerate join code");
+    } finally {
+      setRegenLoading(false);
+    }
+  };
+
+
   const openQr = (classroom) => {
-    const joinCode =
-      classroom?.join_code && classroom.join_code !== "—" ? classroom.join_code : "";
+    const joinCode = classroom?.join_code && classroom.join_code !== "—" ? classroom.join_code : "";
+
     setQrModal({
       open: true,
+      classroomId: classroom?.id ?? null,
       value: joinCode,
       title: `${classroom?.name || "Classroom"}${joinCode ? ` (${joinCode})` : ""}`,
     });
+
     setQrCopied(false);
+    setMessage("");
   };
 
   const closeQr = () => {
-    setQrModal({ open: false, value: "", title: "" });
+    setQrModal({ open: false, classroomId: null, value: "", title: "" });
     setQrCopied(false);
+    setMessage("");
   };
+
 
   const copyText = async (text) => {
     const c = String(text || "").trim();
@@ -160,6 +206,13 @@ const ClassRoomsList = () => {
     const id = setInterval(fetchClassrooms, 30000);
     return () => clearInterval(id);
   }, []);
+
+  useEffect(() => {
+    if (!message) return;
+    const t = window.setTimeout(() => setMessage(""), 2500);
+    return () => window.clearTimeout(t);
+  }, [message]);
+
 
   useEffect(() => {
     if (dtRef.current) {
@@ -354,11 +407,10 @@ const ClassRoomsList = () => {
 
                       <td>
                         <span
-                          className={`px-24 py-4 rounded-pill fw-medium text-sm ${
-                            c.is_active
-                              ? "bg-success-focus text-success-main"
-                              : "bg-warning-focus text-warning-main"
-                          }`}
+                          className={`px-24 py-4 rounded-pill fw-medium text-sm ${c.is_active
+                            ? "bg-success-focus text-success-main"
+                            : "bg-warning-focus text-warning-main"
+                            }`}
                         >
                           {c.is_active ? "Active" : "Archived"}
                         </span>
@@ -458,25 +510,44 @@ const ClassRoomsList = () => {
               <QRCode id="classroom-qr-svg" value={qrModal.value || ""} size={220} />
             </div>
 
-            <div className="d-flex gap-2">
-              <button type="button" className="btn btn-primary flex-grow-1" onClick={downloadQrPng}>
+            <div className="d-flex align-items-center gap-2 flex-nowrap">
+              <button
+                type="button"
+                className="btn btn-primary flex-grow-1 text-truncate"
+                style={{ minWidth: 0 }}
+                onClick={downloadQrPng}
+              >
                 <Icon icon="mdi:download" className="me-6" />
-                Download QR
+                Download
               </button>
+
+              {hasPermission("classrooms.update") && (
+                <button
+                  type="button"
+                  className=" btn btn-warning flex-shrink-0"
+                  style={{ whiteSpace: "nowrap" }}
+                  onClick={regenerateJoinCode}
+                  disabled={regenLoading}
+                  title="Regenerate join code"
+                >
+                  <Icon icon={regenLoading ? "mdi:loading" : "mdi:refresh"} className="me-6" />
+                  {regenLoading ? "..." : "Regenerate"}
+                </button>
+              )}
 
               <button
                 type="button"
-                className={`d-flex align-items-center btn ${
-                  qrCopied ? "btn-success" : "btn-outline-secondary"
-                }`}
+                className={`btn flex-shrink-0 ${qrCopied ? "btn-success" : "btn-outline-secondary"}`}
+                style={{ whiteSpace: "nowrap" }}
                 onClick={copyQrValue}
                 disabled={!qrModal.value}
-                title="Copy QR value"
+                title="Copy join code"
               >
                 <Icon icon={qrCopied ? "mdi:check" : "mdi:content-copy"} className="me-6" />
                 {qrCopied ? "Copied!" : "Copy"}
               </button>
             </div>
+
           </div>
         </div>
       )}
