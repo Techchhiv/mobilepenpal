@@ -65,14 +65,14 @@ class WorldLevelStageSeeder extends Seeder
                 '០',
                 '១',
                 '២',
-                // '៣', '៤', '៥', '៦', '៧', '៨', '៩'
+                '៣', '៤', '៥', '៦', '៧', '៨', '៩'
             ];
 
             $independentVowels = [
                 'ឥ',
                 'ឦ',
                 'ឧ',
-                // 'ឩ', 'ឪ', 'ឫ', 'ឬ', 'ឭ', 'ឮ', 'ឯ', 'ឰ', 'ឱ', 'ឲ', 'ឪ'
+                'ឩ', 'ឪ', 'ឫ', 'ឬ', 'ឭ', 'ឮ', 'ឯ', 'ឰ', 'ឱ', 'ឲ', 'ឪ'
             ];
 
             $dependentVowels = [
@@ -257,10 +257,9 @@ class WorldLevelStageSeeder extends Seeder
         }
 
         if ($characterType === 'digits') {
-            return $this->buildDigitExample($character); // returns "១ / 1"
+            return $character;
         }
 
-        // ✅ vowels: just the vowel itself (UI will show prefix "ស្រៈ")
         if ($characterType === 'dependent_vowels' || $characterType === 'independent_vowels') {
             return "{$character}";
         }

@@ -83,59 +83,35 @@ class StudentProgress
         return 0;
     }
 
-    private function checkAndUnlockNextContent($studentId, $stage)
+    private function checkAndUnlockNextContent(int $studentId, Stage $stage): ?int
     {
         $level = $stage->level;
         $world = $level->world;
 
-        $activeStages = Stage::where('level_id', $level->id)
-            ->where('is_active', true)
-            ->orderBy('order_index')
-            ->get();
-
-        if ($activeStages->isEmpty()) {
-            $this->completeLevel($studentId, $level);
-            $this->checkWorldCompletion($studentId, $world);
-            return null;
-        }
-
-        $completedStages = StudentStageProgress::where('student_id', $studentId)
-            ->whereIn('stage_id', $activeStages->pluck('id'))
-            ->where('status', 'completed')
-            ->count();
-
-        $nextActiveStage = Stage::where('level_id', $level->id)
+        $nextStage = Stage::where('level_id', $level->id)
             ->where('is_active', true)
             ->where('order_index', '>', $stage->order_index)
             ->orderBy('order_index')
+            ->orderBy('id')
             ->first();
 
-        if ($completedStages >= $activeStages->count()) {
-            $this->completeLevel($studentId, $level);
-            $this->checkWorldCompletion($studentId, $world);
-            return null;
+        if ($nextStage) {
+            $this->ensureStageUnlocked($studentId, (int) $nextStage->id);
+            return (int) $nextStage->id;
         }
 
-        if ($nextActiveStage) {
-            $progress = StudentStageProgress::firstOrNew([
-                'student_id' => $studentId,
-                'stage_id'   => $nextActiveStage->id,
-            ]);
+        $this->completeLevel($studentId, $level);
+        $this->checkWorldCompletion($studentId, $world);
 
-            if (!$progress->exists) {
-                $progress->status = 'unlocked';
-                $progress->stars_earned = 0;
-                $progress->save();
-            } elseif ($progress->status === 'locked') {
-                $progress->status = 'unlocked';
-                $progress->save();
-            }
+        $nextStageId = $this->nextPlayableStageAfterLevel($level);
 
-            return $nextActiveStage->id;
+        if ($nextStageId) {
+            $this->ensureStageUnlocked($studentId, (int) $nextStageId);
         }
 
-        return $this->unlockNextStage($studentId, $stage);
+        return $nextStageId;
     }
+
 
 
     private function completeLevel($studentId, $level)
@@ -604,5 +580,25 @@ class StudentProgress
             $progress->status = 'unlocked';
             $progress->save();
         }
+    }
+    private function nextPlayableStageAfterLevel(Level $currentLevel): ?int
+    {
+        $nextLevel = Level::where('world_id', $currentLevel->world_id)
+            ->where('order_index', '>', $currentLevel->order_index)
+            ->where('is_active', true)
+            ->orderBy('order_index')
+            ->get()
+            ->first(function ($lvl) {
+                return $lvl->stages()->where('is_active', true)->exists();
+            });
+
+        if (!$nextLevel) return null;
+
+        $firstStageId = Stage::where('level_id', $nextLevel->id)
+            ->where('is_active', true)
+            ->orderBy('order_index')
+            ->value('id');
+
+        return $firstStageId ? (int) $firstStageId : null;
     }
 }

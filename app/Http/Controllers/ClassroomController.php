@@ -412,9 +412,12 @@ class ClassroomController extends Controller
                 'used_to'         => $usedTo?->toDateString(),
             ];
         } else {
-            $reqTo = $to ? Carbon::parse($to)->endOfDay() : now()->endOfDay();
+            $reqTo = $to
+                ? Carbon::createFromFormat('Y-m-d', $to)->endOfDay()
+                : now()->endOfDay();
+
             $reqFrom = $from
-                ? Carbon::parse($from)->startOfDay()
+                ? Carbon::createFromFormat('Y-m-d', $from)->startOfDay()
                 : $reqTo->copy()->subDays(6)->startOfDay();
 
             if ($reqFrom->gt($reqTo)) {

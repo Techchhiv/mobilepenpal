@@ -140,6 +140,7 @@ class LevelController extends Controller
         if (!$world) return $this->returnError('World not found', 404);
 
         $data = $request->validated();
+        unset($data['order_index']);
 
         $level = DB::transaction(function () use ($data, $worldId) {
             if (!isset($data['order_index'])) {
@@ -162,6 +163,7 @@ class LevelController extends Controller
     public function storeGlobal(StoreLevelGlobalRequest $request)
     {
         $data = $request->validated();
+        unset($data['order_index']);
 
         $worldId = (int) $data['world_id'];
 
