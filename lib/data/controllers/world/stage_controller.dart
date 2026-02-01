@@ -324,7 +324,6 @@ class StageController extends GetxController {
         modelType: payload['model_type'] as String,
         cancelToken: cancelToken,
       );
-      print(data);
       if (myReqId != _redId) return;
 
       prediction = (data['prediction'] ?? '').toString().trim();

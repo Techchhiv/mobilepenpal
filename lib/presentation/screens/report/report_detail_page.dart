@@ -268,16 +268,23 @@ class ReportDetailPage extends StatelessWidget {
       child: Obx(() {
         final m = c.monthly.value;
         final loading = c.isLoading.value && m == null;
-        final allRaw = (m?.charactersSummary ?? []);
 
+        final allRaw = (m?.charactersSummary ?? []);
         final all = allRaw
             .whereType<Map>()
             .map((e) => Map<String, dynamic>.from(e))
             .toList();
 
+        final filter = c.charFilter.value;
+
+        final filtered = all.where((e) {
+          final char = (e['character'] ?? '').toString();
+          return c.matchCharFilter(char, filter);
+        }).toList();
+
         final desc = c.sortAccuracyDesc.value;
 
-        all.sort((a, b) {
+        filtered.sort((a, b) {
           final aa = (a['accuracy'] as num?)?.toDouble() ?? 0.0;
           final bb = (b['accuracy'] as num?)?.toDouble() ?? 0.0;
           final cmp = desc ? bb.compareTo(aa) : aa.compareTo(bb);
@@ -288,6 +295,8 @@ class ReportDetailPage extends StatelessWidget {
           return desc ? atB.compareTo(atA) : atA.compareTo(atB);
         });
 
+        final visibleCount = filtered.length > 5 ? 5 : filtered.length;
+
         return _CardShell(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -295,45 +304,99 @@ class ReportDetailPage extends StatelessWidget {
               Row(
                 children: [
                   _CardIcon(icon: Icons.insights_rounded),
-                  SizedBox(width: 10),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      'character_performance'.tr,
-                      style: TextStyle(
+                      'characters'.tr,
+                      style: const TextStyle(
                         fontWeight: FontWeight.w800,
                         fontSize: 16,
                       ),
                     ),
                   ),
 
-                  Obx(() {
-                    final desc = c.sortAccuracyDesc.value;
-                    return InkWell(
-                      onTap: c.toggleAccuracySort,
-                      borderRadius: BorderRadius.circular(999),
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: desc
-                              ? Colors.black.withValues(alpha: 0.06)
-                              : Colors.black.withValues(alpha: 0.03),
-                          borderRadius: BorderRadius.circular(999),
-                          border: Border.all(
-                            color: Colors.black.withValues(alpha: 0.06),
-                          ),
-                        ),
-                        child: Icon(
-                          desc
-                              ? Icons.arrow_downward_rounded
-                              : Icons.arrow_upward_rounded,
-                          size: 18,
-                          color: Colors.grey[800],
+                  // Filter button
+                  PopupMenuButton<CharacterTypeFilter>(
+                    initialValue: c.charFilter.value,
+                    onSelected: c.setCharFilter,
+                    itemBuilder: (_) =>
+                        [
+                              CharacterTypeFilter.all,
+                              CharacterTypeFilter.consonant,
+                              CharacterTypeFilter.vowelIndependent,
+                              CharacterTypeFilter.vowelDependent,
+                              CharacterTypeFilter.digit,
+                            ]
+                            .map(
+                              (v) => PopupMenuItem(
+                                value: v,
+                                child: Text(c.charFilterLabel(v)),
+                              ),
+                            )
+                            .toList(),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.03),
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(
+                          color: Colors.black.withValues(alpha: 0.06),
                         ),
                       ),
-                    );
-                  }),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.filter_list_rounded,
+                            size: 18,
+                            color: Colors.grey[800],
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            c.charFilterLabel(c.charFilter.value),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            softWrap: false,
+                            style: TextStyle(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(width: 8),
+
+                  InkWell(
+                    onTap: c.toggleAccuracySort,
+                    borderRadius: BorderRadius.circular(999),
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: desc
+                            ? Colors.black.withValues(alpha: 0.06)
+                            : Colors.black.withValues(alpha: 0.03),
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(
+                          color: Colors.black.withValues(alpha: 0.06),
+                        ),
+                      ),
+                      child: Icon(
+                        desc
+                            ? Icons.arrow_downward_rounded
+                            : Icons.arrow_upward_rounded,
+                        size: 18,
+                        color: Colors.grey[800],
+                      ),
+                    ),
+                  ),
                 ],
               ),
+
               const SizedBox(height: 12),
 
               if (loading) ...[
@@ -343,27 +406,41 @@ class ReportDetailPage extends StatelessWidget {
                 const SizedBox(height: 10),
                 ReportDetailPage._shimmerLine(),
               ] else ...[
-                if (all.isEmpty)
-                  const SizedBox.shrink()
+                if (filtered.isEmpty)
+                  SizedBox(
+                    height: 120,
+                    child: Center(
+                      child: Text(
+                        'no_character_data'.tr,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.grey[700],
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  )
                 else
                   SizedBox(
-                    height: 5 * 60.0,
+                    height: visibleCount * 60.0,
                     child: ListView.separated(
                       physics: const BouncingScrollPhysics(),
-                      itemCount: all.length,
+                      itemCount: filtered.length,
                       separatorBuilder: (_, __) => Divider(
                         height: 1,
                         thickness: 1,
                         color: Colors.black.withValues(alpha: 0.06),
                       ),
                       itemBuilder: (_, i) {
-                        final e = all[i];
+                        final e = filtered[i];
                         final char = (e['character'] ?? '—').toString();
+
                         final accuracy =
-                            ((e['accuracy'] as num?)?.toDouble() ?? 0).clamp(
+                            ((e['accuracy'] as num?)?.toDouble() ?? 0.0).clamp(
                               0.0,
                               1.0,
                             );
+
                         final attempts = (e['attempts'] as num?)?.toInt() ?? 0;
                         final pct = (accuracy * 100).round();
 
@@ -395,7 +472,7 @@ class ReportDetailPage extends StatelessWidget {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      _d('$pct%  •  $attempts') + 'times'.tr,
+                                      _d('$pct%  •  $attempts ') + 'times'.tr,
                                       style: const TextStyle(
                                         fontWeight: FontWeight.w800,
                                         fontSize: 13,

@@ -5,7 +5,6 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:image_picker/image_picker.dart';
 
-import 'package:mobilepenpal/core/theme/app_colors.dart';
 import 'package:mobilepenpal/data/models/student/student.dart';
 import 'package:mobilepenpal/data/services/auth_service.dart';
 import 'package:mobilepenpal/data/services/home_service.dart';
@@ -30,8 +29,17 @@ class SettingController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+
     currentMode.value = box.read('mode') ?? 'student';
-    student.value = Student.fromJson(box.read('student') ?? {});
+
+    final raw = box.read('student');
+    if (raw is Map) {
+      student.value = Student.fromJson(Map<String, dynamic>.from(raw));
+    } else if (raw is String && raw.isNotEmpty) {
+      student.value = Student.fromJson(jsonDecode(raw) as Map<String, dynamic>);
+    } else {
+      student.value = null;
+    }
 
     final skip = box.read('skip_parent_pin_setup') ?? false;
     isParentPinRequired.value = !skip;
@@ -82,11 +90,28 @@ class SettingController extends GetxController {
       isLoading.value = false;
 
       if (response.code == 200 && response.data != null) {
-        student.value = response.data;
-        box.write('student', student.value?.toJson());
+        final updated = response.data!;
+        final prev = student.value;
+
+        if (prev != null) {
+          final mergedJson = Map<String, dynamic>.from(prev.toJson());
+
+          final updatedJson = updated.toJson();
+          updatedJson.forEach((k, v) {
+            if (v != null) mergedJson[k] = v;
+          });
+
+          final merged = Student.fromJson(mergedJson);
+
+          student.value = merged;
+          box.write('student', merged.toJson());
+        } else {
+          student.value = updated;
+          box.write('student', updated.toJson());
+        }
 
         AppSnackbar.show(
-          'Profile picture updated successfully'.tr,
+          'profile_updated_successfully'.tr,
           title: 'success'.tr,
           backgroundColor: Colors.green,
         );

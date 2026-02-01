@@ -8,15 +8,12 @@ import 'package:mobilepenpal/presentation/widgets/app_snackbar.dart';
 class RegisterController extends GetxController {
   final AuthService _authService = AuthService();
 
-  // ✅ Student fields
   final studentFirstNameController = TextEditingController();
   final studentLastNameController = TextEditingController();
 
-  // ✅ Parent fields
   final parentFirstNameController = TextEditingController();
   final parentLastNameController = TextEditingController();
 
-  // ✅ Auth fields
   final phoneController = TextEditingController();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
@@ -26,15 +23,12 @@ class RegisterController extends GetxController {
   final isPasswordVisible = false.obs;
   final isConfirmPasswordVisible = false.obs;
 
-  // ✅ Student errors
   final studentFirstNameError = ''.obs;
   final studentLastNameError = ''.obs;
 
-  // ✅ Parent errors
   final parentFirstNameError = ''.obs;
   final parentLastNameError = ''.obs;
 
-  // ✅ Auth errors
   final phoneError = ''.obs;
   final emailError = ''.obs;
   final passwordError = ''.obs;
@@ -48,7 +42,6 @@ class RegisterController extends GetxController {
     isConfirmPasswordVisible.value = !isConfirmPasswordVisible.value;
   }
 
-  // ---------- Local validation ----------
   void validateStudentFirstName(String v) {
     studentFirstNameError.value = '';
     studentFirstNameError.value = v.trim().isEmpty ? 'field_required'.tr : '';
@@ -56,8 +49,6 @@ class RegisterController extends GetxController {
 
   void validateStudentLastName(String v) {
     studentLastNameError.value = '';
-    // optional, but keep max-length style validation if you want
-    // if (v.trim().length > 100) studentLastNameError.value = 'max_length'.tr;
   }
 
   void validateParentFirstName(String v) {
@@ -115,7 +106,6 @@ class RegisterController extends GetxController {
       passwordError.value.isNotEmpty ||
       confirmPasswordError.value.isNotEmpty;
 
-  // ---------- Server error handling ----------
   void _clearFieldErrors() {
     studentFirstNameError.value = '';
     studentLastNameError.value = '';
@@ -158,11 +148,9 @@ class RegisterController extends GetxController {
     if (pw != null) passwordError.value = pw;
   }
 
-  // ---------- Submit ----------
   Future<void> registerParent() async {
     if (isLoading.value) return;
 
-    // local validate
     validateStudentFirstName(studentFirstNameController.text);
     validateStudentLastName(studentLastNameController.text);
 
@@ -220,7 +208,6 @@ class RegisterController extends GetxController {
         return;
       }
 
-      // ❌ show server field errors + snackbar
       _clearFieldErrors();
       _applyServerErrors(response.fieldErrors);
 
@@ -244,7 +231,6 @@ class RegisterController extends GetxController {
     }
   }
 
-  // ---------- Helpers ----------
   void clearForm() {
     studentFirstNameController.clear();
     studentLastNameController.clear();

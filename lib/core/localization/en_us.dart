@@ -41,6 +41,7 @@ final Map<String, String> enUS = {
   'best': "Best",
   'need': "Need",
   'scan': 'Scan QR',
+  'all': 'All',
 
   // ===== Authentication =====
   'enter_your_email_or_phone': 'Enter your email or phone number',
@@ -48,6 +49,7 @@ final Map<String, String> enUS = {
   'enter_your_password': 'Enter your password',
   'enter_your_school_id': 'Enter your school ID',
   'phone_number': 'Phone Number',
+  'account': 'Account',
   'school_id': 'School ID',
   'password': 'Password',
   'forgot_password': 'Forgot Password',
@@ -298,6 +300,11 @@ final Map<String, String> enUS = {
   'learning_numbers': 'Learning Numbers',
   'khmer_alphabet': 'Khmer Alphabet',
   'math_practice': 'Math Practice',
+  'consonants': 'Consonants',
+  'digits': 'Digits',
+  'independent_vowels': 'Ind. vowels',
+  'dependent_vowels': 'Dep. vowels',
+
 
   // ===== Home & Dashboard =====
   'achievements': 'Achievements',
@@ -396,6 +403,8 @@ final Map<String, String> enUS = {
   'total_study_time': 'Total Study Time',
   'weekly_exercises_in_month': 'Weekly Exercises (This Month)',
   'character_performance': 'Character Performance',
+  "no_character_data": "No character data",
+  'characters': 'Characters',
   'week': 'Week',
   'attempts': 'Attempts',
   'times': 'times',

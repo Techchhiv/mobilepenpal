@@ -83,10 +83,7 @@ class RegisterPage extends GetView<RegisterController> {
               ),
               const SizedBox(height: 28),
 
-              // =========================
-              // Student Information
-              // =========================
-              _sectionHeader('student'.tr, icon: Icons.school_rounded),
+              _groupHeader(title: 'student'.tr, icon: Icons.school_rounded),
 
               const SizedBox(height: 14),
 
@@ -123,10 +120,11 @@ class RegisterPage extends GetView<RegisterController> {
 
               const SizedBox(height: 22),
 
-              // =========================
-              // Parent Information
-              // =========================
-              _sectionHeader('parent'.tr, icon: Icons.family_restroom_rounded),
+              _groupHeader(
+                title: 'parent'.tr,
+                icon: Icons.family_restroom_rounded,
+              ),
+
               const SizedBox(height: 14),
 
               _label('parent_first_name'.tr, required: true),
@@ -161,11 +159,13 @@ class RegisterPage extends GetView<RegisterController> {
               ),
 
               const SizedBox(height: 22),
+              _groupHeader(
+                title: 'account'
+                    .tr, // if you don’t have translation key, use 'Account'
+                icon: Icons.lock_rounded,
+                // subtitle: 'your_login_details'.tr, // optional
+              ),
 
-              // =========================
-              // Account Information
-              // =========================
-              _sectionHeader('Account', icon: Icons.lock_rounded),
               const SizedBox(height: 14),
 
               _label('phone_number'.tr, required: true),
@@ -193,7 +193,6 @@ class RegisterPage extends GetView<RegisterController> {
                   keyboardType: TextInputType.emailAddress,
                   enabled: !controller.isLoading.value,
                   decoration: _decoration(
-                    // if you later add a dedicated key, replace it.
                     hint: 'enter_your_email_or_phone'.tr,
                     errorText: controller.emailError.value,
                     isLoading: controller.isLoading.value,
@@ -335,40 +334,60 @@ class RegisterPage extends GetView<RegisterController> {
     );
   }
 
-  Widget _sectionHeader(String text, {IconData? icon}) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 6, bottom: 10),
+  Widget _groupHeader({
+    required String title,
+    required IconData icon,
+    String? subtitle,
+  }) {
+    final hasSubtitle = subtitle != null && subtitle.trim().isNotEmpty;
+
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: 14,
+        vertical: hasSubtitle ? 12 : 10,
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.18)),
+      ),
       child: Row(
         children: [
-          if (icon != null) ...[
-            Icon(icon, size: 18, color: AppColors.primary),
-            const SizedBox(width: 8),
-          ],
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            width: 34,
+            height: 34,
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(999),
-              border: Border.all(
-                color: AppColors.primary.withValues(alpha: 0.25),
-              ),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
             ),
-            child: Text(
-              text,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w900,
-                color: AppColors.primary,
-                letterSpacing: 0.2,
-              ),
-            ),
+            child: Icon(icon, size: 18, color: AppColors.primary),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Expanded(
-            child: Divider(
-              height: 1,
-              thickness: 1,
-              color: Colors.grey.withValues(alpha: 0.25),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.black,
+                  ),
+                ),
+                if (hasSubtitle) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey[700],
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
         ],

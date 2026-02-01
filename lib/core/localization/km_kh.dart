@@ -41,6 +41,7 @@ final Map<String, String> kmKH = {
   'best': "ល្អបំផុត",
   'need': "ត្រូវហាត់បន្ថែម",
   'scan': 'ស្កេន QR',
+  'all': 'ទាំងអស់',
 
   // ===== Authentication =====
   'enter_your_email_or_phone': 'បញ្ចូលអ៊ីមែល ឬ លេខទូរស័ព្ទរបស់អ្នក',
@@ -48,6 +49,7 @@ final Map<String, String> kmKH = {
   'enter_your_password': 'បញ្ចូលពាក្យសម្ងាត់របស់អ្នក',
   'enter_your_school_id': 'បញ្ចូលលេខសម្គាល់សាលារបស់អ្នក',
   'phone_number': 'លេខទូរស័ព្ទ',
+  'account': 'គណនី',
   'school_id': 'លេខសម្គាល់សាលា',
   'password': 'ពាក្យសម្ងាត់',
   'forgot_password': 'ភ្លេចពាក្យសម្ងាត់',
@@ -294,6 +296,11 @@ final Map<String, String> kmKH = {
   'learning_numbers': 'រៀនលេខ',
   'khmer_alphabet': 'អក្សរខ្មែរ',
   'math_practice': 'លំហាត់គណិតវិទ្យា',
+  'consonants': 'ព្យញ្ជនៈ',
+  'digits': 'លេខ',
+  'independent_vowels': 'ស្រៈពេញតួរ',
+  'dependent_vowels': 'ស្រៈនិស័្សយ',
+
 
   // ===== Home & Dashboard =====
   'achievements': 'សមិទ្ធផល',
@@ -391,6 +398,8 @@ final Map<String, String> kmKH = {
   'total_study_time': 'ពេលវេលាសិក្សាសរុប',
   'weekly_exercises_in_month': 'លំហាត់ប្រចាំសប្ដាហ៍ (ក្នុងខែនេះ)',
   'character_performance': 'សមត្ថភាពតាមអក្សរ',
+  "no_character_data": "មិនមានទិន្នន័យអក្សរ",
+  'characters': 'ការសរសេរអក្សរ',
   'week': 'សប្ដាហ៍',
   'attempts': 'លើក',
   'times': 'លើក',

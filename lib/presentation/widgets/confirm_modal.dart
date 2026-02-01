@@ -1,8 +1,9 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobilepenpal/core/theme/app_colors.dart';
 
-class ConfirmModal extends StatelessWidget {
+class ConfirmModal<T> extends StatelessWidget {
   const ConfirmModal({
     super.key,
     this.icon,
@@ -22,13 +23,14 @@ class ConfirmModal extends StatelessWidget {
     this.isLoading = false,
     this.showCloseButton = true,
     this.maxWidth = 360,
+
+    this.primaryResult,
+    this.secondaryResult,
   });
+
   final Widget? icon;
-
   final Widget? title;
-
   final Widget? message;
-
   final Widget? body;
 
   final String primaryText;
@@ -42,12 +44,21 @@ class ConfirmModal extends StatelessWidget {
   final Color? secondaryBorderColor;
   final Color? secondaryBackgroundColor;
 
-  final Future<void> Function()? onPrimary;
-  final VoidCallback? onSecondary;
+  final FutureOr<void> Function()? onPrimary;
+  final FutureOr<void> Function()? onSecondary;
 
   final bool isLoading;
   final bool showCloseButton;
   final double maxWidth;
+
+  final T? primaryResult;
+  final T? secondaryResult;
+
+  Future<void> _run(FutureOr<void> Function()? fn) async {
+    if (fn == null) return;
+    final r = fn();
+    if (r is Future) await r;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -60,8 +71,8 @@ class ConfirmModal extends StatelessWidget {
         child: Material(
           color: Colors.transparent,
           child: Container(
-            margin: EdgeInsets.symmetric(horizontal: 18),
-            padding: EdgeInsets.fromLTRB(16, 14, 16, 16),
+            margin: const EdgeInsets.symmetric(horizontal: 18),
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(22),
@@ -82,8 +93,13 @@ class ConfirmModal extends StatelessWidget {
                     alignment: Alignment.centerRight,
                     child: InkWell(
                       borderRadius: BorderRadius.circular(999),
-                      onTap: () => Get.back(),
-                      child: Padding(
+                      onTap: isLoading
+                          ? null
+                          : () => Get.back<T>(
+                              result: secondaryResult,
+                              closeOverlays: false,
+                            ),
+                      child: const Padding(
                         padding: EdgeInsets.all(6),
                         child: Icon(Icons.close_rounded, size: 20),
                       ),
@@ -140,8 +156,7 @@ class ConfirmModal extends StatelessWidget {
                             foregroundColor:
                                 secondaryTextColor ??
                                 (secondaryColor ?? const Color(0xFF111827)),
-                            backgroundColor:
-                                secondaryBackgroundColor, // optional
+                            backgroundColor: secondaryBackgroundColor,
                             side: BorderSide(
                               color:
                                   secondaryBorderColor ??
@@ -151,12 +166,14 @@ class ConfirmModal extends StatelessWidget {
                               borderRadius: BorderRadius.circular(14),
                             ),
                           ),
-
                           onPressed: isLoading
                               ? null
-                              : () {
-                                  if (onSecondary != null) onSecondary!();
-                                  Get.back();
+                              : () async {
+                                  await _run(onSecondary);
+                                  Get.back<T>(
+                                    result: secondaryResult,
+                                    closeOverlays: false,
+                                  );
                                 },
                           child: Text(
                             secondaryText,
@@ -172,26 +189,23 @@ class ConfirmModal extends StatelessWidget {
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
                             backgroundColor: pColor,
-                            foregroundColor:
-                                primaryTextColor ??
-                                Colors.white,
+                            foregroundColor: primaryTextColor ?? Colors.white,
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(14),
                             ),
                           ),
-
                           onPressed: isLoading
                               ? null
                               : () async {
-                                  if (onPrimary == null) {
-                                    Get.back();
-                                    return;
-                                  }
-                                  await onPrimary!.call();
+                                  await _run(onPrimary);
+                                  Get.back<T>(
+                                    result: primaryResult,
+                                    closeOverlays: false,
+                                  );
                                 },
                           child: isLoading
-                              ? SizedBox(
+                              ? const SizedBox(
                                   width: 20,
                                   height: 20,
                                   child: CircularProgressIndicator(
@@ -201,7 +215,7 @@ class ConfirmModal extends StatelessWidget {
                                 )
                               : Text(
                                   primaryText,
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     fontWeight: FontWeight.w900,
                                     letterSpacing: 0.2,
                                   ),

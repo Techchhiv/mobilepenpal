@@ -75,6 +75,7 @@ class HomeController extends GetxController {
       final response = await _homeService.getStudentProfile();
       if (response.code == 200 && response.data != null) {
         student.value = response.data!.profile;
+        await _box.write('student', student.value!.toJson());
         studentProgress.assignAll(response.data!.progress);
 
         await _syncParentPin(student.value!);
@@ -327,7 +328,7 @@ class HomeController extends GetxController {
 
   Future<bool?> _showCreatePinPrompt() {
     return Get.dialog<bool>(
-      ConfirmModal(
+      ConfirmModal<bool>(
         icon: const Icon(
           Icons.lock_rounded,
           color: AppColors.primary,
@@ -335,18 +336,15 @@ class HomeController extends GetxController {
         ),
         title: Text('set_pin'.tr),
         message: Text('set_parent_pin_prompt'.tr),
-
         secondaryText: 'no'.tr,
         primaryText: 'yes'.tr,
-
         primaryColor: AppColors.primary,
         primaryTextColor: Colors.white,
         secondaryTextColor: const Color(0xFF111827),
-
-        onSecondary: () => Get.back(result: false),
-        onPrimary: () async => Get.back(result: true),
-
         showCloseButton: false,
+
+        primaryResult: true,
+        secondaryResult: false,
       ),
       barrierDismissible: false,
       barrierColor: Colors.black.withValues(alpha: 0.55),

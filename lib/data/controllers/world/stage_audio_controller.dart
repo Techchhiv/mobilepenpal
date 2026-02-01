@@ -59,7 +59,7 @@ class StageAudioController extends GetxController {
         position: Duration.zero,
       );
     } catch (e) {
-      debugPrint('Audio play failed: assets/$relPath  ($e)');
+      // debugPrint('Audio play failed: assets/$relPath  ($e)');
     } finally {
       _busy = false;
     }
