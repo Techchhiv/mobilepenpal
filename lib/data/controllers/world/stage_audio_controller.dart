@@ -1,44 +1,46 @@
-import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
-import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
 class StageAudioController extends GetxController {
-  final AudioPlayer _player = AudioPlayer();
+  final AudioPlayer _voicePlayer = AudioPlayer();
+  final AudioPlayer _sfxPlayer = AudioPlayer(playerId: 'sfx');
 
   final audioSpeed = 0.5.obs;
-
   final isPlaying = false.obs;
 
+  String sfxPath(String name) => 'audios/sfx/$name.mp3';
   bool _busy = false;
   int _token = 0;
-
   DateTime? _lastAutoPlayAt;
 
   @override
   void onInit() {
     super.onInit();
 
-    _player.setReleaseMode(ReleaseMode.stop);
+    _voicePlayer.setReleaseMode(ReleaseMode.stop);
+    _sfxPlayer.setReleaseMode(ReleaseMode.stop);
 
-    _player.onPlayerStateChanged.listen((state) {
+    // _sfxPlayer.setPlayerMode(PlayerMode.lowLatency);
+
+    _voicePlayer.onPlayerStateChanged.listen((state) {
       isPlaying.value = state == PlayerState.playing;
     });
   }
 
   @override
   void onClose() {
-    _player.dispose();
+    _voicePlayer.dispose();
+    _sfxPlayer.dispose();
     super.onClose();
   }
 
   String assetPathForCharacter({required String type, required String ch}) {
-    final t = type.trim();
+    final t = type.trim().toLowerCase();
     final c = ch.trim();
     return 'audios/$t/$c.mp3';
   }
 
-  Future<void> playAsset(String relPath) async {
+  Future<void> playVoiceAsset(String relPath) async {
     if (relPath.trim().isEmpty) return;
 
     final token = ++_token;
@@ -46,37 +48,28 @@ class StageAudioController extends GetxController {
     _busy = true;
 
     try {
-      await _player.stop();
+      await _voicePlayer.stop();
 
       try {
-        await _player.setPlaybackRate(audioSpeed.value);
+        await _voicePlayer.setPlaybackRate(audioSpeed.value);
       } catch (_) {}
 
       if (token != _token) return;
 
-      await _player.play(
-        AssetSource(relPath),
-        position: Duration.zero,
-      );
-    } catch (e) {
-      // debugPrint('Audio play failed: assets/$relPath  ($e)');
+      await _voicePlayer.play(AssetSource(relPath), position: Duration.zero);
     } finally {
       _busy = false;
     }
   }
 
-  Future<void> playCharacter({
-    required String type,
-    required String ch,
-  }) async {
+  Future<void> playCharacter({required String type, required String ch}) async {
     final rel = assetPathForCharacter(type: type, ch: ch);
-    await playAsset(rel);
+    await playVoiceAsset(rel);
   }
-  
+
   Future<void> autoPlayCharacter({
     required String type,
     required String ch,
-    Duration tapCooldown = const Duration(milliseconds: 400),
   }) async {
     _lastAutoPlayAt = DateTime.now();
     await playCharacter(type: type, ch: ch);
@@ -92,5 +85,17 @@ class StageAudioController extends GetxController {
     await playCharacter(type: type, ch: ch);
   }
 
-  Future<void> stop() => _player.stop();
+  Future<void> playSfx(String name) async {
+    await _sfxPlayer.stop();
+    await _sfxPlayer.play(AssetSource(sfxPath(name)), position: Duration.zero);
+  }
+
+  Future<void> playCorrectSfx() => playSfx('correct');
+  Future<void> playWrongSfx() => playSfx('incorrect');
+
+  Future<void> stopVoice() => _voicePlayer.stop();
+  Future<void> stopAll() async {
+    await _voicePlayer.stop();
+    await _sfxPlayer.stop();
+  }
 }

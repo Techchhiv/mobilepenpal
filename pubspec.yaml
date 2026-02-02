@@ -104,6 +104,7 @@ flutter:
     - assets/audios/digits/
     - assets/audios/independent_vowels/
     - assets/audios/dependent_vowels/
+    - assets/audios/sfx/
 
     # - assets/models/best_consonant.onnx
     # - assets/models/best_dependent_vowel.onnx

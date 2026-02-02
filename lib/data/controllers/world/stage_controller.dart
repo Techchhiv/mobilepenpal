@@ -127,6 +127,7 @@ class StageController extends GetxController {
   void onClose() {
     idle?.cancel();
     drawingController.dispose();
+    audio.stopAll();
 
     // if (_ownsAnim && Get.isRegistered<StageAnimationController>()) {
     //   Get.delete<StageAnimationController>();
@@ -186,7 +187,7 @@ class StageController extends GetxController {
 
   void selectExerciseByIndex(int index) {
     if (index < 0 || index >= exercises.length) return;
-    audio.stop();
+    audio.stopVoice();
     _startAtExercise(index);
   }
 
@@ -341,6 +342,8 @@ class StageController extends GetxController {
     }
 
     if (!isCorrect) {
+      unawaited(audio.playWrongSfx());
+
       attemptLeft.value = (attemptLeft.value - 1).clamp(
         0,
         maxAttemptsPerExercise,
@@ -359,7 +362,7 @@ class StageController extends GetxController {
       }
 
       anim.markWrong(currentExerciseIndex.value);
-      await anim.playStarPop(currentExerciseIndex.value);
+      unawaited(anim.playStarPop(currentExerciseIndex.value));
 
       attempts.add({
         'exercise_id': exercise.id,
@@ -383,6 +386,7 @@ class StageController extends GetxController {
     }
 
     anim.showCorrect(starIndex: currentExerciseIndex.value);
+    unawaited(audio.playCorrectSfx());
 
     attempts.add({
       'exercise_id': exercise.id,
