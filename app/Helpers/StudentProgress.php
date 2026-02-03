@@ -5,12 +5,14 @@ namespace App\Helpers;
 use App\Http\Resources\Student\V01\World\WorldIndexResource;
 use App\Models\Level;
 use App\Models\Stage;
+use App\Models\Student;
 use App\Models\StudentDailyStat;
 use App\Models\StudentLevelProgress;
 use App\Models\StudentStageProgress;
 use App\Models\StudentWorldProgress;
 use App\Models\World;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -23,15 +25,12 @@ class StudentProgress
 
         $this->unlockWorldForStudent($studentId);
 
-        $worlds = World::withCount([
-            'levels',
-            'studentLevelProgress as completed_levels_count' => function ($query) {
-                $query->where('is_completed', true);
-            }
-        ])
+        $worlds = $this->visibleWorldQueryForStudent($studentId)
+            ->withCount([
+                'levels',
+                'studentLevelProgress as completed_levels_count' => fn($q) => $q->where('is_completed', true),
+            ])
             ->with('studentProgress')
-            ->where('is_active', true)
-            ->orderBy('order_index')
             ->get();
 
         return WorldIndexResource::collection($worlds);
@@ -112,8 +111,6 @@ class StudentProgress
         return $nextStageId;
     }
 
-
-
     private function completeLevel($studentId, $level)
     {
         $totalStars = StudentStageProgress::where('student_id', $studentId)
@@ -181,7 +178,6 @@ class StudentProgress
         }
     }
 
-
     private function checkWorldCompletion($studentId, $world)
     {
         $worldLevels = Level::where('world_id', $world->id)
@@ -242,35 +238,19 @@ class StudentProgress
 
     private function unlockNextWorld($studentId, $currentWorld)
     {
-        $candidateWorlds = World::where('order_index', '>', $currentWorld->order_index)
-            ->where('is_active', true)
-            ->orderBy('order_index')
-            ->get();
+        $worldIds = $this->visibleWorldIdsForStudent((int)$studentId);
 
-        foreach ($candidateWorlds as $world) {
-            $firstActiveLevel = Level::where('world_id', $world->id)
-                ->where('is_active', true)
-                ->orderBy('order_index')
-                ->first();
+        $pos = array_search((int)$currentWorld->id, $worldIds, true);
+        if ($pos === false) return;
 
-            if (!$firstActiveLevel) {
-                continue;
+        for ($i = $pos + 1; $i < count($worldIds); $i++) {
+            $wid = (int) $worldIds[$i];
+            if ($this->worldHasPlayableContent($wid)) {
+                $this->initializeWorldProgress($studentId, $wid);
+                return;
             }
-
-            $firstActiveStage = Stage::where('level_id', $firstActiveLevel->id)
-                ->where('is_active', true)
-                ->orderBy('order_index')
-                ->first();
-
-            if (!$firstActiveStage) {
-                continue;
-            }
-
-            $this->initializeWorldProgress($studentId, $world->id);
-            return;
         }
     }
-
 
     private function unlockNextStage($studentId, $currentStage)
     {
@@ -307,12 +287,14 @@ class StudentProgress
         return DB::transaction(function () use ($studentId) {
             $firstWorld = null;
 
-            $activeWorlds = World::where('is_active', true)
-                ->orderBy('order_index')
-                ->get();
+            $activeWorlds = $this->visibleWorldQueryForStudent($studentId)->get();
 
             foreach ($activeWorlds as $w) {
-                $firstLevel = $w->activeLevels()->first();
+                $firstLevel = Level::where('world_id', $w->id)
+                    ->where('is_active', true)
+                    ->orderBy('order_index')
+                    ->first();
+
                 if (!$firstLevel) continue;
 
                 $firstStage = Stage::where('level_id', $firstLevel->id)
@@ -348,7 +330,9 @@ class StudentProgress
 
     public function initializeWorldProgress($studentId, $worldId)
     {
-        $world = World::where('is_active', true)->find($worldId);
+        $world = $this->visibleWorldQueryForStudent((int)$studentId)
+            ->where('worlds.id', (int)$worldId)
+            ->first();
         if (!$world) return false;
 
         $this->ensureWorldUnlocked((int)$studentId, (int)$worldId);
@@ -380,9 +364,8 @@ class StudentProgress
         $hasWorldProgress = StudentWorldProgress::where('student_id', $studentId)->exists();
 
         if (!$hasWorldProgress) {
-            $firstWorld = World::where('is_active', true)
-                ->where('is_unlocked_by_default', true)
-                ->orderBy('order_index')
+            $firstWorld = $this->visibleWorldQueryForStudent($studentId)
+                ->where('worlds.is_unlocked_by_default', true)
                 ->first();
 
             if ($firstWorld) {
@@ -453,9 +436,8 @@ class StudentProgress
 
     private function initializeDefaultUnlockedContent(int $studentId): void
     {
-        $defaultWorlds = World::where('is_active', true)
-            ->where('is_unlocked_by_default', true)
-            ->orderBy('order_index')
+        $defaultWorlds = $this->visibleWorldQueryForStudent($studentId)
+            ->where('worlds.is_unlocked_by_default', true)
             ->get();
 
         foreach ($defaultWorlds as $world) {
@@ -600,5 +582,81 @@ class StudentProgress
             ->value('id');
 
         return $firstStageId ? (int) $firstStageId : null;
+    }
+
+    public function visibleWorldQueryForStudent(int $studentId): Builder
+    {
+        $schoolId = (int) (Student::whereKey($studentId)->value('school_id') ?? 0);
+
+        // General user (no school): only admin public
+        if ($schoolId <= 0) {
+            return World::query()
+                ->whereNull('school_id')
+                ->where('audience', 'public')
+                ->where('is_active', true)
+                ->orderBy('order_index');
+        }
+
+        // School student: admin public+schools (unless disabled), admin assigned (enabled), plus school-owned
+        return World::query()
+            ->leftJoin('school_worlds as sw', function ($join) use ($schoolId) {
+                $join->on('sw.world_id', '=', 'worlds.id')
+                    ->where('sw.school_id', '=', $schoolId);
+            })
+            ->where('worlds.is_active', true)
+            ->where(function ($q) use ($schoolId) {
+                // school-owned worlds
+                $q->where('worlds.school_id', $schoolId)
+
+                    // admin public/schools worlds (allowed unless school disabled it)
+                    ->orWhere(function ($qq) {
+                        $qq->whereNull('worlds.school_id')
+                            ->whereIn('worlds.audience', ['public', 'schools'])
+                            ->where(function ($qqq) {
+                                $qqq->whereNull('sw.is_enabled')
+                                    ->orWhere('sw.is_enabled', true);
+                            });
+                    })
+
+                    // admin assigned worlds (must be enabled in pivot)
+                    ->orWhere(function ($qq) {
+                        $qq->whereNull('worlds.school_id')
+                            ->where('worlds.audience', 'assigned')
+                            ->where('sw.is_enabled', true);
+                    });
+            })
+            ->select('worlds.*')
+            // base worlds first, then assigned + school-owned stack
+            ->selectRaw("CASE WHEN worlds.school_id = ? OR worlds.audience='assigned' THEN 1 ELSE 0 END as sort_group", [$schoolId])
+            ->selectRaw("CASE
+            WHEN worlds.school_id = ? THEN worlds.order_index
+            WHEN worlds.audience='assigned' THEN sw.order_index
+            ELSE worlds.order_index
+        END as sort_index", [$schoolId])
+            ->orderBy('sort_group')
+            ->orderBy('sort_index')
+            ->orderBy('worlds.id');
+    }
+
+    public function visibleWorldIdsForStudent(int $studentId): array
+    {
+        return $this->visibleWorldQueryForStudent($studentId)
+            ->pluck('worlds.id')
+            ->map(fn($v) => (int) $v)
+            ->all();
+    }
+
+    private function worldHasPlayableContent(int $worldId): bool
+    {
+        $firstLevel = Level::where('world_id', $worldId)
+            ->where('is_active', true)
+            ->orderBy('order_index')
+            ->first();
+
+        if (!$firstLevel) return false;
+
+        return Stage::where('level_id', $firstLevel->id)
+            ->where('is_active', true)
+            ->exists();
     }
 }

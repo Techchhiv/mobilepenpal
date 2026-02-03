@@ -39,4 +39,16 @@ class World extends Model
         return $this->hasManyThrough(StudentLevelProgress::class, Level::class)
             ->where('student_id', auth()->id());
     }
+
+    public function schools()
+    {
+        return $this->belongsToMany(School::class, 'school_worlds')
+            ->withPivot(['order_index', 'is_enabled'])
+            ->withTimestamps();
+    }
+
+    public function schoolWorlds()
+    {
+        return $this->hasMany(SchoolWorld::class);
+    }
 }

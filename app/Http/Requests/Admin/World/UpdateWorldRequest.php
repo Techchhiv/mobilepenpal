@@ -9,6 +9,8 @@ class UpdateWorldRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'audience' => ['sometimes', 'in:public,schools,assigned'],
+            'school_ids' => ['sometimes', 'array'],
             'name' => ['sometimes', 'required', 'string', 'max:255'],
             'description' => ['sometimes', 'nullable', 'string'],
             'icon_url' => ['sometimes', 'nullable', 'string', 'max:2048'],

@@ -9,6 +9,8 @@ class StoreWorldRequest extends FormRequest
     public function rules()
     {
         return [
+            'audience' => ['required', 'in:public,schools,assigned'],
+            'school_ids' => ['sometimes', 'array'],
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'icon_url' => ['nullable', 'string', 'max:2048'],

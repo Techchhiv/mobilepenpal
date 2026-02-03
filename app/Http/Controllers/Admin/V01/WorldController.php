@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Admin\V01;
 use App\Http\Requests\Admin\World\StoreWorldRequest;
 use App\Http\Requests\Admin\World\UpdateWorldRequest;
 use App\Models\Level;
+use App\Models\SchoolWorld;
 use App\Models\Stage;
+use App\Models\Student;
 use App\Models\StudentLevelProgress;
 use App\Models\StudentStageProgress;
 use App\Models\StudentWorldProgress;
@@ -18,14 +20,14 @@ class WorldController extends Controller
     public function index(Request $request)
     {
         $active = $request->query('active', 'all');
+        $audience = $request->query('audience', 'all'); // all|public|schools|assigned
 
         $query = World::query()
+            ->whereNull('school_id') // admin-owned only
             ->select('worlds.*')
             ->withCount([
                 'levels as levels_count',
-                'levels as active_levels_count' => function ($q) {
-                    $q->where('is_active', true);
-                },
+                'levels as active_levels_count' => fn($q) => $q->where('is_active', true),
             ])
             ->selectSub(function ($q) {
                 $q->from('stages')
@@ -41,12 +43,22 @@ class WorldController extends Controller
                     ->where('stages.is_active', true)
                     ->selectRaw('COUNT(*)');
             }, 'active_stages_count')
+            ->selectSub(function ($q) {
+                $q->from('school_worlds')
+                    ->whereColumn('school_worlds.world_id', 'worlds.id')
+                    ->where('school_worlds.is_enabled', true)
+                    ->selectRaw('COUNT(*)');
+            }, 'assigned_schools_count')
             ->orderBy('order_index');
 
         if ($active === '1' || $active === 'true') {
             $query->where('is_active', true);
         } elseif ($active === '0' || $active === 'false') {
             $query->where('is_active', false);
+        }
+
+        if (in_array($audience, ['public', 'schools', 'assigned'], true)) {
+            $query->where('audience', $audience);
         }
 
         $worlds = $query->get();
@@ -61,6 +73,7 @@ class WorldController extends Controller
         $withStages = $request->boolean('with_stages', false);
 
         $world = World::query()
+            ->whereNull('school_id') // admin-owned only
             ->where('id', $id)
             ->with(['levels' => function ($q) use ($includeInactive, $withStages) {
                 if (!$includeInactive) $q->where('is_active', true);
@@ -82,7 +95,13 @@ class WorldController extends Controller
 
         if (!$world) return $this->returnError('World not found', 404);
 
+        $assigned = SchoolWorld::where('world_id', $world->id)
+            ->where('is_enabled', true)
+            ->orderBy('order_index')
+            ->get(['school_id', 'order_index', 'is_enabled']);
+
         $this->setResult('world', $world);
+        $this->setResult('assigned_schools', $assigned);
         return $this->returnResponse();
     }
 
@@ -90,16 +109,41 @@ class WorldController extends Controller
     {
         $data = $request->validated();
 
-        $world = DB::transaction(function () use ($data) {
-            if (!isset($data['order_index'])) {
-                $max = (int) (World::max('order_index') ?? 0);
-                $data['order_index'] = $max + 1;
-            }
+        $schoolIds = array_values(array_unique(array_map('intval', $data['school_ids'] ?? [])));
+        unset($data['school_ids']);
 
+        $world = DB::transaction(function () use ($data, $schoolIds) {
+            $data['school_id'] = null;
+
+            $data['audience'] = $data['audience'] ?? 'public';
             $data['is_active'] = $data['is_active'] ?? true;
             $data['is_unlocked_by_default'] = $data['is_unlocked_by_default'] ?? false;
 
-            return World::create($data);
+            if (!isset($data['order_index'])) {
+                $max = (int) (World::whereNull('school_id')
+                    ->whereIn('audience', ['public', 'schools'])
+                    ->max('order_index') ?? 0);
+                $data['order_index'] = $max + 1;
+            }
+
+            $world = World::create($data);
+
+            if ($world->audience === 'assigned' && !empty($schoolIds)) {
+                foreach ($schoolIds as $sid) {
+                    $next = (int) (SchoolWorld::where('school_id', $sid)->max('order_index') ?? 0) + 1;
+
+                    SchoolWorld::updateOrCreate(
+                        ['school_id' => $sid, 'world_id' => $world->id],
+                        ['order_index' => $next, 'is_enabled' => true]
+                    );
+                }
+            }
+
+            if ($world->audience !== 'assigned') {
+                SchoolWorld::where('world_id', $world->id)->update(['is_enabled' => false]);
+            }
+
+            return $world;
         });
 
         $this->setResult('world', $world);
@@ -108,11 +152,42 @@ class WorldController extends Controller
 
     public function update(UpdateWorldRequest $request, int $id)
     {
-        $world = World::find($id);
+        $world = World::whereNull('school_id')->find($id);
         if (!$world) return $this->returnError('World not found', 404);
 
-        $world->fill($request->validated());
-        $world->save();
+        $data = $request->validated();
+
+        $schoolIds = array_values(array_unique(array_map('intval', $data['school_ids'] ?? [])));
+        unset($data['school_ids']);
+
+        DB::transaction(function () use ($world, $data, $schoolIds) {
+            $world->fill($data);
+            $world->save();
+
+            // if switching away from assigned, disable pivots
+            if ($world->audience !== 'assigned') {
+                SchoolWorld::where('world_id', $world->id)->update(['is_enabled' => false]);
+            } else {
+                // still assigned: optionally update/append assignments if school_ids provided
+                if (!empty($schoolIds)) {
+                    foreach ($schoolIds as $sid) {
+                        $row = SchoolWorld::where('school_id', $sid)->where('world_id', $world->id)->first();
+                        if ($row) {
+                            $row->is_enabled = true;
+                            $row->save();
+                        } else {
+                            $next = (int) (SchoolWorld::where('school_id', $sid)->max('order_index') ?? 0) + 1;
+                            SchoolWorld::create([
+                                'school_id' => $sid,
+                                'world_id' => $world->id,
+                                'order_index' => $next,
+                                'is_enabled' => true,
+                            ]);
+                        }
+                    }
+                }
+            }
+        });
 
         $this->setResult('world', $world->fresh());
         return $this->returnResponse();
@@ -120,13 +195,11 @@ class WorldController extends Controller
 
     public function toggle(int $id)
     {
-        $updated = World::where('id', $id)->update([
+        $updated = World::whereNull('school_id')->where('id', $id)->update([
             'is_active' => DB::raw('NOT is_active'),
         ]);
 
-        if ($updated === 0) {
-            return $this->returnError('World not found', 404);
-        }
+        if ($updated === 0) return $this->returnError('World not found', 404);
 
         $world = World::find($id);
 
@@ -134,7 +207,9 @@ class WorldController extends Controller
         return $this->returnResponse();
     }
 
-
+    /**
+     * Reorder GLOBAL list (public + schools). Assigned worlds are ordered per-school via school_worlds.
+     */
     public function reorder(Request $request, int $id)
     {
         $data = $request->validate([
@@ -143,24 +218,31 @@ class WorldController extends Controller
 
         $target = (int) $data['order_index'];
 
-        $world = World::find($id);
-        if (!$world) return $this->returnError('World not found', 404);
+        $world = World::whereNull('school_id')
+            ->whereIn('audience', ['public', 'schools'])
+            ->find($id);
+
+        if (!$world) return $this->returnError('World not found or not reorderable globally', 404);
 
         DB::transaction(function () use ($world, $target) {
-            $total = (int) World::count();
+            $total = (int) World::whereNull('school_id')
+                ->whereIn('audience', ['public', 'schools'])
+                ->count();
 
             $newPos = max(1, min($target, $total));
             $oldPos = (int) $world->order_index;
 
-            if ($newPos === $oldPos) {
-                return;
-            }
+            if ($newPos === $oldPos) return;
 
             if ($newPos < $oldPos) {
-                World::whereBetween('order_index', [$newPos, $oldPos - 1])
+                World::whereNull('school_id')
+                    ->whereIn('audience', ['public', 'schools'])
+                    ->whereBetween('order_index', [$newPos, $oldPos - 1])
                     ->increment('order_index');
             } else {
-                World::whereBetween('order_index', [$oldPos + 1, $newPos])
+                World::whereNull('school_id')
+                    ->whereIn('audience', ['public', 'schools'])
+                    ->whereBetween('order_index', [$oldPos + 1, $newPos])
                     ->decrement('order_index');
             }
 
@@ -168,7 +250,121 @@ class WorldController extends Controller
             $world->save();
         });
 
-        $this->setResult('worlds', World::orderBy('order_index')->get());
+        $this->setResult('worlds', World::whereNull('school_id')->orderBy('order_index')->get());
+        return $this->returnResponse();
+    }
+
+    /**
+     * Assign an admin world (audience=assigned) to one or more schools.
+     * This appends to each school's stack (school_worlds.order_index).
+     */
+    public function assignToSchools(Request $request, int $id)
+    {
+        $data = $request->validate([
+            'school_ids' => ['required', 'array', 'min:1'],
+            'school_ids.*' => ['integer', 'exists:schools,id'],
+        ]);
+
+        $world = World::whereNull('school_id')->find($id);
+        if (!$world) return $this->returnError('World not found', 404);
+
+        DB::transaction(function () use ($world, $data) {
+            $world->audience = 'assigned';
+            $world->save();
+
+            foreach ($data['school_ids'] as $sid) {
+                $sid = (int) $sid;
+
+                $row = SchoolWorld::where('school_id', $sid)->where('world_id', $world->id)->first();
+                if ($row) {
+                    $row->is_enabled = true;
+                    $row->save();
+                    continue;
+                }
+
+                $next = (int) (SchoolWorld::where('school_id', $sid)->max('order_index') ?? 0) + 1;
+
+                SchoolWorld::create([
+                    'school_id' => $sid,
+                    'world_id' => $world->id,
+                    'order_index' => $next,
+                    'is_enabled' => true,
+                ]);
+            }
+        });
+
+        $this->setResult('world', $world->fresh());
+        return $this->returnResponse();
+    }
+
+    public function unassignFromSchools(Request $request, int $id)
+    {
+        $data = $request->validate([
+            'school_ids' => ['required', 'array', 'min:1'],
+            'school_ids.*' => ['integer', 'exists:schools,id'],
+        ]);
+
+        $world = World::whereNull('school_id')->find($id);
+        if (!$world) return $this->returnError('World not found', 404);
+
+        SchoolWorld::where('world_id', $world->id)
+            ->whereIn('school_id', array_map('intval', $data['school_ids']))
+            ->update(['is_enabled' => false]);
+
+        $this->setResult('world', $world->fresh());
+        return $this->returnResponse();
+    }
+
+    /**
+     * Reorder within ONE school's stack (school_worlds.order_index).
+     */
+    public function reorderForSchool(Request $request, int $id)
+    {
+        $data = $request->validate([
+            'school_id' => ['required', 'integer', 'exists:schools,id'],
+            'order_index' => ['required', 'integer', 'min:1'],
+        ]);
+
+        $schoolId = (int) $data['school_id'];
+        $to = (int) $data['order_index'];
+
+        $world = World::whereNull('school_id')->find($id);
+        if (!$world) return $this->returnError('World not found', 404);
+
+        $row = SchoolWorld::where('school_id', $schoolId)
+            ->where('world_id', $world->id)
+            ->where('is_enabled', true)
+            ->first();
+
+        if (!$row) return $this->returnError('World is not assigned to this school', 404);
+
+        DB::transaction(function () use ($row, $schoolId, $to) {
+            $total = (int) SchoolWorld::where('school_id', $schoolId)
+                ->where('is_enabled', true)
+                ->count();
+
+            $to = max(1, min($to, $total));
+            $from = (int) $row->order_index;
+
+            if ($to === $from) return;
+
+            SchoolWorld::where('id', $row->id)->update(['order_index' => 0]);
+
+            if ($to > $from) {
+                SchoolWorld::where('school_id', $schoolId)->where('is_enabled', true)
+                    ->whereBetween('order_index', [$from + 1, $to])
+                    ->decrement('order_index', 1);
+            } else {
+                SchoolWorld::where('school_id', $schoolId)->where('is_enabled', true)
+                    ->whereBetween('order_index', [$to, $from - 1])
+                    ->increment('order_index', 1);
+            }
+
+            SchoolWorld::where('id', $row->id)->update(['order_index' => $to]);
+        });
+
+        $this->setResult('school_id', $schoolId);
+        $this->setResult('world_id', $world->id);
         return $this->returnResponse();
     }
 
@@ -180,9 +376,44 @@ class WorldController extends Controller
 
         $studentId = (int) $data['student_id'];
 
-        $world = World::find($id);
+        $studentSchoolId = (int) (Student::whereKey($studentId)->value('school_id') ?? 0);
+        $studentHasSchool = $studentSchoolId > 0;
+
+        $world = World::query()
+            ->where('id', $id)
+            ->where('is_active', true)
+            ->where(function ($q) use ($studentSchoolId, $studentHasSchool) {
+
+                $q->where(function ($qq) use ($studentSchoolId) {
+                    $qq->whereNotNull('school_id')
+                        ->where('school_id', $studentSchoolId);
+                })
+
+                    ->orWhere(function ($qq) use ($studentSchoolId, $studentHasSchool) {
+                        $qq->whereNull('school_id')
+                            ->where(function ($aud) use ($studentSchoolId, $studentHasSchool) {
+                                $aud->where('audience', 'public')
+                                    ->orWhere(function ($a) use ($studentHasSchool) {
+                                        $a->where('audience', 'schools')
+                                            ->whereRaw($studentHasSchool ? '1=1' : '1=0');
+                                    })
+                                    ->orWhere(function ($a) use ($studentSchoolId, $studentHasSchool) {
+                                        $a->where('audience', 'assigned')
+                                            ->whereRaw($studentHasSchool ? '1=1' : '1=0')
+                                            ->whereExists(function ($sub) use ($studentSchoolId) {
+                                                $sub->from('school_worlds')
+                                                    ->whereColumn('school_worlds.world_id', 'worlds.id')
+                                                    ->where('school_worlds.school_id', $studentSchoolId)
+                                                    ->where('school_worlds.is_enabled', true);
+                                            });
+                                    });
+                            });
+                    });
+            })
+            ->first();
+
         if (!$world) {
-            return $this->returnError('World not found', 404);
+            return $this->returnError('World not accessible for this student', 403);
         }
 
         DB::transaction(function () use ($studentId, $world) {

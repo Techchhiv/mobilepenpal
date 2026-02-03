@@ -172,6 +172,7 @@ class RbacSeeder extends Seeder
 
                 // admin tools (as you had)
                 'users.manage','roles.manage','permissions.manage',
+                'worlds.view', 'worlds.create', 'worlds.update', 'worlds.delete', 'worlds.enable_disable'
             ],
 
             'payment-manager' => [

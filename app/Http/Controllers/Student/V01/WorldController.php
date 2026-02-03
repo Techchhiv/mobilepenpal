@@ -27,97 +27,82 @@ class WorldController extends Controller
 {
     public function index()
     {
-        $progressService = new StudentProgress();
-        $progressService->unlockWorldForStudent(Auth::id());
+        $studentId = Auth::id();
 
-        $worlds = World::query()
-            ->where('is_active', true)
+        $progressService = new StudentProgress();
+        $progressService->unlockWorldForStudent($studentId);
+
+        $worlds = $progressService->visibleWorldQueryForStudent($studentId)
             ->with('studentProgress')
             ->withCount([
-                'levels as levels_count' => function ($q) {
-                    $q->where('is_active', true);
-                },
-
+                'levels as levels_count' => fn($q) => $q->where('is_active', true),
                 'studentLevelProgress as completed_levels_count' => function ($q) {
                     $q->where('is_completed', true)
-                        ->whereHas('level', function ($levelQ) {
-                            $levelQ->where('is_active', true);
-                        });
+                        ->whereHas('level', fn($levelQ) => $levelQ->where('is_active', true));
                 },
             ])
-            ->orderBy('order_index')
             ->get();
 
         $this->setResult('worlds', WorldIndexResource::collection($worlds));
         return $this->returnResponse();
     }
 
-
     public function showWorld($id): JsonResponse
     {
-        $world = World::query()
-            ->where('is_active', true)
-            ->with([
-                'levels' => function ($q) {
-                    $q->where('is_active', true)
-                        ->orderBy('order_index');
-                },
-            ])
-            ->find($id);
+        $studentId = auth()->id();
+        $progress = new StudentProgress();
 
-        if (!$world) {
-            return $this->returnError('World not found', 404);
-        }
+        $world = $progress->visibleWorldQueryForStudent($studentId)
+            ->where('worlds.id', (int) $id)
+            ->with(['levels' => fn($q) => $q->where('is_active', true)->orderBy('order_index')])
+            ->first();
+
+        if (!$world) return $this->returnError('World not found', 404);
 
         $this->setResult('world', new WorldWithLevelResource($world));
         return $this->returnResponse();
     }
 
-
     public function showLevel($levelId): JsonResponse
     {
         $studentId = auth()->id();
+        $progress = new StudentProgress();
+        $visibleWorldIds = $progress->visibleWorldIdsForStudent($studentId);
 
         $level = Level::query()
             ->where('is_active', true)
+            ->whereHas('world', fn($q) => $q->whereIn('worlds.id', $visibleWorldIds))
             ->with([
-                'stages' => function ($q) {
-                    $q->where('is_active', true)
-                        ->orderBy('order_index');
-                },
-
-                'stages.studentProgress' => function ($q) use ($studentId) {
-                    $q->where('student_id', $studentId);
-                },
+                'stages' => fn($q) => $q->where('is_active', true)->orderBy('order_index'),
+                'stages.studentProgress' => fn($q) => $q->where('student_id', $studentId),
             ])
             ->find($levelId);
 
-        if (!$level) {
-            return $this->returnError('Level not found', 404);
-        }
+        if (!$level) return $this->returnError('Level not found', 404);
 
         $this->setResult('level', new LevelWithStageResource($level));
         return $this->returnResponse();
     }
 
+
     public function showStage($stageId): JsonResponse
     {
+        $studentId = auth()->id();
+        $progress = new StudentProgress();
+        $visibleWorldIds = $progress->visibleWorldIdsForStudent($studentId);
+
         $stage = Stage::query()
             ->where('is_active', true)
-            ->whereHas('level', function ($q) {
-                $q->where('is_active', true)
-                    ->whereHas('world', fn($w) => $w->where('is_active', true));
-            })
+            ->whereHas('level.world', fn($q) => $q->whereIn('worlds.id', $visibleWorldIds)->where('worlds.is_active', true))
             ->with('exercises')
             ->find($stageId);
 
-        if (!$stage) {
-            return $this->returnError('Stage not found', 404);
-        }
+        if (!$stage) return $this->returnError('Stage not found', 404);
 
         $this->setResult('stage', new StageWithExercisesResource($stage));
         return $this->returnResponse();
     }
+
 
     public function submitExerciseBatch(Request $request): JsonResponse
     {
@@ -131,6 +116,19 @@ class WorldController extends Controller
         $stageId = (int) $request->input('stage_id', 0);
         if ($stageId <= 0) {
             return $this->returnError('Missing stage_id', 422);
+        }
+
+        $progress = new StudentProgress();
+        $visibleWorldIds = $progress->visibleWorldIdsForStudent($studentId);
+
+        $allowedStage = Stage::query()
+            ->whereKey($stageId)
+            ->where('is_active', true)
+            ->whereHas('level.world', fn($q) => $q->whereIn('worlds.id', $visibleWorldIds)->where('worlds.is_active', true))
+            ->exists();
+
+        if (!$allowedStage) {
+            return $this->returnError('Stage not found', 404);
         }
 
         $durationSeconds = (int) $request->input('duration_seconds', 0);

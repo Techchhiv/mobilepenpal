@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\V01\LevelController;
 use App\Http\Controllers\Admin\V01\WorldController;
+use App\Http\Controllers\School\V01\WorldController as SchoolWorldController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\{
     AuthController,
@@ -80,6 +81,10 @@ Route::middleware('auth:api')->group(function () {
             Route::put('/{id}/toggle', [WorldController::class, 'toggle']);
             Route::put('/{id}/reorder', [WorldController::class, 'reorder']);
             Route::post('/{id}/unlock-student', [WorldController::class, 'unlockForStudent']);
+
+            Route::post('/{id}/assign', [WorldController::class, 'assignToSchools']);
+            Route::post('/{id}/unassign', [WorldController::class, 'unassignFromSchools']);
+            Route::put('/{id}/reorder-school', [WorldController::class, 'reorderForSchool']);
 
             Route::get('{worldId}/levels', [LevelController::class, 'index']);
             Route::post('{worldId}/levels', [LevelController::class, 'store']);
@@ -162,6 +167,45 @@ Route::middleware('auth:api')->group(function () {
             // manage enrollments
             Route::get('classrooms/{classroom}/students/{student}', [ClassroomController::class, 'students']);
             Route::post('classrooms/{classroom}/students/{student}/remove', [ClassroomController::class, 'removeStudent']);
+        });
+
+        Route::prefix('worlds')->group(function () {
+            Route::get('', [SchoolWorldController::class, 'index']);
+            Route::post('', [SchoolWorldController::class, 'store']);
+            Route::get('{id}', [SchoolWorldController::class, 'show']);
+            Route::put('{id}', [SchoolWorldController::class, 'update']);
+            Route::put('{id}/toggle', [SchoolWorldController::class, 'toggle']);
+            Route::put('{id}/reorder', [SchoolWorldController::class, 'reorder']);
+
+            Route::get('{worldId}/levels', [\App\Http\Controllers\School\V01\LevelController::class, 'index']);
+            Route::post('{worldId}/levels', [\App\Http\Controllers\School\V01\LevelController::class, 'store']);
+        });
+
+        Route::prefix('levels')->group(function () {
+            Route::get('{id}', [\App\Http\Controllers\School\V01\LevelController::class, 'show']);
+            Route::put('{id}', [\App\Http\Controllers\School\V01\LevelController::class, 'update']);
+            Route::put('{id}/toggle', [\App\Http\Controllers\School\V01\LevelController::class, 'toggle']);
+            Route::put('{id}/reorder', [\App\Http\Controllers\School\V01\LevelController::class, 'reorder']);
+
+            Route::get('{levelId}/stages', [\App\Http\Controllers\School\V01\StageController::class, 'index']);
+            Route::post('{levelId}/stages', [\App\Http\Controllers\School\V01\StageController::class, 'store']);
+        });
+
+        Route::prefix('stages')->group(function () {
+            Route::get('{id}', [\App\Http\Controllers\School\V01\StageController::class, 'show']);
+            Route::put('{id}', [\App\Http\Controllers\School\V01\StageController::class, 'update']);
+            Route::put('{id}/toggle', [\App\Http\Controllers\School\V01\StageController::class, 'toggle']);
+            Route::put('{id}/reorder', [\App\Http\Controllers\School\V01\StageController::class, 'reorder']);
+
+            Route::get('{stageId}/exercises', [\App\Http\Controllers\School\V01\StageExerciseController::class, 'index']);
+            Route::post('{stageId}/exercises', [\App\Http\Controllers\School\V01\StageExerciseController::class, 'store']);
+        });
+
+        Route::prefix('stage-exercises')->group(function () {
+            Route::put('{id}', [\App\Http\Controllers\School\V01\StageExerciseController::class, 'update']);
+            Route::put('{id}/toggle', [\App\Http\Controllers\School\V01\StageExerciseController::class, 'toggle']);
+            Route::put('{id}/reorder', [\App\Http\Controllers\School\V01\StageExerciseController::class, 'reorder']);
+            Route::delete('{id}', [\App\Http\Controllers\School\V01\StageExerciseController::class, 'destroy']);
         });
 
         // Manage school users / roles / permissions (school-admin only)

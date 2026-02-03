@@ -15,7 +15,12 @@ return new class extends Migration
     {
         Schema::create('worlds', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('school_id')
+                ->nullable()
+                ->constrained('schools')
+                ->nullOnDelete();
             $table->string('name');
+            $table->enum('audience', ['public', 'schools', 'assigned'])->default('public');
             $table->text('description')->nullable();
 
             $table->string('icon_url')->nullable();
@@ -26,6 +31,9 @@ return new class extends Migration
             $table->boolean('is_active')->default(true);
             $table->boolean('is_unlocked_by_default')->default(false);
             $table->timestamps();
+
+            $table->index(['school_id', 'is_active']);
+            $table->index(['school_id', 'order_index']);
         });
     }
 
