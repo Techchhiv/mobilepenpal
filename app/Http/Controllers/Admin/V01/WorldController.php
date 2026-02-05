@@ -20,10 +20,10 @@ class WorldController extends Controller
     public function index(Request $request)
     {
         $active = $request->query('active', 'all');
-        $audience = $request->query('audience', 'all'); // all|public|schools|assigned
+        $audience = $request->query('audience', 'all');
 
         $query = World::query()
-            ->whereNull('school_id') // admin-owned only
+            ->whereNull('school_id')
             ->select('worlds.*')
             ->withCount([
                 'levels as levels_count',
@@ -74,7 +74,7 @@ class WorldController extends Controller
 
         $world = World::query()
             ->whereNull('school_id') // admin-owned only
-            ->where('id', $id)
+            ->whereKey($id)
             ->with(['levels' => function ($q) use ($includeInactive, $withStages) {
                 if (!$includeInactive) $q->where('is_active', true);
                 $q->orderBy('order_index');
@@ -95,15 +95,42 @@ class WorldController extends Controller
 
         if (!$world) return $this->returnError('World not found', 404);
 
-        $assigned = SchoolWorld::where('world_id', $world->id)
-            ->where('is_enabled', true)
-            ->orderBy('order_index')
-            ->get(['school_id', 'order_index', 'is_enabled']);
+        $assignedSchoolIds = [];
+        $assignedSchools = [];
+
+        if (($world->audience ?? null) === 'assigned') {
+            $assignedSchools = SchoolWorld::query()
+                ->join('schools', 'schools.id', '=', 'school_worlds.school_id')
+                ->where('school_worlds.world_id', $world->id)
+                ->where('school_worlds.is_enabled', true)
+                ->orderBy('school_worlds.order_index')
+                ->get([
+                    'school_worlds.school_id',
+                    'school_worlds.order_index',
+                    'schools.name as school_name',
+                ])
+                ->map(function ($r) {
+                    return [
+                        'school_id' => (int) $r->school_id,
+                        'name' => (string) $r->school_name,
+                        'order_index' => (int) $r->order_index,
+                    ];
+                })
+                ->values()
+                ->all();
+
+            $assignedSchoolIds = collect($assignedSchools)
+                ->pluck('school_id')
+                ->values()
+                ->all();
+        }
 
         $this->setResult('world', $world);
-        $this->setResult('assigned_schools', $assigned);
+        $this->setResult('assigned_school_ids', $assignedSchoolIds);
+        $this->setResult('assigned_schools', $assignedSchools);
         return $this->returnResponse();
     }
+
 
     public function store(StoreWorldRequest $request)
     {

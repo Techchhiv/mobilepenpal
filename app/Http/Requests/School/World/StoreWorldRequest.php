@@ -1,22 +1,22 @@
 <?php
 
-namespace App\Http\Requests\Admin\Stage;
+namespace App\Http\Requests\School\World;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreStageRequest extends FormRequest
+class StoreWorldRequest extends FormRequest
 {
-    public function rules(): array
+    public function rules()
     {
         return [
             'name' => ['required', 'string', 'max:255'],
             'name_en' => ['required', 'string', 'max:255'],
+
             'description' => ['nullable', 'string'],
             'description_en' => ['nullable', 'string'],
 
-            'max_stars'   => ['nullable', 'integer', 'min:1', 'max:10'],
-            'order_index' => ['nullable', 'integer', 'min:1'],
-            'is_active'   => ['nullable', 'boolean'],
+            'is_active' => ['sometimes', 'boolean'],
+            'is_unlocked_by_default' => ['sometimes', 'boolean'],
         ];
     }
 }

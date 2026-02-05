@@ -6,30 +6,31 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class LevelWithProgressResource extends JsonResource
 {
-    /**
-     * Transform the resource into an array.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return array|\Illuminate\Contracts\Support\Arrayable|\JsonSerializable
-     */
     public function toArray($request)
     {
         $totalStages = $this->stages->count();
         $completedStages = $this->completedStagesProgress->count();
 
         return [
-            'id' => $this->id,
+            'id' => (int) $this->id,
+
             'name' => $this->name,
+            'name_en' => $this->name_en,
             'description' => $this->description,
-            'order_index' => $this->order_index,
-            'background_image' => $this->background_image,
-            'required_stars' => $this->required_stars,
-            'total_stages' => $totalStages,
-            'completed_stages' => $completedStages,
-            'completion_percentage' => $totalStages > 0 ? round(($completedStages / $totalStages) * 100) : 0,
-            'total_stars' => $this->studentProgress->total_stars ?? 0,
-            'is_completed' => $this->studentProgress->is_completed ?? false,
-            'is_unlocked' => $this->studentProgress->is_unlocked ?? false,
+            'description_en' => $this->description_en,
+
+            'order_index' => (int) ($this->order_index ?? 0),
+            'required_stars' => (int) ($this->required_stars ?? 0),
+
+            'total_stages' => (int) $totalStages,
+            'completed_stages' => (int) $completedStages,
+            'completion_percentage' => $totalStages > 0
+                ? (int) round(($completedStages / $totalStages) * 100)
+                : 0,
+
+            'total_stars' => (int) ($this->studentProgress->total_stars ?? 0),
+            'is_completed' => (bool) ($this->studentProgress->is_completed ?? false),
+            'is_unlocked' => (bool) ($this->studentProgress->is_unlocked ?? false),
         ];
     }
 }

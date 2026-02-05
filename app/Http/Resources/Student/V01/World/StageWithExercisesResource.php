@@ -6,39 +6,36 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class StageWithExercisesResource extends JsonResource
 {
-    /**
-     * Transform the resource into an array.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return array|\Illuminate\Contracts\Support\Arrayable|\JsonSerializable
-     */
     public function toArray($request)
     {
         $exercises = $this->exercises
             ->sortBy(fn($exercise) => $exercise->pivot->order_index);
 
         $expandedExercises = $exercises
-            ->sortBy('order_index')
             ->flatMap(function ($exercise) {
-                $times = $exercise->pivot->repeat_count ?? 1;
+                $times = (int) ($exercise->pivot->repeat_count ?? 1);
 
-                return collect(range(1, $times))->map(function ($slotIndex) use ($exercise) {
+                return collect(range(1, max(1, $times)))->map(function ($slotIndex) use ($exercise) {
                     $clone = $exercise->replicate();
-                    $clone->id = $exercise->id;
+                    $clone->id = $exercise->id; // keep original id
                     $clone->repeat_slot = $slotIndex;
-
+                    $clone->setRelation('pivot', $exercise->pivot); // ✅ keep pivot accessible in ExerciseResource
                     return $clone;
                 });
             })
             ->values();
 
         return [
-            'id' => $this->id,
+            'id' => (int) $this->id,
+
             'name' => $this->name,
-            'instruction' => $this->instruction,
+            'name_en' => $this->name_en,
             'description' => $this->description,
-            'order_index' => $this->order_index,
-            'max_stars' => $this->max_stars,
+            'description_en' => $this->description_en,
+
+            'order_index' => (int) ($this->order_index ?? 0),
+            'max_stars' => (int) ($this->max_stars ?? 0),
+
             'exercises' => ExerciseResource::collection($expandedExercises),
         ];
     }

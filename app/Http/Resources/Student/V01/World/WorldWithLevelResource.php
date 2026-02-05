@@ -6,20 +6,16 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class WorldWithLevelResource extends JsonResource
 {
-    /**
-     * Transform the resource into an array.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return array|\Illuminate\Contracts\Support\Arrayable|\JsonSerializable
-     */
     public function toArray($request)
     {
         return [
-            'id' => $this->id,
+            'id' => (int) $this->id,
+
             'name' => $this->name,
+            'name_en' => $this->name_en,
             'description' => $this->description,
-            'image' => $this->image,
-            'background_image' => $this->background_image,
+            'description_en' => $this->description_en,
+
             'levels' => LevelWithProgressResource::collection($this->levels),
         ];
     }

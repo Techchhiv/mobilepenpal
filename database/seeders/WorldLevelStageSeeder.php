@@ -4,8 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Schema;
 
 use App\Models\World;
 use App\Models\Level;
@@ -13,35 +12,12 @@ use App\Models\Stage;
 use App\Models\Exercise;
 use App\Models\StageExercise;
 
-use App\Models\School;
-use App\Models\User;
-use App\Models\SchoolWorld;
-
 class WorldLevelStageSeeder extends Seeder
 {
-    /** @var array<string, \App\Models\Exercise> */
-    protected array $exerciseBank = [];
-
-    public function run()
+    public function run(): void
     {
         DB::transaction(function () {
-            // Clean up in FK-safe order (adjust if you have cascades)
-            DB::table('stage_exercises')->delete();
-            DB::table('student_exercise_attempts')->delete();
-            DB::table('student_stage_progress')->delete();
-            DB::table('student_level_progress')->delete();
-            DB::table('student_world_progress')->delete();
-            DB::table('student_sessions')->delete();
-            DB::table('student_daily_stats')->delete();
-
-            DB::table('exercises')->delete();
-            DB::table('stages')->delete();
-            DB::table('levels')->delete();
-
-            // pivot must be deleted before worlds if FK exists
-            DB::table('school_worlds')->delete();
-
-            DB::table('worlds')->delete();
+            $this->cleanup();
 
             // -----------------------
             // Characters
@@ -61,260 +37,220 @@ class WorldLevelStageSeeder extends Seeder
                 'ា','ិ','ី','ឹ','ឺ','ុ','ូ','ួ','ើ','ឿ','ៀ','េ','ែ','ៃ','ោ','ៅ','ុំ','ំ','ាំ','ះ','ិះ','ុះ','េះ','ោះ'
             ];
 
+            $halfConsonants = array_slice($consonants, 0, (int) ceil(count($consonants) / 2));
+
             // -----------------------
-            // 1) Admin public worlds (first 4)
-            // audience=public => both school students + no-school users see
+            // Worlds to seed
             // -----------------------
-            $worlds = [
+            $worldDefs = [
+                // Public (general users)
                 [
-                    'key' => 'consonants',
-                    'name' => 'ព្យញ្ជនៈ',
-                    'description' => 'រៀនគូរព្យញ្ជនៈខ្មែរ',
-                    'theme_color' => '#4CAF50',
-                    'order_index' => 1,
+                    'key' => 'public_consonants_half',
                     'audience' => 'public',
-                    'school_id' => null,
+                    'order_index' => 1,
+                    'name_km' => 'ព្យញ្ជនៈ (ផ្នែក ១)',
+                    'name_en' => 'Consonants (Part 1)',
+                    'desc_km' => 'រៀនគូរព្យញ្ជនៈខ្មែរ (កន្លះដំបូង)',
+                    'desc_en' => 'Learn Khmer consonants (first half)',
+                    'chars' => $halfConsonants,
+                    'character_type' => 'consonants',
+                    'chunk' => 5,
+                ],
+                [
+                    'key' => 'public_digits',
+                    'audience' => 'public',
+                    'order_index' => 2,
+                    'name_km' => 'លេខ',
+                    'name_en' => 'Digits',
+                    'desc_km' => 'រៀនគូរលេខខ្មែរ',
+                    'desc_en' => 'Learn Khmer digits',
+                    'chars' => $digits,
+                    'character_type' => 'digits',
+                    'chunk' => 5,
+                ],
+
+                // Schools (all school accounts can see)
+                [
+                    'key' => 'schools_consonants_full',
+                    'audience' => 'schools',
+                    'order_index' => 3,
+                    'name_km' => 'ព្យញ្ជនៈ (ពេញ)',
+                    'name_en' => 'Consonants (Full)',
+                    'desc_km' => 'រៀនគូរព្យញ្ជនៈខ្មែរ (ទាំងអស់)',
+                    'desc_en' => 'Learn Khmer consonants (full set)',
                     'chars' => $consonants,
                     'character_type' => 'consonants',
                     'chunk' => 5,
                 ],
                 [
-                    'key' => 'digits',
-                    'name' => 'លេខ',
-                    'description' => 'រៀនគូរលេខខ្មែរ',
-                    'theme_color' => '#2196F3',
-                    'order_index' => 2,
-                    'audience' => 'public',
-                    'school_id' => null,
+                    'key' => 'schools_digits',
+                    'audience' => 'schools',
+                    'order_index' => 4,
+                    'name_km' => 'លេខ',
+                    'name_en' => 'Digits',
+                    'desc_km' => 'រៀនគូរលេខខ្មែរ',
+                    'desc_en' => 'Learn Khmer digits',
                     'chars' => $digits,
                     'character_type' => 'digits',
                     'chunk' => 5,
                 ],
                 [
-                    'key' => 'independent_vowels',
-                    'name' => 'ស្រៈពេញតួ',
-                    'description' => 'រៀនគូរស្រៈពេញតួ',
-                    'theme_color' => '#FF9800',
-                    'order_index' => 3,
-                    'audience' => 'public',
-                    'school_id' => null,
+                    'key' => 'schools_independent_vowels',
+                    'audience' => 'schools',
+                    'order_index' => 5,
+                    'name_km' => 'ស្រៈពេញតួ',
+                    'name_en' => 'Independent Vowels',
+                    'desc_km' => 'រៀនគូរស្រៈពេញតួ',
+                    'desc_en' => 'Learn independent vowels',
                     'chars' => $independentVowels,
                     'character_type' => 'independent_vowels',
                     'chunk' => 5,
                 ],
                 [
-                    'key' => 'dependent_vowels',
-                    'name' => 'ស្រៈនិស្ស័យ',
-                    'description' => 'រៀនគូរស្រៈនិស្ស័យ',
-                    'theme_color' => '#9C27B0',
-                    'order_index' => 4,
-                    'audience' => 'public',
-                    'school_id' => null,
+                    'key' => 'schools_dependent_vowels',
+                    'audience' => 'schools',
+                    'order_index' => 6,
+                    'name_km' => 'ស្រៈនិស្ស័យ',
+                    'name_en' => 'Dependent Vowels',
+                    'desc_km' => 'រៀនគូរស្រៈនិស្ស័យ',
+                    'desc_en' => 'Learn dependent vowels',
                     'chars' => $dependentVowels,
                     'character_type' => 'dependent_vowels',
                     'chunk' => 5,
                 ],
             ];
 
-            foreach ($worlds as $w) {
-                $world = World::create([
-                    'school_id'     => $w['school_id'],
-                    'audience'      => $w['audience'],
-                    'name'          => $w['name'],
-                    'description'   => $w['description'],
-                    'icon_url'      => null,
-                    'map_image_url' => null,
-                    'theme_color'   => $w['theme_color'],
-                    'order_index'   => $w['order_index'],
-                    'is_active'     => true,
-                    'is_unlocked_by_default' => false,
-                ]);
+            foreach ($worldDefs as $def) {
+                $world = $this->createWorld(
+                    audience: $def['audience'],
+                    orderIndex: $def['order_index'],
+                    nameKm: $def['name_km'],
+                    nameEn: $def['name_en'],
+                    descKm: $def['desc_km'],
+                    descEn: $def['desc_en'],
+                );
 
-                $bank = $this->createExerciseBank($w['chars'], $w['character_type']);
-
-                $chunks = array_chunk($w['chars'], $w['chunk']);
-                foreach ($chunks as $levelIndex => $levelChars) {
-                    $levelName = $this->makeLevelName($w['key'], $levelIndex, $levelChars);
-
-                    $level = Level::create([
-                        'world_id' => $world->id,
-                        'name' => $levelName,
-                        'description' => "Level " . ($levelIndex + 1),
-                        'order_index' => $levelIndex + 1,
-                        'background_image' => null,
-                        'is_active' => true,
-                        'is_unlocked_by_default' => false,
-                    ]);
-
-                    foreach ($levelChars as $stageIndex => $ch) {
-                        $stageName = $this->makeStageName($w['character_type'], $ch);
-
-                        $stage = Stage::create([
-                            'level_id'    => $level->id,
-                            'name'        => $stageName,
-                            'description' => "Practice session for {$ch}",
-                            'instruction' => "Trace {$ch} following the guided path",
-                            'order_index' => $stageIndex + 1,
-                            'max_stars'   => 3,
-                            'is_active' => true,
-                            'is_unlocked_by_default' => false,
-                        ]);
-
-                        $this->attachExerciseToStage($stage, $bank[$ch], 1, 3);
-                    }
-                }
+                $this->seedWorldContent(
+                    world: $world,
+                    worldKey: $def['key'],
+                    chars: $def['chars'],
+                    characterType: $def['character_type'],
+                    chunk: $def['chunk'],
+                );
             }
-
-            // -----------------------
-            // 2) Create 2 schools (+ school admin users)
-            // -----------------------
-            [$schoolA, $adminA] = $this->createSchoolWithAdmin(
-                name: 'ITC',
-                schoolKey: 'SCH-QI8AJ1',
-                email: 'itc@gmail.com',
-                password: 'password123'
-            );
-
-            [$schoolB, $adminB] = $this->createSchoolWithAdmin(
-                name: 'Demo School B',
-                schoolKey: 'SCH-DEMO-B',
-                email: 'b@gmail.com',
-                password: 'password123'
-            );
-
-            // -----------------------
-            // 3) Admin-assigned world -> only School A has it (School B does NOT)
-            // audience=assigned + pivot row for School A only
-            // -----------------------
-            $assignedWorld = World::create([
-                'school_id'     => null,            // admin-owned
-                'audience'      => 'assigned',       // only via school_worlds
-                'name'          => 'Extra Practice Pack',
-                'description'   => 'Admin assigned pack for selected schools',
-                'icon_url'      => null,
-                'map_image_url' => null,
-                'theme_color'   => '#607D8B',
-                'order_index'   => 999,              // not used for school stack, but keep a value
-                'is_active'     => true,
-                'is_unlocked_by_default' => false,
-            ]);
-
-            // Minimal content for assigned world (just a few chars)
-            $assignedChars = array_slice($dependentVowels, 0, 5);
-            $this->seedWorldContent(
-                world: $assignedWorld,
-                worldKey: 'assigned_pack',
-                chars: $assignedChars,
-                characterType: 'dependent_vowels',
-                chunk: 5
-            );
-
-            // Assign to School A only, as first item in School A stack
-            SchoolWorld::updateOrCreate(
-                ['school_id' => $schoolA->id, 'world_id' => $assignedWorld->id],
-                ['order_index' => 1, 'is_enabled' => true]
-            );
-
-            // -----------------------
-            // 4) School-created worlds (one each)
-            // school-owned => school_id set, audience can be 'assigned' (school-only)
-            // and we also put them in school_worlds for ordering
-            // -----------------------
-
-            // School A creates a world (should appear AFTER assigned world in School A stack)
-            $schoolAWorld = World::create([
-                'school_id'     => $schoolA->id,
-                'audience'      => 'assigned', // school-only (school_id enforces anyway)
-                'name'          => 'School A Custom World',
-                'description'   => 'Created by Demo School A',
-                'icon_url'      => null,
-                'map_image_url' => null,
-                'theme_color'   => '#E91E63',
-                'order_index'   => 1, // not used for stack ordering, but keep a value
-                'is_active'     => true,
-                'is_unlocked_by_default' => false,
-            ]);
-
-            $schoolAChars = array_slice($consonants, 0, 5);
-            $this->seedWorldContent(
-                world: $schoolAWorld,
-                worldKey: 'school_a_custom',
-                chars: $schoolAChars,
-                characterType: 'consonants',
-                chunk: 5
-            );
-
-            // Put into School A stack as #2
-            SchoolWorld::updateOrCreate(
-                ['school_id' => $schoolA->id, 'world_id' => $schoolAWorld->id],
-                ['order_index' => 2, 'is_enabled' => true]
-            );
-
-            // School B creates a world (School B does NOT get the admin assigned world)
-            $schoolBWorld = World::create([
-                'school_id'     => $schoolB->id,
-                'audience'      => 'assigned',
-                'name'          => 'School B Custom World',
-                'description'   => 'Created by Demo School B',
-                'icon_url'      => null,
-                'map_image_url' => null,
-                'theme_color'   => '#3F51B5',
-                'order_index'   => 1,
-                'is_active'     => true,
-                'is_unlocked_by_default' => false,
-            ]);
-
-            $schoolBChars = array_slice($digits, 0, 5);
-            $this->seedWorldContent(
-                world: $schoolBWorld,
-                worldKey: 'school_b_custom',
-                chars: $schoolBChars,
-                characterType: 'digits',
-                chunk: 5
-            );
-
-            // School B stack starts with its own world as #1
-            SchoolWorld::updateOrCreate(
-                ['school_id' => $schoolB->id, 'world_id' => $schoolBWorld->id],
-                ['order_index' => 1, 'is_enabled' => true]
-            );
         });
     }
 
-    /**
-     * Seed levels/stages/exercises for a given world.
-     */
+    private function cleanup(): void
+    {
+        $this->safeDelete('stage_exercises');
+        $this->safeDelete('student_exercise_attempts');
+        $this->safeDelete('student_stage_progress');
+        $this->safeDelete('student_level_progress');
+        $this->safeDelete('student_world_progress');
+        $this->safeDelete('student_sessions');
+        $this->safeDelete('student_daily_stats');
+
+        $this->safeDelete('exercises');
+        $this->safeDelete('stages');
+        $this->safeDelete('levels');
+
+        // pivot before worlds
+        $this->safeDelete('school_worlds');
+        $this->safeDelete('worlds');
+    }
+
+    private function safeDelete(string $table): void
+    {
+        if (Schema::hasTable($table)) {
+            DB::table($table)->delete();
+        }
+    }
+
+    private function createWorld(
+        string $audience,
+        int $orderIndex,
+        string $nameKm,
+        string $nameEn,
+        ?string $descKm,
+        ?string $descEn
+    ): World {
+        $data = [
+            'school_id' => null,
+            'audience' => $audience,
+            'order_index' => $orderIndex,
+            'is_active' => true,
+            'is_unlocked_by_default' => false,
+            'name' => $nameKm,
+            'description' => $descKm,
+        ];
+
+        if (Schema::hasColumn('worlds', 'name_en')) {
+            $data['name_en'] = $nameEn;
+        }
+        if (Schema::hasColumn('worlds', 'description_en')) {
+            $data['description_en'] = $descEn;
+        }
+
+        return World::create($data);
+    }
+
     private function seedWorldContent(World $world, string $worldKey, array $chars, string $characterType, int $chunk = 5): void
     {
         $bank = $this->createExerciseBank($chars, $characterType);
 
         $chunks = array_chunk($chars, $chunk);
-        foreach ($chunks as $levelIndex => $levelChars) {
-            $levelName = $this->makeLevelName($worldKey, $levelIndex, $levelChars);
 
-            $level = Level::create([
+        foreach ($chunks as $levelIndex => $levelChars) {
+            [$levelNameKm, $levelNameEn] = $this->makeLevelName($characterType, $levelChars);
+
+            $levelData = [
                 'world_id' => $world->id,
-                'name' => $levelName,
-                'description' => "Level " . ($levelIndex + 1),
+                'name' => $levelNameKm,
+                'description' => "កម្រិត " . ($levelIndex + 1),
                 'order_index' => $levelIndex + 1,
-                'background_image' => null,
                 'is_active' => true,
                 'is_unlocked_by_default' => false,
-            ]);
+            ];
+
+            if (Schema::hasColumn('levels', 'name_en')) {
+                $levelData['name_en'] = $levelNameEn;
+            }
+            if (Schema::hasColumn('levels', 'description_en')) {
+                $levelData['description_en'] = "Level " . ($levelIndex + 1);
+            }
+
+            $level = Level::create($levelData);
 
             foreach ($levelChars as $stageIndex => $ch) {
-                $stageName = $this->makeStageName($characterType, $ch);
+                [$stageNameKm, $stageNameEn] = $this->makeStageName($characterType, $ch);
 
-                $stage = Stage::create([
-                    'level_id'    => $level->id,
-                    'name'        => $stageName,
-                    'description' => "Practice session for {$ch}",
-                    'instruction' => "Trace {$ch} following the guided path",
+                $stageData = [
+                    'level_id' => $level->id,
+                    'name' => $stageNameKm,
+                    'description' => "ហាត់សរសេរ {$ch}",
                     'order_index' => $stageIndex + 1,
-                    'max_stars'   => 3,
+                    // 'max_stars' => 3,
                     'is_active' => true,
                     'is_unlocked_by_default' => false,
-                ]);
+                ];
+
+                if (Schema::hasColumn('stages', 'name_en')) {
+                    $stageData['name_en'] = $stageNameEn;
+                }
+                if (Schema::hasColumn('stages', 'description_en')) {
+                    $stageData['description_en'] = "Practice session for {$ch}";
+                }
+
+                // If you still have instruction fields, fill them; otherwise ignore safely
+                if (Schema::hasColumn('stages', 'instruction')) {
+                    $stageData['instruction'] = "តាមដានអក្សរ/លេខ {$ch} តាមផ្លូវណែនាំ";
+                }
+                if (Schema::hasColumn('stages', 'instruction_en')) {
+                    $stageData['instruction_en'] = "Trace {$ch} following the guided path";
+                }
+
+                $stage = Stage::create($stageData);
 
                 $this->attachExerciseToStage($stage, $bank[$ch], 1, 3);
             }
@@ -322,57 +258,28 @@ class WorldLevelStageSeeder extends Seeder
     }
 
     /**
-     * Create a school and its admin user (idempotent-ish).
-     * Returns [School, User]
-     */
-    private function createSchoolWithAdmin(string $name, string $schoolKey, string $email, string $password): array
-    {
-        $school = School::updateOrCreate(
-            ['school_key' => $schoolKey],
-            [
-                'name'        => $name,
-                'slug'        => Str::slug($name),
-                'admin_email' => $email,
-                'is_active'   => true,
-            ]
-        );
-
-        $user = User::updateOrCreate(
-            ['email' => $email],
-            [
-                'name'      => $name . ' Admin',
-                'password'  => Hash::make($password),
-                'school_id' => $school->id,
-            ]
-        );
-
-        // If you use spatie roles, keep this safe:
-        if (method_exists($user, 'assignRole')) {
-            try { $user->assignRole('school-admin'); } catch (\Throwable $e) {}
-        }
-
-        return [$school, $user];
-    }
-
-    /**
-     * @param array<string> $characters
-     * @return array<string, Exercise>
+     * @return array<string, Exercise> keyed by character
      */
     private function createExerciseBank(array $characters, string $characterType): array
     {
         $bank = [];
 
         foreach ($characters as $character) {
-            $bank[$character] = Exercise::create([
-                'prompt'         => "Draw: {$character}",
-                'character'      => $character,
-                'question'       => "Trace: {$character}",
-                'options'        => json_encode([$character]),
-                'instruction'    => "Follow the stroke order to draw {$character}",
-                'hint'           => "Follow the guided path",
-                'example'        => $this->buildExampleForCharacter($character, $characterType),
-                'character_type' => $characterType,
-            ]);
+            // Avoid duplicates when same char set appears in multiple worlds
+            $bank[$character] = Exercise::updateOrCreate(
+                [
+                    'character' => $character,
+                    'character_type' => $characterType,
+                ],
+                [
+                    'prompt' => "Draw: {$character}",
+                    'question' => "Trace: {$character}",
+                    'options' => json_encode([$character], JSON_UNESCAPED_UNICODE),
+                    'instruction' => "Follow the stroke order to draw {$character}",
+                    'hint' => "Follow the guided path",
+                    'example' => $this->buildExampleForCharacter($character, $characterType),
+                ]
+            );
         }
 
         return $bank;
@@ -380,54 +287,52 @@ class WorldLevelStageSeeder extends Seeder
 
     private function attachExerciseToStage(Stage $stage, Exercise $exercise, int $orderIndex = 1, int $repeatCount = 3): void
     {
-        StageExercise::insert([
-            'stage_id'     => $stage->id,
-            'exercise_id'  => $exercise->id,
-            'order_index'  => $orderIndex,
+        StageExercise::create([
+            'stage_id' => $stage->id,
+            'exercise_id' => $exercise->id,
+            'order_index' => $orderIndex,
             'repeat_count' => $repeatCount,
-            'created_at'   => now(),
-            'updated_at'   => now(),
+            'is_active' => true,
         ]);
     }
 
-    private function makeLevelName(string $worldKey, int $levelIndex, array $charsInLevel): string
+    /**
+     * @return array{0:string,1:string} [km,en]
+     */
+    private function makeLevelName(string $characterType, array $charsInLevel): array
     {
         $first = $charsInLevel[0] ?? '';
         $last  = $charsInLevel[count($charsInLevel) - 1] ?? '';
 
-        return match ($worldKey) {
-            'consonants' => "{$first} - {$last}",
-            'digits' => "លេខ {$first} - {$last}",
-            'independent_vowels' => "ស្រៈ {$first} - {$last}",
-            'dependent_vowels' => "ស្រៈ {$first} - {$last}",
-            default => "Level " . ($levelIndex + 1),
+        return match ($characterType) {
+            'consonants' => ["{$first} - {$last}", "Characters {$first} - {$last}"],
+            'digits' => ["លេខ {$first} - {$last}", "Digits {$first} - {$last}"],
+            'independent_vowels' => ["ស្រៈ {$first} - {$last}", "Vowels {$first} - {$last}"],
+            'dependent_vowels' => ["ស្រៈ {$first} - {$last}", "Vowels {$first} - {$last}"],
+            default => ["កម្រិត", "Level"],
         };
     }
 
-    private function makeStageName(string $characterType, string $ch): string
+    /**
+     * @return array{0:string,1:string} [km,en]
+     */
+    private function makeStageName(string $characterType, string $ch): array
     {
         return match ($characterType) {
-            'consonants' => "រៀនអក្សរ {$ch}",
-            'digits' => "រៀនលេខ {$ch}",
-            'independent_vowels', 'dependent_vowels' => "រៀនស្រៈ {$ch}",
-            default => "រៀន {$ch}",
+            'consonants' => ["រៀនអក្សរ {$ch}", "Practice letter {$ch}"],
+            'digits' => ["រៀនលេខ {$ch}", "Practice digit {$ch}"],
+            'independent_vowels', 'dependent_vowels' => ["រៀនស្រៈ {$ch}", "Practice vowel {$ch}"],
+            default => ["រៀន {$ch}", "Practice {$ch}"],
         };
     }
 
     private function buildExampleForCharacter(string $character, string $characterType): string
     {
-        if ($characterType === 'consonants') {
-            return "{$character} / {$character}ា / {$character}ិ / {$character}ី";
-        }
-
-        if ($characterType === 'digits') {
-            return $character;
-        }
-
-        if ($characterType === 'dependent_vowels' || $characterType === 'independent_vowels') {
-            return "{$character}";
-        }
-
-        return "{$character}";
+        return match ($characterType) {
+            'consonants' => "{$character} / {$character}ា / {$character}ិ / {$character}ី",
+            'digits' => $character,
+            'dependent_vowels', 'independent_vowels' => $character,
+            default => $character,
+        };
     }
 }

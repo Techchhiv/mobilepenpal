@@ -10,12 +10,14 @@ class StoreWorldRequest extends FormRequest
     {
         return [
             'audience' => ['required', 'in:public,schools,assigned'],
-            'school_ids' => ['sometimes', 'array'],
+            'school_ids' => ['nullable', 'array'],
+            'school_ids.*' => ['integer', 'exists:schools,id'],
+
             'name' => ['required', 'string', 'max:255'],
+            'name_en' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
-            'icon_url' => ['nullable', 'string', 'max:2048'],
-            'map_image_url' => ['nullable', 'string', 'max:2048'],
-            'theme_color' => ['nullable', 'string', 'max:32'],
+            'description_en' => ['nullable', 'string'],
+
             'is_active' => ['nullable', 'boolean'],
             'is_unlocked_by_default' => ['nullable', 'boolean'],
             'order_index' => ['nullable', 'integer', 'min:1'],

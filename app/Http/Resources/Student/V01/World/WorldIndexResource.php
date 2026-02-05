@@ -6,12 +6,6 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class WorldIndexResource extends JsonResource
 {
-    /**
-     * Transform the resource into an array.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return array|\Illuminate\Contracts\Support\Arrayable|\JsonSerializable
-     */
     public function toArray($request)
     {
         $isUnlocked = false;
@@ -22,18 +16,23 @@ class WorldIndexResource extends JsonResource
             $isUnlocked = (bool) $this->studentProgress->is_unlocked;
         }
 
+        $levelsTotal = (int) ($this->levels_count ?? 0);
+        $levelsCompleted = (int) ($this->completed_levels_count ?? 0);
+
         return [
-            'id' => $this->id,
+            'id' => (int) $this->id,
+
             'name' => $this->name,
+            'name_en' => $this->name_en,
             'description' => $this->description,
-            'icon_url' => $this->icon_url,
-            'map_image_url' => $this->map_image_url,
-            'theme_color' => $this->theme_color,
+            'description_en' => $this->description_en,
+
             'is_unlocked' => $isUnlocked,
             'is_completed' => $this->studentProgress ? (bool) $this->studentProgress->is_completed : false,
-            'levels_completed' => $this->completed_levels_count ?? 0,
-            'levels_total' => $this->levels_count,
-            'levels_remaining' => $this->levels_count - ($this->completed_levels_count ?? 0),
+
+            'levels_completed' => $levelsCompleted,
+            'levels_total' => $levelsTotal,
+            'levels_remaining' => max(0, $levelsTotal - $levelsCompleted),
         ];
     }
 }

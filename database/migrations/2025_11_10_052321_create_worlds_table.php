@@ -19,13 +19,17 @@ return new class extends Migration
                 ->nullable()
                 ->constrained('schools')
                 ->nullOnDelete();
-            $table->string('name');
             $table->enum('audience', ['public', 'schools', 'assigned'])->default('public');
+
+            $table->string('name');
             $table->text('description')->nullable();
 
-            $table->string('icon_url')->nullable();
-            $table->string('map_image_url')->nullable();
-            $table->string('theme_color')->nullable();
+            $table->string('name_en');
+            $table->text('description_en')->nullable();
+
+            // $table->string('icon_url')->nullable();
+            // $table->string('map_image_url')->nullable();
+            // $table->string('theme_color')->nullable();
 
             $table->integer('order_index');
             $table->boolean('is_active')->default(true);

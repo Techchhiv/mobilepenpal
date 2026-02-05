@@ -45,7 +45,7 @@ class StudentProgress
             $totalExercises = $results['total_exercises'];
             $correctAttempts = $results['correct_attempts'];
             $score = $totalExercises > 0 ? round(($correctAttempts / $totalExercises) * 100) : 0;
-            $newStarsEarned = $this->calculateStarsEarned($score, $stage->max_stars);
+            $newStarsEarned = $this->calculateStarsEarned($score, 3);
             $stageProgress = StudentStageProgress::where('student_id', $studentId)
                 ->where('stage_id', $stageId)
                 ->first();
@@ -76,11 +76,14 @@ class StudentProgress
 
     private function calculateStarsEarned($score, $maxStars)
     {
-        if ($score == 100) return $maxStars;
-        if ($score >= 50) return 2;
-        if ($score >= 25) return 1;
+        if ($maxStars <= 0) return 0;
+
+        if ($score >= 100) return $maxStars;
+        if ($score >= 66) return min(2, $maxStars);
+        if ($score >= 33) return min(1, $maxStars);
         return 0;
     }
+
 
     private function checkAndUnlockNextContent(int $studentId, Stage $stage): ?int
     {
@@ -594,10 +597,14 @@ class StudentProgress
                 ->whereNull('school_id')
                 ->where('audience', 'public')
                 ->where('is_active', true)
-                ->orderBy('order_index');
+                ->orderBy('order_index')
+                ->orderBy('id');
         }
 
-        // School student: admin public+schools (unless disabled), admin assigned (enabled), plus school-owned
+        // School student:
+        // - school-owned worlds (worlds.school_id = schoolId)
+        // - admin "schools" worlds (unless hidden by pivot is_enabled=false)
+        // - admin "assigned" worlds (only if pivot exists + enabled)
         return World::query()
             ->leftJoin('school_worlds as sw', function ($join) use ($schoolId) {
                 $join->on('sw.world_id', '=', 'worlds.id')
@@ -605,20 +612,23 @@ class StudentProgress
             })
             ->where('worlds.is_active', true)
             ->where(function ($q) use ($schoolId) {
-                // school-owned worlds
+
+                // 1) school-owned worlds
                 $q->where('worlds.school_id', $schoolId)
 
-                    // admin public/schools worlds (allowed unless school disabled it)
+                    // 2) admin "schools" worlds (visible unless hidden for this school)
                     ->orWhere(function ($qq) {
                         $qq->whereNull('worlds.school_id')
-                            ->whereIn('worlds.audience', ['public', 'schools'])
-                            ->where(function ($qqq) {
-                                $qqq->whereNull('sw.is_enabled')
+                            ->where('worlds.audience', 'schools')
+                            ->where(function ($vis) {
+                                // visible if NO override row (normal case),
+                                // OR override row exists and enabled (future-proof)
+                                $vis->whereNull('sw.id')
                                     ->orWhere('sw.is_enabled', true);
                             });
                     })
 
-                    // admin assigned worlds (must be enabled in pivot)
+                    // 3) admin "assigned" worlds (must be enabled in pivot)
                     ->orWhere(function ($qq) {
                         $qq->whereNull('worlds.school_id')
                             ->where('worlds.audience', 'assigned')
@@ -626,17 +636,23 @@ class StudentProgress
                     });
             })
             ->select('worlds.*')
-            // base worlds first, then assigned + school-owned stack
-            ->selectRaw("CASE WHEN worlds.school_id = ? OR worlds.audience='assigned' THEN 1 ELSE 0 END as sort_group", [$schoolId])
-            ->selectRaw("CASE
-            WHEN worlds.school_id = ? THEN worlds.order_index
-            WHEN worlds.audience='assigned' THEN sw.order_index
-            ELSE worlds.order_index
-        END as sort_index", [$schoolId])
+            ->selectRaw(
+                "CASE WHEN worlds.school_id = ? OR worlds.audience = 'assigned' THEN 1 ELSE 0 END as sort_group",
+                [$schoolId]
+            )
+            ->selectRaw(
+                "CASE
+                WHEN worlds.school_id = ? OR worlds.audience = 'assigned'
+                THEN COALESCE(sw.order_index, worlds.order_index)
+                ELSE worlds.order_index
+            END as sort_index",
+                [$schoolId]
+            )
             ->orderBy('sort_group')
             ->orderBy('sort_index')
             ->orderBy('worlds.id');
     }
+
 
     public function visibleWorldIdsForStudent(int $studentId): array
     {

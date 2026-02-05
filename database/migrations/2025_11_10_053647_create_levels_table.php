@@ -22,9 +22,10 @@ return new class extends Migration
 
             $table->string('name');
             $table->text('description')->nullable();
-            $table->integer('order_index');
 
-            $table->string('background_image')->nullable();
+            $table->string('name_en');
+            $table->text('description_en')->nullable();
+            $table->integer('order_index');
 
             $table->timestamps();
         });

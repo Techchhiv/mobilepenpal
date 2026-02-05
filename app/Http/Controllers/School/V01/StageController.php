@@ -95,7 +95,6 @@ class StageController extends Controller
             $data['level_id'] = $levelId;
             $data['is_active'] = $data['is_active'] ?? true;
             $data['is_unlocked_by_default'] = $data['is_unlocked_by_default'] ?? false;
-            $data['max_stars'] = $data['max_stars'] ?? 3;
 
             return Stage::create($data);
         });

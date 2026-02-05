@@ -11,8 +11,8 @@ class StoreStageRequest extends FormRequest
         return [
             'name'        => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
-            'instruction' => ['nullable', 'string'],
-            'max_stars'   => ['nullable', 'integer', 'min:1', 'max:10'],
+            'name_en'        => ['required', 'string', 'max:255'],
+            'description_en' => ['nullable', 'string'],
             'order_index' => ['nullable', 'integer', 'min:1'],
             'is_active'   => ['nullable', 'boolean'],
         ];

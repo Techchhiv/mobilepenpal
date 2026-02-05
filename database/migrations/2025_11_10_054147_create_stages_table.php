@@ -21,11 +21,14 @@ return new class extends Migration
             $table->boolean('is_active')->default(true);
 
             $table->string('name');
-            $table->text('instruction')->nullable();
+            // $table->text('instruction')->nullable();
             $table->text('description')->nullable();
 
+            $table->string('name_en');
+            $table->text('description_en')->nullable();
+
             $table->integer('order_index');
-            $table->integer('max_stars')->default(3);
+            // $table->integer('max_stars')->default(3);
             $table->timestamps();
         });
     }

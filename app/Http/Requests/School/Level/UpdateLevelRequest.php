@@ -11,7 +11,8 @@ class UpdateLevelRequest extends FormRequest
         return [
             'name'                   => ['sometimes', 'required', 'string', 'max:255'],
             'description'            => ['nullable', 'string'],
-            'background_image'       => ['nullable', 'string', 'max:2048'],
+            'name_en'                   => ['sometimes', 'required', 'string', 'max:255'],
+            'description_en'            => ['nullable', 'string'],
             'is_active'              => ['nullable', 'boolean'],
             'is_unlocked_by_default' => ['nullable', 'boolean'],
         ];

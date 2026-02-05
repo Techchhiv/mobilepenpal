@@ -83,7 +83,9 @@ class LevelController extends Controller
         if ($q !== '') {
             $levelsQuery->where(function ($qq) use ($q) {
                 $qq->where('name', 'like', "%{$q}%")
-                    ->orWhere('description', 'like', "%{$q}%");
+                    ->orWhere('name_en', 'like', "%{$q}%")
+                    ->orWhere('description', 'like', "%{$q}%")
+                    ->orWhere('description_en', 'like', "%{$q}%");
             });
         }
 

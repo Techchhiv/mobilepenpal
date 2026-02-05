@@ -84,7 +84,11 @@ class StageController extends Controller
         if ($qSearch !== '') {
             $q->where(function ($qq) use ($qSearch) {
                 $qq->where('stages.name', 'like', "%{$qSearch}%")
-                    ->orWhere('stages.description', 'like', "%{$qSearch}%");
+                    ->orWhere('stages.name_en', 'like', "%{$qSearch}%")
+                    ->orWhere('stages.description', 'like', "%{$qSearch}%")
+                    ->orWhere('stages.description_en', 'like', "%{$qSearch}%")
+                    ->orWhere('stages.instruction', 'like', "%{$qSearch}%")
+                    ->orWhere('stages.instruction_en', 'like', "%{$qSearch}%");
             });
         }
 
@@ -148,7 +152,6 @@ class StageController extends Controller
             }
 
             $data['is_active'] = $data['is_active'] ?? true;
-            $data['max_stars'] = $data['max_stars'] ?? 3;
             $data['level_id']  = $levelId;
 
             return Stage::create($data);
