@@ -121,52 +121,111 @@ class StageDetailPage extends GetView<StageController> {
           const SizedBox(width: 12),
           Expanded(
             child: Container(
-              height: 44,
+              height: 60,
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(22),
               ),
-              child: Obx(() {
-                final total = controller.exercises.length;
-                final states = controller.anim.starStates;
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
+                child: Obx(() {
+                  final total = controller.totalExercises;
+                  final progress = (total <= 0)
+                      ? 0.0
+                      : controller.stageProgress.value.clamp(0.0, 1.0);
 
-                return Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(total, (index) {
-                    final isAnimating =
-                        controller.anim.animatingStarIndex.value == index;
-                    final scale = controller.anim.starScale.value;
+                  final starStates = controller.progressStarStates;
+                  final animIndex = controller.progressAnimatingStarIndex.value;
+                  final scale = controller.progressStarScale.value;
 
-                    final state = (index < states.length)
-                        ? states[index]
-                        : StarState.pending;
+                  return LayoutBuilder(
+                    builder: (context, cst) {
+                      final w = cst.maxWidth;
+                      final h = cst.maxHeight;
 
-                    final asset = switch (state) {
-                      StarState.correct => 'assets/animated/star.json',
-                      StarState.wrong => 'assets/animated/star_red.json',
-                      StarState.pending => 'assets/animated/star_border.json',
-                    };
+                      const starSize = 48.0;
+                      const barHeight = 12.0;
 
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: AnimatedScale(
-                        scale: isAnimating ? scale : 1.0,
-                        duration: const Duration(milliseconds: 250),
-                        curve: Curves.easeOut,
-                        child: SizedBox(
-                          width: 48,
-                          height: 48,
-                          child: Lottie.asset(
-                            asset,
-                            repeat: false,
-                            fit: BoxFit.contain,
+                      final barTop = (h - barHeight) / 2;
+                      final starTop = barTop + (barHeight / 2) - (starSize / 2);
+
+                      const thresholds = <double>[0.33, 0.66, 1.0];
+
+                      // ✅ Use "usable width" so star centers align with progress fill
+                      final usable = (w - starSize).clamp(0.0, w);
+                      final centers = thresholds
+                          .map((t) => (starSize / 2) + t * usable)
+                          .toList();
+
+                      String assetFor(StarState st) {
+                        switch (st) {
+                          case StarState.correct:
+                            return 'assets/animated/star.json';
+                          case StarState.wrong:
+                            return 'assets/animated/star_red.json';
+                          case StarState.pending:
+                          default:
+                            return 'assets/animated/star_border.json';
+                        }
+                      }
+
+                      return Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Positioned(
+                            left: 0,
+                            right: 0,
+                            top: barTop,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(999),
+                              child: LinearProgressIndicator(
+                                value: progress,
+                                minHeight: barHeight,
+                                backgroundColor: Colors.black.withValues(
+                                  alpha: 0.08,
+                                ),
+                                valueColor: AlwaysStoppedAnimation(
+                                  AppColors.buttonPrimary,
+                                ),
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                    );
-                  }),
-                );
-              }),
+
+                          for (int i = 0; i < 3; i++)
+                            Positioned(
+                              left: (centers[i] - starSize / 2).clamp(
+                                0.0,
+                                w - starSize,
+                              ),
+                              top: starTop,
+                              child: AnimatedScale(
+                                scale: (animIndex == i) ? scale : 1.0,
+                                duration: const Duration(milliseconds: 180),
+                                curve: Curves.easeOutBack,
+                                child: SizedBox(
+                                  width: starSize,
+                                  height: starSize,
+                                  child: Lottie.asset(
+                                    assetFor(starStates[i]),
+                                    repeat: false,
+                                    // ✅ Prevent pending from auto-playing into a "yellow" frame
+                                    animate:
+                                        (animIndex == i) ||
+                                        (starStates[i] != StarState.pending),
+                                    fit: BoxFit.contain,
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      );
+                    },
+                  );
+                }),
+              ),
             ),
           ),
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:mobilepenpal/core/localization/locale_controller.dart';
 import 'package:mobilepenpal/core/network/route_builder.dart';
 import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/world_controller.dart';
@@ -9,7 +10,7 @@ import 'package:mobilepenpal/presentation/widgets/home/course_card.dart';
 class StudentHome extends StatelessWidget {
   final HomeController homeController;
 
- StudentHome({super.key, required this.homeController});
+  StudentHome({super.key, required this.homeController});
 
   @override
   Widget build(BuildContext context) {
@@ -56,12 +57,19 @@ class StudentHome extends StatelessWidget {
                       itemBuilder: (_, index) {
                         final progress = list[index];
                         final unlocked = progress.isUnlocked == true;
+                        final locale = Get.find<LocaleController>();
+                        final title = locale.isKhmer
+                            ? (progress.name)
+                            : (progress.nameEn);
+                        final subtitle = locale.isKhmer
+                            ? (progress.description)
+                            : (progress.descriptionEn);
 
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 14),
                           child: CourseCard(
-                            courseTitle: progress.name,
-                            courseSubtitle: progress.description,
+                            courseTitle: title,
+                            courseSubtitle: subtitle,
                             badgeText: progress.isCompleted
                                 ? 'completed'.tr
                                 : 'in_progress'.tr,

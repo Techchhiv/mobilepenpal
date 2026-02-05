@@ -1,20 +1,23 @@
 class LevelStage {
   final int id;
+
   final String name;
-  final String instruction;
+  final String? nameEn;
+
   final String description;
+  final String? descriptionEn;
+
   final int orderIndex;
-  final int maxStars;
   final int starsEarned;
   final String status;
 
   LevelStage({
     required this.id,
     required this.name,
-    required this.instruction,
+    this.nameEn,
     required this.description,
+    this.descriptionEn,
     required this.orderIndex,
-    required this.maxStars,
     required this.starsEarned,
     required this.status,
   });
@@ -22,11 +25,18 @@ class LevelStage {
   factory LevelStage.fromJson(Map<String, dynamic> json) {
     return LevelStage(
       id: (json['id'] as num?)?.toInt() ?? 0,
+
       name: (json['name'] ?? '').toString(),
-      instruction: (json['instruction'] ?? '').toString(),
+      nameEn: (json['name_en'] ?? '').toString().isEmpty
+          ? null
+          : (json['name_en'] ?? '').toString(),
+
       description: (json['description'] ?? '').toString(),
+      descriptionEn: (json['description_en'] ?? '').toString().isEmpty
+          ? null
+          : (json['description_en'] ?? '').toString(),
+
       orderIndex: (json['order_index'] as num?)?.toInt() ?? 0,
-      maxStars: (json['max_stars'] as num?)?.toInt() ?? 0,
       starsEarned: (json['stars_earned'] as num?)?.toInt() ?? 0,
       status: (json['status'] ?? 'locked').toString(),
     );
@@ -36,10 +46,10 @@ class LevelStage {
     return {
       'id': id,
       'name': name,
-      'instruction': instruction,
+      'name_en': nameEn,
       'description': description,
+      'description_en': descriptionEn,
       'order_index': orderIndex,
-      'max_stars': maxStars,
       'stars_earned': starsEarned,
       'status': status,
     };
@@ -48,20 +58,20 @@ class LevelStage {
   LevelStage copyWith({
     int? id,
     String? name,
-    String? instruction,
+    String? nameEn,
     String? description,
+    String? descriptionEn,
     int? orderIndex,
-    int? maxStars,
     int? starsEarned,
     String? status,
   }) {
     return LevelStage(
       id: id ?? this.id,
       name: name ?? this.name,
-      instruction: instruction ?? this.instruction,
+      nameEn: nameEn ?? this.nameEn,
       description: description ?? this.description,
+      descriptionEn: descriptionEn ?? this.descriptionEn,
       orderIndex: orderIndex ?? this.orderIndex,
-      maxStars: maxStars ?? this.maxStars,
       starsEarned: starsEarned ?? this.starsEarned,
       status: status ?? this.status,
     );

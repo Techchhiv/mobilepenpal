@@ -1,23 +1,24 @@
 class StudentProgress {
-  int id;
-  String name;
-  String description;
-  String? iconUrl;
-  String? mapImageUrl;
-  String themeColor;
-  bool isUnlocked;
-  bool isCompleted;
-  int levelsCompleted;
-  int levelsTotal;
-  int levelsRemaining;
+  final int id;
+
+  final String name;
+  final String nameEn;
+  final String description;
+  final String descriptionEn;
+
+  final bool isUnlocked;
+  final bool isCompleted;
+
+  final int levelsCompleted;
+  final int levelsTotal;
+  final int levelsRemaining;
 
   StudentProgress({
     required this.id,
     required this.name,
+    required this.nameEn,
     required this.description,
-    this.iconUrl,
-    this.mapImageUrl,
-    required this.themeColor,
+    required this.descriptionEn,
     required this.isUnlocked,
     required this.isCompleted,
     required this.levelsCompleted,
@@ -25,35 +26,44 @@ class StudentProgress {
     required this.levelsRemaining,
   });
 
+  static bool _toBool(dynamic v) {
+    if (v is bool) return v;
+    if (v is int) return v == 1;
+    if (v is String) return v == "1" || v.toLowerCase() == "true";
+    return false;
+  }
+
   factory StudentProgress.fromJson(Map<String, dynamic> json) {
     return StudentProgress(
-      id: json['id'] as int? ?? 0,
-      name: json['name'] as String? ?? '',
-      description: json['description'] as String? ?? '',
-      iconUrl: json['icon_url'] as String?,
-      mapImageUrl: json['map_image_url'] as String?,
-      themeColor: json['theme_color'] as String? ?? '#000000',
-      isUnlocked: json['is_unlocked'] as bool? ?? false,
-      isCompleted: json['is_completed'] as bool? ?? false,
-      levelsCompleted: json['levels_completed'] as int? ?? 0,
-      levelsTotal: json['levels_total'] as int? ?? 0,
-      levelsRemaining: json['levels_remaining'] as int? ?? 0,
+      id: (json['id'] ?? 0) as int,
+      name: (json['name'] ?? '') as String,
+      nameEn: (json['name_en'] ?? '') as String,
+      description: (json['description'] ?? '') as String,
+      descriptionEn: (json['description_en'] ?? '') as String,
+      isUnlocked: _toBool(json['is_unlocked']),
+      isCompleted: _toBool(json['is_completed']),
+      levelsCompleted: (json['levels_completed'] ?? 0) as int,
+      levelsTotal: (json['levels_total'] ?? 0) as int,
+      levelsRemaining: (json['levels_remaining'] ?? 0) as int,
     );
   }
 
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = <String, dynamic>{};
-    data['id'] = id;
-    data['name'] = name;
-    data['description'] = description;
-    data['icon_url'] = iconUrl;
-    data['map_image_url'] = mapImageUrl;
-    data['theme_color'] = themeColor;
-    data['is_unlocked'] = isUnlocked;
-    data['is_completed'] = isCompleted;
-    data['levels_completed'] = levelsCompleted;
-    data['levels_total'] = levelsTotal;
-    data['levels_remaining'] = levelsRemaining;
-    return data;
-  }
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        'name_en': nameEn,
+        'description': description,
+        'description_en': descriptionEn,
+        'is_unlocked': isUnlocked,
+        'is_completed': isCompleted,
+        'levels_completed': levelsCompleted,
+        'levels_total': levelsTotal,
+        'levels_remaining': levelsRemaining,
+      };
+
+  // optional helpers
+  double get progress =>
+      levelsTotal > 0 ? (levelsCompleted / levelsTotal) : 0.0;
+
+  bool get completed => levelsTotal > 0 && levelsCompleted >= levelsTotal;
 }

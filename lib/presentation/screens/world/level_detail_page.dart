@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lottie/lottie.dart';
+import 'package:mobilepenpal/core/localization/locale_controller.dart';
 import 'package:mobilepenpal/core/network/route_builder.dart';
 import 'package:mobilepenpal/core/theme/app_colors.dart';
 import 'package:mobilepenpal/core/utils/number_format_utils.dart';
@@ -73,42 +74,50 @@ class LevelDetailPage extends GetView<LevelController> {
   }
 
   Widget _buildTopBar() {
-    return Obx(() {
-      final level = controller.currentLevel.value;
+    final lc = Get.find<LocaleController>();
 
-      return Row(
-        children: [
-          InkWell(
-            onTap: () async {
-              final worldController = Get.find<WorldController>();
+    return GetBuilder<LocaleController>(
+      builder: (_) {
+        final level = controller.currentLevel.value;
 
-              if (controller.worldId > 0) {
-                await worldController.fetchWorldById(controller.worldId);
-                final worldRoute = RouteBuilder.build(AppRoutes.world, {
-                  'id': controller.worldId.toString(),
-                });
-                Get.offNamed(worldRoute);
-              } else {
-                Get.back();
-              }
-            },
-            child: Padding(
-              padding: const EdgeInsets.only(top: 12),
-              child: Row(
-                children: [
-                  const Icon(Icons.arrow_back, color: Colors.white),
-                  const SizedBox(width: 8),
-                  Text(
-                    level?.worldName ?? "Loading...",
-                    style: const TextStyle(color: Colors.white, fontSize: 18),
-                  ),
-                ],
+        final worldTitle = lc.isKhmer
+            ? (level?.worldName ?? "Loading...")
+            : (level?.worldNameEn ?? level?.worldName ?? "Loading...");
+
+        return Row(
+          children: [
+            InkWell(
+              onTap: () async {
+                final worldController = Get.find<WorldController>();
+
+                if (controller.worldId > 0) {
+                  await worldController.fetchWorldById(controller.worldId);
+                  final worldRoute = RouteBuilder.build(AppRoutes.world, {
+                    'id': controller.worldId.toString(),
+                  });
+                  Get.offNamed(worldRoute);
+                } else {
+                  Get.back();
+                }
+              },
+              child: Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Row(
+                  children: [
+                    const Icon(Icons.arrow_back, color: Colors.white),
+                    const SizedBox(width: 8),
+                    Text(
+                      worldTitle,
+                      style: const TextStyle(color: Colors.white, fontSize: 18),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
-      );
-    });
+          ],
+        );
+      },
+    );
   }
 
   Widget _buildBodyContent() {
@@ -183,6 +192,13 @@ class LevelDetailPage extends GetView<LevelController> {
     final isUnlocked =
         stage.status == "unlocked" || stage.status == "completed";
 
+    final lc = Get.find<LocaleController>();
+    final title = lc.isKhmer
+        ? stage.name
+        : ((stage.nameEn?.trim().isNotEmpty ?? false)
+              ? stage.nameEn!
+              : stage.name);
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       child: Card(
@@ -223,7 +239,7 @@ class LevelDetailPage extends GetView<LevelController> {
                       ),
                       const Spacer(),
                       Text(
-                        stage.name,
+                        title,
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
@@ -234,7 +250,7 @@ class LevelDetailPage extends GetView<LevelController> {
                         textAlign: TextAlign.center,
                       ),
                       const Spacer(),
-                      _buildStarDisplay(stage.starsEarned, stage.maxStars),
+                      _buildStarDisplay(stage.starsEarned, 3),
                       const SizedBox(height: 40),
                     ],
                   ),
@@ -287,20 +303,18 @@ class LevelDetailPage extends GetView<LevelController> {
   }
 
   Widget _buildStarDisplay(int starsEarned, int maxStars) {
+    const fixedMax = 3;
+    final ms = fixedMax; // force 3 always
+    final earned = starsEarned.clamp(0, ms);
+
     return SizedBox(
       height: 80,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
-        children: List.generate(maxStars, (index) {
-          final isFilled = index < starsEarned;
-
-          final middleIndex = maxStars ~/ 2;
-          double dy;
-          if (index == middleIndex) {
-            dy = -8;
-          } else {
-            dy = 4;
-          }
+        children: List.generate(ms, (index) {
+          final isFilled = index < earned;
+          final middleIndex = ms ~/ 2;
+          final dy = (index == middleIndex) ? -8.0 : 4.0;
 
           return Transform.translate(
             offset: Offset(0, dy),

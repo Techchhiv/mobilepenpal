@@ -86,6 +86,36 @@ class StageController extends GetxController {
     return t == 'consonants' || t == 'digits';
   }
 
+  final stageProgress = 0.0.obs;
+
+  final progressStarStates = <StarState>[
+    StarState.pending,
+    StarState.pending,
+    StarState.pending,
+  ].obs;
+  final progressAnimatingStarIndex = (-1).obs;
+  final progressStarScale = 1.0.obs;
+
+  int get totalExercises => exercises.length;
+
+  int get completedExercises => attempts.length.clamp(0, totalExercises);
+
+  int get correctExercises {
+    return attempts.where((a) => a['is_correct'] == true).length;
+  }
+
+  int get starsEarnedByScore {
+    final total = totalExercises;
+    if (total <= 0) return 0;
+
+    final pct = (correctExercises / total) * 100.0;
+
+    if (pct >= 100.0) return 3;
+    if (pct >= 66.0) return 2;
+    if (pct >= 33.0) return 1;
+    return 0;
+  }
+
   @override
   void onInit() {
     super.onInit();
@@ -127,6 +157,7 @@ class StageController extends GetxController {
   void onClose() {
     idle?.cancel();
     drawingController.dispose();
+    _cancelPredictIfAny();
     audio.stopAll();
 
     // if (_ownsAnim && Get.isRegistered<StageAnimationController>()) {
@@ -160,6 +191,9 @@ class StageController extends GetxController {
       exercises.assignAll(stage.exercises);
 
       anim.resetStars(total: exercises.length);
+
+      attempts.clear();
+      _updateProgressUI(animate: false);
 
       if (exercises.isEmpty) return;
       _startAtExercise(0, playAudioAfter: true);
@@ -208,7 +242,10 @@ class StageController extends GetxController {
     }
   }
 
-  void _startAtExercise(int index, {bool playAudioAfter = false}) async {
+  Future<void> _startAtExercise(
+    int index, {
+    bool playAudioAfter = false,
+  }) async {
     currentExerciseIndex.value = index;
     selectedCharacter.value = exercises[index].character;
     attemptLeft.value = maxAttemptsPerExercise;
@@ -231,6 +268,44 @@ class StageController extends GetxController {
         );
       }
     }
+  }
+
+  void _updateProgressUI({bool animate = true}) {
+    final total = totalExercises;
+    final correct = correctExercises;
+
+    // IMPORTANT: progress bar uses the SAME metric as stars (score progress)
+    stageProgress.value = (total <= 0)
+        ? 0.0
+        : (correct / total).clamp(0.0, 1.0);
+
+    final earned = starsEarnedByScore;
+
+    final next = List<StarState>.generate(
+      3,
+      (i) => i < earned ? StarState.correct : StarState.pending,
+    );
+
+    if (animate) {
+      for (int i = 0; i < 3; i++) {
+        if (progressStarStates[i] != StarState.correct &&
+            next[i] == StarState.correct) {
+          _popProgressStar(i);
+          break;
+        }
+      }
+    }
+
+    progressStarStates.assignAll(next);
+  }
+
+  Future<void> _popProgressStar(int i) async {
+    progressAnimatingStarIndex.value = i;
+    progressStarScale.value = 1.25;
+    await Future.delayed(const Duration(milliseconds: 140));
+    progressStarScale.value = 1.0;
+    await Future.delayed(const Duration(milliseconds: 120));
+    progressAnimatingStarIndex.value = -1;
   }
 
   Future<void> playCurrentCharacterAudio() async {
@@ -372,6 +447,8 @@ class StageController extends GetxController {
         'is_correct': false,
       });
 
+      _updateProgressUI();
+
       await Future.delayed(const Duration(milliseconds: 300));
       anim.feedback.value = DrawFeedback.none;
       anim.clearPraise();
@@ -395,6 +472,7 @@ class StageController extends GetxController {
       'stroke': getXYStrokes(),
       'is_correct': true,
     });
+    _updateProgressUI();
 
     await Future.delayed(const Duration(milliseconds: 800));
     anim.feedback.value = DrawFeedback.none;
@@ -419,6 +497,7 @@ class StageController extends GetxController {
       'stroke': getXYStrokes(),
       'is_correct': false,
     });
+    _updateProgressUI();
 
     anim.markWrong(currentExerciseIndex.value);
     await anim.playStarPop(currentExerciseIndex.value);
@@ -446,6 +525,7 @@ class StageController extends GetxController {
     );
 
     attempts.clear();
+    _updateProgressUI(animate: false);
     hasDrawnStroke = false;
     drawingController.clear();
     _sessionStart = null;
@@ -461,15 +541,32 @@ class StageController extends GetxController {
     Get.offNamed(summaryRoute, arguments: {'summary': summary});
   }
 
-  void resetForRetry() {
+  Future<void> resetForRetry() async {
+    idle?.cancel();
+    _cancelPredictIfAny();
+    audio.stopVoice();
+
     attempts.clear();
+    _sessionStart = DateTime.now();
+
     currentExerciseIndex.value = 0;
-    anim.resetStars(total: exercises.length);
     attemptLeft.value = maxAttemptsPerExercise;
 
+    anim.resetStars(total: exercises.length);
+
+    stageProgress.value = 0.0;
+    progressStarStates.assignAll([
+      StarState.pending,
+      StarState.pending,
+      StarState.pending,
+    ]);
+    progressAnimatingStarIndex.value = -1;
+    progressStarScale.value = 1.0;
+
+    _updateProgressUI(animate: false);
+
     if (exercises.isNotEmpty) {
-      selectedCharacter.value = exercises[0].character;
-      setGuideForCharacter(selectedCharacter.value);
+      await _startAtExercise(0, playAudioAfter: true);
     } else {
       selectedCharacter.value = '';
       anim.setGuideFromPx(strokesPx: const []);
@@ -701,6 +798,7 @@ class StageController extends GetxController {
 
   void _resetSessionState({bool clearGuide = false}) {
     attempts.clear();
+    _updateProgressUI(animate: false);
     currentExerciseIndex.value = 0;
     selectedCharacter.value = '';
     exercises.clear();

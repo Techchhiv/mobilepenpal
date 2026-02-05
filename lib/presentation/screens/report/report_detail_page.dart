@@ -1,6 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:mobilepenpal/core/localization/locale_controller.dart';
 import 'package:mobilepenpal/core/utils/number_format_utils.dart';
 import 'package:shimmer/shimmer.dart';
 
@@ -520,15 +521,28 @@ class ReportDetailPage extends StatelessWidget {
   }
 
   static String _formatStudyTime(int seconds) {
-    if (seconds <= 0) return '0m';
+    final isKh = Get.find<LocaleController>().isKhmer;
+
+    final hUnit = isKh ? ' ម' : 'h';
+    final mUnit = isKh ? ' ន' : 'm';
+    final sUnit = isKh ? ' វ' : 's';
+
+    if (seconds <= 0) return '0$mUnit';
+
     final s = seconds % 60;
     final totalMinutes = seconds ~/ 60;
     final m = totalMinutes % 60;
     final h = totalMinutes ~/ 60;
 
-    if (h > 0) return '${h}h ${m}m';
-    if (m > 0) return s > 0 ? '${m}m ${s}s' : '${m}m';
-    return '${s}s';
+    if (h > 0) {
+      return m > 0 ? '$h$hUnit $m$mUnit' : '$h$hUnit';
+    }
+
+    if (m > 0) {
+      return s > 0 ? '$m$mUnit $s$sUnit' : '$m$mUnit';
+    }
+
+    return '$s$sUnit';
   }
 }
 

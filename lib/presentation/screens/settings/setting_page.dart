@@ -278,7 +278,7 @@ class SettingPage extends StatelessWidget {
                   horizontal: 12,
                   vertical: 6,
                 ),
-                
+
                 child: Text(
                   isKh ? "KH" : "EN",
                   style: const TextStyle(
@@ -294,8 +294,7 @@ class SettingPage extends StatelessWidget {
                     ? const Locale('en', 'US')
                     : const Locale('km', 'KH');
 
-                Get.updateLocale(next);
-
+                settingController.localeController.changeLocale(next);
                 settingController.update(['lang']);
               },
             );

@@ -2,27 +2,24 @@ import 'package:mobilepenpal/data/models/world/world_level.dart';
 
 class World {
   final int id;
+
   final String name;
+  final String nameEn;
   final String description;
-  final String image;
-  final String? backgroundImage;
-  final String? iconUrl;
-  final String? mapImageUrl;
-  final String? themeColor;
+  final String descriptionEn;
+
   final int levelsCompleted;
   final int levelsTotal;
   final int levelsRemaining;
+
   final List<WorldLevel> levels;
 
   World({
     required this.id,
     required this.name,
+    required this.nameEn,
     required this.description,
-    required this.image,
-    this.backgroundImage,
-    this.iconUrl,
-    this.mapImageUrl,
-    this.themeColor,
+    required this.descriptionEn,
     required this.levelsCompleted,
     required this.levelsTotal,
     required this.levelsRemaining,
@@ -31,26 +28,22 @@ class World {
 
   factory World.fromJson(Map<String, dynamic> json) {
     return World(
-      id: json['id'],
+      id: (json['id'] ?? 0) as int,
       name: (json['name'] ?? '') as String,
+      nameEn: (json['name_en'] ?? '') as String,
       description: (json['description'] ?? '') as String,
-      image: (json['image'] ?? '') as String,
-      backgroundImage: json['background_image'],
-      iconUrl: json['icon_url'],
-      mapImageUrl: json['map_image_url'],
-      themeColor: json['theme_color'],
-      levelsCompleted: json['levels_completed'] ?? 0,
-      levelsTotal: json['levels_total'] ?? 0,
-      levelsRemaining: json['levels_remaining'] ?? 0,
+      descriptionEn: (json['description_en'] ?? '') as String,
+      levelsCompleted: (json['levels_completed'] ?? 0) as int,
+      levelsTotal: (json['levels_total'] ?? 0) as int,
+      levelsRemaining: (json['levels_remaining'] ?? 0) as int,
       levels: (json['levels'] as List<dynamic>? ?? [])
           .map((level) => WorldLevel.fromJson(level as Map<String, dynamic>))
           .toList(),
     );
   }
 
-  double get progressPercentage {
-    return levelsTotal > 0 ? levelsCompleted / levelsTotal : 0.0;
-  }
+  double get progressPercentage =>
+      levelsTotal > 0 ? levelsCompleted / levelsTotal : 0.0;
 
-  bool get isCompleted => levelsCompleted >= levelsTotal;
+  bool get isCompleted => levelsTotal > 0 && levelsCompleted >= levelsTotal;
 }

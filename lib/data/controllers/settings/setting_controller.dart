@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:mobilepenpal/core/localization/locale_controller.dart';
 
 import 'package:mobilepenpal/data/models/student/student.dart';
 import 'package:mobilepenpal/data/services/auth_service.dart';
@@ -17,6 +18,8 @@ class SettingController extends GetxController {
   final HomeService homeService = HomeService();
   final ImagePicker imagePicker = ImagePicker();
   final box = GetStorage();
+
+  final localeController = Get.find<LocaleController>();
 
   var currentMode = 'student'.obs;
   var student = Rxn<Student>();

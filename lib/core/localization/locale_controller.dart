@@ -19,17 +19,22 @@ class LocaleController extends GetxController {
   void _loadLocale() {
     final storedLocale = _box.read(_key);
     if (storedLocale != null) {
-      _locale = Locale(storedLocale['languageCode'], storedLocale['countryCode']);
+      _locale = Locale(
+        storedLocale['languageCode'],
+        storedLocale['countryCode'],
+      );
     } else {
       _locale = const Locale('en', 'US');
     }
     Get.updateLocale(_locale);
+    update();
   }
 
   void changeLocale(Locale newLocale) {
     _locale = newLocale;
     _saveLocaleToBox(newLocale);
     Get.updateLocale(newLocale);
+    update();
   }
 
   void _saveLocaleToBox(Locale locale) {
