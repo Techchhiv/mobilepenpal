@@ -24,10 +24,11 @@ const SchoolLayout = ({ children }) => {
   const showTeacher = hasPermission("teachers.view");
   const showClassRooms = hasPermission("classrooms.view");
   const showStudents = hasPermission("children.view")
-
+  const showWorldManage = isSchoolAdmin || hasPermission("worlds.view")
 
   useEffect(() => {
     const p = location.pathname;
+
     if (
       p.startsWith("/school/users") ||
       p.startsWith("/school/roles") ||
@@ -40,6 +41,13 @@ const SchoolLayout = ({ children }) => {
       p.startsWith("/school/performance")
     ) {
       setOpenDropdownKey("management");
+    } else if (
+      p.startsWith("/school/worlds") ||
+      p.startsWith("/school/levels") ||
+      p.startsWith("/school/stages") ||
+      p.startsWith("/school/exercises")
+    ) {
+      setOpenDropdownKey("world");
     } else {
       setOpenDropdownKey(null);
     }
@@ -125,6 +133,75 @@ const SchoolLayout = ({ children }) => {
               </li>
             )}
 
+            {showWorldManage && (
+              <li className={`dropdown ${openDropdownKey === "world" ? "open" : ""}`}>
+                <a
+                  href="#world"
+                  className={`menu-trigger ${openDropdownKey === "world" ? "active-page" : ""}`}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setOpenDropdownKey((prev) => (prev === "world" ? null : "world"));
+                  }}
+                >
+                  <Icon icon="mdi:earth" className="menu-icon" />
+                  <span>World Management</span>
+                  <Icon
+                    icon={openDropdownKey === "world" ? "mdi:chevron-up" : "mdi:chevron-down"}
+                    className="caret ms-auto"
+                  />
+                </a>
+
+                <ul
+                  className="sidebar-submenu"
+                  style={{
+                    maxHeight: openDropdownKey === "world" ? "600px" : "0px",
+                    overflow: "hidden",
+                    transition: "max-height .25s ease",
+                  }}
+                >
+                  <li>
+                    <NavLink
+                      to="/school/worlds"
+                      className={({ isActive }) => (isActive ? "active-page" : "")}
+                    >
+                      <i className="ri-circle-fill circle-icon text-primary-600 w-auto" />
+                      Manage Worlds
+                    </NavLink>
+                  </li>
+
+                  <li>
+                    <NavLink
+                      to="/school/levels"
+                      className={({ isActive }) => (isActive ? "active-page" : "")}
+                    >
+                      <i className="ri-circle-fill circle-icon text-warning-main w-auto" />
+                      Manage Levels
+                    </NavLink>
+                  </li>
+
+                  <li>
+                    <NavLink
+                      to="/school/stages"
+                      className={({ isActive }) => (isActive ? "active-page" : "")}
+                    >
+                      <i className="ri-circle-fill circle-icon text-info-main w-auto" />
+                      Manage Stages
+                    </NavLink>
+                  </li>
+
+                  <li>
+                    <NavLink
+                      to="/school/exercises"
+                      className={({ isActive }) => (isActive ? "active-page" : "")}
+                    >
+                      <i className="ri-circle-fill circle-icon text-success-main w-auto" />
+                      Manage Exercises
+                    </NavLink>
+                  </li>
+                </ul>
+              </li>
+            )}
+
             {/* Manage Users / Roles / Permissions */}
             {(showManageUsers || showRoles || showPermissions) && (
               <li className={`dropdown ${openDropdownKey === "access" ? "open" : ""}`}>
@@ -164,6 +241,7 @@ const SchoolLayout = ({ children }) => {
                       </NavLink>
                     </li>
                   )}
+
                   {/* {showRoles && (
                     <li>
                       <NavLink

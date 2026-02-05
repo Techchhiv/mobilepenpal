@@ -130,7 +130,7 @@ const MasterLayout = ({ children }) => {
                     </NavLink>
                   </li>
 
-                  <li>
+                  {/* <li>
                     <NavLink
                       to="/admin/levels"
                       className={({ isActive }) => (isActive ? "active-page" : "")}
@@ -138,9 +138,9 @@ const MasterLayout = ({ children }) => {
                       <i className="ri-circle-fill circle-icon text-warning-main w-auto" />
                       Manage Levels
                     </NavLink>
-                  </li>
+                  </li> */}
 
-                  <li>
+                  {/* <li>
                     <NavLink
                       to="/admin/stages"
                       className={({ isActive }) => (isActive ? "active-page" : "")}
@@ -148,7 +148,7 @@ const MasterLayout = ({ children }) => {
                       <i className="ri-circle-fill circle-icon text-info-main w-auto" />
                       Manage Stages
                     </NavLink>
-                  </li>
+                  </li> */}
 
                   <li>
                     <NavLink

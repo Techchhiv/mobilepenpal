@@ -12,13 +12,18 @@ const normalizeBool = (v) => v === true || String(v ?? "0") === "1";
 
 const normalizeLevel = (lv) => {
   const worldName = lv?.world?.name ?? "—";
+  const worldNameEn = lv?.world?.name_en ?? "";
   const levelName = lv?.name ?? "—";
+  const levelNameEn = lv?.name_en ?? "";
   return {
     ...lv,
     is_active: normalizeBool(lv?.is_active),
     world_name: worldName,
+    world_name_en: worldNameEn,
     level_name: levelName,
-    label: `${worldName} → ${levelName} (#${lv?.id ?? "?"})`,
+    level_name_en: levelNameEn,
+    label: `${worldName}${worldNameEn ? ` / ${worldNameEn}` : ""} → ${levelName}${levelNameEn ? ` / ${levelNameEn}` : ""
+      } (#${lv?.id ?? "?"})`,
   };
 };
 
@@ -49,9 +54,9 @@ const StageEdit = () => {
   const [form, setForm] = useState({
     level_id: "",
     name: "",
+    name_en: "",
     description: "",
-    instruction: "",
-    max_stars: 3,
+    description_en: "",
     order_index: "",
     is_active: true,
   });
@@ -83,7 +88,6 @@ const StageEdit = () => {
       setLevels(mapped);
     } catch (err) {
       console.error("Fetch levels failed:", err);
-      // non-fatal; stage can still load
     } finally {
       setLevelsLoading(false);
     }
@@ -103,9 +107,9 @@ const StageEdit = () => {
       const next = {
         level_id: s?.level_id ? String(s.level_id) : "",
         name: s?.name ?? "",
+        name_en: s?.name_en ?? "",
         description: s?.description ?? "",
-        instruction: s?.instruction ?? "",
-        max_stars: s?.max_stars ?? 3,
+        description_en: s?.description_en ?? "",
         order_index: s?.order_index ?? "",
         is_active: normalizeBool(s?.is_active),
       };
@@ -124,7 +128,6 @@ const StageEdit = () => {
     if (!canView) return;
     fetchStage();
     fetchLevels();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, canView]);
 
   const filteredLevels = useMemo(() => {
@@ -134,9 +137,18 @@ const StageEdit = () => {
     return levels.filter((lv) => {
       const label = String(lv.label ?? "").toLowerCase();
       const name = String(lv.level_name ?? "").toLowerCase();
+      const nameEn = String(lv.level_name_en ?? "").toLowerCase();
       const world = String(lv.world_name ?? "").toLowerCase();
+      const worldEn = String(lv.world_name_en ?? "").toLowerCase();
       const idStr = String(lv.id ?? "");
-      return label.includes(q) || name.includes(q) || world.includes(q) || idStr.includes(q);
+      return (
+        label.includes(q) ||
+        name.includes(q) ||
+        nameEn.includes(q) ||
+        world.includes(q) ||
+        worldEn.includes(q) ||
+        idStr.includes(q)
+      );
     });
   }, [levelQ, levels]);
 
@@ -148,7 +160,8 @@ const StageEdit = () => {
 
   const active = useMemo(() => normalizeBool(stage?.is_active), [stage]);
 
-  const displayName = useMemo(() => form.name?.trim() || "Stage", [form.name]);
+  const displayNameKh = useMemo(() => form.name?.trim() || "Stage", [form.name]);
+  const displayNameEn = useMemo(() => form.name_en?.trim() || "", [form.name_en]);
 
   const prettyDateTime = (d) => {
     if (!d) return "—";
@@ -180,14 +193,12 @@ const StageEdit = () => {
     }
     if (!form.name?.trim()) {
       setSaving(false);
-      setError("Name is required.");
+      setError("Name (KH) is required.");
       return;
     }
-
-    const ms = parseInt(form.max_stars, 10);
-    if (Number.isNaN(ms) || ms < 1 || ms > 10) {
+    if (!form.name_en?.trim()) {
       setSaving(false);
-      setError("Max stars must be between 1 and 10.");
+      setError("Name (EN) is required.");
       return;
     }
 
@@ -195,19 +206,14 @@ const StageEdit = () => {
       const payload = {
         level_id: parseInt(form.level_id, 10),
         name: form.name.trim(),
+        name_en: form.name_en.trim(),
         description: form.description?.trim() || null,
-        instruction: form.instruction?.trim() || null,
-        max_stars: ms,
+        description_en: form.description_en?.trim() || null,
         is_active: !!form.is_active,
       };
 
-      if (String(form.order_index).trim() !== "") {
-        payload.order_index = parseInt(form.order_index, 10);
-      }
-
       await API.put(`/admin/stages/${id}`, payload);
 
-      // go back to view (or list), keeping your "from"
       navigate(`/admin/stages/${id}`, {
         state: { from },
         replace: true,
@@ -217,11 +223,10 @@ const StageEdit = () => {
       const errors = err?.response?.data?.errors || {};
       setError(
         errors?.level_id?.[0] ||
-          errors?.name?.[0] ||
-          errors?.max_stars?.[0] ||
-          errors?.order_index?.[0] ||
-          err?.response?.data?.message ||
-          "Failed to update stage."
+        errors?.name?.[0] ||
+        errors?.name_en?.[0] ||
+        err?.response?.data?.message ||
+        "Failed to update stage."
       );
     } finally {
       setSaving(false);
@@ -262,8 +267,29 @@ const StageEdit = () => {
     );
   }
 
-  const worldName = selectedLevel?.world?.name ?? selectedLevel?.world_name ?? stage?.level?.world?.name ?? "—";
-  const levelName = selectedLevel?.name ?? selectedLevel?.level_name ?? stage?.level?.name ?? "—";
+  const worldName =
+    selectedLevel?.world?.name ??
+    selectedLevel?.world_name ??
+    stage?.level?.world?.name ??
+    "—";
+
+  const worldNameEn =
+    selectedLevel?.world?.name_en ??
+    selectedLevel?.world_name_en ??
+    stage?.level?.world?.name_en ??
+    "";
+
+  const levelName =
+    selectedLevel?.name ??
+    selectedLevel?.level_name ??
+    stage?.level?.name ??
+    "—";
+
+  const levelNameEn =
+    selectedLevel?.name_en ??
+    selectedLevel?.level_name_en ??
+    stage?.level?.name_en ??
+    "";
 
   return (
     <MasterLayout>
@@ -272,7 +298,9 @@ const StageEdit = () => {
           <div>
             <h5 className="mb-0">Edit Stage</h5>
             <small className="text-muted">
-              ID: {id} • {worldName} → {levelName}
+              ID: {id} • {worldName}
+              {worldNameEn ? ` / ${worldNameEn}` : ""} → {levelName}
+              {levelNameEn ? ` / ${levelNameEn}` : ""}
             </small>
           </div>
 
@@ -300,9 +328,8 @@ const StageEdit = () => {
               <button
                 type="button"
                 onClick={toggleStage}
-                className={`btn radius-3 px-20 py-11 d-flex align-items-center ${
-                  active ? "btn-warning" : "btn-primary"
-                }`}
+                className={`btn radius-3 px-20 py-11 d-flex align-items-center ${active ? "btn-warning" : "btn-primary"
+                  }`}
                 title="Toggle Active"
                 disabled={saving}
               >
@@ -345,29 +372,34 @@ const StageEdit = () => {
                         </div>
 
                         <div className="flex-grow-1">
-                          <div className="fw-semibold">{displayName}</div>
-                          <div className="text-muted small">Stage ID: {id}</div>
+                          <div className="fw-semibold">{displayNameKh}</div>
+                          <div className="text-muted small">
+                            {displayNameEn || "—"}
+                          </div>
+
+                          <div className="text-muted small mt-6">Stage ID: {id}</div>
 
                           <div className="text-muted small mt-8">
                             World: <span className="fw-medium">{worldName}</span>
+                            {worldNameEn ? (
+                              <span className="text-muted"> • {worldNameEn}</span>
+                            ) : null}
                           </div>
                           <div className="text-muted small">
                             Level: <span className="fw-medium">{levelName}</span>
+                            {levelNameEn ? (
+                              <span className="text-muted"> • {levelNameEn}</span>
+                            ) : null}
                           </div>
 
                           <div className="mt-10 d-flex gap-2 flex-wrap">
                             <span
-                              className={`px-16 py-4 rounded-pill fw-medium text-sm ${
-                                form.is_active
-                                  ? "bg-success-focus text-success-main"
-                                  : "bg-warning-focus text-warning-main"
-                              }`}
+                              className={`px-16 py-4 rounded-pill fw-medium text-sm ${form.is_active
+                                ? "bg-success-focus text-success-main"
+                                : "bg-warning-focus text-warning-main"
+                                }`}
                             >
                               {form.is_active ? "Active" : "Disabled"}
-                            </span>
-
-                            <span className="px-16 py-4 rounded-pill fw-medium text-sm bg-light text-dark">
-                              Max Stars: {form.max_stars ?? "—"}
                             </span>
                           </div>
                         </div>
@@ -438,7 +470,8 @@ const StageEdit = () => {
 
                                 {filteredLevels.map((lv) => (
                                   <option key={lv.id} value={lv.id}>
-                                    {lv.label}{lv.is_active ? "" : " • Disabled"}
+                                    {lv.label}
+                                    {lv.is_active ? "" : " • Disabled"}
                                   </option>
                                 ))}
                               </select>
@@ -449,9 +482,10 @@ const StageEdit = () => {
                           </div>
                         </div>
 
+                        {/* Name KH / EN */}
                         <div className="col-md-6">
                           <label className="form-label">
-                            Name <Required />
+                            Name (KH) <Required />
                           </label>
                           <input
                             className="form-control"
@@ -462,42 +496,22 @@ const StageEdit = () => {
                           />
                         </div>
 
-                        <div className="col-md-3">
-                          <label className="form-label">Order Index</label>
+                        <div className="col-md-6">
+                          <label className="form-label">
+                            Name (EN) <Required />
+                          </label>
                           <input
-                            type="number"
                             className="form-control"
-                            value={form.order_index}
-                            onChange={onChange("order_index")}
-                            min={1}
+                            value={form.name_en}
+                            onChange={onChange("name_en")}
+                            required
+                            maxLength={255}
                           />
                         </div>
 
-                        <div className="col-md-3">
-                          <label className="form-label">Max Stars</label>
-                          <input
-                            type="number"
-                            className="form-control"
-                            value={form.max_stars}
-                            onChange={onChange("max_stars")}
-                            min={1}
-                            max={10}
-                          />
-                        </div>
-
-                        <div className="col-12">
-                          <label className="form-label">Instruction</label>
-                          <textarea
-                            className="form-control"
-                            rows={3}
-                            value={form.instruction}
-                            onChange={onChange("instruction")}
-                            placeholder="Optional"
-                          />
-                        </div>
-
-                        <div className="col-12">
-                          <label className="form-label">Description</label>
+                        {/* Description KH / EN */}
+                        <div className="col-md-6">
+                          <label className="form-label">Description (KH)</label>
                           <textarea
                             className="form-control"
                             rows={3}
@@ -507,8 +521,19 @@ const StageEdit = () => {
                           />
                         </div>
 
+                        <div className="col-md-6">
+                          <label className="form-label">Description (EN)</label>
+                          <textarea
+                            className="form-control"
+                            rows={3}
+                            value={form.description_en}
+                            onChange={onChange("description_en")}
+                            placeholder="Optional"
+                          />
+                        </div>
+
                         <div className="col-12">
-                          <div className="form-check mt-2 d-flex align-items-center">
+                          <div className="form-check mt-2 d-flex justify-content-end align-items-center">
                             <input
                               className="form-check-input"
                               type="checkbox"

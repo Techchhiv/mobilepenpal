@@ -15,6 +15,11 @@ const WorldEdit = () => {
   const canToggle = hasPermission("worlds.enable_disable");
   const canView = hasPermission("worlds.view") || canEdit;
 
+  const [schools, setSchools] = useState([]);
+  const [schoolsLoading, setSchoolsLoading] = useState(false);
+  const [schoolsError, setSchoolsError] = useState("");
+  const [schoolSearch, setSchoolSearch] = useState("");
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -25,7 +30,11 @@ const WorldEdit = () => {
 
   const [form, setForm] = useState({
     name: "",
+    name_en: "",
     description: "",
+    description_en: "",
+    audience: "schools",
+    school_ids: [],
     is_unlocked_by_default: false,
   });
 
@@ -42,15 +51,17 @@ const WorldEdit = () => {
       const res = await API.get(`/admin/worlds/${id}`);
       const payload = res.data?.data ?? res.data;
       const w = payload?.world ?? null;
+      const assignedIds = payload?.assigned_school_ids ?? [];
 
       setWorld(w);
-
       setForm({
         name: w?.name ?? "",
+        name_en: w?.name_en ?? "",
         description: w?.description ?? "",
-        is_unlocked_by_default:
-          w?.is_unlocked_by_default === true ||
-          String(w?.is_unlocked_by_default ?? "0") === "1",
+        description_en: w?.description_en ?? "",
+        audience: w?.audience ?? "schools",
+        school_ids: Array.isArray(assignedIds) ? assignedIds : [],
+        is_unlocked_by_default: w?.is_unlocked_by_default === true || String(w?.is_unlocked_by_default ?? "0") === "1",
       });
     } catch (err) {
       console.error("Fetch world failed:", err);
@@ -59,12 +70,6 @@ const WorldEdit = () => {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    if (!canView) return;
-    fetchWorld();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, canView]);
 
   const onChange = (key) => (e) => {
     const val =
@@ -86,10 +91,22 @@ const WorldEdit = () => {
       return;
     }
 
+    if (form.audience === "assigned" && (!form.school_ids || form.school_ids.length === 0)) {
+      setSaving(false);
+      setError("Please select at least 1 school for Assigned audience.");
+      return;
+    }
+
     try {
       await API.put(`/admin/worlds/${id}`, {
         name: form.name.trim(),
+        name_en: form.name_en?.trim() || null,
         description: form.description?.trim() || null,
+        description_en: form.description_en?.trim() || null,
+
+        audience: form.audience, 
+        school_ids: form.audience === "assigned" ? form.school_ids : [],
+
         is_unlocked_by_default: !!form.is_unlocked_by_default,
       });
 
@@ -121,6 +138,35 @@ const WorldEdit = () => {
     }
   };
 
+  useEffect(() => {
+    if (!canView) return;
+    fetchWorld();
+  }, [id, canView]);
+
+
+  useEffect(() => {
+    if (form.audience !== "assigned") return;
+
+    const t = setTimeout(async () => {
+      setSchoolsLoading(true);
+      setSchoolsError("");
+
+      try {
+        const res = await API.get("/admin/schools", {
+          params: schoolSearch?.trim() ? { search: schoolSearch.trim() } : {},
+        });
+        setSchools(res?.data?.data ?? []);
+      } catch (e) {
+        setSchoolsError(e?.response?.data?.message || "Failed to load schools.");
+      } finally {
+        setSchoolsLoading(false);
+      }
+    }, 250);
+
+    return () => clearTimeout(t);
+  }, [form.audience, schoolSearch]);
+
+
   if (!canView) {
     return (
       <MasterLayout>
@@ -140,6 +186,12 @@ const WorldEdit = () => {
       </MasterLayout>
     );
   }
+
+  const filteredSchools = useMemo(() => {
+    const q = schoolSearch.trim().toLowerCase();
+    if (!q) return schools;
+    return schools.filter(s => (s?.name || "").toLowerCase().includes(q));
+  }, [schools, schoolSearch]);
 
   function prettyDateTime(d) {
     if (!d) return "—";
@@ -174,9 +226,8 @@ const WorldEdit = () => {
               <button
                 type="button"
                 onClick={toggleWorld}
-                className={`btn radius-3 px-20 py-11 d-flex align-items-center ${
-                  active ? "btn-warning" : "btn-primary"
-                }`}
+                className={`btn radius-3 px-20 py-11 d-flex align-items-center ${active ? "btn-warning" : "btn-primary"
+                  }`}
                 title="Toggle Active"
               >
                 <Icon icon="mdi:toggle-switch" className="me-6" />
@@ -217,23 +268,22 @@ const WorldEdit = () => {
                         <Icon icon="mdi:map" width={54} />
                       </div>
 
-                      <h6 className="mt-3 mb-3">{form.name?.trim() || "—"}</h6>
+                      <h6 className="mt-3 mb-1">{form.name?.trim() || "—"}</h6>
+                      <div className="text-muted small mb-3">{form.name_en?.trim() || "—"}</div>
 
                       <div className="d-flex justify-content-center gap-8 flex-wrap">
                         <span
-                          className={`badge ${
-                            active ? "bg-success" : "bg-secondary"
-                          }`}
+                          className={`badge ${active ? "bg-success" : "bg-secondary"
+                            }`}
                         >
                           {active ? "Active" : "Disabled"}
                         </span>
 
                         <span
-                          className={`badge ${
-                            form.is_unlocked_by_default
-                              ? "bg-primary"
-                              : "bg-light text-dark"
-                          }`}
+                          className={`badge ${form.is_unlocked_by_default
+                            ? "bg-primary"
+                            : "bg-light text-dark"
+                            }`}
                         >
                           {form.is_unlocked_by_default
                             ? "Default Unlock"
@@ -267,9 +317,71 @@ const WorldEdit = () => {
                       <h6 className="mb-0">World Information</h6>
                     </div>
 
+
                     <div className="card-body">
+
                       <div className="row g-3">
-                        <Field label="Name *" colClass="col-12 col-lg-6">
+                        <Field label="Audience" colClass="col-12 col-lg-6">
+                          <select className="form-select" value={form.audience} onChange={onChange("audience")}>
+                            <option value="public">Public</option>
+                            <option value="schools">Schools</option>
+                            <option value="assigned">Assigned</option>
+                          </select>
+                        </Field>
+
+                        {form.audience === "assigned" && (
+                          <div className="col-12">
+                            <div className="p-12 border radius-8">
+                              <div className="text-muted small mb-2">Assigned Schools</div>
+
+                              <input
+                                className="form-control mb-2"
+                                placeholder="Search school by name..."
+                                value={schoolSearch}
+                                onChange={(e) => setSchoolSearch(e.target.value)}
+                              />
+
+                              {schoolsError && <div className="alert alert-danger py-2">{schoolsError}</div>}
+
+                              <div style={{ maxHeight: 240, overflow: "auto" }} className="border radius-8 p-2">
+                                {schoolsLoading ? (
+                                  <div className="text-muted">Loading schools...</div>
+                                ) : (filteredSchools?.length ?? 0) === 0 ? (
+                                  <div className="text-muted">No schools found.</div>
+                                ) : (
+                                  filteredSchools.map((s) => {
+                                    const checked = form.school_ids.includes(s.id);
+                                    return (
+                                      <div key={s.id} className="form-check d-flex align-items-center gap-2 py-1">
+                                        <input
+                                          className="form-check-input m-0"
+                                          type="checkbox"
+                                          id={`school-${s.id}`}
+                                          checked={checked}
+                                          onChange={() => {
+                                            setForm((p) => {
+                                              const next = checked
+                                                ? p.school_ids.filter((x) => x !== s.id)
+                                                : [...p.school_ids, s.id];
+                                              return { ...p, school_ids: next };
+                                            });
+                                          }}
+                                        />
+                                        <label className="form-check-label" htmlFor={`school-${s.id}`}>
+                                          {s.name} <span className="text-muted">#{s.id}</span>
+                                        </label>
+                                      </div>
+                                    );
+                                  })
+                                )}
+                              </div>
+
+                              <small className="text-muted d-block mt-2">Selected: {form.school_ids.length}</small>
+                            </div>
+                          </div>
+                        )}
+
+                        <Field label="Name (KH) *" colClass="col-12 col-lg-6">
                           <input
                             className="form-control"
                             value={form.name}
@@ -279,12 +391,33 @@ const WorldEdit = () => {
                           />
                         </Field>
 
-                        <Field label="Description" colClass="col-12">
+                        <Field label="Name (EN)" colClass="col-12 col-lg-6">
+                          <input
+                            className="form-control"
+                            value={form.name_en}
+                            onChange={onChange("name_en")}
+                            maxLength={255}
+                            placeholder="Optional"
+                          />
+                        </Field>
+
+                        <Field label="Description (KH)" colClass="col-12">
                           <textarea
                             className="form-control"
                             rows={4}
                             value={form.description}
                             onChange={onChange("description")}
+                            placeholder="Optional"
+                          />
+                        </Field>
+
+                        <Field label="Description (EN)" colClass="col-12">
+                          <textarea
+                            className="form-control"
+                            rows={4}
+                            value={form.description_en}
+                            onChange={onChange("description_en")}
+                            placeholder="Optional"
                           />
                         </Field>
 

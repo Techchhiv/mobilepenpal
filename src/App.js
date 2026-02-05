@@ -54,6 +54,13 @@ import ExerciseList from "./pages/admin/Exercise/ExerciseList";
 import ExerciseView from "./pages/admin/Exercise/ExerciseView";
 import ExerciseEdit from "./pages/admin/Exercise/ExerciseEdit";
 import ExerciseCreate from "./pages/admin/Exercise/ExerciseCreate";
+import SchoolWorldList from "./pages/school/page/World/SchoolWorldList";
+import SchoolWorldCreate from "./pages/school/page/World/SchoolWorldCreate";
+import SchoolWorldView from "./pages/school/page/World/SchoolWorldView";
+import SchoolWorldEdit from "./pages/school/page/World/SchoolWorldEdit";
+import SchoolLevelList from "./pages/school/page/Level/SchoolLevelList";
+import SchoolLevelEdit from "./pages/school/page/Level/SchoolLevelEdit";
+import SchoolLevelView from "./pages/school/page/Level/SchoolLevelView";
 
 export default function App() {
   return (
@@ -120,7 +127,7 @@ export default function App() {
             <Gate anyPerm={["level.view, level.create, level.delete"]} />
           }
         >
-          <Route path="/admin/levels" element={<LevelList />} />
+          {/* <Route path="/admin/levels" element={<LevelList />} /> */}
           <Route path="/admin/levels/create" element={<LevelCreate />} />
           <Route path="/admin/levels/:id" element={<LevelView />} />
           <Route path="/admin/levels/:id/edit" element={<LevelEdit />} />
@@ -232,6 +239,19 @@ export default function App() {
             path="/school/classrooms/:classroomId/students/:studentId/progress"
             element={<ClassroomStudentProgress />}
           />
+        </Route>
+        <Route
+          element={
+            <Gate anyPerm={["worlds.view", "worlds.create", "worlds.update"]} />
+          }
+        >
+          <Route path="/school/worlds" element={<SchoolWorldList />} />
+          <Route path="/school/worlds/create" element={<SchoolWorldCreate />} />
+          <Route path="/school/worlds/:id" element={<SchoolWorldView />} />
+          <Route path="/school/worlds/:id/edit" element={<SchoolWorldEdit />} />
+
+          <Route path="/school/levels/:id/edit" element={<SchoolLevelEdit />} />
+          <Route path="/school/levels/:id" element={<SchoolLevelView />} />
         </Route>
 
         <Route path="/" element={<Navigate to="/sign-in-school" replace />} />

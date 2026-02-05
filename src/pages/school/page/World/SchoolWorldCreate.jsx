@@ -1,23 +1,20 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Icon } from "@iconify/react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 
-import API from "../../../helper/api";
-import { useAuth } from "../../../context/AuthContext";
-import MasterLayout from "../../../masterLayout/MasterLayout";
+import API from "../../../../helper/api";
+import { useAuth } from "../../../../context/AuthContext";
+import SchoolLayout from "../../masterLayout/SchoolLayout";
 
-const WorldCreate = () => {
+const Required = () => <span className="text-danger ms-1">*</span>;
+
+const SchoolWorldCreate = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { hasPermission } = useAuth();
 
   const canCreate = hasPermission("worlds.create");
-  const from = location.state?.from || "/admin/worlds";
-  const [schools, setSchools] = useState([]);
-  const [schoolsLoading, setSchoolsLoading] = useState(false);
-  const [schoolsError, setSchoolsError] = useState("");
-  const [schoolSearch, setSchoolSearch] = useState("");
-
+  const from = location.state?.from || "/school/worlds";
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -27,17 +24,13 @@ const WorldCreate = () => {
     name_en: "",
     description: "",
     description_en: "",
-    audience: "schools",
     is_active: true,
     is_unlocked_by_default: false,
-    school_ids: [],
   });
 
   const onChange = (key) => (e) => {
     const val =
-      e?.target?.type === "checkbox"
-        ? e.target.checked
-        : e?.target?.value ?? "";
+      e?.target?.type === "checkbox" ? e.target.checked : e?.target?.value ?? "";
     setForm((p) => ({ ...p, [key]: val }));
   };
 
@@ -62,15 +55,10 @@ const WorldCreate = () => {
     setSaving(true);
     setError("");
 
+    // Require KH name (same pattern as Level/Stage)
     if (!form.name?.trim()) {
       setSaving(false);
-      setError("Name is required.");
-      return;
-    }
-
-    if (form.audience === "assigned" && (!form.school_ids || form.school_ids.length === 0)) {
-      setSaving(false);
-      setError("Please select at least 1 school for Assigned audience.");
+      setError("Name (KH) is required.");
       return;
     }
 
@@ -80,14 +68,11 @@ const WorldCreate = () => {
         name_en: form.name_en?.trim() || null,
         description: form.description?.trim() || null,
         description_en: form.description_en?.trim() || null,
-        audience: form.audience,
         is_active: !!form.is_active,
         is_unlocked_by_default: !!form.is_unlocked_by_default,
-        school_ids: form.audience === "assigned" ? form.school_ids : [],
       };
 
-      const res = await API.post("/admin/worlds", payload);
-
+      const res = await API.post("/school/worlds", payload);
       const createdWorld = res?.data?.data?.world ?? res?.data?.world ?? null;
 
       navigate(from, {
@@ -98,18 +83,18 @@ const WorldCreate = () => {
         },
       });
     } catch (err) {
-      console.error("Create world error:", err);
+      console.error("Create school world error:", err);
 
       const errors = err?.response?.data?.errors || {};
       setError(
         errors?.name?.[0] ||
-        errors?.name_en?.[0] ||
-        errors?.description?.[0] ||
-        errors?.description_en?.[0] ||
-        errors?.is_active?.[0] ||
-        errors?.is_unlocked_by_default?.[0] ||
-        err?.response?.data?.message ||
-        "Failed to create world. Please try again."
+          errors?.name_en?.[0] ||
+          errors?.description?.[0] ||
+          errors?.description_en?.[0] ||
+          errors?.is_active?.[0] ||
+          errors?.is_unlocked_by_default?.[0] ||
+          err?.response?.data?.message ||
+          "Failed to create world. Please try again."
       );
     } finally {
       setSaving(false);
@@ -118,53 +103,23 @@ const WorldCreate = () => {
 
   if (!canCreate) {
     return (
-      <MasterLayout>
+      <SchoolLayout>
         <div className="alert alert-danger mb-0">
           You don’t have permission to create worlds.
         </div>
-      </MasterLayout>
+      </SchoolLayout>
     );
   }
 
-  useEffect(() => {
-    if (form.audience !== "assigned") return;
-
-    const t = setTimeout(async () => {
-      setSchoolsLoading(true);
-      setSchoolsError("");
-
-      try {
-        const res = await API.get("/admin/schools", {
-          params: schoolSearch?.trim() ? { search: schoolSearch.trim() } : {},
-        });
-
-        const rows = res?.data?.data ?? [];
-        setSchools(rows);
-      } catch (e) {
-        setSchoolsError(e?.response?.data?.message || "Failed to load schools.");
-      } finally {
-        setSchoolsLoading(false);
-      }
-    }, 250);
-
-    return () => clearTimeout(t);
-  }, [form.audience, schoolSearch]);
-
-  const filteredSchools = useMemo(() => {
-    const q = schoolSearch.trim().toLowerCase();
-    if (!q) return schools;
-    return schools.filter(s => (s?.name || "").toLowerCase().includes(q));
-  }, [schools, schoolSearch]);
-
-
-  const Required = () => <span className="text-danger ms-1">*</span>;
-
   return (
-    <MasterLayout>
+    <SchoolLayout>
       <div className="col-lg-12">
         <div className="card">
           <div className="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-            <h3 className="card-title mb-0">Create New World</h3>
+            <div>
+              <h3 className="card-title mb-0">Create New World</h3>
+              <div className="text-muted small">Fill in Khmer and optionally English.</div>
+            </div>
 
             <Link to={from} className="d-flex align-items-center btn btn-secondary">
               <Icon icon="mdi:arrow-left" className="me-3" />
@@ -180,7 +135,7 @@ const WorldCreate = () => {
               </div>
             )}
 
-            <form className="row gy-4 align-items-start" onSubmit={submit}>
+            <form className="row gy-4" onSubmit={submit}>
               {/* Left: Preview */}
               <div className="col-md-4">
                 <div className="card h-100">
@@ -201,10 +156,14 @@ const WorldCreate = () => {
                       <Icon icon="mdi:map" width={72} />
                     </div>
 
-                    <h6 className="mt-2 mb-1">{form.name?.trim() || "—"}</h6>
+                    <h6 className="mt-2 mb-0">{form.name?.trim() || "—"}</h6>
                     {form.name_en?.trim() ? (
-                      <div className="text-muted small">{form.name_en.trim()}</div>
-                    ) : null}
+                      <div className="text-muted small">
+                        {form.name_en.trim()}
+                      </div>
+                    ) : (
+                      <div className="mb-1" />
+                    )}
 
                     <div className="d-flex justify-content-center gap-8 flex-wrap">
                       <span className={`badge ${previewActive ? "bg-success" : "bg-secondary"}`}>
@@ -212,8 +171,9 @@ const WorldCreate = () => {
                       </span>
 
                       <span
-                        className={`badge ${form.is_unlocked_by_default ? "bg-primary" : "bg-light text-dark"
-                          }`}
+                        className={`badge ${
+                          form.is_unlocked_by_default ? "bg-primary" : "bg-light text-dark"
+                        }`}
                       >
                         {form.is_unlocked_by_default ? "Default Unlock" : "Not Default"}
                       </span>
@@ -233,82 +193,15 @@ const WorldCreate = () => {
                   </div>
 
                   <div className="card-body">
-                    <div className="col-md-12">
-                      <label className="form-label">Audience</label>
-                      <select className="form-select" value={form.audience} onChange={onChange("audience")}>
-                        <option value="public">Public (no-school users)</option>
-                        <option value="schools">Schools (all registered schools)</option>
-                        <option value="assigned">Assigned (selected schools only)</option>
-                      </select>
-
-                      <small className="text-muted d-block mt-1">
-                        • Public: students without school_id<br />
-                        • Schools: any school student<br />
-                        • Assigned: only selected schools via school_worlds
-                      </small>
-                    </div>
-
-                    {form.audience === "assigned" && (
-                      <div className="col-12">
-                        <label className="form-label">Assign to Schools</label>
-
-                        <input
-                          className="form-control mb-2"
-                          placeholder="Search school by name..."
-                          value={schoolSearch}
-                          onChange={(e) => setSchoolSearch(e.target.value)}
-                        />
-
-                        {schoolsError && <div className="alert alert-danger py-2">{schoolsError}</div>}
-
-                        <div className="border radius-8 p-2" style={{ maxHeight: 240, overflow: "auto" }}>
-                          {schoolsLoading ? (
-                            <div className="text-muted">Loading schools...</div>
-                          ) : (filteredSchools?.length ?? 0) === 0 ? (
-                            <div className="text-muted">No schools found.</div>
-                          ) : (
-                            filteredSchools.map((s) => {
-                              const checked = form.school_ids.includes(s.id);
-                              return (
-                                <div key={s.id} className="form-check d-flex align-items-center gap-2 py-1">
-                                  <input
-                                    className="form-check-input m-0"
-                                    type="checkbox"
-                                    id={`school-${s.id}`}
-                                    checked={checked}
-                                    onChange={() => {
-                                      setForm((p) => {
-                                        const next = checked
-                                          ? p.school_ids.filter((x) => x !== s.id)
-                                          : [...p.school_ids, s.id];
-                                        return { ...p, school_ids: next };
-                                      });
-                                    }}
-                                  />
-                                  <label className="form-check-label" htmlFor={`school-${s.id}`}>
-                                    {s.name} <span className="text-muted">#{s.id}</span>
-                                  </label>
-                                </div>
-                              );
-                            })
-                          )}
-                        </div>
-
-                        <small className="text-muted d-block mt-2">
-                          Selected: {form.school_ids.length}
-                        </small>
-                      </div>
-                    )}
-
-
                     <div className="row g-3">
-                      <div className="col-md-12">
+                      {/* Names */}
+                      <div className="col-md-6">
                         <label className="form-label">
                           Name (KH) <Required />
                         </label>
                         <input
                           className="form-control"
-                          placeholder="Enter world name (Khmer)"
+                          placeholder="ឧ. ព្យញ្ជនៈ"
                           value={form.name}
                           onChange={onChange("name")}
                           required
@@ -316,22 +209,23 @@ const WorldCreate = () => {
                         />
                       </div>
 
-                      <div className="col-md-12">
+                      <div className="col-md-6">
                         <label className="form-label">Name (EN)</label>
                         <input
                           className="form-control"
-                          placeholder="Enter world name (English)"
+                          placeholder="e.g. Consonants"
                           value={form.name_en}
                           onChange={onChange("name_en")}
                           maxLength={255}
                         />
                       </div>
 
+                      {/* Descriptions */}
                       <div className="col-12">
                         <label className="form-label">Description (KH)</label>
                         <textarea
                           className="form-control"
-                          placeholder="Optional description (Khmer)"
+                          placeholder="Optional description (KH)"
                           rows={3}
                           value={form.description}
                           onChange={onChange("description")}
@@ -342,13 +236,14 @@ const WorldCreate = () => {
                         <label className="form-label">Description (EN)</label>
                         <textarea
                           className="form-control"
-                          placeholder="Optional description (English)"
+                          placeholder="Optional description (EN)"
                           rows={3}
                           value={form.description_en}
                           onChange={onChange("description_en")}
                         />
                       </div>
 
+                      {/* Toggles */}
                       <div className="col-md-6 d-flex align-items-end">
                         <div className="form-check d-flex align-items-center">
                           <input
@@ -407,8 +302,8 @@ const WorldCreate = () => {
           </div>
         </div>
       </div>
-    </MasterLayout>
+    </SchoolLayout>
   );
 };
 
-export default WorldCreate;
+export default SchoolWorldCreate;

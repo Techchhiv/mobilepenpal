@@ -43,7 +43,7 @@ const StageView = () => {
     const [attachOpen, setAttachOpen] = useState(false);
     const [attachLoading, setAttachLoading] = useState(false);
     const [attachError, setAttachError] = useState("");
-    const [attachRepeat, setAttachRepeat] = useState(3);
+    const [selectedExercises, setSelectedExercises] = useState([]);
 
     const [exerciseQuery, setExerciseQuery] = useState("");
     const [characterType, setCharacterType] = useState("");
@@ -78,7 +78,6 @@ const StageView = () => {
             setStageExercises(rows);
         } catch (err) {
             console.error("Fetch stage exercises failed:", err);
-            // keep stage view usable even if this fails
         } finally {
             setLoadingSE(false);
         }
@@ -88,7 +87,6 @@ const StageView = () => {
         if (!canView) return;
         fetchStage();
         fetchStageExercises();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [id, canView]);
 
     const active = useMemo(() => normalizeBool(stage?.is_active), [stage]);
@@ -123,11 +121,53 @@ const StageView = () => {
 
     const openAttach = async () => {
         setAttachError("");
-        setAttachRepeat(3);
         setAttachOpen(true);
+
+        setSelectedExercises([]);
+        setExerciseQuery("");
+        setCharacterType("");
+        setExerciseRows([]);
+
         await searchExercises({ q: "", character_type: "" });
     };
 
+    const isSelected = (exerciseId) =>
+        selectedExercises.some((x) => x.id === exerciseId);
+
+    const toggleSelectExercise = (ex) => {
+        if (!ex?.id) return;
+
+        setSelectedExercises((prev) => {
+            if (prev.some((x) => x.id === ex.id)) {
+                return prev.filter((x) => x.id !== ex.id);
+            }
+
+            return [
+                ...prev,
+                {
+                    id: ex.id,
+                    character: ex.character ?? "—",
+                    character_type: ex.character_type ?? "—",
+                    prompt: ex.prompt ?? ex.question ?? "",
+                    repeat_count: 1,
+                },
+            ];
+        });
+    };
+
+    const changeRepeatForSelected = (exerciseId, repeat) => {
+        setSelectedExercises((prev) =>
+            prev.map((x) => {
+                if (x.id !== exerciseId) return x;
+                const next = Math.max(1, parseInt(repeat || "1", 10));
+                return { ...x, repeat_count: Number.isNaN(next) ? 1 : next };
+            })
+        );
+    };
+
+    const removeSelected = (exerciseId) => {
+        setSelectedExercises((prev) => prev.filter((x) => x.id !== exerciseId));
+    };
 
     const closeAttach = () => {
         setAttachOpen(false);
@@ -164,54 +204,53 @@ const StageView = () => {
         }
     };
 
-    const attachExercise = async (exerciseId) => {
+    const attachSelectedExercises = async () => {
         if (!canAttachExercise) return;
+
+        if (selectedExercises.length === 0) {
+            setAttachError("Please select at least one exercise.");
+            return;
+        }
 
         setAttachLoading(true);
         setAttachError("");
-        try {
-            await API.post(`/admin/stages/${id}/exercises`, {
-                exercise_id: exerciseId,
-                repeat_count: Math.max(1, Number(attachRepeat || 3)),
-                is_active: true,
-            });
 
-            setMessage("Exercise attached to stage.");
+        try {
+            for (const ex of selectedExercises) {
+                await API.post(`/admin/stages/${id}/exercises`, {
+                    exercise_id: ex.id,
+                    repeat_count: Math.max(1, Number(ex.repeat_count || 1)),
+                    is_active: true,
+                });
+            }
+
+            setMessage("Exercises attached to stage.");
             closeAttach();
 
             await fetchStage();
             await fetchStageExercises();
         } catch (err) {
-            console.error("Attach failed:", err);
-            setAttachError(err?.response?.data?.message || "Failed to attach exercise.");
+            console.error("Attach selected failed:", err);
+            setAttachError(err?.response?.data?.message || "Failed to attach exercises.");
         } finally {
             setAttachLoading(false);
         }
     };
 
-    const removeStageExercise = async (stageExerciseId) => {
+    const toggleStageExercise = async (stageExerciseId) => {
         if (!canAttachExercise) return;
-
-        const ok = window.confirm("Remove this exercise from the stage?");
-        if (!ok) return;
 
         setError("");
         setMessage("");
 
         try {
-            await API.put(`/admin/stage-exercises/${stageExerciseId}`, {
-                is_active: false,
-            });
-
-            setMessage("Exercise removed from stage.");
-            await fetchStage();
+            await API.put(`/admin/stage-exercises/${stageExerciseId}/toggle`);
             await fetchStageExercises();
         } catch (err) {
-            console.error("Remove failed:", err);
-            setError(err?.response?.data?.message || "Failed to remove exercise.");
+            console.error("Toggle stage exercise failed:", err);
+            setError(err?.response?.data?.message || "Failed to toggle stage exercise.");
         }
     };
-
 
     if (!canView) {
         return (
@@ -224,7 +263,15 @@ const StageView = () => {
     }
 
     const worldName = stage?.level?.world?.name ?? "—";
+    const worldNameEn = stage?.level?.world?.name_en ?? "";
+
     const levelName = stage?.level?.name ?? "—";
+    const levelNameEn = stage?.level?.name_en ?? "";
+
+    const stageName = stage?.name ?? "—";
+    const stageNameEn = stage?.name_en ?? "";
+
+    const descriptionEn = stage?.description_en ?? "";
 
     const totalExercises = stage?.exercises_count ?? 0;
     const activeExercises = stage?.active_exercises_count ?? 0;
@@ -305,9 +352,12 @@ const StageView = () => {
                                             <Icon icon="mdi:layers" width={54} />
                                         </div>
 
-                                        <h6 className="mt-3 mb-2">
-                                            <Trunc value={stage?.name ?? "—"} maxWidth={220} />
+                                        <h6 className="mt-3 mb-1">
+                                            <Trunc value={stageName} maxWidth={220} />
                                         </h6>
+                                        <div className="text-muted small mb-2">
+                                            <Trunc value={stageNameEn || "—"} maxWidth={220} />
+                                        </div>
 
                                         <div className="text-muted small mb-1">
                                             World: <span className="fw-medium">{worldName}</span>
@@ -319,10 +369,6 @@ const StageView = () => {
                                         <div className="d-flex justify-content-center gap-8 flex-wrap">
                                             <span className={`badge ${active ? "bg-success" : "bg-secondary"}`}>
                                                 {active ? "Active" : "Disabled"}
-                                            </span>
-
-                                            <span className="badge bg-light text-dark">
-                                                Max Stars: {stage?.max_stars ?? "—"}
                                             </span>
                                         </div>
                                     </div>
@@ -350,18 +396,24 @@ const StageView = () => {
 
                                     <div className="card-body">
                                         <div className="row g-3">
-                                            <Info label="Name" value={stage?.name} />
-                                            <Info label="World" value={worldName} />
-                                            <Info label="Level" value={levelName} />
-                                            <Info label="Max Stars" value={stage?.max_stars ?? "—"} />
-                                            <Info
-                                                label="Instruction"
-                                                value={stage?.instruction || "—"}
-                                                colClass="col-12"
-                                            />
+                                            <Info label="Name (KH)" value={stageName} />
+                                            <Info label="Name (EN)" value={stageNameEn || "—"} />
+
+                                            <Info label="World (KH)" value={worldName} />
+                                            <Info label="World (EN)" value={worldNameEn || "—"} />
+
+                                            <Info label="Level (KH)" value={levelName} />
+                                            <Info label="Level (EN)" value={levelNameEn || "—"} />
+
                                             <Info
                                                 label="Description"
                                                 value={stage?.description || "—"}
+                                                colClass="col-12"
+                                            />
+
+                                            <Info
+                                                label="Description (EN)"
+                                                value={descriptionEn || "—"}
                                                 colClass="col-12"
                                             />
                                         </div>
@@ -466,15 +518,30 @@ const StageView = () => {
 
                                                                         {canAttachExercise && (
                                                                             <td className="text-center align-middle">
-                                                                                <button
-                                                                                    type="button"
-                                                                                    onClick={() => removeStageExercise(se.id)}
-                                                                                    className="w-32-px h-32-px bg-danger-focus text-danger-main rounded-circle d-inline-flex align-items-center justify-content-center border-0"
-                                                                                    title="Remove"
-                                                                                    disabled={attachLoading}
-                                                                                >
-                                                                                    <Icon icon="mdi:trash-can-outline" />
-                                                                                </button>
+                                                                                {seActive ? (
+                                                                                    <button
+                                                                                        type="button"
+                                                                                        onClick={() => {
+                                                                                            const ok = window.confirm("Deactivate this exercise for this stage?");
+                                                                                            if (ok) toggleStageExercise(se.id);
+                                                                                        }}
+                                                                                        className="w-32-px h-32-px bg-warning-focus text-warning-main rounded-circle d-inline-flex align-items-center justify-content-center border-0"
+                                                                                        title="Deactivate"
+                                                                                        disabled={attachLoading}
+                                                                                    >
+                                                                                        <Icon icon="mdi:toggle-switch-off-outline" />
+                                                                                    </button>
+                                                                                ) : (
+                                                                                    <button
+                                                                                        type="button"
+                                                                                        onClick={() => toggleStageExercise(se.id)}
+                                                                                        className="w-32-px h-32-px bg-success-focus text-success-main rounded-circle d-inline-flex align-items-center justify-content-center border-0"
+                                                                                        title="Activate"
+                                                                                        disabled={attachLoading}
+                                                                                    >
+                                                                                        <Icon icon="mdi:toggle-switch-outline" />
+                                                                                    </button>
+                                                                                )}
                                                                             </td>
                                                                         )}
 
@@ -531,20 +598,64 @@ const StageView = () => {
 
                         <div className="card-body" style={{ overflow: "auto" }}>
                             {attachError && <div className="alert alert-danger">{attachError}</div>}
-                            <div className="row g-2 align-items-end mb-3">
-                                <div className="col-12 col-md-4">
-                                    <label className="form-label">Repeat Count</label>
-                                    <input
-                                        type="number"
-                                        min={1}
-                                        className="form-control"
-                                        value={attachRepeat}
-                                        onChange={(e) => setAttachRepeat(e.target.value)}
-                                    />
-                                    <small className="text-muted">Used when inserting exercises.</small>
-                                </div>
-                            </div>
+                            {selectedExercises.length > 0 && (
+                                <div className="mt-3 border radius-8 p-12">
+                                    <div className="d-flex justify-content-between align-items-center mb-2">
+                                        <div className="fw-semibold">Selected: {selectedExercises.length}</div>
+                                        <div className="text-muted small">Set repeat per exercise</div>
+                                    </div>
 
+                                    <div className="table-responsive">
+                                        <table className="table bordered-table mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th style={{ width: 80 }} className="text-center">#</th>
+                                                    <th style={{ width: 240 }}>Character</th>
+                                                    <th>Prompt</th>
+                                                    <th style={{ width: 140 }} className="text-center">Repeat</th>
+                                                    <th style={{ width: 110 }} className="text-center">Remove</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {selectedExercises.map((x, idx) => (
+                                                    <tr key={x.id}>
+                                                        <td className="text-center">{idx + 1}</td>
+                                                        <td>
+                                                            <div className="fw-semibold">{x.character}</div>
+                                                            <div className="text-muted small">{x.character_type}</div>
+                                                        </td>
+                                                        <td>
+                                                            <Trunc value={x.prompt || "—"} maxWidth={520} />
+                                                        </td>
+                                                        <td className="text-center">
+                                                            <input
+                                                                type="number"
+                                                                min={1}
+                                                                className="form-control"
+                                                                style={{ width: 110, margin: "0 auto" }}
+                                                                value={x.repeat_count}
+                                                                onChange={(e) => changeRepeatForSelected(x.id, e.target.value)}
+                                                                disabled={attachLoading}
+                                                            />
+                                                        </td>
+                                                        <td className="text-center">
+                                                            <button
+                                                                type="button"
+                                                                className="w-32-px h-32-px bg-danger-focus text-danger-main rounded-circle d-inline-flex align-items-center justify-content-center border-0"
+                                                                onClick={() => removeSelected(x.id)}
+                                                                disabled={attachLoading}
+                                                                title="Remove"
+                                                            >
+                                                                <Icon icon="mdi:minus" />
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            )}
 
                             <div className="row g-2 align-items-end">
                                 <div className="col-12 col-md-6">
@@ -606,37 +717,45 @@ const StageView = () => {
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {exerciseRows.map((ex) => (
-                                                    <tr key={ex.id}>
-                                                        <td>{ex.id}</td>
-                                                        <td>
-                                                            <div className="fw-semibold">{ex.character ?? "—"}</div>
-                                                            <div className="text-muted small">{ex.character_type ?? "—"}</div>
-                                                        </td>
-                                                        <td>
-                                                            <div className="fw-medium">
-                                                                <Trunc value={ex.prompt ?? ex.question ?? "—"} maxWidth={520} />
-                                                            </div>
-                                                            {ex.instruction ? (
-                                                                <div className="text-muted small mt-1">
-                                                                    <Trunc value={ex.instruction} maxWidth={640} />
-                                                                </div>
-                                                            ) : null}
-                                                        </td>
-                                                        <td className="text-center">
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => attachExercise(ex.id)}
-                                                                disabled={attachLoading}
-                                                                className="w-32-px h-32-px me-8 bg-success-focus text-success-main rounded-circle d-inline-flex align-items-center justify-content-center border-0"
-                                                                title="Insert into this stage"
-                                                            >
-                                                                <Icon icon="mdi:plus" />
-                                                            </button>
-                                                        </td>
+                                                {exerciseRows.map((ex) => {
+                                                    const selected = isSelected(ex.id);
 
-                                                    </tr>
-                                                ))}
+                                                    return (
+                                                        <tr key={ex.id}>
+                                                            <td>{ex.id}</td>
+                                                            <td>
+                                                                <div className="fw-semibold">{ex.character ?? "—"}</div>
+                                                                <div className="text-muted small">{ex.character_type ?? "—"}</div>
+                                                            </td>
+                                                            <td>
+                                                                <div className="fw-medium">
+                                                                    <Trunc value={ex.prompt ?? ex.question ?? "—"} maxWidth={520} />
+                                                                </div>
+                                                                {ex.instruction ? (
+                                                                    <div className="text-muted small mt-1">
+                                                                        <Trunc value={ex.instruction} maxWidth={640} />
+                                                                    </div>
+                                                                ) : null}
+                                                            </td>
+
+                                                            <td className="text-center">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => toggleSelectExercise(ex)}
+                                                                    disabled={attachLoading}
+                                                                    className={`w-32-px h-32-px me-8 rounded-circle d-inline-flex align-items-center justify-content-center border-0 ${selected
+                                                                        ? "bg-danger-focus text-danger-main"
+                                                                        : "bg-success-focus text-success-main"
+                                                                        }`}
+                                                                    title={selected ? "Unselect" : "Select"}
+                                                                >
+                                                                    <Icon icon={selected ? "mdi:minus" : "mdi:plus"} />
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })}
+
                                             </tbody>
                                         </table>
                                     </div>
@@ -644,11 +763,21 @@ const StageView = () => {
                             </div>
                         </div>
 
-                        <div className="card-footer d-flex justify-content-end">
-                            <button type="button" className="btn btn-secondary" onClick={closeAttach}>
+                        <div className="card-footer d-flex justify-content-end gap-2">
+                            <button type="button" className="btn btn-secondary" onClick={closeAttach} disabled={attachLoading}>
                                 Close
                             </button>
+
+                            <button
+                                type="button"
+                                className="btn btn-primary"
+                                onClick={attachSelectedExercises}
+                                disabled={attachLoading || selectedExercises.length === 0}
+                            >
+                                {attachLoading ? "Saving..." : "Insert Selected"}
+                            </button>
                         </div>
+
                     </div>
                 </div>
             )}

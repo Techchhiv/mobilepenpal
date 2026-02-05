@@ -49,8 +49,8 @@ const LevelView = () => {
 
   const [stName, setStName] = useState("");
   const [stDescription, setStDescription] = useState("");
-  const [stInstruction, setStInstruction] = useState("");
-  const [stMaxStars, setStMaxStars] = useState(3);
+  const [stNameEn, setStNameEn] = useState("");
+  const [stDescriptionEn, setStDescriptionEn] = useState("");
   const [stActive, setStActive] = useState(true);
 
   const [exLoading, setExLoading] = useState(false);
@@ -154,9 +154,9 @@ const LevelView = () => {
     setError("");
 
     setStName("");
+    setStNameEn("");
     setStDescription("");
-    setStInstruction("");
-    setStMaxStars(3);
+    setStDescriptionEn("");
     setStActive(true);
 
     setSelectedExercises([]);
@@ -276,8 +276,10 @@ const LevelView = () => {
     setError("");
 
     const name = (stName || "").trim();
+    const name_en = (stNameEn || "").trim();
+
     if (!name) {
-      setCreateError("Stage name is required.");
+      setCreateError("Stage name (KH) is required.");
       return;
     }
 
@@ -285,11 +287,14 @@ const LevelView = () => {
     try {
       const stageRes = await API.post(`/admin/levels/${levelId}/stages`, {
         name,
-        description: stDescription || "",
-        instruction: stInstruction || "",
-        max_stars: Math.max(1, Number(stMaxStars || 3)),
+        name_en: name_en || null,
+
+        description: (stDescription || "").trim() || null,
+        description_en: (stDescriptionEn || "").trim() || null,
+
         is_active: !!stActive,
       });
+
 
       const stagePayload = stageRes.data?.data ?? stageRes.data;
       const createdStage =
@@ -416,9 +421,17 @@ const LevelView = () => {
                       <Icon icon="mdi:stairs" width={54} />
                     </div>
 
-                    <h6 className="mt-3 mb-2">
+                    <h6 className="mt-3 mb-1">
                       <Trunc value={level?.name ?? "—"} maxWidth={220} />
                     </h6>
+
+                    {level?.name_en ? (
+                      <div className="text-muted small mb-2">
+                        <Trunc value={level.name_en} maxWidth={220} />
+                      </div>
+                    ) : (
+                      <div className="mb-2" />
+                    )}
 
                     <div className="text-muted small mb-2">
                       World:{" "}
@@ -479,19 +492,27 @@ const LevelView = () => {
 
                   <div className="card-body">
                     <div className="row g-3">
-                      <Info label="Name" value={level?.name} />
-                      <Info label="World" value={level?.world?.name ?? "—"} />
+                      <Info label="Name (KH)" value={level?.name} />
+                      <Info label="Name (EN)" value={level?.name_en || "—"} />
+
+                      <Info label="World" value={level?.world?.name ?? "—"} colClass="col-12" />
+
                       <Info
-                        label="Description"
+                        label="Description (KH)"
                         value={level?.description || "—"}
                         colClass="col-12"
                       />
+
+                      <Info
+                        label="Description (EN)"
+                        value={level?.description_en || "—"}
+                        colClass="col-12"
+                      />
+
                       {level?.background_image ? (
                         <div className="col-12">
                           <div className="border radius-8 p-12">
-                            <div className="text-muted small mb-8">
-                              Background Preview
-                            </div>
+                            <div className="text-muted small mb-8">Background Preview</div>
                             <img
                               src={level.background_image}
                               alt="Background"
@@ -509,6 +530,7 @@ const LevelView = () => {
                         </div>
                       ) : null}
                     </div>
+
                   </div>
                 </div>
 
@@ -548,9 +570,6 @@ const LevelView = () => {
                               <th>Description</th>
                               <th style={{ width: 140 }} className="text-center">
                                 Status
-                              </th>
-                              <th style={{ width: 120 }} className="text-center">
-                                Max Stars
                               </th>
                               <th style={{ width: 80 }} className="text-center">
                                 View
@@ -673,28 +692,28 @@ const LevelView = () => {
 
                         {/* Stage Fields */}
                         <div className="row g-3 mb-3">
-                          <div className="col-12 col-md-6">
-                            <label className="form-label">Stage Name *</label>
+                          <div className="col-12 col-md-5">
+                            <label className="form-label">Stage Name (KH) *</label>
                             <input
                               className="form-control"
                               value={stName}
                               onChange={(e) => setStName(e.target.value)}
-                              placeholder="Stage name"
+                              placeholder="ឧ. រៀនអក្សរ ក"
                             />
                           </div>
 
-                          <div className="col-12 col-md-3">
-                            <label className="form-label">Max Stars</label>
+                          <div className="col-12 col-md-5">
+                            <label className="form-label">Stage Name (EN)</label>
                             <input
-                              type="number"
-                              min={1}
                               className="form-control"
-                              value={stMaxStars}
-                              onChange={(e) => setStMaxStars(e.target.value)}
+                              value={stNameEn}
+                              onChange={(e) => setStNameEn(e.target.value)}
+                              placeholder="e.g. Learn letter KA"
                             />
                           </div>
 
-                          <div className="col-12 col-md-3 d-flex align-items-end">
+
+                          <div className="col-12 col-md-2 d-flex align-items-end">
                             <div className="form-check d-flex align-items-center">
                               <input
                                 className="form-check-input"
@@ -710,24 +729,25 @@ const LevelView = () => {
                           </div>
 
                           <div className="col-12 col-md-6">
-                            <label className="form-label">Description</label>
+                            <label className="form-label">Description (KH)</label>
                             <input
                               className="form-control"
                               value={stDescription}
                               onChange={(e) => setStDescription(e.target.value)}
-                              placeholder="Optional description"
+                              placeholder="Optional (KH)"
                             />
                           </div>
 
                           <div className="col-12 col-md-6">
-                            <label className="form-label">Instruction</label>
+                            <label className="form-label">Description (EN)</label>
                             <input
                               className="form-control"
-                              value={stInstruction}
-                              onChange={(e) => setStInstruction(e.target.value)}
-                              placeholder="Optional instruction"
+                              value={stDescriptionEn}
+                              onChange={(e) => setStDescriptionEn(e.target.value)}
+                              placeholder="Optional (EN)"
                             />
                           </div>
+
                         </div>
 
                         <hr className="my-3" />
@@ -749,7 +769,7 @@ const LevelView = () => {
                             <label className="form-label">Search</label>
                             <input
                               className="form-control"
-                              placeholder="Search prompt / instruction / character..."
+                              placeholder="Search prompt / character..."
                               value={exerciseQuery}
                               onChange={(e) => setExerciseQuery(e.target.value)}
                               disabled={createLoading}

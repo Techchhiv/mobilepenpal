@@ -36,6 +36,9 @@ const WorldView = () => {
 
     const [newLevelName, setNewLevelName] = useState("");
     const [newLevelDescription, setNewLevelDescription] = useState("");
+    const [newLevelNameEn, setNewLevelNameEn] = useState("");
+    const [newLevelDescriptionEn, setNewLevelDescriptionEn] = useState("");
+
     const [newLevelActive, setNewLevelActive] = useState(true);
     const [newLevelUnlockedByDefault, setNewLevelUnlockedByDefault] = useState(false);
 
@@ -60,11 +63,14 @@ const WorldView = () => {
     const openInsertLevel = () => {
         setInsertLevelError("");
         setNewLevelName("");
+        setNewLevelNameEn("");
         setNewLevelDescription("");
+        setNewLevelDescriptionEn("");
         setNewLevelActive(true);
         setNewLevelUnlockedByDefault(false);
         setInsertLevelOpen(true);
     };
+
 
     const closeInsertLevel = () => {
         setInsertLevelOpen(false);
@@ -80,13 +86,15 @@ const WorldView = () => {
         try {
             const payload = {
                 name: newLevelName.trim(),
+                name_en: newLevelNameEn.trim() || null,
                 description: newLevelDescription.trim() || null,
+                description_en: newLevelDescriptionEn.trim() || null,
                 is_active: newLevelActive ? 1 : 0,
                 is_unlocked_by_default: newLevelUnlockedByDefault ? 1 : 0,
             };
 
             if (!payload.name) {
-                setInsertLevelError("Level name is required.");
+                setInsertLevelError("Level name (KH) is required.");
                 return;
             }
 
@@ -102,6 +110,7 @@ const WorldView = () => {
             setInsertLevelLoading(false);
         }
     };
+
 
     useEffect(() => {
         if (!canView) return;
@@ -248,8 +257,13 @@ const WorldView = () => {
                                         </div>
 
                                         <h6 className="mt-16 mb-3">{normalized.name || "—"}</h6>
+                                        {/* <h6 className="mt-16 mb-3">{normalized.name_en || "—"}</h6> */}
 
                                         <div className="d-flex justify-content-center gap-8 flex-wrap mt-3">
+                                            <span className="badge bg-info text-dark">
+                                                Audience: {normalized.audience ?? "—"}
+                                            </span>
+
                                             <span
                                                 className={`badge ${normalized.is_active ? "bg-success" : "bg-secondary"
                                                     }`}
@@ -304,13 +318,20 @@ const WorldView = () => {
                                     <div className="card-body">
                                         <div className="row g-3">
                                             <InfoItem label="Name" value={normalized.name} />
+                                            <InfoItem label="Name English" value={normalized.name_en} />
                                             <InfoItem
                                                 label="Default Unlocked"
                                                 value={normalized.is_unlocked_by_default ? "Yes" : "No"}
+                                                colClass="col-12"
                                             />
                                             <InfoItem
                                                 label="Description"
                                                 value={normalized.description}
+                                                colClass="col-12"
+                                            />
+                                            <InfoItem
+                                                label="Description English"
+                                                value={normalized.description_en}
                                                 colClass="col-12"
                                             />
                                         </div>
@@ -376,7 +397,10 @@ const WorldView = () => {
                                                                 return (
                                                                     <tr key={l.id} className={!active ? "table-light" : ""}>
                                                                         <td>{l.order_index ?? "—"}</td>
-                                                                        <td>{l.name ?? "—"}</td>
+                                                                        <td>
+                                                                            <div className="fw-medium">{l.name ?? "—"}</div>
+                                                                            {l.name_en ? <div className="text-muted small">{l.name_en}</div> : null}
+                                                                        </td>
                                                                         <td>
                                                                             <span
                                                                                 className={`badge ${active ? "bg-success" : "bg-secondary"
@@ -450,7 +474,7 @@ const WorldView = () => {
 
                                 <div className="row g-3">
                                     <div className="col-12">
-                                        <label className="form-label">Level Name *</label>
+                                        <label className="form-label">Level Name (KH) *</label>
                                         <input
                                             className="form-control"
                                             value={newLevelName}
@@ -460,7 +484,17 @@ const WorldView = () => {
                                     </div>
 
                                     <div className="col-12">
-                                        <label className="form-label">Description</label>
+                                        <label className="form-label">Level Name (EN)</label>
+                                        <input
+                                            className="form-control"
+                                            value={newLevelNameEn}
+                                            onChange={(e) => setNewLevelNameEn(e.target.value)}
+                                            placeholder="e.g. Ka - Ngo"
+                                        />
+                                    </div>
+
+                                    <div className="col-12">
+                                        <label className="form-label">Description (KH)</label>
                                         <textarea
                                             className="form-control"
                                             rows={3}
@@ -469,6 +503,18 @@ const WorldView = () => {
                                             placeholder="Optional"
                                         />
                                     </div>
+
+                                    <div className="col-12">
+                                        <label className="form-label">Description (EN)</label>
+                                        <textarea
+                                            className="form-control"
+                                            rows={3}
+                                            value={newLevelDescriptionEn}
+                                            onChange={(e) => setNewLevelDescriptionEn(e.target.value)}
+                                            placeholder="Optional"
+                                        />
+                                    </div>
+
 
                                     <div className="col-12 col-md-6">
                                         <div className="form-check d-flex align-items-center gap-2">

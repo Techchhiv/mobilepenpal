@@ -36,9 +36,9 @@ const LevelEdit = () => {
   const [form, setForm] = useState({
     world_id: "",
     name: "",
+    name_en: "",
     description: "",
-    background_image: "",
-    order_index: "",
+    description_en: "",
     is_active: true,
     is_unlocked_by_default: false,
   });
@@ -60,7 +60,7 @@ const LevelEdit = () => {
       setWorlds(rows);
     } catch (err) {
       console.error("Fetch worlds failed:", err);
-      // non-fatal; still can edit other fields
+      // non-fatal
     } finally {
       setWorldLoading(false);
     }
@@ -80,9 +80,9 @@ const LevelEdit = () => {
       const next = {
         world_id: lv?.world_id ? String(lv.world_id) : "",
         name: lv?.name ?? "",
+        name_en: lv?.name_en ?? "",
         description: lv?.description ?? "",
-        background_image: lv?.background_image ?? "",
-        order_index: lv?.order_index ?? "",
+        description_en: lv?.description_en ?? "",
         is_active: normalizeBool(lv?.is_active),
         is_unlocked_by_default: normalizeBool(lv?.is_unlocked_by_default),
       };
@@ -101,7 +101,6 @@ const LevelEdit = () => {
     if (!canView) return;
     fetchLevel();
     fetchWorlds();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, canView]);
 
   const filteredWorlds = useMemo(() => {
@@ -110,9 +109,17 @@ const LevelEdit = () => {
 
     return worlds.filter((w) => {
       const name = String(w?.name ?? "").toLowerCase();
+      const nameEn = String(w?.name_en ?? "").toLowerCase();
       const desc = String(w?.description ?? "").toLowerCase();
+      const descEn = String(w?.description_en ?? "").toLowerCase();
       const wid = String(w?.id ?? "");
-      return name.includes(q) || desc.includes(q) || wid.includes(q);
+      return (
+        name.includes(q) ||
+        nameEn.includes(q) ||
+        desc.includes(q) ||
+        descEn.includes(q) ||
+        wid.includes(q)
+      );
     });
   }, [worldQ, worlds]);
 
@@ -122,9 +129,13 @@ const LevelEdit = () => {
     return worlds.find((w) => String(w.id) === wid) || level?.world || null;
   }, [form.world_id, worlds, level]);
 
-  const displayName = useMemo(() => {
+  const displayNameKh = useMemo(() => {
     return form.name?.trim() || "Level";
   }, [form.name]);
+
+  const displayNameEn = useMemo(() => {
+    return form.name_en?.trim() || "";
+  }, [form.name_en]);
 
   const prettyDateTime = (d) => {
     if (!d) return "—";
@@ -132,6 +143,12 @@ const LevelEdit = () => {
     if (Number.isNaN(dt.getTime())) return String(d);
     return dt.toLocaleString();
   };
+
+  const goBack = () => {
+    if (window.history.length > 1) navigate(-1);
+    else navigate(`/admin/levels/${id}`);
+  };
+
 
   const resetForm = () => {
     if (!initialForm) return;
@@ -151,7 +168,12 @@ const LevelEdit = () => {
 
     if (!form.name?.trim()) {
       setSaving(false);
-      setError("Name is required.");
+      setError("Name (KH) is required.");
+      return;
+    }
+    if (!form.name_en?.trim()) {
+      setSaving(false);
+      setError("Name (EN) is required.");
       return;
     }
 
@@ -165,32 +187,25 @@ const LevelEdit = () => {
       const payload = {
         world_id: parseInt(form.world_id, 10),
         name: form.name.trim(),
+        name_en: form.name_en.trim(),
         description: form.description?.trim() || null,
-        background_image: form.background_image?.trim() || null,
+        description_en: form.description_en?.trim() || null,
         is_active: !!form.is_active,
         is_unlocked_by_default: !!form.is_unlocked_by_default,
       };
 
-      if (String(form.order_index).trim() !== "") {
-        payload.order_index = parseInt(form.order_index, 10);
-      } else {
-        payload.order_index = null; // optional: let backend ignore / keep current
-      }
-
       await API.put(`/admin/levels/${id}`, payload);
 
-      navigate(from, {
-        state: { success: `Level "${payload.name}" updated successfully!` },
-      });
+      goBack();
     } catch (err) {
       console.error("Update failed:", err);
       const errors = err?.response?.data?.errors || {};
       setError(
         errors?.world_id?.[0] ||
-          errors?.name?.[0] ||
-          errors?.order_index?.[0] ||
-          err?.response?.data?.message ||
-          "Failed to update level."
+        errors?.name?.[0] ||
+        errors?.name_en?.[0] ||
+        err?.response?.data?.message ||
+        "Failed to update level."
       );
     } finally {
       setSaving(false);
@@ -225,18 +240,21 @@ const LevelEdit = () => {
             <div>
               <h4 className="card-title mb-0">Edit Level</h4>
               <div className="text-muted small">
-                ID: {id} {selectedWorld?.name ? `• World: ${selectedWorld.name}` : ""}
+                ID: {id}{" "}
+                {selectedWorld?.name ? `• World: ${selectedWorld.name}` : ""}
               </div>
             </div>
 
             <div className="d-flex gap-2 flex-wrap">
-              <Link
-                to={from}
+              <button
+                type="button"
+                onClick={goBack}
                 className="d-flex align-items-center btn btn-secondary"
               >
                 <Icon icon="mdi:arrow-left" className="me-6" />
                 Back
-              </Link>
+              </button>
+
 
               <Link
                 to={`/admin/levels/${id}`}
@@ -280,33 +298,39 @@ const LevelEdit = () => {
                           </div>
 
                           <div className="flex-grow-1">
-                            <div className="fw-semibold">{displayName}</div>
-                            <div className="text-muted small">Level ID: {id}</div>
+                            <div className="fw-semibold">{displayNameKh}</div>
+                            {displayNameEn ? (
+                              <div className="text-muted small">{displayNameEn}</div>
+                            ) : (
+                              <div className="text-muted small">—</div>
+                            )}
+                            <div className="text-muted small mt-6">Level ID: {id}</div>
 
                             <div className="text-muted small mt-8">
                               World:{" "}
                               <span className="fw-medium">
                                 {selectedWorld?.name ?? "—"}
                               </span>
+                              {selectedWorld?.name_en ? (
+                                <span className="text-muted"> • {selectedWorld.name_en}</span>
+                              ) : null}
                             </div>
 
                             <div className="mt-10 d-flex gap-2 flex-wrap">
                               <span
-                                className={`px-16 py-4 rounded-pill fw-medium text-sm ${
-                                  form.is_active
-                                    ? "bg-success-focus text-success-main"
-                                    : "bg-warning-focus text-warning-main"
-                                }`}
+                                className={`px-16 py-4 rounded-pill fw-medium text-sm ${form.is_active
+                                  ? "bg-success-focus text-success-main"
+                                  : "bg-warning-focus text-warning-main"
+                                  }`}
                               >
                                 {form.is_active ? "Active" : "Disabled"}
                               </span>
 
                               <span
-                                className={`px-16 py-4 rounded-pill fw-medium text-sm ${
-                                  form.is_unlocked_by_default
-                                    ? "bg-primary-light text-primary-600"
-                                    : "bg-light text-dark"
-                                }`}
+                                className={`px-16 py-4 rounded-pill fw-medium text-sm ${form.is_unlocked_by_default
+                                  ? "bg-primary-light text-primary-600"
+                                  : "bg-light text-dark"
+                                  }`}
                               >
                                 {form.is_unlocked_by_default
                                   ? "Default Unlock"
@@ -383,7 +407,8 @@ const LevelEdit = () => {
 
                                   {filteredWorlds.map((w) => (
                                     <option key={w.id} value={w.id}>
-                                      {w.name} (#{w.id})
+                                      {w.name}
+                                      {w.name_en ? ` / ${w.name_en}` : ""} (#{w.id})
                                     </option>
                                   ))}
                                 </select>
@@ -395,9 +420,10 @@ const LevelEdit = () => {
                             </div>
                           </div>
 
+                          {/* Names */}
                           <div className="col-md-6">
                             <label className="form-label">
-                              Name <Required />
+                              Name (KH) <Required />
                             </label>
                             <input
                               className="form-control"
@@ -405,36 +431,27 @@ const LevelEdit = () => {
                               onChange={onChange("name")}
                               required
                               maxLength={255}
+                              placeholder="e.g. ក - ង"
                             />
                           </div>
 
                           <div className="col-md-6">
-                            <label className="form-label">Order Index</label>
-                            <input
-                              type="number"
-                              className="form-control"
-                              value={form.order_index}
-                              onChange={onChange("order_index")}
-                              min={1}
-                            />
-                            <small className="text-muted">
-                              Optional. Leave as-is unless you want reorder.
-                            </small>
-                          </div>
-
-                          <div className="col-12">
-                            <label className="form-label">Background Image URL</label>
+                            <label className="form-label">
+                              Name (EN) <Required />
+                            </label>
                             <input
                               className="form-control"
-                              value={form.background_image}
-                              onChange={onChange("background_image")}
-                              maxLength={2048}
-                              placeholder="https://..."
+                              value={form.name_en}
+                              onChange={onChange("name_en")}
+                              required
+                              maxLength={255}
+                              placeholder="e.g. Characters K - Ng"
                             />
                           </div>
 
-                          <div className="col-12">
-                            <label className="form-label">Description</label>
+                          {/* Descriptions */}
+                          <div className="col-md-6">
+                            <label className="form-label">Description (KH)</label>
                             <textarea
                               className="form-control"
                               rows={3}
@@ -445,7 +462,18 @@ const LevelEdit = () => {
                           </div>
 
                           <div className="col-md-6">
-                            <div className="form-check mt-2">
+                            <label className="form-label">Description (EN)</label>
+                            <textarea
+                              className="form-control"
+                              rows={3}
+                              value={form.description_en}
+                              onChange={onChange("description_en")}
+                              placeholder="Optional"
+                            />
+                          </div>
+                          {/* Toggles */}
+                          <div className="d-flex justify-content-end gap-5 col-12 align-items-center">
+                            <div className="form-check mt-4 d-flex align-content-center">
                               <input
                                 className="form-check-input"
                                 type="checkbox"
@@ -457,10 +485,8 @@ const LevelEdit = () => {
                                 Active
                               </label>
                             </div>
-                          </div>
 
-                          <div className="col-md-6">
-                            <div className="form-check mt-2">
+                            <div className="form-check mt-2 d-flex align-content-center">
                               <input
                                 className="form-check-input"
                                 type="checkbox"
