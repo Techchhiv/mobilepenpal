@@ -274,7 +274,6 @@ class StageController extends GetxController {
     final total = totalExercises;
     final correct = correctExercises;
 
-    // IMPORTANT: progress bar uses the SAME metric as stars (score progress)
     stageProgress.value = (total <= 0)
         ? 0.0
         : (correct / total).clamp(0.0, 1.0);

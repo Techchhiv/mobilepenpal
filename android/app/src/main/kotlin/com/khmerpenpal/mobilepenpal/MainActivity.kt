@@ -1,4 +1,4 @@
-package com.example.mobilepenpal
+package com.khmerpenpal.mobilepenpal
 
 import io.flutter.embedding.android.FlutterActivity
 

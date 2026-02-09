@@ -17,7 +17,7 @@ class ParentHome extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GetBuilder<HomeController>(
-      init: homeController,
+      autoRemove: false,
       initState: (_) {
         WidgetsBinding.instance.addPostFrameCallback((_) async {
           if (homeController.dailySummary.value == null &&
@@ -125,6 +125,27 @@ class ParentHome extends StatelessWidget {
       final loading = homeController.isClassroomLoading.value;
       final classroom = homeController.currentClassroom.value;
 
+      Widget body;
+
+      if (classroom == null) {
+        // No cached data yet → shimmer only while loading
+        if (loading) {
+          body = _ClassroomShimmerCard();
+        } else {
+          body = _buildEmptyClassroomCard();
+        }
+      } else {
+        // Have cached classroom → keep showing it even if loading == true
+        body = _buildCurrentClassroomCard(
+          name: classroom.name,
+          teacherName: classroom.teacherName ?? '—',
+          studentsCount: classroom.studentsCount,
+          isActive: classroom.isActive,
+          enrolledAt: classroom.enrolledAt,
+          onTap: () => Get.toNamed('/classroom/${classroom.id}'),
+        );
+      }
+
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -136,22 +157,7 @@ class ParentHome extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-
-          if (loading && classroom == null)
-            _ClassroomShimmerCard()
-          else if (classroom == null)
-            _buildEmptyClassroomCard()
-          else
-            _buildCurrentClassroomCard(
-              name: classroom.name,
-              teacherName: classroom.teacherName ?? '—',
-              studentsCount: classroom.studentsCount,
-              isActive: classroom.isActive,
-              enrolledAt: classroom.enrolledAt,
-              onTap: () {
-                Get.toNamed('/classroom/${classroom.id}');
-              },
-            ),
+          body,
         ],
       );
     });

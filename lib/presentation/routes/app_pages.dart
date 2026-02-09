@@ -39,11 +39,11 @@ class AppPages {
       page: () => const RegisterPage(),
       binding: RegisterBinding(),
     ),
-    GetPage(
-      name: AppRoutes.otp,
-      page: () => OtpVerificationPage(),
-      binding: OtpBinding(),
-    ),
+    // GetPage(
+    //   name: AppRoutes.otp,
+    //   page: () => OtpVerificationPage(),
+    //   binding: OtpBinding(),
+    // ),
     GetPage(name: AppRoutes.offline, page: () => const OfflinePage()),
 
     GetPage(

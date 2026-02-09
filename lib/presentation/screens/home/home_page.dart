@@ -110,9 +110,16 @@ class HomePage extends StatelessWidget {
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Obx(() {
-                          return homeController.currentMode.value == 'student'
-                              ? StudentHome(homeController: homeController)
-                              : ParentHome(homeController: homeController);
+                          final isStudent =
+                              homeController.currentMode.value == 'student';
+
+                          return IndexedStack(
+                            index: isStudent ? 0 : 1,
+                            children: [
+                              StudentHome(homeController: homeController),
+                              ParentHome(homeController: homeController),
+                            ],
+                          );
                         }),
                       ),
                     ),

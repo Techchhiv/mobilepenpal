@@ -28,7 +28,7 @@ class ChangePasswordPage extends StatelessWidget {
           elevation: 0,
           automaticallyImplyLeading: false,
           title: InkWell(
-            onTap: () => Get.offNamed('/setting'),
+            onTap: () => Get.back(),
             borderRadius: BorderRadius.circular(8),
             child: Row(
               mainAxisSize: MainAxisSize.min,

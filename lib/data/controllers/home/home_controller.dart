@@ -64,6 +64,14 @@ class HomeController extends GetxController {
 
   void loadInitialData() {
     setCurrentMode(_box.read('mode') ?? 'student');
+
+    final cached = _box.read('student');
+    if (cached is Map<String, dynamic>) {
+      try {
+        student.value = Student.fromJson(Map<String, dynamic>.from(cached));
+      } catch (_) {}
+    }
+
     fetchStudentProfile();
   }
 
@@ -80,10 +88,12 @@ class HomeController extends GetxController {
 
         await _syncParentPin(student.value!);
 
-        if (currentMode.value == 'parent' && hasSchool) {
-          await fetchCurrentClassroom();
-        } else {
+        if (!hasSchool) {
           currentClassroom.value = null;
+        } else {
+          if (currentMode.value == 'parent' && currentClassroom.value == null) {
+            await fetchCurrentClassroom();
+          }
         }
       } else {
         AppSnackbar.show(
@@ -180,12 +190,19 @@ class HomeController extends GetxController {
     }
   }
 
-  Future<void> fetchCurrentClassroom() async {
+  Future<void> fetchCurrentClassroom({bool force = false}) async {
     if (!hasSchool) {
       currentClassroom.value = null;
       return;
     }
     if (isClassroomLoading.value) return;
+
+    final userId =
+        student.value?.id.toString() ?? '0'; 
+    final attemptKey = 'classroom_attempted_$userId';
+    final attempted = _box.read(attemptKey) == true;
+
+    if (!force && attempted) return;
 
     isClassroomLoading.value = true;
     try {
@@ -194,8 +211,6 @@ class HomeController extends GetxController {
       if (res.code == 200 && res.data != null) {
         final list = res.data!;
         currentClassroom.value = list.isNotEmpty ? list.first : null;
-      } else {
-        currentClassroom.value = null;
       }
     } catch (e) {
       AppSnackbar.show(
@@ -205,6 +220,7 @@ class HomeController extends GetxController {
       );
     } finally {
       isClassroomLoading.value = false;
+      await _box.write(attemptKey, true); // ✅ mark attempted
     }
   }
 
@@ -277,6 +293,10 @@ class HomeController extends GetxController {
 
       if (skip == true) {
         setCurrentMode('parent');
+
+        if (hasSchool && currentClassroom.value == null) {
+          await fetchCurrentClassroom();
+        }
         return;
       }
 
@@ -298,13 +318,17 @@ class HomeController extends GetxController {
         if (ok == true) {
           await Future.delayed(const Duration(milliseconds: 200));
           setCurrentMode('parent');
+
+          // ✅ Only fetch classroom if needed
+          if (hasSchool && currentClassroom.value == null) {
+            await fetchCurrentClassroom();
+          }
         }
 
         return;
       }
 
       final create = await _showCreatePinPrompt();
-
       if (create == null) {
         return;
       }
@@ -316,10 +340,18 @@ class HomeController extends GetxController {
 
         if (created == true) {
           setCurrentMode('parent');
+
+          if (hasSchool && currentClassroom.value == null) {
+            await fetchCurrentClassroom();
+          }
         }
       } else {
         await _box.write('skip_parent_pin_setup', true);
         setCurrentMode('parent');
+
+        if (hasSchool && currentClassroom.value == null) {
+          await fetchCurrentClassroom();
+        }
       }
     } else {
       setCurrentMode('student');
@@ -364,7 +396,7 @@ class HomeController extends GetxController {
 
       if (currentMode.value == 'parent') {
         if (hasSchool) {
-          await fetchCurrentClassroom();
+          await fetchCurrentClassroom(force: true);
         } else {
           currentClassroom.value = null;
         }

@@ -80,16 +80,19 @@ class ReportController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    fetchMonthly();
+    if (monthly.value == null) {
+      fetchMonthly();
+    }
   }
 
-  Future<void> fetchMonthly() async {
+  Future<void> fetchMonthly({bool force = false}) async {
     if (isLoading.value) return;
+
+    if (!force && monthly.value != null) return;
 
     isLoading.value = true;
     try {
       final res = await _homeService.getMonthlySummary(month: monthKey);
-
       if (res.code == 200 && res.data != null) {
         monthly.value = res.data!;
       }
@@ -101,12 +104,14 @@ class ReportController extends GetxController {
   void prevMonth() {
     final d = selectedMonth.value;
     selectedMonth.value = DateTime(d.year, d.month - 1, 1);
-    fetchMonthly();
+    monthly.value = null;
+    fetchMonthly(force: true);
   }
 
   void nextMonth() {
     final d = selectedMonth.value;
     selectedMonth.value = DateTime(d.year, d.month + 1, 1);
-    fetchMonthly();
+    monthly.value = null;
+    fetchMonthly(force: true);
   }
 }

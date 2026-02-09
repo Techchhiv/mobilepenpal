@@ -27,7 +27,7 @@ class ReportDetailPage extends StatelessWidget {
 
             Expanded(
               child: RefreshIndicator(
-                onRefresh: c.fetchMonthly,
+                onRefresh: () => c.fetchMonthly(force: true),
                 child: ListView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: EdgeInsets.zero,
@@ -56,7 +56,7 @@ class ReportDetailPage extends StatelessWidget {
       child: Row(
         children: [
           IconButton(
-            onPressed: () => Get.offNamed('/home'),
+            onPressed: () => Get.back(),
             icon: Icon(Icons.arrow_back_ios_new_rounded),
           ),
           SizedBox(width: 6),

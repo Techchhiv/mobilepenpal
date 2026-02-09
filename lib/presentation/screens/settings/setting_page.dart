@@ -55,7 +55,15 @@ class SettingPage extends StatelessWidget {
       elevation: 0,
       automaticallyImplyLeading: false,
       title: InkWell(
-        onTap: () => Get.offAllNamed('/home'),
+        onTap: () {
+          final canPop = Get.key.currentState?.canPop() ?? false;
+          if (canPop) {
+            Get.back();
+          } else {
+            Get.offAllNamed('/home');
+          }
+        },
+
         borderRadius: BorderRadius.circular(8),
         child: Row(
           mainAxisSize: MainAxisSize.min,

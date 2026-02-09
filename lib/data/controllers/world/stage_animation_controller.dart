@@ -47,8 +47,8 @@ class StageAnimationController extends GetxController
   final List<List<double>> _cumLenByStroke = [];
   final List<double> _totalLenByStroke = [];
 
-  final minStrokeDurationMs = 450.obs;
-  final maxStrokeDurationMs = 2600.obs;
+  final minStrokeDurationMs = 1500.obs;
+  final maxStrokeDurationMs = 3000.obs;
 
   final _rng = Random();
   List<String>? _digitFruitAssets;
