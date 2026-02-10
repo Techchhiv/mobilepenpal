@@ -86,31 +86,41 @@ class LevelDetailPage extends GetView<LevelController> {
 
         return Row(
           children: [
-            InkWell(
-              onTap: () async {
-                final worldController = Get.find<WorldController>();
+            Expanded(
+              child: InkWell(
+                onTap: () async {
+                  final worldController = Get.find<WorldController>();
 
-                if (controller.worldId > 0) {
-                  await worldController.fetchWorldById(controller.worldId);
-                  final worldRoute = RouteBuilder.build(AppRoutes.world, {
-                    'id': controller.worldId.toString(),
-                  });
-                  Get.offNamed(worldRoute);
-                } else {
-                  Get.back();
-                }
-              },
-              child: Padding(
-                padding: const EdgeInsets.only(top: 12),
-                child: Row(
-                  children: [
-                    const Icon(Icons.arrow_back, color: Colors.white),
-                    const SizedBox(width: 8),
-                    Text(
-                      worldTitle,
-                      style: const TextStyle(color: Colors.white, fontSize: 18),
-                    ),
-                  ],
+                  if (controller.worldId > 0) {
+                    await worldController.fetchWorldById(controller.worldId);
+                    final worldRoute = RouteBuilder.build(AppRoutes.world, {
+                      'id': controller.worldId.toString(),
+                    });
+                    Get.offNamed(worldRoute);
+                  } else {
+                    Get.back();
+                  }
+                },
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.arrow_back, color: Colors.white),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          worldTitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          softWrap: false,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -158,7 +168,12 @@ class LevelDetailPage extends GetView<LevelController> {
               'assets/animated/pencil.json',
               repeat: true,
               animate: true,
+              width: 80,
             ),
+            // child: Image.asset(
+            //   'assets/images/illustrations/boy.png',
+            //   height: 100,
+            // ),
           ),
         ),
         Expanded(flex: 1, child: _buildStagesCarousel(level.stages)),

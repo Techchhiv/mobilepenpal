@@ -315,10 +315,14 @@ class ParentSummaryCard extends StatelessWidget {
 
   String _formatDailyInsight(Map<String, dynamic>? insight) {
     if (insight == null) return '—';
-    final c = insight['character']?.toString() ?? '—';
+
+    final rawChar = insight['character']?.toString();
+    final c = rawChar.toReportCharacterLabel();
+
     final a = insight['accuracy'];
     final p = a == null ? null : ((a as num).toDouble() * 100).round();
-    return p == null ? c : _d('$c  •  $p%');
+
+    return p == null ? c : '$c  •  ${_d('$p')}%';
   }
 
   Widget _buildWeeklyBody({
@@ -400,12 +404,15 @@ class ParentSummaryCard extends StatelessWidget {
   String _topChars(List<Map<String, dynamic>>? list) {
     final items = list ?? [];
     if (items.isEmpty) return '—';
-    final chars = items
+
+    final labels = items
         .take(3)
         .map((e) => e['character'])
         .whereType<String>()
+        .map((s) => s.toReportCharacterLabel())
         .toList();
-    return chars.isEmpty ? '—' : chars.join(' • ');
+
+    return labels.isEmpty ? '—' : labels.join(' • ');
   }
 
   Widget _buildMetricGrid({required List<Widget> children}) {

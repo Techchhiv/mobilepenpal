@@ -403,6 +403,7 @@ final Map<String, String> kmKH = {
   'week': 'សប្ដាហ៍',
   'attempts': 'លើក',
   'times': 'លើក',
+  'math': "គណិត",
 
   // ===== Summary Page =====
   'summary_perfect': 'ឆ្លើយបានត្រឹមត្រូវ',

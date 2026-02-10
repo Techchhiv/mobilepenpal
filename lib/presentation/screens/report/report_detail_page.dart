@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobilepenpal/core/localization/locale_controller.dart';
 import 'package:mobilepenpal/core/utils/number_format_utils.dart';
+import 'package:mobilepenpal/core/utils/report_format.dart';
 import 'package:shimmer/shimmer.dart';
 
 import 'package:mobilepenpal/core/theme/app_colors.dart';
@@ -128,7 +129,7 @@ class ReportDetailPage extends StatelessWidget {
         final attempts = m?.totalStagesCompleted ?? 0;
         final stars = m?.totalStarsEarned ?? 0;
         final accuracy = m?.accuracy ?? 0.0;
-        final time = _formatStudyTime(m?.totalTimeSpentSeconds ?? 0);
+        final time = (m?.totalTimeSpentSeconds ?? 0).toStudyTime();
         final days = m?.practiceDays ?? 0;
 
         return Column(
@@ -327,6 +328,7 @@ class ReportDetailPage extends StatelessWidget {
                               CharacterTypeFilter.vowelIndependent,
                               CharacterTypeFilter.vowelDependent,
                               CharacterTypeFilter.digit,
+                              CharacterTypeFilter.math
                             ]
                             .map(
                               (v) => PopupMenuItem(
@@ -434,7 +436,8 @@ class ReportDetailPage extends StatelessWidget {
                       ),
                       itemBuilder: (_, i) {
                         final e = filtered[i];
-                        final char = (e['character'] ?? '—').toString();
+                        final charRaw = (e['character'] ?? '—').toString();
+                        final char = charRaw.toReportCharacterLabel();
 
                         final accuracy =
                             ((e['accuracy'] as num?)?.toDouble() ?? 0.0).clamp(
@@ -518,31 +521,6 @@ class ReportDetailPage extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  static String _formatStudyTime(int seconds) {
-    final isKh = Get.find<LocaleController>().isKhmer;
-
-    final hUnit = isKh ? ' ម' : 'h';
-    final mUnit = isKh ? ' ន' : 'm';
-    final sUnit = isKh ? ' វ' : 's';
-
-    if (seconds <= 0) return '0$mUnit';
-
-    final s = seconds % 60;
-    final totalMinutes = seconds ~/ 60;
-    final m = totalMinutes % 60;
-    final h = totalMinutes ~/ 60;
-
-    if (h > 0) {
-      return m > 0 ? '$h$hUnit $m$mUnit' : '$h$hUnit';
-    }
-
-    if (m > 0) {
-      return s > 0 ? '$m$mUnit $s$sUnit' : '$m$mUnit';
-    }
-
-    return '$s$sUnit';
   }
 }
 

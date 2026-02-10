@@ -10,6 +10,7 @@ enum CharacterTypeFilter {
   vowelIndependent,
   vowelDependent,
   digit,
+  math,
 }
 
 class ReportController extends GetxController {
@@ -42,11 +43,29 @@ class ReportController extends GetxController {
         return 'dependent_vowels'.tr;
       case CharacterTypeFilter.digit:
         return 'digits'.tr;
+      case CharacterTypeFilter.math:
+        return 'math'.tr;
     }
+  }
+
+  bool _isMathToken(String raw) {
+    final v = raw.trim().toLowerCase();
+
+    const ops = {'add', 'sub', 'mul', 'div'};
+
+    const symbols = {'+', '-', '×', '*', 'x', '÷', '/'};
+
+    if (v.startsWith('math:')) return true;
+    return ops.contains(v) || symbols.contains(v);
   }
 
   bool matchCharFilter(String ch, CharacterTypeFilter filter) {
     if (filter == CharacterTypeFilter.all) return true;
+
+    if (filter == CharacterTypeFilter.math) {
+      return _isMathToken(ch);
+    }
+
     final type = _detectKhmerCharType(ch);
     return type == filter;
   }

@@ -8,6 +8,8 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_drawing_board/flutter_drawing_board.dart';
 import 'package:get/get.dart';
 import 'package:mobilepenpal/core/network/route_builder.dart';
+import 'package:mobilepenpal/core/utils/math_generation.dart';
+import 'package:mobilepenpal/core/utils/number_format_utils.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_animation_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_audio_controller.dart';
 import 'package:mobilepenpal/data/models/stage/stage.dart';
@@ -50,6 +52,14 @@ class StageController extends GetxController {
   final currentExerciseIndex = 0.obs;
   final selectedCharacter = ''.obs;
 
+  final MathGenerator _mathGen = MathGenerator();
+
+  final mathPrompt = ''.obs;
+  final mathExpected = RxnInt();
+  final currentMathOp = RxnString();
+
+  final Map<String, MathQuestion> _mathCache = {};
+
   final attempts = <Map<String, dynamic>>[].obs;
 
   final _strokesDb = Rxn<Map<String, dynamic>>();
@@ -83,8 +93,15 @@ class StageController extends GetxController {
 
   bool get showIllustration {
     final t = (currentExercise?.characterType ?? '').trim().toLowerCase();
-    return t == 'consonants' || t == 'digits';
+    return t == 'consonants' || t == 'digits' || t == 'math';
   }
+
+  bool get isMathCurrent {
+    final t = (currentExercise?.characterType ?? '').trim().toLowerCase();
+    return t == 'math';
+  }
+
+  String _mathKeyFor(StageExercise ex) => '${ex.id}:${ex.repeatSlot}';
 
   final stageProgress = 0.0.obs;
 
@@ -190,6 +207,10 @@ class StageController extends GetxController {
       currentStage.value = stage;
       exercises.assignAll(stage.exercises);
 
+      _mathCache.clear();
+      mathPrompt.value = '';
+      mathExpected.value = null;
+
       anim.resetStars(total: exercises.length);
 
       attempts.clear();
@@ -247,26 +268,55 @@ class StageController extends GetxController {
     bool playAudioAfter = false,
   }) async {
     currentExerciseIndex.value = index;
-    selectedCharacter.value = exercises[index].character;
     attemptLeft.value = maxAttemptsPerExercise;
 
     clearBoard();
+
+    final ex = exercises[index];
+    final t = (ex.characterType ?? '').trim().toLowerCase();
+
+    if (t == 'math') {
+      final key = _mathKeyFor(ex);
+
+      final diff = parseMathDifficulty(ex.difficulty);
+      final q = _mathCache.putIfAbsent(key, () {
+        return _mathGen.generate(
+          difficulty: diff,
+          opKeyRaw: ex.mathOp,
+        );
+      });
+
+      mathPrompt.value = q.toPrompt(withQuestionMark: true);
+      mathExpected.value = q.answer;
+      currentMathOp.value = q.opKey;
+
+      letterSubpathsNorm.clear();
+      strokeStrokesNorm.clear();
+      anim.setGuideFromPx(strokesPx: const []);
+      anim.stopGuide();
+
+      selectedCharacter.value = '';
+      return;
+    }
+
+    mathPrompt.value = '';
+    mathExpected.value = null;
+    currentMathOp.value = null;
+
+    selectedCharacter.value = ex.character;
     setGuideForCharacter(selectedCharacter.value);
 
     await anim.resolveIllustration(
-      characterType: exercises[index].characterType ?? '',
-      character: exercises[index].character,
+      characterType: ex.characterType ?? '',
+      character: ex.character,
     );
 
     if (playAudioAfter) {
       await Future.delayed(const Duration(milliseconds: 150));
-      final ex = currentExercise;
-      if (ex != null) {
-        await audio.autoPlayCharacter(
-          type: ex.characterType ?? '',
-          ch: ex.character,
-        );
-      }
+      await audio.autoPlayCharacter(
+        type: ex.characterType ?? '',
+        ch: ex.character,
+      );
     }
   }
 
@@ -324,7 +374,12 @@ class StageController extends GetxController {
 
     _rawStrokes.clear();
     _currentStroke = null;
-    anim.restartGuideFromStart();
+    if (!isMathCurrent) {
+      anim.restartGuideFromStart();
+    } else {
+      anim.stopGuide();
+      anim.setGuideFromPx(strokesPx: const []);
+    }
   }
 
   void onPointerDown() {
@@ -402,13 +457,22 @@ class StageController extends GetxController {
       if (myReqId != _redId) return;
 
       prediction = (data['prediction'] ?? '').toString().trim();
-      final expected = (exercise.character).trim();
-      isCorrect = prediction == expected;
+
+      if (isMathCurrent) {
+        final expected = mathExpected.value;
+        final predValue = NumberFormatUtils.parseIntAny(prediction);
+
+        isCorrect =
+            expected != null && predValue != null && predValue == expected;
+      } else {
+        final expected = exercise.character.trim();
+        isCorrect = prediction == expected;
+      }
     } on DioException catch (e) {
       if (CancelToken.isCancel(e)) return;
     } catch (e) {
       lastError.value = 'Predict failed: $e';
-      isCorrect = Random().nextDouble() <= 0.9;
+      isCorrect = isMathCurrent ? false : (Random().nextDouble() <= 0.9);
     } finally {
       if (myReqId == _redId) {
         _cancelToken = null;
@@ -427,7 +491,7 @@ class StageController extends GetxController {
         onAfterReset: () {
           clearBoard();
           hasDrawnStroke = false;
-          anim.restartGuideFromStart();
+          if (!isMathCurrent) anim.restartGuideFromStart();
         },
       );
 
@@ -438,12 +502,17 @@ class StageController extends GetxController {
       anim.markWrong(currentExerciseIndex.value);
       unawaited(anim.playStarPop(currentExerciseIndex.value));
 
+      final label = isMathCurrent
+          ? (mathExpected.value?.toString() ?? '')
+          : exercise.character;
+
       attempts.add({
         'exercise_id': exercise.id,
         'user_answer': prediction,
-        'label': exercise.character,
+        'label': label,
         'stroke': getXYStrokes(),
         'is_correct': false,
+        if (isMathCurrent) 'math_op': currentMathOp.value,
       });
 
       _updateProgressUI();
@@ -464,12 +533,17 @@ class StageController extends GetxController {
     anim.showCorrect(starIndex: currentExerciseIndex.value);
     unawaited(audio.playCorrectSfx());
 
+    final label = isMathCurrent
+        ? (mathExpected.value?.toString() ?? '')
+        : exercise.character;
+
     attempts.add({
       'exercise_id': exercise.id,
       'user_answer': prediction.isNotEmpty ? prediction : exercise.character,
-      'label': exercise.character,
+      'label': label,
       'stroke': getXYStrokes(),
       'is_correct': true,
+      if (isMathCurrent) 'math_op': currentMathOp.value,
     });
     _updateProgressUI();
 
@@ -489,12 +563,17 @@ class StageController extends GetxController {
     final exercise = currentExercise;
     if (exercise == null) return;
 
+    final label = isMathCurrent
+        ? (mathExpected.value?.toString() ?? '')
+        : exercise.character;
+
     attempts.add({
       'exercise_id': exercise.id,
       'user_answer': '',
-      'label': exercise.character,
+      'label': label,
       'stroke': getXYStrokes(),
       'is_correct': false,
+      if (isMathCurrent) 'math_op': currentMathOp.value,
     });
     _updateProgressUI();
 
@@ -690,7 +769,15 @@ class StageController extends GetxController {
     final db = _strokesDb.value;
     final items = db?['items'] as Map<String, dynamic>?;
 
+    if (isMathCurrent) {
+      letterSubpathsNorm.clear();
+      strokeStrokesNorm.clear();
+      anim.setGuideFromPx(strokesPx: const []);
+      return;
+    }
+
     final entry = items?[ch.trim()] as Map<String, dynamic>?;
+
     if (entry == null) {
       letterSubpathsNorm.clear();
       strokeStrokesNorm.clear();
@@ -803,6 +890,11 @@ class StageController extends GetxController {
     exercises.clear();
     currentStage.value = null;
     _sessionStart = null;
+
+    _mathCache.clear();
+    mathPrompt.value = '';
+    mathExpected.value = null;
+    currentMathOp.value = null;
 
     clearBoard();
     if (clearGuide) anim.setGuideFromPx(strokesPx: const []);

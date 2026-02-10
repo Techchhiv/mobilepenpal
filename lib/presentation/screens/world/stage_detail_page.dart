@@ -19,85 +19,95 @@ class StageDetailPage extends GetView<StageController> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Obx(
-        () => LoadingOverlay(
-          isLoading: controller.isSubmitting.value,
-          child: Stack(
-            children: [
-              Positioned.fill(
-                child: Image.asset(
-                  "assets/images/backgrounds/stage_background.png",
-                  fit: BoxFit.cover,
-                ),
-              ),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
 
-              Positioned.fill(
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Color(0xFF2B7A78).withValues(alpha: 1),
-                        Color(0xFF6B9F8E).withValues(alpha: 0.0),
-                        // Color(0xFF8FB99F).withValues(alpha: 0.0),
-                      ],
-                      stops: [0.15, 0.45],
+        if (Get.isDialogOpen == true) return;
+
+        _showPauseDialog(context);
+      },
+      child: Scaffold(
+        body: Obx(
+          () => LoadingOverlay(
+            isLoading: controller.isSubmitting.value,
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: Image.asset(
+                    "assets/images/backgrounds/stage_background.png",
+                    fit: BoxFit.cover,
+                  ),
+                ),
+
+                Positioned.fill(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Color(0xFF2B7A78).withValues(alpha: 1),
+                          Color(0xFF6B9F8E).withValues(alpha: 0.0),
+                          // Color(0xFF8FB99F).withValues(alpha: 0.0),
+                        ],
+                        stops: [0.15, 0.45],
+                      ),
                     ),
                   ),
                 ),
-              ),
 
-              SafeArea(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 16,
-                  ),
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 20),
-                      _buildTopBar(Get.context!),
-                      const SizedBox(height: 20),
-                      Obx(() {
-                        final show = controller.showIllustration;
-                        return AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 220),
-                          switchInCurve: Curves.easeOut,
-                          switchOutCurve: Curves.easeIn,
-                          transitionBuilder: (child, anim) => SizeTransition(
-                            sizeFactor: anim,
-                            axisAlignment: -1.0,
-                            child: child,
-                          ),
-                          child: show
-                              ? Column(
-                                  key: const ValueKey('illus'),
-                                  children: [
-                                    _buildIllustration(),
-                                    const SizedBox(height: 30),
-                                  ],
-                                )
-                              : const SizedBox(key: ValueKey('no_illus')),
-                        );
-                      }),
-                      Obx(
-                        () => controller.showIllustration
-                            ? const SizedBox.shrink()
-                            : const Spacer(),
-                      ),
-                      _buildDrawingBoard(),
-                      const SizedBox(height: 16),
-                      _buildCharacterOptions(),
-                      const Spacer(),
-                      _buildBottomButtons(),
-                      const SizedBox(height: 20),
-                    ],
+                SafeArea(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 16,
+                    ),
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 20),
+                        _buildTopBar(Get.context!),
+                        const SizedBox(height: 20),
+                        Obx(() {
+                          final show = controller.showIllustration;
+                          return AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 220),
+                            switchInCurve: Curves.easeOut,
+                            switchOutCurve: Curves.easeIn,
+                            transitionBuilder: (child, anim) => SizeTransition(
+                              sizeFactor: anim,
+                              axisAlignment: -1.0,
+                              child: child,
+                            ),
+                            child: show
+                                ? Column(
+                                    key: const ValueKey('illus'),
+                                    children: [
+                                      _buildIllustration(),
+                                      const SizedBox(height: 30),
+                                    ],
+                                  )
+                                : const SizedBox(key: ValueKey('no_illus')),
+                          );
+                        }),
+                        Obx(
+                          () => controller.showIllustration
+                              ? const SizedBox.shrink()
+                              : const Spacer(),
+                        ),
+                        _buildDrawingBoard(),
+                        const SizedBox(height: 16),
+                        _buildCharacterOptions(),
+                        const Spacer(),
+                        _buildBottomButtons(),
+                        const SizedBox(height: 20),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -111,12 +121,16 @@ class StageDetailPage extends GetView<StageController> {
         children: [
           Container(
             width: 50,
-            height: 50,
             decoration: BoxDecoration(
-              color: Colors.orange.shade300,
+              // color: Colors.orange.shade300,
               borderRadius: BorderRadius.circular(25),
             ),
-            child: const Icon(Icons.person, color: Colors.white, size: 30),
+            // child: const Icon(Icons.person, color: Colors.white, size: 30),
+            clipBehavior: Clip.antiAlias,
+            child: Image.asset(
+              'assets/images/illustrations/pencil.png',
+              fit: BoxFit.fill,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -260,6 +274,29 @@ class StageDetailPage extends GetView<StageController> {
         children: [
           Expanded(
             child: Obx(() {
+              // ✅ MATH: show only "៣+៦" (no extra text)
+              if (controller.isMathCurrent) {
+                final raw = controller.mathPrompt.value; // e.g. "3 + 6 = ?"
+                final left = raw.split('=').first.trim(); // "3 + 6"
+                final compact = left.replaceAll(' ', ''); // "3+6"
+                final km = NumberFormatUtils.digitsByLocale(
+                  compact,
+                  forceKhmer: true,
+                );
+
+                return Center(
+                  child: Text(
+                    km, // "៣+៦"
+                    style: const TextStyle(
+                      fontSize: 64,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                    ),
+                  ),
+                );
+              }
+
+              // ===== existing code below (digits/consonants) =====
               final path = controller.anim.illustrationAssetPath.value;
               final ch = controller.selectedCharacter.value;
               final digit = NumberFormatUtils.parseSingleDigitAny(ch);
@@ -306,7 +343,7 @@ class StageDetailPage extends GetView<StageController> {
                                     width: itemSize,
                                     height: itemSize,
                                     child: path.isEmpty
-                                        ? SizedBox.shrink()
+                                        ? const SizedBox.shrink()
                                         : Image.asset(
                                             path,
                                             fit: BoxFit.contain,
@@ -338,7 +375,7 @@ class StageDetailPage extends GetView<StageController> {
                                       width: itemSize,
                                       height: itemSize,
                                       child: path.isEmpty
-                                          ? SizedBox.shrink()
+                                          ? const SizedBox.shrink()
                                           : Image.asset(
                                               path,
                                               fit: BoxFit.contain,
@@ -371,7 +408,7 @@ class StageDetailPage extends GetView<StageController> {
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(10),
                     child: path.isEmpty
-                        ? SizedBox.shrink()
+                        ? const SizedBox.shrink()
                         : Image.asset(
                             path,
                             fit: BoxFit.contain,
@@ -388,6 +425,8 @@ class StageDetailPage extends GetView<StageController> {
           ),
 
           Obx(() {
+            if (controller.isMathCurrent) return const SizedBox.shrink();
+
             final ch = controller.selectedCharacter.value;
             final digit = NumberFormatUtils.parseSingleDigitAny(ch);
             if (digit != null) return const SizedBox.shrink();
@@ -396,7 +435,7 @@ class StageDetailPage extends GetView<StageController> {
             if (label.isEmpty) return const SizedBox.shrink();
 
             return Padding(
-              padding: EdgeInsets.symmetric(vertical: 6),
+              padding: const EdgeInsets.symmetric(vertical: 6),
               child: Text(
                 label,
                 style: const TextStyle(

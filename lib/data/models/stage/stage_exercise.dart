@@ -15,6 +15,9 @@ class StageExercise {
   final String hint;
   final int orderIndex;
   final String? characterType;
+  final int repeatSlot;
+  final String? difficulty;
+  final String? mathOp;
 
   StageExercise({
     required this.id,
@@ -27,6 +30,9 @@ class StageExercise {
     required this.hint,
     required this.orderIndex,
     this.characterType,
+    this.repeatSlot = 1,
+    this.difficulty,
+    this.mathOp,
   });
 
   factory StageExercise.fromJson(Map<String, dynamic> json) {
@@ -59,6 +65,9 @@ class StageExercise {
       hint: (json['hint'] ?? '').toString(),
       orderIndex: (json['order_index'] as num?)?.toInt() ?? 0,
       characterType: json['character_type']?.toString(),
+      repeatSlot: (json['repeat_slot'] as num?)?.toInt() ?? 1,
+      difficulty: json['difficulty']?.toString(),
+      mathOp: json['difficulty']?.toString(),
     );
   }
 
@@ -74,6 +83,9 @@ class StageExercise {
       'hint': hint,
       'order_index': orderIndex,
       'character_type': characterType,
+      'repeat_slot': repeatSlot,
+      'difficulty': difficulty,
+      'mathOp': mathOp,
     };
   }
 

@@ -93,6 +93,7 @@ class LoginPage extends StatelessWidget {
               SizedBox(height: 8),
               Obx(
                 () => TextFormField(
+                  key: Key('login_phone'),
                   controller: authController.phoneController,
                   keyboardType: TextInputType.phone,
                   enabled: !authController.isLoading.value,
@@ -154,6 +155,7 @@ class LoginPage extends StatelessWidget {
               SizedBox(height: 8),
               Obx(
                 () => TextFormField(
+                  key: Key('login_password'),
                   controller: authController.passwordController,
                   obscureText: !authController.isPasswordVisible.value,
                   enabled: !authController.isLoading.value,
@@ -221,6 +223,7 @@ class LoginPage extends StatelessWidget {
                   width: double.infinity,
                   height: 56,
                   child: ElevatedButton(
+                  key: Key('login_submit'),
                     onPressed: authController.isLoading.value
                         ? null
                         : () => authController.login(),

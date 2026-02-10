@@ -63,4 +63,30 @@ class NumberFormatUtils {
     if (s.length == 1) return _khmerToLatin[s];
     return null;
   }
+
+  static int? parseIntAny(String raw) {
+    final s = raw.trim();
+    if (s.isEmpty) return null;
+
+    final buf = StringBuffer();
+
+    for (final ch in s.split('')) {
+      final ascii = int.tryParse(ch);
+      if (ascii != null && ascii >= 0 && ascii <= 9) {
+        buf.write(ch);
+        continue;
+      }
+
+      final kh = _khmerToLatin[ch];
+      if (kh != null) {
+        buf.write(kh.toString());
+        continue;
+      }
+    }
+
+    final out = buf.toString();
+    if (out.isEmpty) return null;
+
+    return int.tryParse(out);
+  }
 }

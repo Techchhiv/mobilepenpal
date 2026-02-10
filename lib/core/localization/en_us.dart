@@ -408,6 +408,7 @@ final Map<String, String> enUS = {
   'week': 'Week',
   'attempts': 'Attempts',
   'times': 'times',
+  'math': "Math",
 
   // ===== Summary Page =====
   'summary_perfect': 'Excellent job!',

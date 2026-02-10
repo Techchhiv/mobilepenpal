@@ -135,7 +135,6 @@ class ParentHome extends StatelessWidget {
           body = _buildEmptyClassroomCard();
         }
       } else {
-        // Have cached classroom → keep showing it even if loading == true
         body = _buildCurrentClassroomCard(
           name: classroom.name,
           teacherName: classroom.teacherName ?? '—',

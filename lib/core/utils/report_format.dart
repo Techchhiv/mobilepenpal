@@ -1,16 +1,29 @@
+import 'package:get/get.dart';
+import 'package:mobilepenpal/core/utils/number_format_utils.dart';
+
 extension StudyTimeFormat on int {
   String toStudyTime() {
-    if (this <= 0) return '0m';
+    final seconds = this;
+    if (seconds <= 0) return _unitM(0);
 
-    final s = this % 60;
-    final totalMinutes = this ~/ 60;
+    final s = seconds % 60;
+    final totalMinutes = seconds ~/ 60;
     final m = totalMinutes % 60;
     final h = totalMinutes ~/ 60;
 
-    if (h > 0) return '${h}h ${m}m';
-    if (m > 0) return s > 0 ? '${m}m ${s}s' : '${m}m';
-    return '${s}s';
+    if (h > 0) return '${_unitH(h)} ${_unitM(m)}';
+    if (m > 0) return s > 0 ? '${_unitM(m)} ${_unitS(s)}' : _unitM(m);
+    return _unitS(s);
   }
+
+  bool get _isKhmer {
+    final locale = Get.locale ?? Get.deviceLocale;
+    return (locale?.languageCode.toLowerCase() == 'km');
+  }
+
+  String _unitH(int v) => _isKhmer ? '$v ម' : '${v}h';
+  String _unitM(int v) => _isKhmer ? '$v ន' : '${v}m';
+  String _unitS(int v) => _isKhmer ? '$v វ' : '${v}s';
 }
 
 extension StudyDateFormat on String? {
@@ -65,5 +78,29 @@ extension MonthLabelFormat on DateTime {
       'Dec',
     ];
     return '${months[month - 1]} $year';
+  }
+}
+
+extension ReportCharacterFormat on String? {
+  String toReportCharacterLabel() {
+    final raw = (this ?? '').trim();
+    if (raw.isEmpty) return '—';
+
+    final key = raw.contains(':')
+        ? raw.split(':').last.trim().toLowerCase()
+        : raw.toLowerCase();
+
+    switch (key) {
+      case 'add':
+        return '+';
+      case 'sub':
+        return '-';
+      case 'mul':
+        return '×';
+      case 'div':
+        return '÷';
+      default:
+        return NumberFormatUtils.digitsByLocale(raw);
+    }
   }
 }
