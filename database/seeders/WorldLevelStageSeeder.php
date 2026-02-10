@@ -23,18 +23,85 @@ class WorldLevelStageSeeder extends Seeder
             // Characters
             // -----------------------
             $consonants = [
-                'ក','ខ','គ','ឃ','ង','ច','ឆ','ជ','ឈ','ញ','ដ','ឋ','ឌ','ឍ','ណ','ត','ថ','ទ','ធ','ន',
-                'ប','ផ','ព','ភ','ម','យ','រ','ល','វ','ស','ហ','ឡ','អ',
+                'ក',
+                'ខ',
+                'គ',
+                'ឃ',
+                'ង',
+                'ច',
+                'ឆ',
+                'ជ',
+                'ឈ',
+                'ញ',
+                'ដ',
+                'ឋ',
+                'ឌ',
+                'ឍ',
+                'ណ',
+                'ត',
+                'ថ',
+                'ទ',
+                'ធ',
+                'ន',
+                'ប',
+                'ផ',
+                'ព',
+                'ភ',
+                'ម',
+                'យ',
+                'រ',
+                'ល',
+                'វ',
+                'ស',
+                'ហ',
+                'ឡ',
+                'អ',
             ];
 
-            $digits = ['០','១','២','៣','៤','៥','៦','៧','៨','៩'];
+            $digits = ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'];
 
             $independentVowels = [
-                'ឥ','ឦ','ឧ','ឩ','ឪ','ឫ','ឬ','ឭ','ឮ','ឯ','ឰ','ឱ','ឲ','ឪ'
+                'ឥ',
+                'ឦ',
+                'ឧ',
+                'ឩ',
+                'ឪ',
+                'ឫ',
+                'ឬ',
+                'ឭ',
+                'ឮ',
+                'ឯ',
+                'ឰ',
+                'ឱ',
+                'ឲ',
+                'ឪ'
             ];
 
             $dependentVowels = [
-                'ា','ិ','ី','ឹ','ឺ','ុ','ូ','ួ','ើ','ឿ','ៀ','េ','ែ','ៃ','ោ','ៅ','ុំ','ំ','ាំ','ះ','ិះ','ុះ','េះ','ោះ'
+                'ា',
+                'ិ',
+                'ី',
+                'ឹ',
+                'ឺ',
+                'ុ',
+                'ូ',
+                'ួ',
+                'ើ',
+                'ឿ',
+                'ៀ',
+                'េ',
+                'ែ',
+                'ៃ',
+                'ោ',
+                'ៅ',
+                'ុំ',
+                'ំ',
+                'ាំ',
+                'ះ',
+                'ិះ',
+                'ុះ',
+                'េះ',
+                'ោះ'
             ];
 
             $halfConsonants = array_slice($consonants, 0, (int) ceil(count($consonants) / 2));
@@ -66,6 +133,30 @@ class WorldLevelStageSeeder extends Seeder
                     'desc_en' => 'Learn Khmer digits',
                     'chars' => $digits,
                     'character_type' => 'digits',
+                    'chunk' => 5,
+                ],
+                [
+                    'key' => 'public_math',
+                    'audience' => 'public',
+                    'order_index' => 3, // adjust to your ordering
+                    'name_km' => 'គណិតវិទ្យា',
+                    'name_en' => 'Math',
+                    'desc_km' => 'ហាត់គណិតវិទ្យា (បូក ដក គុណ ចែក)',
+                    'desc_en' => 'Practice math (add, sub, mul, div)',
+                    'chars' => [],                 // not used for math
+                    'character_type' => 'math',
+                    'chunk' => 5,
+                ],
+                [
+                    'key' => 'schools_math',
+                    'audience' => 'schools',
+                    'order_index' => 7, // adjust
+                    'name_km' => 'គណិតវិទ្យា',
+                    'name_en' => 'Math',
+                    'desc_km' => 'ហាត់គណិតវិទ្យា (បូក ដក គុណ ចែក)',
+                    'desc_en' => 'Practice math (add, sub, mul, div)',
+                    'chars' => [],
+                    'character_type' => 'math',
                     'chunk' => 5,
                 ],
 
@@ -197,6 +288,11 @@ class WorldLevelStageSeeder extends Seeder
 
     private function seedWorldContent(World $world, string $worldKey, array $chars, string $characterType, int $chunk = 5): void
     {
+        if ($characterType === 'math') {
+            $this->seedMathWorldContent($world);
+            return;
+        }
+
         $bank = $this->createExerciseBank($chars, $characterType);
 
         $chunks = array_chunk($chars, $chunk);
@@ -242,14 +338,6 @@ class WorldLevelStageSeeder extends Seeder
                     $stageData['description_en'] = "Practice session for {$ch}";
                 }
 
-                // If you still have instruction fields, fill them; otherwise ignore safely
-                if (Schema::hasColumn('stages', 'instruction')) {
-                    $stageData['instruction'] = "តាមដានអក្សរ/លេខ {$ch} តាមផ្លូវណែនាំ";
-                }
-                if (Schema::hasColumn('stages', 'instruction_en')) {
-                    $stageData['instruction_en'] = "Trace {$ch} following the guided path";
-                }
-
                 $stage = Stage::create($stageData);
 
                 $this->attachExerciseToStage($stage, $bank[$ch], 1, 3);
@@ -285,6 +373,130 @@ class WorldLevelStageSeeder extends Seeder
         return $bank;
     }
 
+    private function seedMathWorldContent(World $world): void
+    {
+        $difficulties = ['easy', 'medium', 'hard'];
+        $ops = ['add', 'sub', 'mul', 'div'];
+
+        // bank[difficulty][op] = Exercise
+        $bank = $this->createMathExerciseBank($difficulties, $ops);
+
+        // 1 level only
+        $levelData = [
+            'world_id' => $world->id,
+            'name' => 'គណិតវិទ្យា',
+            'description' => 'កម្រិតគណិតវិទ្យា',
+            'order_index' => 1,
+            'is_active' => true,
+            'is_unlocked_by_default' => false,
+        ];
+
+        if (Schema::hasColumn('levels', 'name_en')) {
+            $levelData['name_en'] = 'Math';
+        }
+        if (Schema::hasColumn('levels', 'description_en')) {
+            $levelData['description_en'] = 'Math level';
+        }
+
+        $level = Level::create($levelData);
+
+        foreach ($difficulties as $i => $diff) {
+            [$kmName, $enName] = match ($diff) {
+                'easy' => ['ងាយ', 'Easy'],
+                'medium' => ['មធ្យម', 'Medium'],
+                'hard' => ['ពិបាក', 'Hard'],
+                default => [$diff, ucfirst($diff)],
+            };
+
+            $stageData = [
+                'level_id' => $level->id,
+                'name' => "គណិតវិទ្យា - {$kmName}",
+                'description' => "ហាត់គណិតវិទ្យា ({$kmName})",
+                'order_index' => $i + 1,
+                'is_active' => true,
+                'is_unlocked_by_default' => false,
+            ];
+
+            if (Schema::hasColumn('stages', 'name_en')) {
+                $stageData['name_en'] = "Math - {$enName}";
+            }
+            if (Schema::hasColumn('stages', 'description_en')) {
+                $stageData['description_en'] = "Practice math ({$enName})";
+            }
+
+            $stage = Stage::create($stageData);
+
+            // Attach 4 ops (add/sub/mul/div) for this difficulty
+            // Pick repeat_count however you want (example: 3 each => 12 questions total)
+            $order = 1;
+            foreach ($ops as $op) {
+                $this->attachExerciseToStage(
+                    $stage,
+                    $bank[$diff][$op],
+                    orderIndex: $order++,
+                    repeatCount: 3
+                );
+            }
+        }
+    }
+
+
+    /**
+     * @return array<string, array<string, Exercise>> bank[difficulty][op]
+     */
+    private function createMathExerciseBank(array $difficulties, array $ops): array
+    {
+        $bank = [];
+
+        foreach ($difficulties as $diff) {
+            foreach ($ops as $op) {
+                $characterKey = "math_{$op}_{$diff}";
+
+                $data = [
+                    'prompt' => "Math ({$op}, {$diff})",
+                    'question' => "Solve ({$op})",
+                    'options' => null,
+                    'correct_answer' => null,
+                    'instruction' => "Solve the {$op} question",
+                    'hint' => "Try again",
+                    'example' => null,
+                ];
+
+                if (Schema::hasColumn('exercises', 'difficulty')) {
+                    $data['difficulty'] = $diff;
+                }
+
+                if (Schema::hasColumn('exercises', 'math_op')) {
+                    $data['math_op'] = $op;
+                }
+
+                $bank[$diff][$op] = Exercise::updateOrCreate(
+                    [
+                        'character' => $characterKey,
+                        'character_type' => 'math',
+                    ],
+                    $data
+                );
+            }
+        }
+
+        return $bank;
+    }
+
+
+    private function mathOpSymbol(string $op): string
+    {
+        return match ($op) {
+            'add' => '+',
+            'sub' => '-',
+            'mul' => '×',
+            'div' => '÷',
+            default => '?',
+        };
+    }
+
+
+
     private function attachExerciseToStage(Stage $stage, Exercise $exercise, int $orderIndex = 1, int $repeatCount = 3): void
     {
         StageExercise::create([
@@ -295,6 +507,7 @@ class WorldLevelStageSeeder extends Seeder
             'is_active' => true,
         ]);
     }
+
 
     /**
      * @return array{0:string,1:string} [km,en]

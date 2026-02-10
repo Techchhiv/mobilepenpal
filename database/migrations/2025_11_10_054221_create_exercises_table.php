@@ -15,7 +15,6 @@ return new class extends Migration
     {
         Schema::create('exercises', function (Blueprint $table) {
             $table->id();
-            // $table->foreignId('stage_id')->constrained()->onDelete('cascade');
 
             $table->string('prompt')->nullable();
             $table->string('character')->nullable();
@@ -27,15 +26,11 @@ return new class extends Migration
             $table->text('example')->nullable();
             $table->text('hint')->nullable();
 
-            // $table->integer('order_index')->default(1);
-            // $table->integer('repeat_count')->default(1);
 
-            $table->enum('character_type', ['digits', 'consonants', 'dependent_vowels','independent_vowels'])->default('consonants');
-            // $table->string('audio_url')->nullable();
-            // $table->string('image_url')->nullable();
-            // $table->integer('max_points')->default(1);
-            // $table->integer('time_limit')->nullable();
-            // $table->enum('difficulty', ['easy', 'medium', 'hard'])->default('easy');
+            $table->enum('character_type', ['digits', 'consonants', 'dependent_vowels','independent_vowels', 'math'])->default('consonants');
+            $table->enum('math_op', ['add', 'sub', 'mul', 'div'])->nullable();
+            $table->enum('difficulty', ['easy', 'medium', 'hard'])->default('easy');
+            $table->index(['character_type', 'difficulty', 'math_op']);
             $table->timestamps();
         });
     }

@@ -27,6 +27,9 @@ class UpdateExerciseRequest extends FormRequest
                 'required',
                 Rule::in(['digits', 'consonants', 'independent_vowels', 'dependent_vowels']),
             ],
+
+            'difficulty' => ['nullable', 'in:easy,medium,hard'],
+            'math_op'    => ['nullable', 'in:add,sub,mul,div'],
         ];
     }
 }

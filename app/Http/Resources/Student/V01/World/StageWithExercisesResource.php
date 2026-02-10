@@ -17,9 +17,9 @@ class StageWithExercisesResource extends JsonResource
 
                 return collect(range(1, max(1, $times)))->map(function ($slotIndex) use ($exercise) {
                     $clone = $exercise->replicate();
-                    $clone->id = $exercise->id; // keep original id
+                    $clone->id = $exercise->id;
                     $clone->repeat_slot = $slotIndex;
-                    $clone->setRelation('pivot', $exercise->pivot); // ✅ keep pivot accessible in ExerciseResource
+                    $clone->setRelation('pivot', $exercise->pivot);
                     return $clone;
                 });
             })

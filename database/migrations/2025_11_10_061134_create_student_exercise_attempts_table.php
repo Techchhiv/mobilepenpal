@@ -22,6 +22,7 @@ return new class extends Migration
             $table->string('user_answer')->nullable();
             $table->json('stroke')->nullable();
             $table->string('label')->nullable();
+            $table->string('math_op', 8)->nullable()->index();
             // $table->integer('points_earned')->default(0);
             // $table->integer('time_taken')->nullable();
             $table->boolean('is_correct')->default(false);

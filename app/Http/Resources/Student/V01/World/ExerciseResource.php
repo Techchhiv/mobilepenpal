@@ -23,6 +23,8 @@ class ExerciseResource extends JsonResource
             'order_index' => (int) ($this->pivot->order_index ?? 0),
             'repeat_slot' => (int) ($this->repeat_slot ?? 1),
             'character_type' => $this->character_type,
+            'difficulty' => $this->difficulty,
+            'math_op' => $this->math_op
         ];
     }
 }

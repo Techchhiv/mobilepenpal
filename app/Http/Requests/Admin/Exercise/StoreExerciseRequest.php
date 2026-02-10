@@ -14,7 +14,6 @@ class StoreExerciseRequest extends FormRequest
             'character'      => ['nullable', 'string', 'max:50'],
             'question'       => ['nullable', 'string', 'max:255'],
 
-            // allow either array or null; controller will json_encode it
             'options'        => ['nullable', 'array'],
             'options.*'      => ['nullable'],
 
@@ -27,6 +26,9 @@ class StoreExerciseRequest extends FormRequest
                 'required',
                 Rule::in(['digits', 'consonants', 'independent_vowels', 'dependent_vowels']),
             ],
+
+            'difficulty' => ['nullable', 'in:easy,medium,hard'],
+            'math_op'    => ['nullable', 'in:add,sub,mul,div'],
         ];
     }
 }

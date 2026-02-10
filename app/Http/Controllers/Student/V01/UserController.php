@@ -174,9 +174,7 @@ class UserController extends Controller
 
         $date = $request->query('date', Carbon::now()->toDateString());
 
-        $classroomId = $student->current_classroom_id ? (int) $student->current_classroom_id : null;
-
-        $summary = StudentSummary::getDailySummary($student->id, $date, $classroomId);
+        $summary = StudentSummary::getDailySummary($student->id, $date);
 
         $this->setResult('summary', $summary);
         return $this->returnResponse();

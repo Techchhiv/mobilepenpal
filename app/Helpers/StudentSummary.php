@@ -32,9 +32,7 @@ class StudentSummary
             ->get();
 
         $characterGroups = $attempts
-            ->groupBy(function ($attempt) {
-                return optional($attempt->exercise)->character;
-            })
+            ->groupBy(fn($attempt) => self::practiceKey($attempt))
             ->filter();
 
         $characters = $characterGroups->map(function ($group, $character) {
@@ -101,7 +99,7 @@ class StudentSummary
                 ? ($correctCount / $attemptsCount) * 100
                 : 0;
 
-            $sessionStars = self::calculateSessionStars($score, (int) $stage->max_stars);
+            $sessionStars = self::calculateSessionStars($score);
             $starsEarned += $sessionStars;
 
             if ($score >= 50) {
@@ -127,7 +125,7 @@ class StudentSummary
         ];
     }
 
-    private static function calculateSessionStars(float $score, int $maxStars): int
+    private static function calculateSessionStars(float $score, int $maxStars = 3): int
     {
         if ($score === 100.0) {
             return $maxStars;
@@ -175,9 +173,7 @@ class StudentSummary
             ->get();
 
         $characterGroups = $attempts
-            ->groupBy(function ($attempt) {
-                return optional($attempt->exercise)->character;
-            })
+            ->groupBy(fn($attempt) => self::practiceKey($attempt))
             ->filter();
 
         $characters = $characterGroups->map(function ($group, $character) {
@@ -240,7 +236,7 @@ class StudentSummary
                 ? ($correctCount / $attemptsCount) * 100
                 : 0;
 
-            $sessionStars = self::calculateSessionStars($score, (int) $stage->max_stars);
+            $sessionStars = self::calculateSessionStars($score);
             $totalStarsEarned += $sessionStars;
 
             if ($score >= 50) {
@@ -410,7 +406,7 @@ class StudentSummary
     private static function characterSummaryFromAttempts(Collection $attempts): array
     {
         $groups = $attempts
-            ->groupBy(fn($a) => optional($a->exercise)->character)
+            ->groupBy(fn($a) => self::practiceKey($a))
             ->filter();
 
         return $groups->map(function ($group, $character) {
@@ -468,10 +464,24 @@ class StudentSummary
             $correct = $group->where('is_correct', true)->count();
             $score = $count > 0 ? ($correct / $count) * 100 : 0;
 
-            $totalStarsEarned += self::calculateSessionStars($score, (int) $stage->max_stars);
+            $totalStarsEarned += self::calculateSessionStars($score);
             if ($score >= 50) $totalStagesCompleted++;
         }
 
         return [$totalStarsEarned, $totalStagesCompleted];
+    }
+
+    private static function practiceKey($attempt): ?string
+    {
+        $ex = $attempt->exercise;
+        if (!$ex) return null;
+
+        $type = strtolower($ex->character_type ?? '');
+
+        if ($type === 'math') {
+            return $attempt->math_op ?: 'math';
+        }
+
+        return $ex->character ?: null;
     }
 }

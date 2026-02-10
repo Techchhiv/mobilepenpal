@@ -169,6 +169,7 @@ class WorldController extends Controller
                     'is_correct' => !empty($attempt['is_correct']),
                     'stroke' => $attempt['stroke'] ?? null,
                     'label' => $attempt['label'] ?? null,
+                    'math_op' => $attempt['math_op'] ?? null,
                 ]);
 
                 $totalExercises++;
