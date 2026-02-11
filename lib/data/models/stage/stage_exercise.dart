@@ -67,7 +67,7 @@ class StageExercise {
       characterType: json['character_type']?.toString(),
       repeatSlot: (json['repeat_slot'] as num?)?.toInt() ?? 1,
       difficulty: json['difficulty']?.toString(),
-      mathOp: json['difficulty']?.toString(),
+      mathOp: json['math_op']?.toString(),
     );
   }
 

@@ -48,7 +48,6 @@ class MathGenerator {
 
   MathGenerator({int? seed}) : _rand = Random(seed);
 
-  /// Normalizes raw op from API/UI into: add | sub | mul | div
   static String normalizeOp(String? raw) {
     final v = (raw ?? '').trim().toLowerCase();
     switch (v) {
@@ -72,9 +71,6 @@ class MathGenerator {
     }
   }
 
-  /// Main entry
-  /// - If opKeyRaw is provided -> generate ONLY that operation (after normalize)
-  /// - If opKeyRaw is null/empty -> choose ops based on difficulty
   MathQuestion generate({
     required MathDifficulty difficulty,
     String? opKeyRaw,
@@ -90,7 +86,6 @@ class MathGenerator {
         ops: [forcedOp],
         allowZero: allowZero,
         maxTries: maxTries,
-        // easy/medium keep answers small, hard can be bigger
         forceOneDigitAnswer: difficulty != MathDifficulty.hard,
       );
     }
@@ -148,9 +143,7 @@ class MathGenerator {
       if (q != null) return q;
     }
 
-    // fallback
     return const MathQuestion(a: 1, b: 1, op: '+', opKey: 'add', answer: 2);
-    // ignore: dead_code
   }
 
   MathQuestion? _genAdd({
@@ -172,7 +165,6 @@ class MathGenerator {
     var a = _nextIntInclusive(min, 9);
     var b = _nextIntInclusive(min, 9);
 
-    // make it non-negative
     if (b > a) {
       final tmp = a;
       a = b;

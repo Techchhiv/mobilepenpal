@@ -1,17 +1,21 @@
+import 'dart:async';
+
 import 'package:audioplayers/audioplayers.dart';
 import 'package:get/get.dart';
 
 class StageAudioController extends GetxController {
   final AudioPlayer _voicePlayer = AudioPlayer();
-  final AudioPlayer _sfxPlayer = AudioPlayer(playerId: 'sfx');
+  final AudioPlayer _sfxPlayer = AudioPlayer();
 
   final audioSpeed = 0.5.obs;
   final isPlaying = false.obs;
 
-  String sfxPath(String name) => 'audios/sfx/$name.mp3';
-  bool _busy = false;
-  int _token = 0;
+  bool _voiceBusy = false;
+  int _voiceToken = 0;
   DateTime? _lastAutoPlayAt;
+
+  Future<void> _sfxQueue = Future.value();
+  String sfxPath(String name) => 'audios/sfx/$name.mp3';
 
   @override
   void onInit() {
@@ -20,7 +24,7 @@ class StageAudioController extends GetxController {
     _voicePlayer.setReleaseMode(ReleaseMode.stop);
     _sfxPlayer.setReleaseMode(ReleaseMode.stop);
 
-    // _sfxPlayer.setPlayerMode(PlayerMode.lowLatency);
+    _sfxPlayer.setPlayerMode(PlayerMode.lowLatency);
 
     _voicePlayer.onPlayerStateChanged.listen((state) {
       isPlaying.value = state == PlayerState.playing;
@@ -43,9 +47,9 @@ class StageAudioController extends GetxController {
   Future<void> playVoiceAsset(String relPath) async {
     if (relPath.trim().isEmpty) return;
 
-    final token = ++_token;
-    if (_busy) return;
-    _busy = true;
+    final token = ++_voiceToken;
+    if (_voiceBusy) return;
+    _voiceBusy = true;
 
     try {
       await _voicePlayer.stop();
@@ -54,11 +58,11 @@ class StageAudioController extends GetxController {
         await _voicePlayer.setPlaybackRate(audioSpeed.value);
       } catch (_) {}
 
-      if (token != _token) return;
+      if (token != _voiceToken) return;
 
-      await _voicePlayer.play(AssetSource(relPath), position: Duration.zero);
+      await _voicePlayer.play(AssetSource(relPath));
     } finally {
-      _busy = false;
+      _voiceBusy = false;
     }
   }
 
@@ -85,16 +89,29 @@ class StageAudioController extends GetxController {
     await playCharacter(type: type, ch: ch);
   }
 
-  Future<void> playSfx(String name) async {
-    await _sfxPlayer.stop();
-    await _sfxPlayer.play(AssetSource(sfxPath(name)), position: Duration.zero);
+  Future<void> playSfx(String name) {
+    _sfxQueue = _sfxQueue.catchError((_) {}).then((_) async {
+      try {
+        await _sfxPlayer.stop();
+        await _sfxPlayer.play(AssetSource(sfxPath(name)));
+      } on TimeoutException catch (_) {
+        try {
+          await _sfxPlayer.stop();
+        } catch (_) {}
+      } catch (_) {
+      }
+    });
+
+    return _sfxQueue;
   }
 
   Future<void> playCorrectSfx() => playSfx('correct');
   Future<void> playWrongSfx() => playSfx('incorrect');
 
   Future<void> stopVoice() => _voicePlayer.stop();
+
   Future<void> stopAll() async {
+    _voiceToken++;
     await _voicePlayer.stop();
     await _sfxPlayer.stop();
   }

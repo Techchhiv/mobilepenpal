@@ -85,15 +85,31 @@ class StageSummaryController extends GetxController
     isContinuing.value = true;
 
     try {
+      await Future.delayed(const Duration(milliseconds: 16));
+
       final levelController = Get.find<LevelController>();
+      levelController.worldId = worldId;
+      levelController.levelId = levelId;
+
       await levelController.fetchLevelDetail();
 
-      final levelRoute = RouteBuilder.build(AppRoutes.level, {
-        'worldId': worldId.toString(),
-        'levelId': levelId.toString(),
+      bool hitLevel = false;
+
+      Get.until((route) {
+        final name = route.settings.name ?? '';
+        final isLevelOnly =
+            name.contains('/level/') && !name.contains('/stage/');
+        if (isLevelOnly) hitLevel = true;
+        return isLevelOnly;
       });
 
-      Get.offNamed(levelRoute);
+      if (!hitLevel) {
+        final levelRoute = RouteBuilder.build(AppRoutes.level, {
+          'worldId': worldId.toString(),
+          'levelId': levelId.toString(),
+        });
+        Get.offAllNamed(levelRoute);
+      }
     } catch (_) {
       Get.snackbar(
         'Error',

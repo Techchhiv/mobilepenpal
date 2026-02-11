@@ -14,7 +14,8 @@ class WorldAnimationController extends GetxController
   late final AnimationController waveCtrl;
   late final AnimationController bounceCtrl;
 
-  bool _active = false;
+  bool _waveActive = false;
+  bool _bounceActive = false;
 
   @override
   void onInit() {
@@ -31,19 +32,41 @@ class WorldAnimationController extends GetxController
     );
   }
 
-  void setActive(bool active) {
-    if (_active == active) return;
-    _active = active;
+  void setWaveActive(bool active) {
+    if (_waveActive == active) return;
+    _waveActive = active;
 
     if (active) {
-      if (!waveCtrl.isAnimating) waveCtrl.repeat();
-      if (!bounceCtrl.isAnimating) bounceCtrl.repeat(reverse: true);
+      if (!waveCtrl.isAnimating) {
+        waveCtrl.repeat();
+      }
     } else {
-      if (waveCtrl.isAnimating) waveCtrl.stop();
-      if (bounceCtrl.isAnimating) bounceCtrl.stop();
+      if (waveCtrl.isAnimating) {
+        waveCtrl.stop();
+      }
       waveCtrl.value = 0;
+    }
+  }
+
+  void setBounceActive(bool active) {
+    if (_bounceActive == active) return;
+    _bounceActive = active;
+
+    if (active) {
+      if (!bounceCtrl.isAnimating) {
+        bounceCtrl.repeat(reverse: true);
+      }
+    } else {
+      if (bounceCtrl.isAnimating) {
+        bounceCtrl.stop();
+      }
       bounceCtrl.value = 0;
     }
+  }
+
+  void setActive(bool active) {
+    setWaveActive(active);
+    setBounceActive(active);
   }
 
   @override

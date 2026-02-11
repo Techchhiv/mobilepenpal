@@ -558,7 +558,7 @@ class _MonthSwitcher extends StatelessWidget {
           const SizedBox(width: 6),
           Obx(
             () => Text(
-              NumberFormatUtils.digitsByLocale(label()),
+              label().toMonthLabelByLocale(),
               style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
             ),
           ),

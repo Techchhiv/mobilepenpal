@@ -66,9 +66,8 @@ class StageDetailPage extends GetView<StageController> {
                     ),
                     child: Column(
                       children: [
-                        const SizedBox(height: 20),
                         _buildTopBar(Get.context!),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 16),
                         Obx(() {
                           final show = controller.showIllustration;
                           return AnimatedSwitcher(
@@ -85,7 +84,7 @@ class StageDetailPage extends GetView<StageController> {
                                     key: const ValueKey('illus'),
                                     children: [
                                       _buildIllustration(),
-                                      const SizedBox(height: 30),
+                                      const SizedBox(height: 16),
                                     ],
                                   )
                                 : const SizedBox(key: ValueKey('no_illus')),
@@ -168,7 +167,6 @@ class StageDetailPage extends GetView<StageController> {
 
                       const thresholds = <double>[0.33, 0.66, 1.0];
 
-                      // ✅ Use "usable width" so star centers align with progress fill
                       final usable = (w - starSize).clamp(0.0, w);
                       final centers = thresholds
                           .map((t) => (starSize / 2) + t * usable)
@@ -180,7 +178,7 @@ class StageDetailPage extends GetView<StageController> {
                             return 'assets/animated/star.json';
                           case StarState.wrong:
                             return 'assets/animated/star_red.json';
-                          case StarState.pending:
+                          // case StarState.pending:
                           default:
                             return 'assets/animated/star_border.json';
                         }
@@ -225,7 +223,6 @@ class StageDetailPage extends GetView<StageController> {
                                   child: Lottie.asset(
                                     assetFor(starStates[i]),
                                     repeat: false,
-                                    // ✅ Prevent pending from auto-playing into a "yellow" frame
                                     animate:
                                         (animIndex == i) ||
                                         (starStates[i] != StarState.pending),
@@ -274,11 +271,10 @@ class StageDetailPage extends GetView<StageController> {
         children: [
           Expanded(
             child: Obx(() {
-              // ✅ MATH: show only "៣+៦" (no extra text)
               if (controller.isMathCurrent) {
-                final raw = controller.mathPrompt.value; // e.g. "3 + 6 = ?"
-                final left = raw.split('=').first.trim(); // "3 + 6"
-                final compact = left.replaceAll(' ', ''); // "3+6"
+                final raw = controller.mathPrompt.value;
+                final left = raw.split('=').first.trim();
+                final compact = left.replaceAll(' ', '');
                 final km = NumberFormatUtils.digitsByLocale(
                   compact,
                   forceKhmer: true,
@@ -286,7 +282,7 @@ class StageDetailPage extends GetView<StageController> {
 
                 return Center(
                   child: Text(
-                    km, // "៣+៦"
+                    km,
                     style: const TextStyle(
                       fontSize: 64,
                       fontWeight: FontWeight.w900,
@@ -296,7 +292,6 @@ class StageDetailPage extends GetView<StageController> {
                 );
               }
 
-              // ===== existing code below (digits/consonants) =====
               final path = controller.anim.illustrationAssetPath.value;
               final ch = controller.selectedCharacter.value;
               final digit = NumberFormatUtils.parseSingleDigitAny(ch);
@@ -647,7 +642,7 @@ class StageDetailPage extends GetView<StageController> {
       if (forms.isEmpty) return const SizedBox.shrink();
 
       return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32),
+        padding: const EdgeInsets.symmetric(horizontal: 18),
         child: SizedBox(
           height: 64,
           child: LayoutBuilder(

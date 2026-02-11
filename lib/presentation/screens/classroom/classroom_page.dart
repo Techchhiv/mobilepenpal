@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobilepenpal/core/config/env.dart';
 import 'package:mobilepenpal/core/theme/app_colors.dart';
+import 'package:mobilepenpal/core/utils/number_format_utils.dart';
 import 'package:mobilepenpal/data/controllers/classroom/classroom_controller.dart';
 import 'package:mobilepenpal/data/models/classroom/classroom_detail.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:mobilepenpal/core/utils/report_format.dart';
 
 class ClassroomPage extends GetView<ClassroomController> {
   final int classroomId;
@@ -44,7 +46,8 @@ class ClassroomPage extends GetView<ClassroomController> {
               _sectionTitle('classmates'.tr),
               const SizedBox(height: 10),
 
-              if (loading && detail == null) ...List.generate(6, (_) => _RowShimmer()),
+              if (loading && detail == null)
+                ...List.generate(6, (_) => _RowShimmer()),
               if (!loading && err.isNotEmpty)
                 _errorBox(err, onRetry: c.fetchDetail),
               if (!loading && detail != null)
@@ -78,10 +81,7 @@ class ClassroomPage extends GetView<ClassroomController> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            msg,
-            style: const TextStyle(fontWeight: FontWeight.w700),
-          ),
+          Text(msg, style: const TextStyle(fontWeight: FontWeight.w700)),
           const SizedBox(height: 10),
           SizedBox(
             height: 40,
@@ -102,11 +102,6 @@ class _HeaderCard extends StatelessWidget {
   const _HeaderCard({required this.detail});
 
   static const Color _brand = Color(0xFF00897B);
-
-  String _fmt(DateTime d) {
-    const m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    return '${d.day} ${m[d.month - 1]} ${d.year}';
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -178,7 +173,7 @@ class _HeaderCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      '${'children'.tr}: ${detail.studentsCount}',
+                      '${'student'.tr}: ${NumberFormatUtils.intText(detail.studentsCount)}',
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -188,7 +183,7 @@ class _HeaderCard extends StatelessWidget {
                     if (enrolled != null) ...[
                       const SizedBox(height: 6),
                       Text(
-                        '${'joined'.tr}: ${_fmt(enrolled)}',
+                        '${'joined'.tr}: ${detail.enrollment?.enrolledAt?.toJoinDateLabel() ?? '—'}',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
@@ -219,11 +214,7 @@ class _HeaderCard extends StatelessWidget {
       ),
       child: Text(
         active ? 'active'.tr : 'inactive'.tr,
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w900,
-          color: fg,
-        ),
+        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: fg),
       ),
     );
   }
@@ -297,10 +288,7 @@ class _ClassmateRow extends StatelessWidget {
               s.displayName,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontWeight: FontWeight.w800,
-                fontSize: 14,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
             ),
           ),
         ],

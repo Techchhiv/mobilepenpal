@@ -14,10 +14,21 @@ class LevelCircle extends StatelessWidget {
     required this.isCurrent,
   });
 
+  bool _boolish(dynamic v) =>
+      v == true || v == 1 || v == '1' || v.toString().toLowerCase() == 'true';
+
+  double _progress01(dynamic v) {
+    final n = (v is num) ? v.toDouble() : double.tryParse(v.toString()) ?? 0.0;
+    final p = (n > 1.0) ? (n / 100.0) : n;
+    return p.clamp(0.0, 1.0);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final bool isUnlocked = level.isUnlocked == 1 || level.isUnlocked == true;
-    final double progress = (level.completionPercentage / 100.0).clamp(0.0, 1.0);
+    final bool isUnlocked = _boolish(level.isUnlocked);
+    final double progress = isUnlocked
+        ? _progress01(level.completionPercentage)
+        : 0.0;
     final bool isCompleted = progress >= 1.0;
 
     const double ring = 72;

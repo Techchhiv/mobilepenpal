@@ -274,7 +274,6 @@ class StageController extends GetxController {
 
     final ex = exercises[index];
     final t = (ex.characterType ?? '').trim().toLowerCase();
-
     if (t == 'math') {
       final key = _mathKeyFor(ex);
 
@@ -285,7 +284,6 @@ class StageController extends GetxController {
           opKeyRaw: ex.mathOp,
         );
       });
-
       mathPrompt.value = q.toPrompt(withQuestionMark: true);
       mathExpected.value = q.answer;
       currentMathOp.value = q.opKey;

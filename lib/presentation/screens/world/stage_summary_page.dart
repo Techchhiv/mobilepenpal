@@ -13,48 +13,58 @@ class StageSummaryPage extends GetView<StageSummaryController> {
     return Obx(() {
       return LoadingOverlay(
         isLoading: controller.isContinuing.value,
-        child: Scaffold(
-          body: Stack(
-            children: [
-              Positioned.fill(
-                child: Image.asset(
-                  "assets/images/backgrounds/summary_background.png",
-                  fit: BoxFit.cover,
-                ),
-              ),
+        child: PopScope(
+          canPop: false,
+          onPopInvokedWithResult: (didPop, result) {
+            if (didPop) return;
 
-              Positioned.fill(
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Color(0xFF2B7A78).withValues(alpha: 1),
-                        Color(0xFF6B9F8E).withValues(alpha: 0.8),
-                        Color(0xFF8FB99F).withValues(alpha: 0.1),
-                      ],
+            if (controller.isContinuing.value) return;
+
+            controller.goBackToLevel();
+          },
+          child: Scaffold(
+            body: Stack(
+              children: [
+                Positioned.fill(
+                  child: Image.asset(
+                    "assets/images/backgrounds/summary_background.png",
+                    fit: BoxFit.cover,
+                  ),
+                ),
+
+                Positioned.fill(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Color(0xFF2B7A78).withValues(alpha: 1),
+                          Color(0xFF6B9F8E).withValues(alpha: 0.8),
+                          Color(0xFF8FB99F).withValues(alpha: 0.1),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
 
-              SafeArea(
-                child: Column(
-                  children: [
-                    const SizedBox(height: 8),
-                    _buildTopBar(),
-                    const SizedBox(height: 24),
-                    _buildIcon(),
-                    const SizedBox(height: 24),
-                    _buildScore(),
-                    Expanded(child: _buildStarDisplay()),
-                    _buildBottomButtons(),
-                    const SizedBox(height: 8),
-                  ],
+                SafeArea(
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 8),
+                      _buildTopBar(),
+                      const SizedBox(height: 24),
+                      _buildIcon(),
+                      const SizedBox(height: 24),
+                      _buildScore(),
+                      Expanded(child: _buildStarDisplay()),
+                      _buildBottomButtons(),
+                      const SizedBox(height: 8),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       );
@@ -232,7 +242,7 @@ class StageSummaryPage extends GetView<StageSummaryController> {
 
     if (stars >= 3 || accuracy >= 0.999) return 'summary_perfect';
 
-    if (stars == 2 || accuracy >= 0.70) return 'summary_great';
+    if (stars == 2 || accuracy >= 0.50) return 'summary_great';
 
     return 'summary_good_try';
   }

@@ -99,7 +99,7 @@ class _WorldMapState extends State<WorldMap> {
     for (int i = 0; i < levels.length; i++) {
       final level = levels[i];
       final bool isCompleted = level.completionPercentage >= 100;
-      final bool isUnlocked = level.isUnlocked == 1 || level.isUnlocked == true;
+      final bool isUnlocked = level.isUnlocked || level.isUnlocked == true;
 
       if (isUnlocked && !isCompleted) return i;
     }
@@ -163,7 +163,7 @@ class _WorldMapState extends State<WorldMap> {
   }
 
   Future<void> _onLevelTap(WorldLevel level) async {
-    final bool isUnlocked = level.isUnlocked == 1 || level.isUnlocked == true;
+    final bool isUnlocked = level.isUnlocked || level.isUnlocked == true;
 
     if (!isUnlocked) {
       _showSnackBar('level_locked'.tr, Colors.orange);
@@ -213,13 +213,11 @@ class _WorldMapState extends State<WorldMap> {
       screenWidth: screenW,
     );
 
-    // ✅ Tile count should be based on the content you actually need for levels
     final tileCount = _tileCountForHeight(
       contentHeight: neededH,
       tileHeight: tileH,
     );
 
-    // ✅ But the overall content must still fill the viewport (no green gap)
     final viewportH = MediaQuery.of(context).size.height;
     final contentH = max(tileCount * tileH, viewportH);
 
@@ -300,6 +298,11 @@ class _WorldMapState extends State<WorldMap> {
   }) {
     if (levels.isEmpty) return const SizedBox();
 
+    bool isUnlockedOf(WorldLevel l) => l.isUnlocked == true;
+
+    double progress01Of(WorldLevel l) =>
+        (l.completionPercentage / 100.0).clamp(0.0, 1.0);
+
     final currentIdx = _findCurrentLevelIndex(levels);
 
     final anim = Get.isRegistered<WorldAnimationController>(tag: _animTag)
@@ -307,14 +310,20 @@ class _WorldMapState extends State<WorldMap> {
         : Get.put(WorldAnimationController(), tag: _animTag);
 
     final currentLevel = levels[currentIdx];
-    final bool currentUnlocked =
-        currentLevel.isUnlocked == 1 || currentLevel.isUnlocked == true;
-    final bool currentCompleted = (currentLevel.completionPercentage) >= 100;
+    final currentUnlocked = isUnlockedOf(currentLevel);
+    final currentCompleted = progress01Of(currentLevel) >= 1.0;
+    final shouldBounceCurrent = currentUnlocked && !currentCompleted;
 
-    final bool shouldAnimateCurrent = currentUnlocked && !currentCompleted;
+    final anyWave = levels.any((l) {
+      final unlocked = isUnlockedOf(l);
+      final completed = progress01Of(l) >= 1.0;
+      return unlocked && !completed;
+    });
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) anim.setActive(shouldAnimateCurrent);
+      if (!mounted) return;
+      anim.setWaveActive(anyWave);
+      anim.setBounceActive(shouldBounceCurrent);
     });
 
     final spacing = _scaled(_levelSpacingDesign, screenWidth);
@@ -361,7 +370,7 @@ class LevelCircle extends StatelessWidget {
     required this.isCurrent,
   });
 
-  bool get _isUnlocked => level.isUnlocked == 1 || level.isUnlocked == true;
+  bool get _isUnlocked => level.isUnlocked || level.isUnlocked == true;
 
   double get _progress =>
       ((level.completionPercentage) / 100.0).clamp(0.0, 1.0);
@@ -388,6 +397,8 @@ class LevelCircle extends StatelessWidget {
     final Color waveColor = _isCompleted
         ? Colors.green.shade600
         : Colors.blue.shade600;
+
+    final bool animateWave = _isUnlocked && !_isCompleted;
 
     Widget body = SizedBox(
       width: ring,
@@ -422,7 +433,7 @@ class LevelCircle extends StatelessWidget {
                     Positioned.fill(
                       child: CustomPaint(
                         painter: _WaveCirclePainter(
-                          wave: animateThisOne ? anim.waveCtrl : null,
+                          wave: animateWave ? anim.waveCtrl : null,
                           progress: _isUnlocked ? _progress : 0.0,
                           locked: !_isUnlocked,
                           completed: _isCompleted,
@@ -675,7 +686,6 @@ class _WaveCirclePainter extends CustomPainter {
       canvas.restore();
     }
 
-    // Border
     final borderPaint = Paint()
       ..color = borderColor
       ..style = PaintingStyle.stroke
