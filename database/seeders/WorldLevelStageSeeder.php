@@ -11,6 +11,7 @@ use App\Models\Level;
 use App\Models\Stage;
 use App\Models\Exercise;
 use App\Models\StageExercise;
+use Illuminate\Support\Facades\Log;
 
 class WorldLevelStageSeeder extends Seeder
 {
@@ -104,24 +105,21 @@ class WorldLevelStageSeeder extends Seeder
                 'ោះ'
             ];
 
-            $halfConsonants = array_slice($consonants, 0, (int) ceil(count($consonants) / 2));
+            $halfConsonants = array_slice($consonants, 0, 10);
 
-            // -----------------------
-            // Worlds to seed
-            // -----------------------
             $worldDefs = [
-                // Public (general users)
                 [
                     'key' => 'public_consonants_half',
                     'audience' => 'public',
                     'order_index' => 1,
-                    'name_km' => 'ព្យញ្ជនៈ (ផ្នែក ១)',
-                    'name_en' => 'Consonants (Part 1)',
-                    'desc_km' => 'រៀនគូរព្យញ្ជនៈខ្មែរ (កន្លះដំបូង)',
-                    'desc_en' => 'Learn Khmer consonants (first half)',
+                    'name_km' => 'ព្យញ្ជនៈ',
+                    'name_en' => 'Consonants',
+                    'desc_km' => 'រៀនគូរព្យញ្ជនៈខ្មែរ',
+                    'desc_en' => 'Learn Khmer consonants',
                     'chars' => $halfConsonants,
                     'character_type' => 'consonants',
                     'chunk' => 5,
+                    'is_unlocked_by_default'=> true,
                 ],
                 [
                     'key' => 'public_digits',
@@ -134,31 +132,32 @@ class WorldLevelStageSeeder extends Seeder
                     'chars' => $digits,
                     'character_type' => 'digits',
                     'chunk' => 5,
+                    'is_unlocked_by_default'=> true,
                 ],
-                [
-                    'key' => 'public_math',
-                    'audience' => 'public',
-                    'order_index' => 3, // adjust to your ordering
-                    'name_km' => 'គណិតវិទ្យា',
-                    'name_en' => 'Math',
-                    'desc_km' => 'ហាត់គណិតវិទ្យា (បូក ដក គុណ ចែក)',
-                    'desc_en' => 'Practice math (add, sub, mul, div)',
-                    'chars' => [],                 // not used for math
-                    'character_type' => 'math',
-                    'chunk' => 5,
-                ],
-                [
-                    'key' => 'schools_math',
-                    'audience' => 'schools',
-                    'order_index' => 7, // adjust
-                    'name_km' => 'គណិតវិទ្យា',
-                    'name_en' => 'Math',
-                    'desc_km' => 'ហាត់គណិតវិទ្យា (បូក ដក គុណ ចែក)',
-                    'desc_en' => 'Practice math (add, sub, mul, div)',
-                    'chars' => [],
-                    'character_type' => 'math',
-                    'chunk' => 5,
-                ],
+                // [
+                //     'key' => 'public_math',
+                //     'audience' => 'public',
+                //     'order_index' => 3,
+                //     'name_km' => 'គណិតវិទ្យា',
+                //     'name_en' => 'Math',
+                //     'desc_km' => 'ហាត់គណិតវិទ្យា (បូក ដក គុណ ចែក)',
+                //     'desc_en' => 'Practice math (add, sub, mul, div)',
+                //     'chars' => [],
+                //     'character_type' => 'math',
+                //     'chunk' => 5,
+                // ],
+                // [
+                //     'key' => 'schools_math',
+                //     'audience' => 'schools',
+                //     'order_index' => 7,
+                //     'name_km' => 'គណិតវិទ្យា',
+                //     'name_en' => 'Math',
+                //     'desc_km' => 'ហាត់គណិតវិទ្យា (បូក ដក គុណ ចែក)',
+                //     'desc_en' => 'Practice math (add, sub, mul, div)',
+                //     'chars' => [],
+                //     'character_type' => 'math',
+                //     'chunk' => 5,
+                // ],
 
                 // Schools (all school accounts can see)
                 [
@@ -219,6 +218,7 @@ class WorldLevelStageSeeder extends Seeder
                     nameEn: $def['name_en'],
                     descKm: $def['desc_km'],
                     descEn: $def['desc_en'],
+                    unlocked: $def['is_unlocked_by_default'] ?? false
                 );
 
                 $this->seedWorldContent(
@@ -246,7 +246,6 @@ class WorldLevelStageSeeder extends Seeder
         $this->safeDelete('stages');
         $this->safeDelete('levels');
 
-        // pivot before worlds
         $this->safeDelete('school_worlds');
         $this->safeDelete('worlds');
     }
@@ -264,14 +263,15 @@ class WorldLevelStageSeeder extends Seeder
         string $nameKm,
         string $nameEn,
         ?string $descKm,
-        ?string $descEn
+        ?string $descEn,
+        ?bool $unlocked = false
     ): World {
         $data = [
             'school_id' => null,
             'audience' => $audience,
             'order_index' => $orderIndex,
             'is_active' => true,
-            'is_unlocked_by_default' => false,
+            'is_unlocked_by_default' => $unlocked,
             'name' => $nameKm,
             'description' => $descKm,
         ];
@@ -353,21 +353,32 @@ class WorldLevelStageSeeder extends Seeder
         $bank = [];
 
         foreach ($characters as $character) {
-            // Avoid duplicates when same char set appears in multiple worlds
-            $bank[$character] = Exercise::updateOrCreate(
-                [
-                    'character' => $character,
-                    'character_type' => $characterType,
-                ],
-                [
+            $existing = Exercise::where('character_type', $characterType)
+                ->whereRaw('BINARY `character` = ?', [$character])
+                ->first();
+
+            if ($existing) {
+                $existing->update([
                     'prompt' => "Draw: {$character}",
                     'question' => "Trace: {$character}",
                     'options' => json_encode([$character], JSON_UNESCAPED_UNICODE),
                     'instruction' => "Follow the stroke order to draw {$character}",
                     'hint' => "Follow the guided path",
                     'example' => $this->buildExampleForCharacter($character, $characterType),
-                ]
-            );
+                ]);
+                $bank[$character] = $existing;
+            } else {
+                $bank[$character] = Exercise::create([
+                    'character' => $character,
+                    'character_type' => $characterType,
+                    'prompt' => "Draw: {$character}",
+                    'question' => "Trace: {$character}",
+                    'options' => json_encode([$character], JSON_UNESCAPED_UNICODE),
+                    'instruction' => "Follow the stroke order to draw {$character}",
+                    'hint' => "Follow the guided path",
+                    'example' => $this->buildExampleForCharacter($character, $characterType),
+                ]);
+            }
         }
 
         return $bank;
@@ -378,10 +389,8 @@ class WorldLevelStageSeeder extends Seeder
         $difficulties = ['easy', 'medium', 'hard'];
         $ops = ['add', 'sub', 'mul', 'div'];
 
-        // bank[difficulty][op] = Exercise
         $bank = $this->createMathExerciseBank($difficulties, $ops);
 
-        // 1 level only
         $levelData = [
             'world_id' => $world->id,
             'name' => 'គណិតវិទ្យា',
@@ -426,8 +435,6 @@ class WorldLevelStageSeeder extends Seeder
 
             $stage = Stage::create($stageData);
 
-            // Attach 4 ops (add/sub/mul/div) for this difficulty
-            // Pick repeat_count however you want (example: 3 each => 12 questions total)
             $order = 1;
             foreach ($ops as $op) {
                 $this->attachExerciseToStage(
@@ -482,19 +489,6 @@ class WorldLevelStageSeeder extends Seeder
 
         return $bank;
     }
-
-
-    private function mathOpSymbol(string $op): string
-    {
-        return match ($op) {
-            'add' => '+',
-            'sub' => '-',
-            'mul' => '×',
-            'div' => '÷',
-            default => '?',
-        };
-    }
-
 
 
     private function attachExerciseToStage(Stage $stage, Exercise $exercise, int $orderIndex = 1, int $repeatCount = 3): void
