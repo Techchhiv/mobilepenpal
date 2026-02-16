@@ -17,7 +17,7 @@ class PinWidget extends StatelessWidget {
   final bool returnToSettings;
 
   const PinWidget({
-    Key? key,
+    super.key,
     required this.mode,
     this.homeService,
     this.title,
@@ -27,7 +27,7 @@ class PinWidget extends StatelessWidget {
     this.autoCloseOnSuccess = true,
     this.onSuccess,
     this.returnToSettings = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -140,7 +140,10 @@ class PinWidget extends StatelessWidget {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: filled ? Colors.white : Colors.transparent,
-            border: Border.all(color: Colors.white.withValues(alpha: 0.6), width: 2),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.6),
+              width: 2,
+            ),
           ),
         );
       }),
@@ -164,7 +167,9 @@ class PinWidget extends StatelessWidget {
         alignment: Alignment.center,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: pressed ? Colors.white.withValues(alpha: 0.28) : Colors.transparent,
+          color: pressed
+              ? Colors.white.withValues(alpha: 0.28)
+              : Colors.transparent,
           border: showBorder
               ? Border.all(color: Colors.white54, width: 1.5)
               : null,

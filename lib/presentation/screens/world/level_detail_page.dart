@@ -7,7 +7,6 @@ import 'package:mobilepenpal/core/theme/app_colors.dart';
 import 'package:mobilepenpal/core/utils/number_format_utils.dart';
 import 'package:mobilepenpal/data/controllers/world/level_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_controller.dart';
-import 'package:mobilepenpal/data/controllers/world/world_controller.dart';
 import 'package:mobilepenpal/data/models/level/level_stage.dart';
 import 'package:mobilepenpal/presentation/routes/app_routes.dart';
 import 'package:mobilepenpal/presentation/widgets/app_snackbar.dart';
@@ -88,17 +87,17 @@ class LevelDetailPage extends GetView<LevelController> {
           children: [
             Expanded(
               child: InkWell(
-                onTap: () async {
-                  final worldController = Get.find<WorldController>();
-
-                  if (controller.worldId > 0) {
-                    await worldController.fetchWorldById(controller.worldId);
+                onTap: () {
+                  final canPop = Get.key.currentState?.canPop() == true;
+                  if (canPop) {
+                    Get.back();
+                  } else if (controller.worldId > 0) {
                     final worldRoute = RouteBuilder.build(AppRoutes.world, {
                       'id': controller.worldId.toString(),
                     });
                     Get.offNamed(worldRoute);
                   } else {
-                    Get.back();
+                    Get.offNamed(AppRoutes.home);
                   }
                 },
                 child: Padding(
@@ -131,11 +130,12 @@ class LevelDetailPage extends GetView<LevelController> {
   }
 
   Widget _buildBodyContent() {
-    if (controller.isLoading.value) {
+    final level = controller.currentLevel.value;
+
+    if (level == null && controller.isLoading.value) {
       return const SizedBox.shrink();
     }
 
-    final level = controller.currentLevel.value;
     if (level == null) {
       return Center(
         child: Column(

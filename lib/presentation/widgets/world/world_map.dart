@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import 'package:mobilepenpal/core/network/route_builder.dart';
 import 'package:mobilepenpal/core/theme/app_colors.dart';
 import 'package:mobilepenpal/data/controllers/world/level_controller.dart';
-import 'package:mobilepenpal/data/controllers/world/world_animation_controller.dart';
+import 'package:mobilepenpal/data/controllers/world/world_controller.dart';
 import 'package:mobilepenpal/data/models/world/world.dart';
 import 'package:mobilepenpal/data/models/world/world_level.dart';
 import 'package:mobilepenpal/presentation/routes/app_routes.dart';
@@ -212,25 +212,30 @@ class _WorldMapState extends State<WorldMap> with TickerProviderStateMixin {
       return;
     }
 
+    final worldController = Get.find<WorldController>();
     final levelController = Get.find<LevelController>();
     levelController.worldId = widget.world.id;
     levelController.levelId = level.id;
 
-    await levelController.fetchLevelDetail();
+    worldController.isNavigatingToLevel.value = true;
+    try {
+      await levelController.fetchLevelDetail();
 
-    final currentLevel = levelController.currentLevel.value;
-    if (currentLevel == null || currentLevel.id != level.id) {
-      _showSnackBar('Failed to load level', Colors.red);
-      return;
+      final currentLevel = levelController.currentLevel.value;
+      if (currentLevel == null || currentLevel.id != level.id) {
+        _showSnackBar('Failed to load level', Colors.red);
+        return;
+      }
+
+      final route = RouteBuilder.build(AppRoutes.level, {
+        'worldId': widget.world.id.toString(),
+        'levelId': level.id.toString(),
+      });
+
+      Get.toNamed(route);
+    } finally {
+      worldController.isNavigatingToLevel.value = false;
     }
-
-    final route = RouteBuilder.build(AppRoutes.level, {
-      'worldId': widget.world.id.toString(),
-      'levelId': level.id.toString(),
-    });
-
-    await Future.delayed(Duration.zero);
-    Get.toNamed(route);
   }
 
   void _showSnackBar(String message, Color bg) {

@@ -48,19 +48,19 @@ class _LoadingModalState extends State<LoadingModal> {
         height: MediaQuery.of(context).size.height,
         color: AppColors.primary.withValues(alpha: widget.opacity),
         child: Center(
-          child: Container(
+          child: SizedBox(
             width: 140,
             height: 140,
             // decoration: BoxDecoration(
-              // color: widget.backgroundColor,
-              // borderRadius: BorderRadius.circular(16),
-              // boxShadow: [
-              //   BoxShadow(
-              //     color: Colors.black.withValues(alpha: 0.3),
-              //     blurRadius: 20,
-              //     offset: const Offset(0, 8),
-              //   ),
-              // ],
+            // color: widget.backgroundColor,
+            // borderRadius: BorderRadius.circular(16),
+            // boxShadow: [
+            //   BoxShadow(
+            //     color: Colors.black.withValues(alpha: 0.3),
+            //     blurRadius: 20,
+            //     offset: const Offset(0, 8),
+            //   ),
+            // ],
             // ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -85,7 +85,9 @@ class _LoadingModalState extends State<LoadingModal> {
                     height: 50,
                     child: CircularProgressIndicator(
                       strokeWidth: 4,
-                      valueColor: AlwaysStoppedAnimation<Color>(widget.loadingColor),
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        widget.loadingColor,
+                      ),
                     ),
                   ),
                 const SizedBox(height: 16),

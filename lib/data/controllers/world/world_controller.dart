@@ -8,10 +8,10 @@ class WorldController extends GetxController {
   final WorldService _worldService = WorldService();
 
   var isLoading = false.obs;
+  var isNavigatingToLevel = false.obs;
   var currentWorld = Rxn<World>();
   var worldsList = <World>[].obs;
   var levelsList = <WorldLevel>[].obs;
-
 
   Future<void> fetchWorlds() async {
     isLoading.value = true;

@@ -10,14 +10,14 @@ class LoadingStatus extends StatelessWidget {
   final VoidCallback? onButtonPressed;
 
   const LoadingStatus({
-    Key? key,
+    super.key,
     required this.isLoading,
     required this.isSuccess,
     this.loadingText,
     this.successText,
     this.buttonText,
     this.onButtonPressed,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -11,7 +11,7 @@ import 'package:mobilepenpal/core/utils/report_format.dart';
 class ClassroomPage extends GetView<ClassroomController> {
   final int classroomId;
 
-  ClassroomPage({super.key, required this.classroomId});
+  const ClassroomPage({super.key, required this.classroomId});
 
   static const Color _brand = Color(0xFF00897B);
 

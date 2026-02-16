@@ -63,7 +63,7 @@ class StageController extends GetxController {
 
   final attempts = <Map<String, dynamic>>[].obs;
 
-  final _strokesDb = Rxn<Map<String, dynamic>>();
+  static Map<String, dynamic>? _strokesDbCache;
 
   late final StageAnimationController anim;
   bool _ownsAnim = false;
@@ -183,12 +183,12 @@ class StageController extends GetxController {
     _cancelPredictIfAny();
     audio.stopAll();
 
-    // if (_ownsAnim && Get.isRegistered<StageAnimationController>()) {
-    //   Get.delete<StageAnimationController>();
-    // }
-    // if (_ownsAudio && Get.isRegistered<StageAudioController>()) {
-    //   Get.delete<StageAudioController>();
-    // }
+    if (_ownsAnim && Get.isRegistered<StageAnimationController>()) {
+      Get.delete<StageAnimationController>();
+    }
+    if (_ownsAudio && Get.isRegistered<StageAudioController>()) {
+      Get.delete<StageAudioController>();
+    }
 
     super.onClose();
   }
@@ -770,14 +770,14 @@ class StageController extends GetxController {
   }
 
   Future<void> loadStrokeDb() async {
-    if (_strokesDb.value != null) return;
+    if (_strokesDbCache != null) return;
 
     final raw = await rootBundle.loadString('assets/strokes/strokes.json');
-    _strokesDb.value = jsonDecode(raw) as Map<String, dynamic>;
+    _strokesDbCache = jsonDecode(raw) as Map<String, dynamic>;
   }
 
   void setGuideForCharacter(String ch) {
-    final db = _strokesDb.value;
+    final db = _strokesDbCache;
     final items = db?['items'] as Map<String, dynamic>?;
 
     if (isMathCurrent) {

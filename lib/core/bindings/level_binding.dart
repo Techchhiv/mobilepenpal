@@ -1,5 +1,4 @@
 import 'package:get/get.dart';
-import 'package:mobilepenpal/data/controllers/world/level_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_controller.dart';
 
 class LevelBinding implements Bindings {

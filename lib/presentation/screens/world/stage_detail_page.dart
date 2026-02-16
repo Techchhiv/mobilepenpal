@@ -1002,7 +1002,7 @@ class StageDetailPage extends GetView<StageController> {
                                     'levelId': controller.levelId.toString(),
                                   });
 
-                              Get.offNamed(levelRoute);
+                              Get.offAllNamed(levelRoute);
                             } finally {
                               controller.isSubmitting.value = false;
                             }

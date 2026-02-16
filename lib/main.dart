@@ -23,7 +23,7 @@ void main() async {
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
-  
+
   await GetStorage.init();
 
   const secure = FlutterSecureStorage();
@@ -49,7 +49,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
 
       // ========= Transition ==========
-      defaultTransition: Transition.cupertinoDialog,
+      defaultTransition: Transition.cupertino,
       transitionDuration: Duration(milliseconds: 250),
 
       // ====== Message ======

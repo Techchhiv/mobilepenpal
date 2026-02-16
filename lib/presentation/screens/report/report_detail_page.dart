@@ -1,7 +1,6 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:mobilepenpal/core/localization/locale_controller.dart';
 import 'package:mobilepenpal/core/utils/number_format_utils.dart';
 import 'package:mobilepenpal/core/utils/report_format.dart';
 import 'package:shimmer/shimmer.dart';
@@ -328,7 +327,7 @@ class ReportDetailPage extends StatelessWidget {
                               CharacterTypeFilter.vowelIndependent,
                               CharacterTypeFilter.vowelDependent,
                               CharacterTypeFilter.digit,
-                              CharacterTypeFilter.math
+                              CharacterTypeFilter.math,
                             ]
                             .map(
                               (v) => PopupMenuItem(

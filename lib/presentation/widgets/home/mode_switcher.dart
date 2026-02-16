@@ -7,10 +7,10 @@ class ModeSwitcher extends StatelessWidget {
   final Function(String) onModeChanged;
 
   const ModeSwitcher({
-    Key? key,
+    super.key,
     required this.currentMode,
     required this.onModeChanged,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

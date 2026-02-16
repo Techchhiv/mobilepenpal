@@ -39,7 +39,7 @@ class Student {
     this.updatedAt,
   });
 
-  static String? _s(dynamic v) => v == null ? null : v.toString();
+  static String? _s(dynamic v) => v?.toString();
   static int? _i(dynamic v) =>
       v == null ? null : (v is int ? v : int.tryParse(v.toString()));
 

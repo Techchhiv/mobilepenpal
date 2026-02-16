@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:mobilepenpal/data/controllers/world/level_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/world_controller.dart';
 import 'package:mobilepenpal/data/models/world/world.dart';
 import 'package:mobilepenpal/presentation/widgets/loading_overly.dart';
@@ -12,11 +11,13 @@ class WorldDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final LevelController levelController = Get.find<LevelController>();
+    final WorldController worldController = Get.find<WorldController>();
     return Scaffold(
       body: Obx(
         () => LoadingOverlay(
-          isLoading: levelController.isLoading.value,
+          isLoading:
+              worldController.isLoading.value ||
+              worldController.isNavigatingToLevel.value,
           child: _WorldDetailContent(),
         ),
       ),
@@ -34,27 +35,24 @@ class _WorldDetailContent extends StatelessWidget {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final current = worldController.currentWorld.value;
-      if (current == null || current.id != worldId) {
+      if (worldId > 0 && (current == null || current.id != worldId)) {
         worldController.fetchWorldById(worldId);
       }
     });
 
     return Obx(() {
-      if (worldController.isLoading.value) {
-        return _buildLoadingState();
-      }
-
       final world = worldController.currentWorld.value;
-      if (world == null) {
-        return _buildErrorState(worldId);
+
+      if (world != null) {
+        return _buildSuccessState(world);
       }
 
-      return _buildSuccessState(world);
-    });
-  }
+      if (worldController.isLoading.value) {
+        return const SizedBox.shrink();
+      }
 
-  Widget _buildLoadingState() {
-    return const Center(child: CircularProgressIndicator());
+      return _buildErrorState(worldId);
+    });
   }
 
   Widget _buildErrorState(int worldId) {

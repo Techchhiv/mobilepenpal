@@ -15,7 +15,7 @@ class CourseCard extends StatelessWidget {
   final bool isLocked;
 
   const CourseCard({
-    Key? key,
+    super.key,
     this.courseTitle = '',
     this.courseSubtitle = '',
     this.badgeText = '',
@@ -27,7 +27,7 @@ class CourseCard extends StatelessWidget {
     this.badgeColor = const Color(0xFFFF9800),
     this.isLoading = false,
     this.isLocked = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -255,7 +255,6 @@ class CourseCard extends StatelessWidget {
           //     borderRadius: BorderRadius.circular(999),
           //   ),
           // ),
-
           const SizedBox(height: 12),
 
           Container(

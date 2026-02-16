@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobilepenpal/core/localization/locale_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/world_controller.dart';
+import 'package:mobilepenpal/presentation/routes/app_routes.dart';
 
 class WorldHeader extends StatelessWidget {
   const WorldHeader({super.key});
@@ -81,7 +82,14 @@ class WorldHeader extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(10),
-        onTap: () => Get.offAllNamed('/home'),
+        onTap: () {
+          final canPop = Get.key.currentState?.canPop() == true;
+          if (canPop) {
+            Get.back();
+          } else {
+            Get.offAllNamed(AppRoutes.home);
+          }
+        },
         child: const Padding(
           padding: EdgeInsets.all(6),
           child: Icon(Icons.arrow_back, color: Colors.white, size: 24),

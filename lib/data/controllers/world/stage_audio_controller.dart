@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:get/get.dart';
 
 class StageAudioController extends GetxController {
@@ -15,7 +17,6 @@ class StageAudioController extends GetxController {
   DateTime? _lastAutoPlayAt;
 
   Future<void> _sfxQueue = Future.value();
-  String sfxPath(String name) => 'audios/sfx/$name.mp3';
 
   @override
   void onInit() {
@@ -41,7 +42,7 @@ class StageAudioController extends GetxController {
   String assetPathForCharacter({required String type, required String ch}) {
     final t = type.trim().toLowerCase();
     final c = ch.trim();
-    return 'audios/$t/$c.mp3';
+    return 'assets/audios/$t/$c.mp3';
   }
 
   Future<void> playVoiceAsset(String relPath) async {
@@ -60,7 +61,10 @@ class StageAudioController extends GetxController {
 
       if (token != _voiceToken) return;
 
-      await _voicePlayer.play(AssetSource(relPath));
+      final data = await rootBundle.load(relPath);
+      await _voicePlayer.play(BytesSource(data.buffer.asUint8List()));
+    } catch (e) {
+      debugPrint('[StageAudio] Failed to play "$relPath": $e');
     } finally {
       _voiceBusy = false;
     }
@@ -93,13 +97,13 @@ class StageAudioController extends GetxController {
     _sfxQueue = _sfxQueue.catchError((_) {}).then((_) async {
       try {
         await _sfxPlayer.stop();
-        await _sfxPlayer.play(AssetSource(sfxPath(name)));
+        final data = await rootBundle.load('assets/audios/sfx/$name.mp3');
+        await _sfxPlayer.play(BytesSource(data.buffer.asUint8List()));
       } on TimeoutException catch (_) {
         try {
           await _sfxPlayer.stop();
         } catch (_) {}
-      } catch (_) {
-      }
+      } catch (_) {}
     });
 
     return _sfxQueue;
@@ -108,11 +112,19 @@ class StageAudioController extends GetxController {
   Future<void> playCorrectSfx() => playSfx('correct');
   Future<void> playWrongSfx() => playSfx('incorrect');
 
-  Future<void> stopVoice() => _voicePlayer.stop();
+  Future<void> stopVoice() async {
+    try {
+      await _voicePlayer.stop();
+    } catch (_) {}
+  }
 
   Future<void> stopAll() async {
     _voiceToken++;
-    await _voicePlayer.stop();
-    await _sfxPlayer.stop();
+    try {
+      await _voicePlayer.stop();
+    } catch (_) {}
+    try {
+      await _sfxPlayer.stop();
+    } catch (_) {}
   }
 }
