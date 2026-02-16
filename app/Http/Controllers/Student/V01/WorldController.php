@@ -211,6 +211,7 @@ class WorldController extends Controller
                 'total_questions'  => $progressResult['total_exercises'] ?? 0,
                 'is_new_best'      => $progressResult['is_new_best'] ?? false,
                 'next_stage_id'    => $progressResult['next_stage_id'] ?? null,
+                'is_last'    => $progressResult['is_last'] ?? false,
             ];
         });
 

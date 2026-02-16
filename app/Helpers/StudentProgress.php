@@ -63,6 +63,20 @@ class StudentProgress
                 $stageProgress->refresh();
             }
 
+            $hasNextInSameLevel = Stage::query()
+                ->where('level_id', $stage->level_id)
+                ->where('is_active', true)
+                ->where(function ($q) use ($stage) {
+                    $q->where('order_index', '>', $stage->order_index)
+                        ->orWhere(function ($qq) use ($stage) {
+                            $qq->where('order_index', '=', $stage->order_index)
+                                ->where('id', '>', $stage->id);
+                        });
+                })
+                ->exists();
+
+            $isLast = !$hasNextInSameLevel;
+
             $nextStageId = $this->checkAndUnlockNextContent($studentId, $stage);
 
             return [
@@ -70,6 +84,7 @@ class StudentProgress
                 'correct_attempts' => $correctAttempts,
                 'total_exercises' => $totalExercises,
                 'next_stage_id' => $nextStageId,
+                'is_last' => $isLast,
             ];
         });
     }
