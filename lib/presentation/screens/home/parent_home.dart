@@ -45,26 +45,37 @@ class ParentHome extends StatelessWidget {
                 onRefresh: () async {
                   await homeController.refreshHome();
                 },
-                child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Obx(() {
-                        final c = Get.find<HomeController>();
-                        if (!c.hasSchool) return const SizedBox.shrink();
-
-                        return Column(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    return SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(
+                        parent: BouncingScrollPhysics(),
+                      ),
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          minHeight: constraints.maxHeight,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildClassroomSection(),
+                            Obx(() {
+                              final c = Get.find<HomeController>();
+                              if (!c.hasSchool) return const SizedBox.shrink();
+
+                              return Column(
+                                children: [
+                                  _buildClassroomSection(),
+                                  const SizedBox(height: 24),
+                                ],
+                              );
+                            }),
+                            ParentSummaryCard(homeController: homeController),
                             const SizedBox(height: 24),
                           ],
-                        );
-                      }),
-                      ParentSummaryCard(homeController: homeController),
-                      const SizedBox(height: 24),
-                    ],
-                  ),
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ),
             ),
@@ -128,7 +139,6 @@ class ParentHome extends StatelessWidget {
       Widget body;
 
       if (classroom == null) {
-        // No cached data yet → shimmer only while loading
         if (loading) {
           body = _ClassroomShimmerCard();
         } else {

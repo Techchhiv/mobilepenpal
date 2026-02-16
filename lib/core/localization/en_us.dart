@@ -276,6 +276,8 @@ final Map<String, String> enUS = {
   'children': 'children',
   'classmates': 'Classmates',
   'no_classmates': 'No classmates found',
+  "no_course_available": "No course available",
+  "pull_down_to_refresh": "Pull down to refresh",
 
   // ===== Course & Progress =====
   'my_courses': 'My Courses',

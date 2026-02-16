@@ -1,15 +1,16 @@
-import 'package:flutter/animation.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class WorldAnimationController extends GetxController
     with GetTickerProviderStateMixin {
-  int waveDurationMs = 1600; // smaller = faster wave
-  int bounceDurationMs = 650; // smaller = faster bounce
-  double bounceHeight = 8.0; // how high it bounces
+  int waveDurationMs = 1600;
+  int bounceDurationMs = 650;
 
-  double waveAmplitudeFactor = 0.06; // relative to circle height
-  double waveAmplitudeMin = 2.0; // minimum amplitude
-  double waveWavelengthFactor = 0.95; // relative to circle width
+  double bounceHeight = 8.0;
+
+  double waveAmplitudeFactor = 0.06;
+  double waveAmplitudeMin = 2.0;
+  double waveWavelengthFactor = 0.95;
 
   late final AnimationController waveCtrl;
   late final AnimationController bounceCtrl;
@@ -33,33 +34,23 @@ class WorldAnimationController extends GetxController
   }
 
   void setWaveActive(bool active) {
-    if (_waveActive == active) return;
     _waveActive = active;
 
     if (active) {
-      if (!waveCtrl.isAnimating) {
-        waveCtrl.repeat();
-      }
+      waveCtrl.repeat();
     } else {
-      if (waveCtrl.isAnimating) {
-        waveCtrl.stop();
-      }
+      waveCtrl.stop();
       waveCtrl.value = 0;
     }
   }
 
   void setBounceActive(bool active) {
-    if (_bounceActive == active) return;
     _bounceActive = active;
 
     if (active) {
-      if (!bounceCtrl.isAnimating) {
-        bounceCtrl.repeat(reverse: true);
-      }
+      bounceCtrl.repeat(reverse: true);
     } else {
-      if (bounceCtrl.isAnimating) {
-        bounceCtrl.stop();
-      }
+      bounceCtrl.stop();
       bounceCtrl.value = 0;
     }
   }

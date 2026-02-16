@@ -17,6 +17,7 @@ class StageSummaryController extends GetxController
   late final int correctAnswers;
   late final int totalQuestions;
   late final int? nextStageId;
+  late final bool isLast;
 
   final isContinuing = false.obs;
   late final List<AnimationController> starControllers;
@@ -36,6 +37,7 @@ class StageSummaryController extends GetxController
     starsEarned = (summary['stars_earned'] as int?) ?? 0;
     correctAnswers = (summary['correct_answers'] as int?) ?? 0;
     totalQuestions = (summary['total_questions'] as int?) ?? 0;
+    isLast = (summary['is_last'] as bool?) ?? false;
 
     final rawNext = summary['next_stage_id'];
     if (rawNext is int) {
@@ -108,7 +110,7 @@ class StageSummaryController extends GetxController
           'worldId': worldId.toString(),
           'levelId': levelId.toString(),
         });
-        Get.offAllNamed(levelRoute);
+        Get.offNamed(levelRoute);
       }
     } catch (_) {
       Get.snackbar(
@@ -141,33 +143,8 @@ class StageSummaryController extends GetxController
   Future<void> continueNext() async {
     if (isContinuing.value) return;
 
-    if (nextStageId != null) {
-      isContinuing.value = true;
-      try {
-        final stageController = Get.find<StageController>();
-
-        await stageController.loadStage(
-          newStageId: nextStageId!,
-          newWorldId: worldId,
-          newLevelId: levelId,
-        );
-
-        final nextStageRoute = RouteBuilder.build(AppRoutes.stage, {
-          'worldId': worldId.toString(),
-          'levelId': levelId.toString(),
-          'stageId': nextStageId.toString(),
-        });
-
-        Get.offNamed(nextStageRoute);
-      } catch (e) {
-        Get.snackbar(
-          'Error',
-          'Failed to load stage'.tr,
-          snackPosition: SnackPosition.BOTTOM,
-        );
-      } finally {
-        isContinuing.value = false;
-      }
+    if (!isLast) {
+      await goBackToLevel();
       return;
     }
 
@@ -180,8 +157,9 @@ class StageSummaryController extends GetxController
       final worldRoute = RouteBuilder.build(AppRoutes.world, {
         'id': worldId.toString(),
       });
-      Get.offNamed(worldRoute);
-    } catch (e) {
+
+      Get.offAllNamed(worldRoute);
+    } catch (_) {
       Get.snackbar(
         'Notice',
         'Could not refresh world yet'.tr,

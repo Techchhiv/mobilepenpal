@@ -272,6 +272,8 @@ final Map<String, String> kmKH = {
   'joined': 'បានចូលរួម',
   'classmates': 'មិត្តរួមថ្នាក់',
   'no_classmates': 'មិនមានមិត្តរួមថ្នាក់',
+  "no_course_available": "មិនមានវគ្គសិក្សាទេ",
+  "pull_down_to_refresh": "អូសចុះក្រោមដើម្បីធ្វើការអាប់ដេត",
 
   // ===== Course & Progress =====
   'my_courses': 'វគ្គសិក្សារបស់ខ្ញុំ',

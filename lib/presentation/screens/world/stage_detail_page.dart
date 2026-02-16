@@ -797,7 +797,7 @@ class StageDetailPage extends GetView<StageController> {
 
   Widget _buildBottomButtons() {
     Widget buildActionButton({
-      required VoidCallback onTap,
+      required VoidCallback? onTap,
       required Color bg,
       required Color fg,
       required IconData icon,
@@ -808,7 +808,7 @@ class StageDetailPage extends GetView<StageController> {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(28),
-          onTap: onTap,
+          onTap: onTap, // ✅ null disables taps
           child: Ink(
             height: 56,
             decoration: BoxDecoration(
@@ -861,13 +861,18 @@ class StageDetailPage extends GetView<StageController> {
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: buildActionButton(
-              onTap: controller.skipCurrentExercise,
-              bg: AppColors.buttonPrimary,
-              fg: Colors.white,
-              icon: Icons.skip_next,
-              label: "skip".tr,
-            ),
+            child: Obx(() {
+              final enabled = controller.canSkip;
+              return buildActionButton(
+                onTap: enabled ? controller.skipCurrentExercise : null,
+                bg: enabled
+                    ? AppColors.buttonPrimary
+                    : AppColors.buttonPrimary.withValues(alpha: 0.55),
+                fg: Colors.white.withValues(alpha: enabled ? 1.0 : 0.65),
+                icon: Icons.skip_next,
+                label: "skip".tr,
+              );
+            }),
           ),
         ],
       ),

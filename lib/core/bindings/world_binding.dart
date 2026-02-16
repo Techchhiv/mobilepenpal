@@ -8,6 +8,6 @@ class WorldBinding extends Bindings {
   void dependencies() {
     // Get.lazyPut<WorldController>(() => WorldController(), fenix: true);
     Get.lazyPut<LevelController>(() => LevelController(), fenix: true);
-    Get.lazyPut<WorldAnimationController>(() => WorldAnimationController());
+    // Get.lazyPut<WorldAnimationController>(() => WorldAnimationController(), fenix: true);
   }
 }

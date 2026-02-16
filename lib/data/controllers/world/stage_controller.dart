@@ -26,6 +26,7 @@ class StageController extends GetxController {
 
   final isLoading = false.obs;
   final isSubmitting = false.obs;
+  final isSkipLocked = false.obs;
 
   final currentStage = Rxn<Stage>();
   final exercises = <StageExercise>[].obs;
@@ -132,6 +133,11 @@ class StageController extends GetxController {
     if (pct >= 33.0) return 1;
     return 0;
   }
+
+  bool get canSkip =>
+      !isSubmitting.value &&
+      !isSkipLocked.value &&
+      anim.feedback.value == DrawFeedback.none;
 
   @override
   void onInit() {
@@ -279,10 +285,7 @@ class StageController extends GetxController {
 
       final diff = parseMathDifficulty(ex.difficulty);
       final q = _mathCache.putIfAbsent(key, () {
-        return _mathGen.generate(
-          difficulty: diff,
-          opKeyRaw: ex.mathOp,
-        );
+        return _mathGen.generate(difficulty: diff, opKeyRaw: ex.mathOp);
       });
       mathPrompt.value = q.toPrompt(withQuestionMark: true);
       mathExpected.value = q.answer;
@@ -484,7 +487,7 @@ class StageController extends GetxController {
         0,
         maxAttemptsPerExercise,
       );
-
+      isSkipLocked.value = true;
       await anim.showWrongAndReset(
         onAfterReset: () {
           clearBoard();
@@ -492,6 +495,8 @@ class StageController extends GetxController {
           if (!isMathCurrent) anim.restartGuideFromStart();
         },
       );
+
+      isSkipLocked.value = false;
 
       if (attemptLeft.value > 0) {
         return;
@@ -558,40 +563,48 @@ class StageController extends GetxController {
   }
 
   Future<void> skipCurrentExercise() async {
-    final exercise = currentExercise;
-    if (exercise == null) return;
+    if (!canSkip) return;
 
-    final label = isMathCurrent
-        ? (mathExpected.value?.toString() ?? '')
-        : exercise.character;
+    await _runWithSkipLock(() async {
+      idle?.cancel();
+      _cancelPredictIfAny();
 
-    attempts.add({
-      'exercise_id': exercise.id,
-      'user_answer': '',
-      'label': label,
-      'stroke': getXYStrokes(),
-      'is_correct': false,
-      if (isMathCurrent) 'math_op': currentMathOp.value,
+      final exercise = currentExercise;
+      if (exercise == null) return;
+
+      final label = isMathCurrent
+          ? (mathExpected.value?.toString() ?? '')
+          : exercise.character;
+
+      attempts.add({
+        'exercise_id': exercise.id,
+        'user_answer': '',
+        'label': label,
+        'stroke': getXYStrokes(),
+        'is_correct': false,
+        if (isMathCurrent) 'math_op': currentMathOp.value,
+      });
+
+      _updateProgressUI();
+
+      anim.markWrong(currentExerciseIndex.value);
+      await anim.playStarPop(currentExerciseIndex.value);
+
+      await anim.showWrongAndReset(
+        onAfterReset: () {
+          clearBoard();
+          hasDrawnStroke = false;
+        },
+      );
+
+      if (_isLastExercise) {
+        await _finishStageIfLast();
+        return;
+      }
+
+      nextExercise();
+      clearBoard();
     });
-    _updateProgressUI();
-
-    anim.markWrong(currentExerciseIndex.value);
-    await anim.playStarPop(currentExerciseIndex.value);
-
-    await anim.showWrongAndReset(
-      onAfterReset: () {
-        clearBoard();
-        hasDrawnStroke = false;
-      },
-    );
-
-    if (_isLastExercise) {
-      await _finishStageIfLast();
-      return;
-    }
-
-    nextExercise();
-    clearBoard();
   }
 
   Future<void> _finishStageIfLast() async {
@@ -920,6 +933,18 @@ class StageController extends GetxController {
         return 'math';
       default:
         return 'consonant';
+    }
+  }
+
+  Future<T?> _runWithSkipLock<T>(Future<T> Function() fn) async {
+    if (isSkipLocked.value) return null;
+    isSkipLocked.value = true;
+    try {
+      return await fn();
+    } finally {
+      if (Get.isRegistered<StageController>()) {
+        isSkipLocked.value = false;
+      }
     }
   }
 }

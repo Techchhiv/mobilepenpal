@@ -18,9 +18,8 @@ class WorldMap extends StatefulWidget {
   State<WorldMap> createState() => _WorldMapState();
 }
 
-class _WorldMapState extends State<WorldMap> {
+class _WorldMapState extends State<WorldMap> with TickerProviderStateMixin {
   late final ScrollController _scrollController;
-  late final String _animTag;
 
   static const double _tileOriginalWidth = 440.0;
   static const double _tileOriginalHeight = 956.0;
@@ -48,12 +47,54 @@ class _WorldMapState extends State<WorldMap> {
   /// LevelCircle size approximation for centering.
   static const double _bubbleSize = 72.0;
 
+  late final AnimationController waveCtrl;
+  late final AnimationController bounceCtrl;
+
+  bool _waveActive = false;
+  bool _bounceActive = false;
+
+  bool _boolish(dynamic v) => v == true || v == 1 || v == '1';
+
+  double _progress01(dynamic pct) {
+    final n = (pct is num) ? pct.toDouble() : double.tryParse('$pct') ?? 0.0;
+    return (n / 100.0).clamp(0.0, 1.0);
+  }
+
+  void _applyAnim({required bool wave, required bool bounce}) {
+    if (wave != _waveActive) {
+      _waveActive = wave;
+      if (wave) {
+        waveCtrl.repeat();
+      } else {
+        waveCtrl.stop();
+        waveCtrl.value = 0;
+      }
+    }
+
+    if (bounce != _bounceActive) {
+      _bounceActive = bounce;
+      if (bounce) {
+        bounceCtrl.repeat(reverse: true);
+      } else {
+        bounceCtrl.stop();
+        bounceCtrl.value = 0;
+      }
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     _scrollController = ScrollController();
+    waveCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1600),
+    );
 
-    _animTag = 'worldMap_${widget.world.id}';
+    bounceCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 650),
+    );
 
     WidgetsBinding.instance.addPostFrameCallback(
       (_) => _scrollToCurrentLevel(),
@@ -62,8 +103,9 @@ class _WorldMapState extends State<WorldMap> {
 
   @override
   void dispose() {
+    waveCtrl.dispose();
+    bounceCtrl.dispose();
     _scrollController.dispose();
-
     super.dispose();
   }
 
@@ -98,8 +140,8 @@ class _WorldMapState extends State<WorldMap> {
   int _findCurrentLevelIndex(List<WorldLevel> levels) {
     for (int i = 0; i < levels.length; i++) {
       final level = levels[i];
-      final bool isCompleted = level.completionPercentage >= 100;
-      final bool isUnlocked = level.isUnlocked || level.isUnlocked == true;
+      final bool isCompleted = _progress01(level.completionPercentage) >= 1.0;
+      final bool isUnlocked = _boolish(level.isUnlocked);
 
       if (isUnlocked && !isCompleted) return i;
     }
@@ -163,7 +205,7 @@ class _WorldMapState extends State<WorldMap> {
   }
 
   Future<void> _onLevelTap(WorldLevel level) async {
-    final bool isUnlocked = level.isUnlocked || level.isUnlocked == true;
+    final bool isUnlocked = _boolish(level.isUnlocked);
 
     if (!isUnlocked) {
       _showSnackBar('level_locked'.tr, Colors.orange);
@@ -298,16 +340,10 @@ class _WorldMapState extends State<WorldMap> {
   }) {
     if (levels.isEmpty) return const SizedBox();
 
-    bool isUnlockedOf(WorldLevel l) => l.isUnlocked == true;
-
-    double progress01Of(WorldLevel l) =>
-        (l.completionPercentage / 100.0).clamp(0.0, 1.0);
+    bool isUnlockedOf(WorldLevel l) => _boolish(l.isUnlocked);
+    double progress01Of(WorldLevel l) => _progress01(l.completionPercentage);
 
     final currentIdx = _findCurrentLevelIndex(levels);
-
-    final anim = Get.isRegistered<WorldAnimationController>(tag: _animTag)
-        ? Get.find<WorldAnimationController>(tag: _animTag)
-        : Get.put(WorldAnimationController(), tag: _animTag);
 
     final currentLevel = levels[currentIdx];
     final currentUnlocked = isUnlockedOf(currentLevel);
@@ -322,8 +358,7 @@ class _WorldMapState extends State<WorldMap> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      anim.setWaveActive(anyWave);
-      anim.setBounceActive(shouldBounceCurrent);
+      _applyAnim(wave: anyWave, bounce: shouldBounceCurrent);
     });
 
     final spacing = _scaled(_levelSpacingDesign, screenWidth);
@@ -345,7 +380,12 @@ class _WorldMapState extends State<WorldMap> {
           left: left,
           top: y - (_bubbleSize / 2),
           child: LevelCircle(
-            animTag: _animTag,
+            wave: waveCtrl,
+            bounce: bounceCtrl,
+            bounceHeight: 8.0,
+            waveAmplitudeFactor: 0.06,
+            waveAmplitudeMin: 2.0,
+            waveWavelengthFactor: 0.95,
             level: levels[i],
             isCurrent: i == currentIdx,
             onTap: _onLevelTap,
@@ -357,20 +397,35 @@ class _WorldMapState extends State<WorldMap> {
 }
 
 class LevelCircle extends StatelessWidget {
-  final String animTag;
+  final Animation<double> wave;
+  final Animation<double> bounce;
+  final double bounceHeight;
+
+  final double waveAmplitudeFactor;
+  final double waveAmplitudeMin;
+  final double waveWavelengthFactor;
+
   final WorldLevel level;
   final bool isCurrent;
   final Function(WorldLevel) onTap;
 
   const LevelCircle({
     super.key,
-    required this.animTag,
+    required this.wave,
+    required this.bounce,
+    required this.bounceHeight,
+    required this.waveAmplitudeFactor,
+    required this.waveAmplitudeMin,
+    required this.waveWavelengthFactor,
     required this.level,
     required this.onTap,
     required this.isCurrent,
   });
 
-  bool get _isUnlocked => level.isUnlocked || level.isUnlocked == true;
+  bool get _isUnlocked =>
+      level.isUnlocked == true ||
+      level.isUnlocked == 1 ||
+      level.isUnlocked == '1';
 
   double get _progress =>
       ((level.completionPercentage) / 100.0).clamp(0.0, 1.0);
@@ -379,10 +434,6 @@ class LevelCircle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final anim = Get.isRegistered<WorldAnimationController>(tag: animTag)
-        ? Get.find<WorldAnimationController>(tag: animTag)
-        : Get.put(WorldAnimationController(), tag: animTag);
-
     final bool animateThisOne = isCurrent && _isUnlocked && !_isCompleted;
 
     const double ring = 72;
@@ -433,16 +484,16 @@ class LevelCircle extends StatelessWidget {
                     Positioned.fill(
                       child: CustomPaint(
                         painter: _WaveCirclePainter(
-                          wave: animateWave ? anim.waveCtrl : null,
+                          wave: animateWave ? wave : null,
+                          amplitudeFactor: waveAmplitudeFactor,
+                          amplitudeMin: waveAmplitudeMin,
+                          wavelengthFactor: waveWavelengthFactor,
                           progress: _isUnlocked ? _progress : 0.0,
                           locked: !_isUnlocked,
                           completed: _isCompleted,
                           waveColor: waveColor,
                           backgroundColor: Colors.white.withValues(alpha: 0.92),
                           borderColor: borderColor,
-                          amplitudeFactor: anim.waveAmplitudeFactor,
-                          amplitudeMin: anim.waveAmplitudeMin,
-                          wavelengthFactor: anim.waveWavelengthFactor,
                         ),
                       ),
                     ),
@@ -486,9 +537,9 @@ class LevelCircle extends StatelessWidget {
     if (!animateThisOne) return body;
 
     return AnimatedBuilder(
-      animation: anim.bounceCtrl,
+      animation: bounce,
       builder: (context, child) {
-        final dy = -anim.bounceHeight * anim.bounceCtrl.value;
+        final dy = -bounceHeight * bounce.value;
         return Transform.translate(offset: Offset(0, dy), child: child);
       },
       child: body,

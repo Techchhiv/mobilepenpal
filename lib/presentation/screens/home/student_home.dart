@@ -50,48 +50,85 @@ class StudentHome extends StatelessWidget {
                         child: CourseCard(isLoading: true),
                       ),
                     )
-                  : ListView.builder(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      padding: EdgeInsets.zero,
-                      itemCount: list.length,
-                      itemBuilder: (_, index) {
-                        final progress = list[index];
-                        final unlocked = progress.isUnlocked == true;
-                        final locale = Get.find<LocaleController>();
-                        final title = locale.isKhmer
-                            ? (progress.name)
-                            : (progress.nameEn);
-                        final subtitle = locale.isKhmer
-                            ? (progress.description)
-                            : (progress.descriptionEn);
+                  : (list.isEmpty
+                        ? ListView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            padding: EdgeInsets.zero,
+                            children: [
+                              SizedBox(height: 140),
+                              Icon(
+                                Icons.menu_book_outlined,
+                                size: 56,
+                                color: Colors.grey,
+                              ),
+                              SizedBox(height: 12),
+                              Center(
+                                child: Text(
+                                  "no_course_available".tr,
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: Colors.black54,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ),
+                              SizedBox(height: 6),
+                              Center(
+                                child: Text(
+                                  "pull_down_to_refresh".tr,
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: Colors.grey,
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          )
+                        : ListView.builder(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            padding: EdgeInsets.zero,
+                            itemCount: list.length,
+                            itemBuilder: (_, index) {
+                              final progress = list[index];
+                              final unlocked = progress.isUnlocked == true;
+                              final locale = Get.find<LocaleController>();
+                              final title = locale.isKhmer
+                                  ? (progress.name)
+                                  : (progress.nameEn);
+                              final subtitle = locale.isKhmer
+                                  ? (progress.description)
+                                  : (progress.descriptionEn);
 
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 14),
-                          child: CourseCard(
-                            courseTitle: title,
-                            courseSubtitle: subtitle,
-                            badgeText: progress.isCompleted
-                                ? 'completed'.tr
-                                : 'in_progress'.tr,
-                            completedLessons: progress.levelsCompleted,
-                            totalLessons: progress.levelsTotal,
-                            buttonText: unlocked
-                                ? (progress.levelsCompleted > 0
-                                      ? 'continue'.tr
-                                      : 'start'.tr)
-                                : 'locked'.tr,
-                            primaryColor: _getColorByIndex(index),
-                            badgeColor: progress.isCompleted
-                                ? Colors.green
-                                : const Color(0xFFFF9800),
-                            onTap: unlocked
-                                ? () => _openWorld(progress.id)
-                                : null,
-                            isLocked: !unlocked,
-                          ),
-                        );
-                      },
-                    ),
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 14),
+                                child: CourseCard(
+                                  courseTitle: title,
+                                  courseSubtitle: subtitle,
+                                  badgeText: progress.isCompleted
+                                      ? 'completed'.tr
+                                      : 'in_progress'.tr,
+                                  completedLessons: progress.levelsCompleted,
+                                  totalLessons: progress.levelsTotal,
+                                  buttonText: unlocked
+                                      ? (progress.levelsCompleted > 0
+                                            ? 'continue'.tr
+                                            : 'start'.tr)
+                                      : 'locked'.tr,
+                                  primaryColor: _getColorByIndex(index),
+                                  badgeColor: progress.isCompleted
+                                      ? Colors.green
+                                      : const Color(0xFFFF9800),
+                                  onTap: unlocked
+                                      ? () => _openWorld(progress.id)
+                                      : null,
+                                  isLocked: !unlocked,
+                                ),
+                              );
+                            },
+                          )),
             ),
           ),
 

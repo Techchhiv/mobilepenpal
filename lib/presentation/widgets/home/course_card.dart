@@ -245,16 +245,16 @@ class CourseCard extends StatelessWidget {
             ],
           ),
 
-          const SizedBox(height: 16),
+          // const SizedBox(height: 16),
 
-          Container(
-            height: 12,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: Colors.grey[300],
-              borderRadius: BorderRadius.circular(999),
-            ),
-          ),
+          // Container(
+          //   height: 12,
+          //   width: double.infinity,
+          //   decoration: BoxDecoration(
+          //     color: Colors.grey[300],
+          //     borderRadius: BorderRadius.circular(999),
+          //   ),
+          // ),
 
           const SizedBox(height: 12),
 
