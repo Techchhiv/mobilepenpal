@@ -47,8 +47,24 @@ class StageController extends GetxController {
   final letterSubpathsNorm = <List<Offset>>[].obs;
   final strokeStrokesNorm = <List<Offset>>[].obs;
 
-  final double boardWidth = 340;
-  final double boardHeight = 340;
+  final boardWidth = 340.0.obs;
+  final boardHeight = 340.0.obs;
+
+  void updateBoardSize(double size, {double? height}) {
+    if (boardWidth.value == size && boardHeight.value == (height ?? size)) {
+      return;
+    }
+
+    boardWidth.value = size;
+    boardHeight.value = height ?? size;
+    anim.setBoardSize(width: boardWidth.value, height: boardHeight.value);
+
+    if (selectedCharacter.value.isNotEmpty) {
+      setGuideForCharacter(selectedCharacter.value);
+    }
+  }
+
+  double get scale => boardWidth.value / 340.0;
 
   final currentExerciseIndex = 0.obs;
   final selectedCharacter = ''.obs;
@@ -157,7 +173,8 @@ class StageController extends GetxController {
       anim = Get.put(StageAnimationController());
       _ownsAnim = true;
     }
-    anim.setBoardSize(width: boardWidth, height: boardHeight);
+    // Initial sync
+    anim.setBoardSize(width: boardWidth.value, height: boardHeight.value);
 
     if (Get.isRegistered<StageAudioController>()) {
       audio = Get.find<StageAudioController>();
@@ -697,11 +714,12 @@ class StageController extends GetxController {
 
   List<dynamic> getXYStrokes() {
     final out = <dynamic>[];
+    final s = scale;
 
     for (final stroke in _rawStrokes) {
       for (final p in stroke) {
-        out.add((p["x"] as num).toDouble());
-        out.add((p["y"] as num).toDouble());
+        out.add((p["x"] as num).toDouble() / s);
+        out.add((p["y"] as num).toDouble() / s);
       }
       out.add('#');
     }
@@ -711,6 +729,7 @@ class StageController extends GetxController {
   }
 
   Map<String, dynamic> getXYStrokeWithTime({required String modelType}) {
+    final s = scale;
     return {
       "strokes": _rawStrokes
           .map(
@@ -718,8 +737,8 @@ class StageController extends GetxController {
               "points": stroke
                   .map(
                     (p) => {
-                      "x": (p["x"] as num).toDouble(),
-                      "y": (p["y"] as num).toDouble(),
+                      "x": (p["x"] as num).toDouble() / s,
+                      "y": (p["y"] as num).toDouble() / s,
                       "time": (p["time"] as num?)?.toInt(),
                     },
                   )
@@ -812,8 +831,8 @@ class StageController extends GetxController {
     final combined = <List<Offset>>[...letterOut, ...strokesOut];
     final fitted = _autoFitGlyphPx(
       combined,
-      boardW: boardWidth,
-      boardH: boardHeight,
+      boardW: boardWidth.value,
+      boardH: boardHeight.value,
       pad: 24,
       minWidthFill: 0.72,
       minHeightFill: 0.78,
