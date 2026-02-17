@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart' show rootBundle;
+
 import 'package:get/get.dart';
 
 class StageAudioController extends GetxController {
@@ -42,7 +42,7 @@ class StageAudioController extends GetxController {
   String assetPathForCharacter({required String type, required String ch}) {
     final t = type.trim().toLowerCase();
     final c = ch.trim();
-    return 'assets/audios/$t/$c.mp3';
+    return 'audios/$t/$c.mp3';
   }
 
   Future<void> playVoiceAsset(String relPath) async {
@@ -61,10 +61,14 @@ class StageAudioController extends GetxController {
 
       if (token != _voiceToken) return;
 
-      final data = await rootBundle.load(relPath);
-      await _voicePlayer.play(BytesSource(data.buffer.asUint8List()));
+      String path = relPath;
+      if (path.startsWith('assets/')) {
+        path = path.substring(7);
+      }
+
+      await _voicePlayer.play(AssetSource(path));
     } catch (e) {
-      debugPrint('[StageAudio] Failed to play "$relPath": $e');
+      debugPrint('[StageAudio] Failed to play voice "$relPath": $e');
     } finally {
       _voiceBusy = false;
     }
@@ -97,13 +101,10 @@ class StageAudioController extends GetxController {
     _sfxQueue = _sfxQueue.catchError((_) {}).then((_) async {
       try {
         await _sfxPlayer.stop();
-        final data = await rootBundle.load('assets/audios/sfx/$name.mp3');
-        await _sfxPlayer.play(BytesSource(data.buffer.asUint8List()));
-      } on TimeoutException catch (_) {
-        try {
-          await _sfxPlayer.stop();
-        } catch (_) {}
-      } catch (_) {}
+        await _sfxPlayer.play(AssetSource('audios/sfx/$name.mp3'));
+      } catch (e) {
+        debugPrint('[StageAudio] Failed to play SFX "$name": $e');
+      }
     });
 
     return _sfxQueue;
