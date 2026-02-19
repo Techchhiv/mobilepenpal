@@ -23,6 +23,8 @@ return new class extends Migration
             $table->boolean('is_unlocked')->default(false);
 
             $table->timestamps();
+
+            $table->unique(['student_id', 'level_id']);
         });
     }
 

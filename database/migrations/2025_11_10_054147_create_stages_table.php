@@ -30,6 +30,9 @@ return new class extends Migration
             $table->integer('order_index');
             // $table->integer('max_stars')->default(3);
             $table->timestamps();
+
+            $table->index(['level_id', 'is_active']);
+            $table->index(['level_id', 'order_index']);
         });
     }
 

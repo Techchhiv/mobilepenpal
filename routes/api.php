@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\{
     AuthController,
     GoogleAuthController,
-    OrdersController,
     AdminUserController,
     AdminRoleController,
     AdminPermissionController,

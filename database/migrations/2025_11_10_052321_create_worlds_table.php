@@ -19,7 +19,7 @@ return new class extends Migration
                 ->nullable()
                 ->constrained('schools')
                 ->nullOnDelete();
-            $table->enum('audience', ['public', 'schools', 'assigned'])->default('public');
+            $table->enum('audience', ['public', 'schools', 'assigned'])->default('public')->index();
 
             $table->string('name');
             $table->text('description')->nullable();

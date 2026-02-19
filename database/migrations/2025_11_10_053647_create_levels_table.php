@@ -28,6 +28,9 @@ return new class extends Migration
             $table->integer('order_index');
 
             $table->timestamps();
+            
+            $table->index(['world_id', 'is_active']);
+            $table->index(['world_id', 'order_index']);
         });
     }
 

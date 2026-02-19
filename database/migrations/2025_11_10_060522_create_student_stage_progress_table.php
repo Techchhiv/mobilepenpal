@@ -23,6 +23,8 @@ return new class extends Migration
             $table->enum('status',['locked', 'unlocked', 'completed'])->default('locked');
 
             $table->timestamps();
+
+            $table->unique(['student_id', 'stage_id']);
         });
     }
 

@@ -57,7 +57,8 @@ class WorldController extends Controller
             ->with(['levels' => fn($q) => $q->where('is_active', true)->orderBy('order_index')])
             ->first();
 
-        if (!$world) return $this->returnError('World not found', 404);
+        if (!$world)
+            return $this->returnError('World not found', 404);
 
         $this->setResult('world', new WorldWithLevelResource($world));
         return $this->returnResponse();
@@ -78,7 +79,8 @@ class WorldController extends Controller
             ])
             ->find($levelId);
 
-        if (!$level) return $this->returnError('Level not found', 404);
+        if (!$level)
+            return $this->returnError('Level not found', 404);
 
         $this->setResult('level', new LevelWithStageResource($level));
         return $this->returnResponse();
@@ -97,7 +99,8 @@ class WorldController extends Controller
             ->with('exercises')
             ->find($stageId);
 
-        if (!$stage) return $this->returnError('Stage not found', 404);
+        if (!$stage)
+            return $this->returnError('Stage not found', 404);
 
         $this->setResult('stage', new StageWithExercisesResource($stage));
         return $this->returnResponse();
@@ -180,11 +183,11 @@ class WorldController extends Controller
 
             if ($durationSeconds > 0) {
                 StudentSession::create([
-                    'student_id'       => $studentId,
-                    'stage_id'         => $stageId,
+                    'student_id' => $studentId,
+                    'stage_id' => $stageId,
                     'duration_seconds' => $durationSeconds,
-                    'started_at'       => now()->subSeconds($durationSeconds),
-                    'ended_at'         => now(),
+                    'started_at' => now()->subSeconds($durationSeconds),
+                    'ended_at' => now(),
                 ]);
             }
 
@@ -198,20 +201,20 @@ class WorldController extends Controller
             );
 
             $results = [
-                'total_exercises'  => $totalExercises,
+                'total_exercises' => $totalExercises,
                 'correct_attempts' => $correctAttempts,
-                'stage_id'         => $stageId,
+                'stage_id' => $stageId,
             ];
 
             $progressResult = $progressService->updateStageProgress($studentId, $stageId, $results);
 
             $summary = [
-                'stars_earned'     => $progressResult['stars_earned'] ?? 0,
-                'correct_answers'  => $progressResult['correct_attempts'] ?? 0,
-                'total_questions'  => $progressResult['total_exercises'] ?? 0,
-                'is_new_best'      => $progressResult['is_new_best'] ?? false,
-                'next_stage_id'    => $progressResult['next_stage_id'] ?? null,
-                'is_last'    => $progressResult['is_last'] ?? false,
+                'stars_earned' => $progressResult['stars_earned'] ?? 0,
+                'correct_answers' => $progressResult['correct_attempts'] ?? 0,
+                'total_questions' => $progressResult['total_exercises'] ?? 0,
+                'is_new_best' => $progressResult['is_new_best'] ?? false,
+                'next_stage_id' => $progressResult['next_stage_id'] ?? null,
+                'is_last' => $progressResult['is_last'] ?? false,
             ];
         });
 

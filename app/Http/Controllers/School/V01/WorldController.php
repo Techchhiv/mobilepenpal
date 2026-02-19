@@ -22,14 +22,14 @@ class WorldController extends Controller
     public function index(Request $request)
     {
         $schoolId = (int) (auth()->user()->school_id ?? 0);
-        if ($schoolId <= 0) return $this->returnError('School account required', 403);
+        if ($schoolId <= 0)
+            return $this->returnError('School account required', 403);
 
         $includeInactive = $request->boolean('include_inactive', true);
 
-        // Admin global worlds (public + schools) with "hidden_for_school" derived from school_worlds override row (is_enabled=false)
         $global = World::query()
             ->whereNull('school_id')
-            ->whereIn('audience', ['schools'])   // ✅ remove public
+            ->whereIn('audience', ['schools'])
             ->when(!$includeInactive, fn($q) => $q->where('is_active', true))
             ->select('worlds.*')
             ->selectSub(function ($q) use ($schoolId) {
@@ -57,13 +57,12 @@ class WorldController extends Controller
                 return $w;
             });
 
-        // School stack worlds (enabled in pivot), ordered by school_worlds.order_index
         $stack = SchoolWorld::query()
             ->where('school_worlds.school_id', $schoolId)
             ->where('school_worlds.is_enabled', true)
             ->join('worlds', 'worlds.id', '=', 'school_worlds.world_id')
             ->where(function ($q) use ($schoolId) {
-                $q->where('worlds.school_id', $schoolId) // ✅ school-owned
+                $q->where('worlds.school_id', $schoolId)
                     ->orWhere(function ($qq) {
                         $qq->whereNull('worlds.school_id')
                             ->where('worlds.audience', 'assigned'); // ✅ admin-assigned only
@@ -87,7 +86,7 @@ class WorldController extends Controller
             ->get()
             ->map(function ($w) use ($schoolId) {
                 $w->stack_order_index = (int) ($w->stack_order_index ?? 0);
-                $w->owned_by_school = (int)($w->school_id ?? 0) === (int)$schoolId;
+                $w->owned_by_school = (int) ($w->school_id ?? 0) === (int) $schoolId;
                 $w->active_stages_count = (int) ($w->active_stages_count ?? 0);
                 return $w;
             });
@@ -107,49 +106,56 @@ class WorldController extends Controller
     public function show(Request $request, int $id)
     {
         $schoolId = (int) (auth()->user()->school_id ?? 0);
-        if ($schoolId <= 0) return $this->returnError('School account required', 403);
+        if ($schoolId <= 0)
+            return $this->returnError('School account required', 403);
 
         $includeInactive = $request->boolean('include_inactive', true);
         $withStages = $request->boolean('with_stages', false);
 
         $world = World::query()
             ->where('id', $id)
-            ->with(['levels' => function ($q) use ($includeInactive, $withStages) {
-                if (!$includeInactive) $q->where('is_active', true);
-                $q->orderBy('order_index');
+            ->with([
+                'levels' => function ($q) use ($includeInactive, $withStages) {
+                    if (!$includeInactive)
+                        $q->where('is_active', true);
+                    $q->orderBy('order_index');
 
-                if ($withStages) {
-                    $q->with(['stages' => function ($sq) use ($includeInactive) {
-                        if (!$includeInactive) $sq->where('is_active', true);
-                        $sq->orderBy('order_index');
-                    }]);
-                } else {
-                    $q->withCount([
-                        'stages as stages_count',
-                        'stages as active_stages_count' => fn($sq) => $sq->where('is_active', true),
-                    ]);
+                    if ($withStages) {
+                        $q->with([
+                            'stages' => function ($sq) use ($includeInactive) {
+                                if (!$includeInactive)
+                                    $sq->where('is_active', true);
+                                $sq->orderBy('order_index');
+                            }
+                        ]);
+                    } else {
+                        $q->withCount([
+                            'stages as stages_count',
+                            'stages as active_stages_count' => fn($sq) => $sq->where('is_active', true),
+                        ]);
+                    }
                 }
-            }])
+            ])
             ->first();
 
-        if (!$world) return $this->returnError('World not found', 404);
+        if (!$world)
+            return $this->returnError('World not found', 404);
 
-        // If school-owned, only that school can view
         if (!is_null($world->school_id)) {
             if ((int) $world->school_id !== $schoolId) {
                 return $this->returnError('World not found', 404);
             }
 
             $meta = [
-                'owned_by_school'       => true,
-                'is_admin_owned'        => false,
-                'audience'              => (string) ($world->audience ?? 'assigned'),
-                'is_global'             => false,
-                'is_assigned'           => false,
-                'is_hidden_for_school'  => false,
+                'owned_by_school' => true,
+                'is_admin_owned' => false,
+                'audience' => (string) ($world->audience ?? 'assigned'),
+                'is_global' => false,
+                'is_assigned' => false,
+                'is_hidden_for_school' => false,
                 'is_enabled_for_school' => true,
-                'stack_order_index'     => null,
-                'can_edit'              => true,
+                'stack_order_index' => null,
+                'can_edit' => true,
             ];
 
             $this->setResult('world', $world);
@@ -157,12 +163,10 @@ class WorldController extends Controller
             return $this->returnResponse();
         }
 
-        // Admin-owned world rules
         $pivot = SchoolWorld::where('school_id', $schoolId)
             ->where('world_id', $world->id)
             ->first();
 
-        // ❌ Block public for school accounts
         if ($world->audience === 'public') {
             return $this->returnError('World not found', 404);
         }
@@ -171,28 +175,26 @@ class WorldController extends Controller
         $isGlobal = $world->audience === 'schools';
         $isAssigned = $world->audience === 'assigned';
 
-        // Assigned: must exist and enabled to view
         if ($isAssigned) {
             if (!$pivot || $pivot->is_enabled !== true) {
                 return $this->returnError('World not found', 404);
             }
         }
 
-        // Schools: if hidden (pivot exists with is_enabled=false), do not allow show
         if ($isGlobal && $pivot && $pivot->is_enabled === false) {
             return $this->returnError('World not found', 404);
         }
 
         $meta = [
-            'owned_by_school'       => false,
-            'is_admin_owned'        => $isAdminOwned,
-            'audience'              => (string) ($world->audience ?? 'schools'),
-            'is_global'             => $isGlobal,
-            'is_assigned'           => $isAssigned,
-            'is_hidden_for_school'  => $isGlobal && $pivot ? ($pivot->is_enabled === false) : false,
+            'owned_by_school' => false,
+            'is_admin_owned' => $isAdminOwned,
+            'audience' => (string) ($world->audience ?? 'schools'),
+            'is_global' => $isGlobal,
+            'is_assigned' => $isAssigned,
+            'is_hidden_for_school' => $isGlobal && $pivot ? ($pivot->is_enabled === false) : false,
             'is_enabled_for_school' => $pivot ? (bool) $pivot->is_enabled : true,
-            'stack_order_index'     => ($pivot && $pivot->is_enabled) ? (int) $pivot->order_index : null,
-            'can_edit'              => false, // admin-owned not editable by school
+            'stack_order_index' => ($pivot && $pivot->is_enabled) ? (int) $pivot->order_index : null,
+            'can_edit' => false, // admin-owned not editable by school
         ];
 
         $this->setResult('world', $world);
@@ -207,7 +209,8 @@ class WorldController extends Controller
     public function store(StoreWorldRequest $request)
     {
         $schoolId = (int) (auth()->user()->school_id ?? 0);
-        if ($schoolId <= 0) return $this->returnError('School account required', 403);
+        if ($schoolId <= 0)
+            return $this->returnError('School account required', 403);
 
         $data = $request->validated();
 
@@ -246,10 +249,12 @@ class WorldController extends Controller
     public function update(UpdateWorldRequest $request, int $id)
     {
         $schoolId = (int) (auth()->user()->school_id ?? 0);
-        if ($schoolId <= 0) return $this->returnError('School account required', 403);
+        if ($schoolId <= 0)
+            return $this->returnError('School account required', 403);
 
         $world = World::where('school_id', $schoolId)->find($id);
-        if (!$world) return $this->returnError('World not found', 404);
+        if (!$world)
+            return $this->returnError('World not found', 404);
 
         $data = $request->validated();
 
@@ -271,12 +276,14 @@ class WorldController extends Controller
     public function toggle(Request $request, int $id)
     {
         $schoolId = (int) (auth()->user()->school_id ?? 0);
-        if ($schoolId <= 0) return $this->returnError('School account required', 403);
+        if ($schoolId <= 0)
+            return $this->returnError('School account required', 403);
 
         $world = World::find($id);
-        if (!$world) return $this->returnError('World not found', 404);
+        if (!$world)
+            return $this->returnError('World not found', 404);
 
-        if ((int)($world->school_id ?? 0) === $schoolId) {
+        if ((int) ($world->school_id ?? 0) === $schoolId) {
             $world->is_active = !$world->is_active;
             $world->save();
 
@@ -284,7 +291,7 @@ class WorldController extends Controller
             return $this->returnResponse();
         }
 
-        if (!is_null($world->school_id) && (int)$world->school_id !== $schoolId) {
+        if (!is_null($world->school_id) && (int) $world->school_id !== $schoolId) {
             return $this->returnError('World not found', 404);
         }
 
@@ -314,7 +321,8 @@ class WorldController extends Controller
 
         if ($isAssigned) {
             $row = SchoolWorld::where('school_id', $schoolId)->where('world_id', $world->id)->first();
-            if (!$row) return $this->returnError('World is not assigned to this school', 404);
+            if (!$row)
+                return $this->returnError('World is not assigned to this school', 404);
 
             $row->is_enabled = !$row->is_enabled;
             $row->save();
@@ -334,7 +342,8 @@ class WorldController extends Controller
     public function reorder(Request $request, int $id)
     {
         $schoolId = (int) (auth()->user()->school_id ?? 0);
-        if ($schoolId <= 0) return $this->returnError('School account required', 403);
+        if ($schoolId <= 0)
+            return $this->returnError('School account required', 403);
 
         $data = $request->validate([
             'order_index' => ['required', 'integer', 'min:1'],
@@ -347,7 +356,8 @@ class WorldController extends Controller
             ->where('is_enabled', true)
             ->first();
 
-        if (!$row) return $this->returnError('World is not in school stack (or disabled)', 404);
+        if (!$row)
+            return $this->returnError('World is not in school stack (or disabled)', 404);
 
         DB::transaction(function () use ($row, $schoolId, $to) {
             $total = (int) SchoolWorld::where('school_id', $schoolId)
@@ -357,7 +367,8 @@ class WorldController extends Controller
             $to = max(1, min($to, $total));
             $from = (int) $row->order_index;
 
-            if ($to === $from) return;
+            if ($to === $from)
+                return;
 
             SchoolWorld::where('id', $row->id)->update(['order_index' => 0]);
 

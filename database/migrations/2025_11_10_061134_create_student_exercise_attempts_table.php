@@ -28,6 +28,9 @@ return new class extends Migration
             $table->boolean('is_correct')->default(false);
 
             $table->timestamps();
+
+            $table->index(['student_id', 'exercise_id']);
+            $table->index(['student_id', 'created_at']);
         });
     }
 

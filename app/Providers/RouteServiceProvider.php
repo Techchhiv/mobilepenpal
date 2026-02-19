@@ -46,15 +46,6 @@ class RouteServiceProvider extends ServiceProvider
                 ->prefix('api/mobile/student/v01')
                 ->group(base_path('routes/student/v01/auth.php'));
 
-            // teacher api v1 auth
-            Route::middleware(['api'])
-                ->prefix('api/teacher/v01')
-                ->group(base_path('routes/teacher/v01/no_auth.php'));
-
-            // teacher api v1 auth
-            Route::middleware(['api', 'auth:sanctum'])
-                ->prefix('api/teacher/v01')
-                ->group(base_path('routes/teacher/v01/auth.php'));
         });
     }
 
