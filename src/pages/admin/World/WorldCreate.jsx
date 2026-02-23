@@ -55,6 +55,36 @@ const WorldCreate = () => {
 
   const previewActive = useMemo(() => !!form.is_active, [form.is_active]);
 
+  useEffect(() => {
+    if (form.audience !== "assigned") return;
+
+    const t = setTimeout(async () => {
+      setSchoolsLoading(true);
+      setSchoolsError("");
+
+      try {
+        const res = await API.get("/admin/schools", {
+          params: schoolSearch?.trim() ? { search: schoolSearch.trim() } : {},
+        });
+
+        const rows = res?.data?.data ?? [];
+        setSchools(rows);
+      } catch (e) {
+        setSchoolsError(e?.response?.data?.message || "Failed to load schools.");
+      } finally {
+        setSchoolsLoading(false);
+      }
+    }, 250);
+
+    return () => clearTimeout(t);
+  }, [form.audience, schoolSearch]);
+
+  const filteredSchools = useMemo(() => {
+    const q = schoolSearch.trim().toLowerCase();
+    if (!q) return schools;
+    return schools.filter(s => (s?.name || "").toLowerCase().includes(q));
+  }, [schools, schoolSearch]);
+
   const submit = async (e) => {
     e.preventDefault();
     if (!canCreate) return;
@@ -125,37 +155,6 @@ const WorldCreate = () => {
       </MasterLayout>
     );
   }
-
-  useEffect(() => {
-    if (form.audience !== "assigned") return;
-
-    const t = setTimeout(async () => {
-      setSchoolsLoading(true);
-      setSchoolsError("");
-
-      try {
-        const res = await API.get("/admin/schools", {
-          params: schoolSearch?.trim() ? { search: schoolSearch.trim() } : {},
-        });
-
-        const rows = res?.data?.data ?? [];
-        setSchools(rows);
-      } catch (e) {
-        setSchoolsError(e?.response?.data?.message || "Failed to load schools.");
-      } finally {
-        setSchoolsLoading(false);
-      }
-    }, 250);
-
-    return () => clearTimeout(t);
-  }, [form.audience, schoolSearch]);
-
-  const filteredSchools = useMemo(() => {
-    const q = schoolSearch.trim().toLowerCase();
-    if (!q) return schools;
-    return schools.filter(s => (s?.name || "").toLowerCase().includes(q));
-  }, [schools, schoolSearch]);
-
 
   const Required = () => <span className="text-danger ms-1">*</span>;
 

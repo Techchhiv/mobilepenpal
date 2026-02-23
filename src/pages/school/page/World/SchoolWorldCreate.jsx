@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useEffect, useState } from "react";
 import { Icon } from "@iconify/react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 
@@ -55,7 +55,6 @@ const SchoolWorldCreate = () => {
     setSaving(true);
     setError("");
 
-    // Require KH name (same pattern as Level/Stage)
     if (!form.name?.trim()) {
       setSaving(false);
       setError("Name (KH) is required.");

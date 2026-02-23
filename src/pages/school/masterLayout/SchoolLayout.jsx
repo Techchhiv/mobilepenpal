@@ -134,71 +134,14 @@ const SchoolLayout = ({ children }) => {
             )}
 
             {showWorldManage && (
-              <li className={`dropdown ${openDropdownKey === "world" ? "open" : ""}`}>
-                <a
-                  href="#world"
-                  className={`menu-trigger ${openDropdownKey === "world" ? "active-page" : ""}`}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setOpenDropdownKey((prev) => (prev === "world" ? null : "world"));
-                  }}
+              <li>
+                <NavLink
+                  to="/school/worlds"
+                  className={({ isActive }) => (isActive ? "active-page" : "")}
                 >
                   <Icon icon="mdi:earth" className="menu-icon" />
-                  <span>World Management</span>
-                  <Icon
-                    icon={openDropdownKey === "world" ? "mdi:chevron-up" : "mdi:chevron-down"}
-                    className="caret ms-auto"
-                  />
-                </a>
-
-                <ul
-                  className="sidebar-submenu"
-                  style={{
-                    maxHeight: openDropdownKey === "world" ? "600px" : "0px",
-                    overflow: "hidden",
-                    transition: "max-height .25s ease",
-                  }}
-                >
-                  <li>
-                    <NavLink
-                      to="/school/worlds"
-                      className={({ isActive }) => (isActive ? "active-page" : "")}
-                    >
-                      <i className="ri-circle-fill circle-icon text-primary-600 w-auto" />
-                      Manage Worlds
-                    </NavLink>
-                  </li>
-
-                  <li>
-                    <NavLink
-                      to="/school/levels"
-                      className={({ isActive }) => (isActive ? "active-page" : "")}
-                    >
-                      <i className="ri-circle-fill circle-icon text-warning-main w-auto" />
-                      Manage Levels
-                    </NavLink>
-                  </li>
-
-                  <li>
-                    <NavLink
-                      to="/school/stages"
-                      className={({ isActive }) => (isActive ? "active-page" : "")}
-                    >
-                      <i className="ri-circle-fill circle-icon text-info-main w-auto" />
-                      Manage Stages
-                    </NavLink>
-                  </li>
-
-                  <li>
-                    <NavLink
-                      to="/school/exercises"
-                      className={({ isActive }) => (isActive ? "active-page" : "")}
-                    >
-                      <i className="ri-circle-fill circle-icon text-success-main w-auto" />
-                      Manage Exercises
-                    </NavLink>
-                  </li>
-                </ul>
+                  <span>Manage Worlds</span>
+                </NavLink>
               </li>
             )}
 

@@ -104,7 +104,7 @@ const WorldEdit = () => {
         description: form.description?.trim() || null,
         description_en: form.description_en?.trim() || null,
 
-        audience: form.audience, 
+        audience: form.audience,
         school_ids: form.audience === "assigned" ? form.school_ids : [],
 
         is_unlocked_by_default: !!form.is_unlocked_by_default,
@@ -137,6 +137,12 @@ const WorldEdit = () => {
       setError(err?.response?.data?.message || "Toggle failed");
     }
   };
+
+  const filteredSchools = useMemo(() => {
+    const q = schoolSearch.trim().toLowerCase();
+    if (!q) return schools;
+    return schools.filter(s => (s?.name || "").toLowerCase().includes(q));
+  }, [schools, schoolSearch]);
 
   useEffect(() => {
     if (!canView) return;
@@ -186,12 +192,6 @@ const WorldEdit = () => {
       </MasterLayout>
     );
   }
-
-  const filteredSchools = useMemo(() => {
-    const q = schoolSearch.trim().toLowerCase();
-    if (!q) return schools;
-    return schools.filter(s => (s?.name || "").toLowerCase().includes(q));
-  }, [schools, schoolSearch]);
 
   function prettyDateTime(d) {
     if (!d) return "—";

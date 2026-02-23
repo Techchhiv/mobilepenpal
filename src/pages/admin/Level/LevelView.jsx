@@ -64,7 +64,43 @@ const LevelView = () => {
   const moveSelectedUp = (exerciseId) => moveSelected(exerciseId, -1);
   const moveSelectedDown = (exerciseId) => moveSelected(exerciseId, 1);
 
-  const MAX_REPEAT_TOTAL = 3;
+  const MAX_REPEAT_TOTAL = 20;
+
+  const cap1 = (s) => {
+    const v = String(s ?? "").trim();
+    return v ? v.charAt(0).toUpperCase() + v.slice(1) : "";
+  };
+
+  const mathOpSymbol = (op) => {
+    switch (String(op ?? "").toLowerCase()) {
+      case "add":
+        return "+";
+      case "sub":
+        return "−";
+      case "mul":
+        return "×";
+      case "div":
+        return "÷";
+      default:
+        return "?";
+    }
+  };
+
+  const mathOpLabel = (op) => {
+    switch (String(op ?? "").toLowerCase()) {
+      case "add":
+        return "Addition";
+      case "sub":
+        return "Subtraction";
+      case "mul":
+        return "Multiplication";
+      case "div":
+        return "Division";
+      default:
+        return cap1(op);
+    }
+  };
+
 
   const fetchLevel = async () => {
     setLoading(true);
@@ -236,10 +272,13 @@ const LevelView = () => {
           id: ex.id,
           character: ex.character ?? "—",
           character_type: ex.character_type ?? "—",
+          difficulty: ex.difficulty ?? null,
+          math_op: ex.math_op ?? null,
           prompt: ex.prompt ?? ex.question ?? "",
           repeat_count,
         },
       ];
+
     });
   };
 
@@ -572,7 +611,7 @@ const LevelView = () => {
                                 Status
                               </th>
                               <th style={{ width: 80 }} className="text-center">
-                                View
+                                Action
                               </th>
                             </tr>
                           </thead>
@@ -614,10 +653,6 @@ const LevelView = () => {
                                       >
                                         {sActive ? "Active" : "Disabled"}
                                       </span>
-                                    </td>
-
-                                    <td className="text-center">
-                                      {s?.max_stars ?? "—"}
                                     </td>
 
                                     <td className="text-center align-middle">
@@ -785,10 +820,11 @@ const LevelView = () => {
                               disabled={createLoading}
                             >
                               <option value="">All</option>
-                              <option value="digits">digits</option>
-                              <option value="consonants">consonants</option>
-                              <option value="independent_vowels">independent_vowels</option>
-                              <option value="dependent_vowels">dependent_vowels</option>
+                              <option value="digits">Digits</option>
+                              <option value="consonants">Consonants</option>
+                              <option value="independent_vowels">Independent Vowels</option>
+                              <option value="dependent_vowels">Dependent Vowels</option>
+                              <option value="math">Math</option>
                             </select>
                           </div>
 
@@ -838,9 +874,25 @@ const LevelView = () => {
                                       <td className="text-center">{idx + 1}</td>
                                       {/* <td>{x.id}</td> */}
                                       <td>
-                                        <div className="fw-semibold">{x.character}</div>
-                                        <div className="text-muted small">{x.character_type}</div>
+                                        {x.character_type === "math" ? (
+                                          <>
+                                            <div className="fw-semibold">
+                                              {mathOpSymbol(x.math_op)} ({cap1(x.difficulty)})
+                                            </div>
+                                            <div className="text-muted small">{mathOpLabel(x.math_op)}</div>
+                                          </>
+                                        ) : (
+                                          <>
+                                            <div className="fw-semibold">{x.character}</div>
+                                            <div className="text-muted small">
+                                              {x.character_type}
+                                              {x.difficulty ? ` • ${cap1(x.difficulty)}` : ""}
+                                              {x.math_op ? ` • ${mathOpLabel(x.math_op)}` : ""}
+                                            </div>
+                                          </>
+                                        )}
                                       </td>
+
                                       <td className="text-center">
                                         <input
                                           type="number"
@@ -940,12 +992,20 @@ const LevelView = () => {
                                       <tr key={ex.id} className={selected ? "table-success" : ""}>
                                         <td>{ex.id}</td>
                                         <td>
-                                          <div className="fw-semibold">
-                                            {ex.character ?? "—"}
-                                          </div>
-                                          <div className="text-muted small">
-                                            {ex.character_type ?? "—"}
-                                          </div>
+                                          {ex.character_type === "math" ? (
+                                            <>
+                                              <div className="fw-semibold">
+                                                {mathOpSymbol(ex.math_op)} ({cap1(ex.difficulty)})
+                                              </div>
+                                              <div className="text-muted small">{mathOpLabel(ex.math_op)}</div>
+                                            </>
+                                          ) : (
+                                            <>
+                                              <div className="fw-semibold">{ex.character ?? "—"}</div>
+                                              <div className="text-muted small">{ex.character_type ?? "—"}</div>
+                                            </>
+                                          )}
+
                                         </td>
                                         <td className="text-center">
                                           <button
