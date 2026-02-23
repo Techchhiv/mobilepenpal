@@ -12,6 +12,7 @@ import 'package:mobilepenpal/data/controllers/world/stage_animation_controller.d
 import 'package:mobilepenpal/presentation/routes/app_routes.dart';
 import 'package:mobilepenpal/presentation/widgets/app_snackbar.dart';
 import 'package:mobilepenpal/presentation/widgets/loading_overly.dart';
+import 'package:mobilepenpal/presentation/widgets/world/board_grid_painter.dart';
 import 'package:mobilepenpal/presentation/widgets/world/letter_painter.dart';
 
 class StageDetailPage extends GetView<StageController> {
@@ -84,7 +85,7 @@ class StageDetailPage extends GetView<StageController> {
                                     key: const ValueKey('illus'),
                                     children: [
                                       _buildIllustration(),
-                                      const SizedBox(height: 8),
+                                      SizedBox(height: 0),
                                     ],
                                   )
                                 : const SizedBox(key: ValueKey('no_illus')),
@@ -274,10 +275,8 @@ class StageDetailPage extends GetView<StageController> {
             child: Obx(() {
               if (controller.isMathCurrent) {
                 final raw = controller.mathPrompt.value;
-                final left = raw.split('=').first.trim();
-                final compact = left.replaceAll(' ', '');
                 final km = NumberFormatUtils.digitsByLocale(
-                  compact,
+                  raw,
                   forceKhmer: true,
                 );
 
@@ -527,6 +526,13 @@ class StageDetailPage extends GetView<StageController> {
                                   height: size,
                                   child: Stack(
                                     children: [
+                                      Positioned.fill(
+                                        child: IgnorePointer(
+                                          child: CustomPaint(
+                                            painter: BoardGridPainter(),
+                                          ),
+                                        ),
+                                      ),
                                       if (letter.isNotEmpty)
                                         Positioned.fill(
                                           child: IgnorePointer(

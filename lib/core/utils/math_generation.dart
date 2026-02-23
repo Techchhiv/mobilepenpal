@@ -36,7 +36,8 @@ class MathQuestion {
   });
 
   String toPrompt({bool withQuestionMark = false}) {
-    final s = '$a $op $b';
+    final bStr = b < 0 ? '($b)' : '$b';
+    final s = '$a $op $bStr';
     return withQuestionMark ? '$s = ?' : s;
   }
 
@@ -81,62 +82,45 @@ class MathGenerator {
         ? null
         : normalizeOp(opKeyRaw);
 
+    List<String> ops;
     if (forcedOp != null) {
-      return _generateFromOps(
-        ops: [forcedOp],
-        allowZero: allowZero,
-        maxTries: maxTries,
-        forceOneDigitAnswer: difficulty != MathDifficulty.hard,
-      );
+      ops = [forcedOp];
+    } else {
+      switch (difficulty) {
+        case MathDifficulty.easy:
+          ops = const ['add', 'sub'];
+          break;
+        case MathDifficulty.medium:
+          ops = const ['mul', 'div'];
+          break;
+        case MathDifficulty.hard:
+          ops = const ['add', 'sub', 'mul', 'div'];
+          break;
+      }
     }
 
-    switch (difficulty) {
-      case MathDifficulty.easy:
-        return _generateFromOps(
-          ops: const ['add', 'sub'],
-          allowZero: allowZero,
-          maxTries: maxTries,
-          forceOneDigitAnswer: true,
-        );
-
-      case MathDifficulty.medium:
-        return _generateFromOps(
-          ops: const ['mul', 'div'],
-          allowZero: allowZero,
-          maxTries: maxTries,
-          forceOneDigitAnswer: true,
-        );
-
-      case MathDifficulty.hard:
-        return _generateFromOps(
-          ops: const ['add', 'sub', 'mul', 'div'],
-          allowZero: allowZero,
-          maxTries: maxTries,
-          forceOneDigitAnswer: false,
-        );
-    }
+    return _generateFromOps(
+      ops: ops,
+      allowZero: allowZero,
+      maxTries: maxTries,
+      difficulty: difficulty,
+    );
   }
 
   MathQuestion _generateFromOps({
     required List<String> ops,
     required bool allowZero,
     required int maxTries,
-    required bool forceOneDigitAnswer,
+    required MathDifficulty difficulty,
   }) {
     for (int i = 0; i < maxTries; i++) {
       final opKey = ops[_rand.nextInt(ops.length)];
 
       final q = switch (opKey) {
-        'add' => _genAdd(
-            allowZero: allowZero,
-            forceOneDigitAnswer: forceOneDigitAnswer,
-          ),
-        'sub' => _genSub(allowZero: allowZero),
-        'mul' => _genMul(
-            allowZero: allowZero,
-            forceOneDigitAnswer: forceOneDigitAnswer,
-          ),
-        'div' => _genDiv(),
+        'add' => _genAdd(allowZero: allowZero, difficulty: difficulty),
+        'sub' => _genSub(allowZero: allowZero, difficulty: difficulty),
+        'mul' => _genMul(allowZero: allowZero, difficulty: difficulty),
+        'div' => _genDiv(difficulty: difficulty),
         _ => null,
       };
 
@@ -148,27 +132,68 @@ class MathGenerator {
 
   MathQuestion? _genAdd({
     required bool allowZero,
-    required bool forceOneDigitAnswer,
+    required MathDifficulty difficulty,
   }) {
     final min = allowZero ? 0 : 1;
-    final a = _nextIntInclusive(min, 9);
-    final b = _nextIntInclusive(min, 9);
+    int a, b;
+    switch (difficulty) {
+      case MathDifficulty.easy:
+        a = _nextIntInclusive(min, 9);
+        b = _nextIntInclusive(min, 9);
+        if (a + b > 9) return null;
+        break;
+      case MathDifficulty.medium:
+        a = _nextIntInclusive(min, 99);
+        b = _nextIntInclusive(min, 99);
+        if (a + b > 99) return null;
+        break;
+      case MathDifficulty.hard:
+        a = _nextIntInclusive(10, 99);
+        b = _nextIntInclusive(10, 99);
+        if (_rand.nextBool()) a = -a;
+        if (_rand.nextBool()) b = -b;
+        final ansAbs = (a + b).abs();
+        if (ansAbs < 10 || ansAbs > 99) return null;
+        break;
+    }
+
     final ans = a + b;
-
-    if (forceOneDigitAnswer && ans > 9) return null;
-
     return MathQuestion(a: a, b: b, op: '+', opKey: 'add', answer: ans);
   }
 
-  MathQuestion? _genSub({required bool allowZero}) {
+  MathQuestion? _genSub({
+    required bool allowZero,
+    required MathDifficulty difficulty,
+  }) {
     final min = allowZero ? 0 : 1;
-    var a = _nextIntInclusive(min, 9);
-    var b = _nextIntInclusive(min, 9);
-
-    if (b > a) {
-      final tmp = a;
-      a = b;
-      b = tmp;
+    int a, b;
+    switch (difficulty) {
+      case MathDifficulty.easy:
+        a = _nextIntInclusive(min, 9);
+        b = _nextIntInclusive(min, 9);
+        if (b > a) {
+          final tmp = a;
+          a = b;
+          b = tmp;
+        }
+        break;
+      case MathDifficulty.medium:
+        a = _nextIntInclusive(min, 99);
+        b = _nextIntInclusive(min, 99);
+        if (b > a) {
+          final tmp = a;
+          a = b;
+          b = tmp;
+        }
+        break;
+      case MathDifficulty.hard:
+        a = _nextIntInclusive(10, 99);
+        b = _nextIntInclusive(10, 99);
+        if (_rand.nextBool()) a = -a;
+        if (_rand.nextBool()) b = -b;
+        final ansAbs = (a - b).abs();
+        if (ansAbs < 10 || ansAbs > 99) return null;
+        break;
     }
 
     final ans = a - b;
@@ -177,24 +202,61 @@ class MathGenerator {
 
   MathQuestion? _genMul({
     required bool allowZero,
-    required bool forceOneDigitAnswer,
+    required MathDifficulty difficulty,
   }) {
     final min = allowZero ? 0 : 1;
-    final a = _nextIntInclusive(min, 9);
-    final b = _nextIntInclusive(min, 9);
+    int a, b;
+    switch (difficulty) {
+      case MathDifficulty.easy:
+        a = _nextIntInclusive(min, 9);
+        b = _nextIntInclusive(min, 9);
+        if (a * b > 9) return null;
+        break;
+      case MathDifficulty.medium:
+        a = _nextIntInclusive(min, 9);
+        b = _nextIntInclusive(min, 99);
+        if (a * b > 99) return null;
+        break;
+      case MathDifficulty.hard:
+        a = _nextIntInclusive(10, 99);
+        b = _nextIntInclusive(10, 99);
+        if (_rand.nextBool()) a = -a;
+        if (_rand.nextBool()) b = -b;
+        final ansAbs = (a * b).abs();
+        if (ansAbs < 10 || ansAbs > 99) return null;
+        break;
+    }
+
     final ans = a * b;
-
-    if (forceOneDigitAnswer && ans > 9) return null;
-
     return MathQuestion(a: a, b: b, op: '×', opKey: 'mul', answer: ans);
   }
 
-  MathQuestion? _genDiv() {
-    final d = _nextIntInclusive(1, 9);
-    final qMax = (9 / d).floor(); // ensures a<=9
-    final q = _nextIntInclusive(0, qMax);
-    final a = d * q;
+  MathQuestion? _genDiv({required MathDifficulty difficulty}) {
+    int d, qMax, q;
+    switch (difficulty) {
+      case MathDifficulty.easy:
+        d = _nextIntInclusive(1, 9);
+        qMax = (9 / d).floor();
+        q = _nextIntInclusive(0, qMax);
+        break;
+      case MathDifficulty.medium:
+        d = _nextIntInclusive(1, 99);
+        q = _nextIntInclusive(0, 99);
+        if (d * q > 99) return null;
+        break;
+      case MathDifficulty.hard:
+        d = _nextIntInclusive(10, 99);
+        q = _nextIntInclusive(10, 99);
+        if (_rand.nextBool()) d = -d;
+        if (_rand.nextBool()) q = -q;
+        final aAbs = (d * q).abs();
+        if (aAbs < 10 || aAbs > 99) {
+          return null;
+        }
+        break;
+    }
 
+    final a = d * q;
     return MathQuestion(a: a, b: d, op: '÷', opKey: 'div', answer: q);
   }
 
