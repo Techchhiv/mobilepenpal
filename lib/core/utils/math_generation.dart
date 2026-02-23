@@ -1,10 +1,12 @@
 import 'dart:math';
 
-enum MathDifficulty { easy, medium, hard }
+enum MathDifficulty { easy, medium, hard, veryHard }
 
 MathDifficulty parseMathDifficulty(String? raw) {
   final v = (raw ?? '').trim().toLowerCase();
   switch (v) {
+    case 'very_hard':
+      return MathDifficulty.veryHard;
     case 'hard':
       return MathDifficulty.hard;
     case 'medium':
@@ -26,6 +28,7 @@ class MathQuestion {
   final String opKey;
 
   final int answer;
+  final int? missingOperandIndex;
 
   const MathQuestion({
     required this.a,
@@ -33,12 +36,27 @@ class MathQuestion {
     required this.op,
     required this.opKey,
     required this.answer,
+    this.missingOperandIndex,
   });
 
   String toPrompt({bool withQuestionMark = false}) {
-    final bStr = b < 0 ? '($b)' : '$b';
-    final s = '$a $op $bStr';
-    return withQuestionMark ? '$s = ?' : s;
+    if (missingOperandIndex == 0) {
+      final bStr = b < 0 ? '($b)' : '$b';
+      return '? $op $bStr = $answer';
+    } else if (missingOperandIndex == 1) {
+      final aStr = a < 0 ? '($a)' : '$a';
+      return '$aStr $op ? = $answer';
+    } else {
+      final bStr = b < 0 ? '($b)' : '$b';
+      final s = '$a $op $bStr';
+      return withQuestionMark ? '$s = ?' : s;
+    }
+  }
+
+  int get expectedAnswer {
+    if (missingOperandIndex == 0) return a;
+    if (missingOperandIndex == 1) return b;
+    return answer;
   }
 
   String toToken() => '$a/$opKey/$b';
@@ -94,6 +112,7 @@ class MathGenerator {
           ops = const ['mul', 'div'];
           break;
         case MathDifficulty.hard:
+        case MathDifficulty.veryHard:
           ops = const ['add', 'sub', 'mul', 'div'];
           break;
       }
@@ -136,6 +155,7 @@ class MathGenerator {
   }) {
     final min = allowZero ? 0 : 1;
     int a, b;
+    int? missing;
     switch (difficulty) {
       case MathDifficulty.easy:
         a = _nextIntInclusive(min, 9);
@@ -143,22 +163,30 @@ class MathGenerator {
         if (a + b > 9) return null;
         break;
       case MathDifficulty.medium:
-        a = _nextIntInclusive(min, 99);
-        b = _nextIntInclusive(min, 99);
-        if (a + b > 99) return null;
+        a = _nextIntInclusive(min, 9);
+        b = _nextIntInclusive(min, 9);
         break;
       case MathDifficulty.hard:
+        a = _nextIntInclusive(min, 9);
+        b = _nextIntInclusive(min, 9);
+        missing = _rand.nextBool() ? 0 : 1;
+        break;
+      case MathDifficulty.veryHard:
         a = _nextIntInclusive(10, 99);
         b = _nextIntInclusive(10, 99);
-        if (_rand.nextBool()) a = -a;
-        if (_rand.nextBool()) b = -b;
-        final ansAbs = (a + b).abs();
-        if (ansAbs < 10 || ansAbs > 99) return null;
+        missing = _rand.nextBool() ? 0 : 1;
         break;
     }
 
     final ans = a + b;
-    return MathQuestion(a: a, b: b, op: '+', opKey: 'add', answer: ans);
+    return MathQuestion(
+      a: a,
+      b: b,
+      op: '+',
+      opKey: 'add',
+      answer: ans,
+      missingOperandIndex: missing,
+    );
   }
 
   MathQuestion? _genSub({
@@ -167,6 +195,7 @@ class MathGenerator {
   }) {
     final min = allowZero ? 0 : 1;
     int a, b;
+    int? missing;
     switch (difficulty) {
       case MathDifficulty.easy:
         a = _nextIntInclusive(min, 9);
@@ -178,26 +207,33 @@ class MathGenerator {
         }
         break;
       case MathDifficulty.medium:
-        a = _nextIntInclusive(min, 99);
-        b = _nextIntInclusive(min, 99);
-        if (b > a) {
-          final tmp = a;
-          a = b;
-          b = tmp;
-        }
+        a = _nextIntInclusive(min, 9);
+        b = _nextIntInclusive(min, 9);
+        if (a - b < -9) return null;
         break;
       case MathDifficulty.hard:
+        a = _nextIntInclusive(min, 9);
+        b = _nextIntInclusive(min, 9);
+        missing = _rand.nextBool() ? 0 : 1;
+        if (a - b < -9) return null;
+        break;
+      case MathDifficulty.veryHard:
         a = _nextIntInclusive(10, 99);
         b = _nextIntInclusive(10, 99);
-        if (_rand.nextBool()) a = -a;
-        if (_rand.nextBool()) b = -b;
-        final ansAbs = (a - b).abs();
-        if (ansAbs < 10 || ansAbs > 99) return null;
+        missing = _rand.nextBool() ? 0 : 1;
+        if (a - b < -9) return null;
         break;
     }
 
     final ans = a - b;
-    return MathQuestion(a: a, b: b, op: '-', opKey: 'sub', answer: ans);
+    return MathQuestion(
+      a: a,
+      b: b,
+      op: '-',
+      opKey: 'sub',
+      answer: ans,
+      missingOperandIndex: missing,
+    );
   }
 
   MathQuestion? _genMul({
@@ -206,6 +242,7 @@ class MathGenerator {
   }) {
     final min = allowZero ? 0 : 1;
     int a, b;
+    int? missing;
     switch (difficulty) {
       case MathDifficulty.easy:
         a = _nextIntInclusive(min, 9);
@@ -214,25 +251,37 @@ class MathGenerator {
         break;
       case MathDifficulty.medium:
         a = _nextIntInclusive(min, 9);
-        b = _nextIntInclusive(min, 99);
-        if (a * b > 99) return null;
+        b = _nextIntInclusive(min, 9);
         break;
       case MathDifficulty.hard:
+        a = _nextIntInclusive(min, 9);
+        b = _nextIntInclusive(min, 9);
+        if (a == 0 || b == 0) return null;
+        missing = _rand.nextBool() ? 0 : 1;
+        break;
+      case MathDifficulty.veryHard:
         a = _nextIntInclusive(10, 99);
         b = _nextIntInclusive(10, 99);
-        if (_rand.nextBool()) a = -a;
-        if (_rand.nextBool()) b = -b;
-        final ansAbs = (a * b).abs();
-        if (ansAbs < 10 || ansAbs > 99) return null;
+        // Avoid `0 * ? = 0` or `? * 0 = 0` which has infinite answers
+        if (a == 0 || b == 0) return null;
+        missing = _rand.nextBool() ? 0 : 1;
         break;
     }
 
     final ans = a * b;
-    return MathQuestion(a: a, b: b, op: '×', opKey: 'mul', answer: ans);
+    return MathQuestion(
+      a: a,
+      b: b,
+      op: '×',
+      opKey: 'mul',
+      answer: ans,
+      missingOperandIndex: missing,
+    );
   }
 
   MathQuestion? _genDiv({required MathDifficulty difficulty}) {
     int d, qMax, q;
+    int? missing;
     switch (difficulty) {
       case MathDifficulty.easy:
         d = _nextIntInclusive(1, 9);
@@ -240,24 +289,30 @@ class MathGenerator {
         q = _nextIntInclusive(0, qMax);
         break;
       case MathDifficulty.medium:
-        d = _nextIntInclusive(1, 99);
-        q = _nextIntInclusive(0, 99);
-        if (d * q > 99) return null;
+        d = _nextIntInclusive(1, 9);
+        q = _nextIntInclusive(0, 9);
         break;
       case MathDifficulty.hard:
+        d = _nextIntInclusive(1, 9);
+        q = _nextIntInclusive(1, 9);
+        missing = _rand.nextBool() ? 0 : 1;
+        break;
+      case MathDifficulty.veryHard:
         d = _nextIntInclusive(10, 99);
         q = _nextIntInclusive(10, 99);
-        if (_rand.nextBool()) d = -d;
-        if (_rand.nextBool()) q = -q;
-        final aAbs = (d * q).abs();
-        if (aAbs < 10 || aAbs > 99) {
-          return null;
-        }
+        missing = _rand.nextBool() ? 0 : 1;
         break;
     }
 
     final a = d * q;
-    return MathQuestion(a: a, b: d, op: '÷', opKey: 'div', answer: q);
+    return MathQuestion(
+      a: a,
+      b: d,
+      op: '÷',
+      opKey: 'div',
+      answer: q,
+      missingOperandIndex: missing,
+    );
   }
 
   int _nextIntInclusive(int min, int max) {

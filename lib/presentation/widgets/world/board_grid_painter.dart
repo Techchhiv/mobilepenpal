@@ -3,23 +3,21 @@ import 'package:flutter/material.dart';
 class BoardGridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    const int numCells = 8;
-    final double cellWidth = size.width / numCells;
-    final double cellHeight = size.height / numCells;
+    const int numCellsMin = 8;
+    final double cellSize =
+        (size.width < size.height ? size.width : size.height) / numCellsMin;
 
     final Paint gridPaint = Paint()
       ..color = Colors.blueGrey.withValues(alpha: 0.25)
       ..strokeWidth = 1.2;
 
     // Draw vertical lines
-    for (int i = 1; i < numCells; i++) {
-      double x = i * cellWidth;
+    for (double x = cellSize; x < size.width; x += cellSize) {
       canvas.drawLine(Offset(x, 0), Offset(x, size.height), gridPaint);
     }
 
     // Draw horizontal lines
-    for (int i = 1; i < numCells; i++) {
-      double y = i * cellHeight;
+    for (double y = cellSize; y < size.height; y += cellSize) {
       canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
     }
 

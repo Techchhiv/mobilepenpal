@@ -71,6 +71,10 @@ class NumberFormatUtils {
     final buf = StringBuffer();
 
     for (final ch in s.split('')) {
+      if (ch == '-') {
+        buf.write(ch);
+        continue;
+      }
       final ascii = int.tryParse(ch);
       if (ascii != null && ascii >= 0 && ascii <= 9) {
         buf.write(ch);

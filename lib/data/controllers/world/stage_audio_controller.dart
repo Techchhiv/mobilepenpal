@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 
 import 'package:get/get.dart';
 
@@ -62,11 +63,13 @@ class StageAudioController extends GetxController {
       if (token != _voiceToken) return;
 
       String path = relPath;
-      if (path.startsWith('assets/')) {
-        path = path.substring(7);
+      if (!path.startsWith('assets/')) {
+        path = 'assets/$path';
       }
 
-      await _voicePlayer.play(AssetSource(path));
+      final byteData = await rootBundle.load(path);
+      final bytes = byteData.buffer.asUint8List();
+      await _voicePlayer.play(BytesSource(bytes));
     } catch (e) {
       debugPrint('[StageAudio] Failed to play voice "$relPath": $e');
     } finally {

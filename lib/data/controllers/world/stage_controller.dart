@@ -42,7 +42,22 @@ class StageController extends GetxController {
   late int levelId;
   late int stageId;
 
-  final DrawingController drawingController = DrawingController();
+  final List<DrawingController> drawingControllers = List.generate(
+    3,
+    (_) => DrawingController(),
+  );
+
+  int get activeBoardCount {
+    if (isMathCurrent) {
+      final expected = mathExpected.value;
+      if (expected != null) {
+        return expected
+            .toString()
+            .length; // Remove .abs() so negative signs get a board
+      }
+    }
+    return 1;
+  }
 
   final letterSubpathsNorm = <List<Offset>>[].obs;
   final strokeStrokesNorm = <List<Offset>>[].obs;
@@ -87,10 +102,17 @@ class StageController extends GetxController {
   late final StageAudioController audio;
   bool _ownsAudio = false;
 
-  final List<List<Map<String, dynamic>>> _rawStrokes = [];
-  List<Map<String, dynamic>>? _currentStroke;
+  final List<List<List<Map<String, dynamic>>>> _rawStrokesList = List.generate(
+    3,
+    (_) => [],
+  );
+  final List<List<Map<String, dynamic>>?> _currentStrokeList = List.filled(
+    3,
+    null,
+  );
+  final List<bool> hasDrawnStrokeList = List.filled(3, false);
 
-  bool hasDrawnStroke = false;
+  bool get hasDrawnAnyStroke => hasDrawnStrokeList.any((e) => e);
   Timer? idle;
   DateTime? _sessionStart;
 
@@ -164,7 +186,9 @@ class StageController extends GetxController {
     levelId = int.tryParse(p['levelId'] ?? '') ?? 0;
     stageId = int.tryParse(p['stageId'] ?? '') ?? 0;
 
-    drawingController.setStyle(color: Colors.black, strokeWidth: 6);
+    for (var c in drawingControllers) {
+      c.setStyle(color: Colors.black, strokeWidth: 6);
+    }
 
     if (Get.isRegistered<StageAnimationController>()) {
       anim = Get.find<StageAnimationController>();
@@ -196,7 +220,9 @@ class StageController extends GetxController {
   @override
   void onClose() {
     idle?.cancel();
-    drawingController.dispose();
+    for (var c in drawingControllers) {
+      c.dispose();
+    }
     _cancelPredictIfAny();
     audio.stopAll();
 
@@ -305,7 +331,7 @@ class StageController extends GetxController {
         return _mathGen.generate(difficulty: diff, opKeyRaw: ex.mathOp);
       });
       mathPrompt.value = q.toPrompt(withQuestionMark: true);
-      mathExpected.value = q.answer;
+      mathExpected.value = q.expectedAnswer;
       currentMathOp.value = q.opKey;
 
       letterSubpathsNorm.clear();
@@ -385,13 +411,18 @@ class StageController extends GetxController {
   }
 
   void clearBoard() {
-    drawingController.clear();
+    for (var c in drawingControllers) {
+      c.clear();
+    }
 
-    hasDrawnStroke = false;
+    hasDrawnStrokeList.fillRange(0, hasDrawnStrokeList.length, false);
     idle?.cancel();
 
-    _rawStrokes.clear();
-    _currentStroke = null;
+    for (int i = 0; i < _rawStrokesList.length; i++) {
+      _rawStrokesList[i].clear();
+      _currentStrokeList[i] = null;
+    }
+
     if (!isMathCurrent) {
       anim.restartGuideFromStart();
     } else {
@@ -401,50 +432,80 @@ class StageController extends GetxController {
   }
 
   void onPointerDown() {
-    hasDrawnStroke = true;
     idle?.cancel();
     anim.stopGuide();
     _cancelPredictIfAny();
   }
 
   Future<void> onPointerUp() async {
-    if (!hasDrawnStroke) return;
+    if (!hasDrawnAnyStroke) return;
 
-    hasDrawnStroke = false;
     idle?.cancel();
+
+    for (int i = 0; i < activeBoardCount; i++) {
+      if (_rawStrokesList[i].isEmpty) {
+        return;
+      }
+    }
+
+    double totalDistance = 0.0;
+    for (int i = 0; i < activeBoardCount; i++) {
+      for (final stroke in _rawStrokesList[i]) {
+        if (stroke.length > 1) {
+          for (int j = 1; j < stroke.length; j++) {
+            final p1 = stroke[j - 1];
+            final p2 = stroke[j];
+            final dx = (p2['x'] as double) - (p1['x'] as double);
+            final dy = (p2['y'] as double) - (p1['y'] as double);
+            totalDistance += sqrt(dx * dx + dy * dy);
+          }
+        }
+      }
+    }
+
+    if (totalDistance < 248.0) {
+      if (!isMathCurrent) {
+        anim.restartGuideFromStart();
+      }
+      return;
+    }
 
     idle = Timer(const Duration(milliseconds: 1800), () async {
       await checkDrawing();
-      hasDrawnStroke = false;
+      hasDrawnStrokeList.fillRange(0, hasDrawnStrokeList.length, false);
     });
   }
 
-  void onRawPointerDown(PointerDownEvent e) {
-    _currentStroke = [];
+  void onRawPointerDown(PointerDownEvent e, int boardIndex) {
+    _currentStrokeList[boardIndex] = [];
     final now = DateTime.now().millisecondsSinceEpoch;
-    _currentStroke!.add({
+    _currentStrokeList[boardIndex]!.add({
       "x": e.localPosition.dx,
       "y": e.localPosition.dy,
       "time": now,
     });
+    hasDrawnStrokeList[boardIndex] = true;
     onPointerDown();
   }
 
-  void onRawPointerMove(PointerMoveEvent e) {
-    if (_currentStroke == null) return;
+  void onRawPointerMove(PointerMoveEvent e, int boardIndex) {
+    if (_currentStrokeList[boardIndex] == null) return;
     final now = DateTime.now().millisecondsSinceEpoch;
-    _currentStroke!.add({
+    _currentStrokeList[boardIndex]!.add({
       "x": e.localPosition.dx,
       "y": e.localPosition.dy,
       "time": now,
     });
   }
 
-  void onRawPointerUp(PointerUpEvent e) {
-    if (_currentStroke != null && _currentStroke!.isNotEmpty) {
-      _rawStrokes.add(List<Map<String, dynamic>>.from(_currentStroke!));
+  void onRawPointerUp(PointerUpEvent e, int boardIndex) {
+    if (_currentStrokeList[boardIndex] != null &&
+        _currentStrokeList[boardIndex]!.isNotEmpty) {
+      _rawStrokesList[boardIndex].add(
+        List<Map<String, dynamic>>.from(_currentStrokeList[boardIndex]!),
+      );
     }
-    _currentStroke = null;
+    _currentStrokeList[boardIndex] = null;
     onPointerUp();
   }
 
@@ -461,30 +522,61 @@ class StageController extends GetxController {
 
     bool isCorrect = false;
     String prediction = '';
+    final boards = activeBoardCount;
 
     try {
-      final payload = getXYStrokeWithTime(modelType: modelType);
+      if (isMathCurrent && boards > 1) {
+        String combinedPred = '';
+        for (int i = 0; i < boards; i++) {
+          if (_rawStrokesList[i].isEmpty) continue;
 
-      final strokes = (payload['strokes'] as List).cast<Map<String, dynamic>>();
+          final payload = getXYStrokeWithTime(
+            modelType: modelType,
+            boardIndex: i,
+          );
+          final strokes = (payload['strokes'] as List)
+              .cast<Map<String, dynamic>>();
 
-      final data = await _worldService.predictDrawingVector(
-        strokes: strokes,
-        modelType: payload['model_type'] as String,
-        cancelToken: cancelToken,
-      );
-      if (myReqId != _redId) return;
+          final data = await _worldService.predictDrawingVector(
+            strokes: strokes,
+            modelType: payload['model_type'] as String,
+            cancelToken: cancelToken,
+          );
+          if (myReqId != _redId) return;
+          combinedPred += (data['prediction'] ?? '').toString().trim();
+        }
+        prediction = combinedPred;
 
-      prediction = (data['prediction'] ?? '').toString().trim();
-
-      if (isMathCurrent) {
         final expected = mathExpected.value;
         final predValue = NumberFormatUtils.parseIntAny(prediction);
-
         isCorrect =
             expected != null && predValue != null && predValue == expected;
       } else {
-        final expected = exercise.character.trim();
-        isCorrect = prediction == expected;
+        final payload = getXYStrokeWithTime(
+          modelType: modelType,
+          boardIndex: 0,
+        );
+        final strokes = (payload['strokes'] as List)
+            .cast<Map<String, dynamic>>();
+
+        final data = await _worldService.predictDrawingVector(
+          strokes: strokes,
+          modelType: payload['model_type'] as String,
+          cancelToken: cancelToken,
+        );
+        if (myReqId != _redId) return;
+
+        prediction = (data['prediction'] ?? '').toString().trim();
+
+        if (isMathCurrent) {
+          final expected = mathExpected.value;
+          final predValue = NumberFormatUtils.parseIntAny(prediction);
+          isCorrect =
+              expected != null && predValue != null && predValue == expected;
+        } else {
+          final expected = exercise.character.trim();
+          isCorrect = prediction == expected;
+        }
       }
     } on DioException catch (e) {
       if (CancelToken.isCancel(e)) return;
@@ -508,7 +600,6 @@ class StageController extends GetxController {
       await anim.showWrongAndReset(
         onAfterReset: () {
           clearBoard();
-          hasDrawnStroke = false;
           if (!isMathCurrent) anim.restartGuideFromStart();
         },
       );
@@ -597,7 +688,7 @@ class StageController extends GetxController {
         'exercise_id': exercise.id,
         'user_answer': '',
         'label': label,
-        'stroke': getXYStrokes(),
+        'stroke': getAllXYStrokesCombined(),
         'is_correct': false,
         if (isMathCurrent) 'math_op': currentMathOp.value,
       });
@@ -610,7 +701,6 @@ class StageController extends GetxController {
       await anim.showWrongAndReset(
         onAfterReset: () {
           clearBoard();
-          hasDrawnStroke = false;
         },
       );
 
@@ -632,8 +722,10 @@ class StageController extends GetxController {
 
     attempts.clear();
     _updateProgressUI(animate: false);
-    hasDrawnStroke = false;
-    drawingController.clear();
+    for (var c in drawingControllers) {
+      c.clear();
+    }
+    hasDrawnStrokeList.fillRange(0, hasDrawnStrokeList.length, false);
     _sessionStart = null;
 
     if (summary == null) return;
@@ -712,11 +804,23 @@ class StageController extends GetxController {
     }
   }
 
-  List<dynamic> getXYStrokes() {
+  List<dynamic> getAllXYStrokesCombined() {
+    final out = <dynamic>[];
+    for (int i = 0; i < activeBoardCount; i++) {
+      final s = getXYStrokes(boardIndex: i);
+      if (s.isNotEmpty) {
+        if (out.isNotEmpty) out.add('#');
+        out.addAll(s);
+      }
+    }
+    return out;
+  }
+
+  List<dynamic> getXYStrokes({int boardIndex = 0}) {
     final out = <dynamic>[];
     final s = scale;
 
-    for (final stroke in _rawStrokes) {
+    for (final stroke in _rawStrokesList[boardIndex]) {
       for (final p in stroke) {
         out.add((p["x"] as num).toDouble() / s);
         out.add((p["y"] as num).toDouble() / s);
@@ -728,10 +832,13 @@ class StageController extends GetxController {
     return out;
   }
 
-  Map<String, dynamic> getXYStrokeWithTime({required String modelType}) {
+  Map<String, dynamic> getXYStrokeWithTime({
+    required String modelType,
+    int boardIndex = 0,
+  }) {
     final s = scale;
     return {
-      "strokes": _rawStrokes
+      "strokes": _rawStrokesList[boardIndex]
           .map(
             (stroke) => {
               "points": stroke
