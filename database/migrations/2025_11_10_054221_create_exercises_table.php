@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      *
@@ -27,9 +26,9 @@ return new class extends Migration
             $table->text('hint')->nullable();
 
 
-            $table->enum('character_type', ['digits', 'consonants', 'dependent_vowels','independent_vowels', 'math'])->default('consonants');
+            $table->enum('character_type', ['digits', 'consonants', 'dependent_vowels', 'independent_vowels', 'math'])->default('consonants');
             $table->enum('math_op', ['add', 'sub', 'mul', 'div'])->nullable();
-            $table->enum('difficulty', ['easy', 'medium', 'hard'])->default('easy');
+            $table->enum('difficulty', ['easy', 'medium', 'hard', 'very_hard'])->default('easy');
             $table->index(['character_type', 'difficulty', 'math_op']);
             $table->timestamps();
         });

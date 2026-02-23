@@ -119,7 +119,7 @@ class WorldLevelStageSeeder extends Seeder
                     'chars' => $halfConsonants,
                     'character_type' => 'consonants',
                     'chunk' => 5,
-                    'is_unlocked_by_default'=> true,
+                    'is_unlocked_by_default' => true,
                 ],
                 [
                     'key' => 'public_digits',
@@ -132,7 +132,7 @@ class WorldLevelStageSeeder extends Seeder
                     'chars' => $digits,
                     'character_type' => 'digits',
                     'chunk' => 5,
-                    'is_unlocked_by_default'=> true,
+                    'is_unlocked_by_default' => true,
                 ],
                 // [
                 //     'key' => 'public_math',
@@ -145,6 +145,7 @@ class WorldLevelStageSeeder extends Seeder
                 //     'chars' => [],
                 //     'character_type' => 'math',
                 //     'chunk' => 5,
+                //     'is_unlocked_by_default' => true,
                 // ],
                 // [
                 //     'key' => 'schools_math',
@@ -242,7 +243,6 @@ class WorldLevelStageSeeder extends Seeder
         $this->safeDelete('student_sessions');
         $this->safeDelete('student_daily_stats');
 
-        $this->safeDelete('exercises');
         $this->safeDelete('stages');
         $this->safeDelete('levels');
 
@@ -293,7 +293,10 @@ class WorldLevelStageSeeder extends Seeder
             return;
         }
 
-        $bank = $this->createExerciseBank($chars, $characterType);
+        $bank = Exercise::where('character_type', $characterType)
+            ->whereIn('character', $chars)
+            ->get()
+            ->keyBy('character');
 
         $chunks = array_chunk($chars, $chunk);
 
@@ -345,102 +348,84 @@ class WorldLevelStageSeeder extends Seeder
         }
     }
 
-    /**
-     * @return array<string, Exercise> keyed by character
-     */
-    private function createExerciseBank(array $characters, string $characterType): array
-    {
-        $bank = [];
 
-        foreach ($characters as $character) {
-            $existing = Exercise::where('character_type', $characterType)
-                ->whereRaw('BINARY `character` = ?', [$character])
-                ->first();
-
-            if ($existing) {
-                $existing->update([
-                    'prompt' => "Draw: {$character}",
-                    'question' => "Trace: {$character}",
-                    'options' => json_encode([$character], JSON_UNESCAPED_UNICODE),
-                    'instruction' => "Follow the stroke order to draw {$character}",
-                    'hint' => "Follow the guided path",
-                    'example' => $this->buildExampleForCharacter($character, $characterType),
-                ]);
-                $bank[$character] = $existing;
-            } else {
-                $bank[$character] = Exercise::create([
-                    'character' => $character,
-                    'character_type' => $characterType,
-                    'prompt' => "Draw: {$character}",
-                    'question' => "Trace: {$character}",
-                    'options' => json_encode([$character], JSON_UNESCAPED_UNICODE),
-                    'instruction' => "Follow the stroke order to draw {$character}",
-                    'hint' => "Follow the guided path",
-                    'example' => $this->buildExampleForCharacter($character, $characterType),
-                ]);
-            }
-        }
-
-        return $bank;
-    }
 
     private function seedMathWorldContent(World $world): void
     {
-        $difficulties = ['easy', 'medium', 'hard'];
+        $difficulties = ['easy', 'medium', 'hard', 'very_hard'];
         $ops = ['add', 'sub', 'mul', 'div'];
 
-        $bank = $this->createMathExerciseBank($difficulties, $ops);
-
-        $levelData = [
-            'world_id' => $world->id,
-            'name' => 'គណិតវិទ្យា',
-            'description' => 'កម្រិតគណិតវិទ្យា',
-            'order_index' => 1,
-            'is_active' => true,
-            'is_unlocked_by_default' => false,
-        ];
-
-        if (Schema::hasColumn('levels', 'name_en')) {
-            $levelData['name_en'] = 'Math';
+        $bank = [];
+        foreach ($difficulties as $diff) {
+            foreach ($ops as $op) {
+                $exercise = Exercise::where('character_type', 'math')
+                    ->where('character', "math_{$op}_{$diff}")
+                    ->first();
+                if ($exercise) {
+                    $bank[$diff][$op] = $exercise;
+                }
+            }
         }
-        if (Schema::hasColumn('levels', 'description_en')) {
-            $levelData['description_en'] = 'Math level';
-        }
-
-        $level = Level::create($levelData);
 
         foreach ($difficulties as $i => $diff) {
             [$kmName, $enName] = match ($diff) {
                 'easy' => ['ងាយ', 'Easy'],
                 'medium' => ['មធ្យម', 'Medium'],
                 'hard' => ['ពិបាក', 'Hard'],
+                'very_hard' => ['ពិបាកខ្លាំង', 'Very Hard'],
                 default => [$diff, ucfirst($diff)],
             };
 
-            $stageData = [
-                'level_id' => $level->id,
+            $levelData = [
+                'world_id' => $world->id,
                 'name' => "គណិតវិទ្យា - {$kmName}",
-                'description' => "ហាត់គណិតវិទ្យា ({$kmName})",
+                'description' => "កម្រិតគណិតវិទ្យា ({$kmName})",
                 'order_index' => $i + 1,
                 'is_active' => true,
                 'is_unlocked_by_default' => false,
             ];
 
-            if (Schema::hasColumn('stages', 'name_en')) {
-                $stageData['name_en'] = "Math - {$enName}";
+            if (Schema::hasColumn('levels', 'name_en')) {
+                $levelData['name_en'] = "Math - {$enName}";
             }
-            if (Schema::hasColumn('stages', 'description_en')) {
-                $stageData['description_en'] = "Practice math ({$enName})";
+            if (Schema::hasColumn('levels', 'description_en')) {
+                $levelData['description_en'] = "Math level ({$enName})";
             }
 
-            $stage = Stage::create($stageData);
+            $level = Level::create($levelData);
 
             $order = 1;
             foreach ($ops as $op) {
+                [$stageKmName, $stageEnName] = match ($op) {
+                    'add' => ['បូក', 'Addition'],
+                    'sub' => ['ដក', 'Subtraction'],
+                    'mul' => ['គុណ', 'Multiplication'],
+                    'div' => ['ចែក', 'Division'],
+                    default => [$op, ucfirst($op)],
+                };
+
+                $stageData = [
+                    'level_id' => $level->id,
+                    'name' => "{$stageKmName}",
+                    'description' => "ហាត់{$stageKmName}",
+                    'order_index' => $order++,
+                    'is_active' => true,
+                    'is_unlocked_by_default' => false,
+                ];
+
+                if (Schema::hasColumn('stages', 'name_en')) {
+                    $stageData['name_en'] = "Math - {$stageEnName}";
+                }
+                if (Schema::hasColumn('stages', 'description_en')) {
+                    $stageData['description_en'] = "Practice {$stageEnName}";
+                }
+
+                $stage = Stage::create($stageData);
+
                 $this->attachExerciseToStage(
                     $stage,
                     $bank[$diff][$op],
-                    orderIndex: $order++,
+                    orderIndex: 1,
                     repeatCount: 3
                 );
             }
@@ -448,47 +433,7 @@ class WorldLevelStageSeeder extends Seeder
     }
 
 
-    /**
-     * @return array<string, array<string, Exercise>> bank[difficulty][op]
-     */
-    private function createMathExerciseBank(array $difficulties, array $ops): array
-    {
-        $bank = [];
 
-        foreach ($difficulties as $diff) {
-            foreach ($ops as $op) {
-                $characterKey = "math_{$op}_{$diff}";
-
-                $data = [
-                    'prompt' => "Math ({$op}, {$diff})",
-                    'question' => "Solve ({$op})",
-                    'options' => null,
-                    'correct_answer' => null,
-                    'instruction' => "Solve the {$op} question",
-                    'hint' => "Try again",
-                    'example' => null,
-                ];
-
-                if (Schema::hasColumn('exercises', 'difficulty')) {
-                    $data['difficulty'] = $diff;
-                }
-
-                if (Schema::hasColumn('exercises', 'math_op')) {
-                    $data['math_op'] = $op;
-                }
-
-                $bank[$diff][$op] = Exercise::updateOrCreate(
-                    [
-                        'character' => $characterKey,
-                        'character_type' => 'math',
-                    ],
-                    $data
-                );
-            }
-        }
-
-        return $bank;
-    }
 
 
     private function attachExerciseToStage(Stage $stage, Exercise $exercise, int $orderIndex = 1, int $repeatCount = 3): void
@@ -509,7 +454,7 @@ class WorldLevelStageSeeder extends Seeder
     private function makeLevelName(string $characterType, array $charsInLevel): array
     {
         $first = $charsInLevel[0] ?? '';
-        $last  = $charsInLevel[count($charsInLevel) - 1] ?? '';
+        $last = $charsInLevel[count($charsInLevel) - 1] ?? '';
 
         return match ($characterType) {
             'consonants' => ["{$first} - {$last}", "Characters {$first} - {$last}"],
@@ -533,13 +478,4 @@ class WorldLevelStageSeeder extends Seeder
         };
     }
 
-    private function buildExampleForCharacter(string $character, string $characterType): string
-    {
-        return match ($characterType) {
-            'consonants' => "{$character} / {$character}ា / {$character}ិ / {$character}ី",
-            'digits' => $character,
-            'dependent_vowels', 'independent_vowels' => $character,
-            default => $character,
-        };
-    }
 }
