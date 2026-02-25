@@ -23,6 +23,7 @@ const TeacherList = () => {
   const { hasPermission, hasAnyPermission } = useAuth();
   const [teachers, setTeachers] = useState([]);
   const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(true);
 
   const dtRef = useRef(null);
   const tableId = "teacherTable";
@@ -73,6 +74,8 @@ const TeacherList = () => {
       setTeachers(rows.map(normalizeTeacher));
     } catch (err) {
       console.error("Fetch teachers failed:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -196,7 +199,14 @@ const TeacherList = () => {
             </thead>
 
             <tbody>
-              {teachers.length === 0 ? (
+              {loading ? (
+                <tr>
+                  <td colSpan={canAnyAction ? 9 : 8} className="text-center py-4">
+                    <div className="spinner-border spinner-border-sm" role="status" />
+                    <div className="mt-2 text-muted">Loading teachers…</div>
+                  </td>
+                </tr>
+              ) : teachers.length === 0 ? (
                 <tr>
                   <td colSpan={canAnyAction ? 9 : 8} className="text-center">
                     No teachers found

@@ -32,6 +32,7 @@ const normalizeLevel = (lv) => ({
 const SchoolLevelList = () => {
     const { hasPermission, hasAnyPermission } = useAuth();
     const [levels, setLevels] = useState([]);
+    const [loading, setLoading] = useState(true);
     const dtRef = useRef(null);
 
     const canView = hasPermission("worlds.view");
@@ -53,6 +54,8 @@ const SchoolLevelList = () => {
             setLevels(rows.map(normalizeLevel));
         } catch (err) {
             console.error("Fetch school levels failed:", err);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -163,7 +166,14 @@ const SchoolLevelList = () => {
                         </thead>
 
                         <tbody>
-                            {levels.length === 0 ? (
+                            {loading ? (
+                                <tr>
+                                    <td colSpan={canAnyAction ? 9 : 8} className="text-center py-4">
+                                        <div className="spinner-border spinner-border-sm" role="status" />
+                                        <div className="mt-2 text-muted">Loading levels…</div>
+                                    </td>
+                                </tr>
+                            ) : levels.length === 0 ? (
                                 <tr>
                                     <td colSpan={canAnyAction ? 9 : 8} className="text-center">
                                         No levels found
@@ -200,8 +210,8 @@ const SchoolLevelList = () => {
                                         <td className="text-center align-middle">
                                             <span
                                                 className={`px-24 py-4 rounded-pill fw-medium text-sm ${lv.is_active
-                                                        ? "bg-success-focus text-success-main"
-                                                        : "bg-warning-focus text-warning-main"
+                                                    ? "bg-success-focus text-success-main"
+                                                    : "bg-warning-focus text-warning-main"
                                                     }`}
                                             >
                                                 {lv.is_active ? "Active" : "Disabled"}

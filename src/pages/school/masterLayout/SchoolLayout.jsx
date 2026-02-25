@@ -66,7 +66,15 @@ const SchoolLayout = ({ children }) => {
   if (loading) return <div>Loading...</div>;
 
   return (
-    <section className={mobileMenu ? "overlay active" : "overlay"}>
+    <section
+      className={mobileMenu ? "overlay active" : "overlay"}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          setMobileMenu(false);
+          setSidebarActive(false);
+        }
+      }}
+    >
       <aside className={isSidebarOpen ? "sidebar active" : "sidebar"}>
         <button
           onClick={() => {

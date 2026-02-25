@@ -27,6 +27,7 @@ const StudentList = () => {
   const { hasPermission, hasAnyPermission } = useAuth();
   const [students, setStudents] = useState([]);
   const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(true);
   const dtRef = useRef(null);
 
   const [previewSrc, setPreviewSrc] = useState(null);
@@ -73,6 +74,8 @@ const StudentList = () => {
       setStudents(rows.map(normalizeStudent));
     } catch (err) {
       console.error("Fetch students failed:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -177,7 +180,14 @@ const StudentList = () => {
             </thead>
 
             <tbody>
-              {students.length === 0 ? (
+              {loading ? (
+                <tr>
+                  <td colSpan={canAnyAction ? 9 : 8} className="text-center py-4">
+                    <div className="spinner-border spinner-border-sm" role="status" />
+                    <div className="mt-2 text-muted">Loading students…</div>
+                  </td>
+                </tr>
+              ) : students.length === 0 ? (
                 <tr>
                   <td colSpan={canAnyAction ? 9 : 8} className="text-center">
                     No students found

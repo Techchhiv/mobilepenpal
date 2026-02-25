@@ -22,7 +22,7 @@ const ClassroomView = () => {
   const canView = hasPermission("classrooms.view");
   const canEdit = hasPermission("classrooms.update");
   const canDelete = hasPermission("classrooms.delete");
-  
+
 
   const avatarUrl = (path) => {
     if (!path) return null;
@@ -98,6 +98,21 @@ const ClassroomView = () => {
     } catch (err) {
       console.error(err);
       setError(err?.response?.data?.message || "Archive failed");
+    }
+  };
+
+  const removeStudent = async (studentId) => {
+    if (!window.confirm("Are you sure you want to remove this student from the classroom?")) return;
+    setError("");
+    setFlash("");
+
+    try {
+      await API.post(`/school/classrooms/${id}/students/${studentId}/remove`);
+      setFlash("Student removed successfully");
+      setEnrollments((prev) => prev.filter((en) => en.student_id !== studentId && en.student?.id !== studentId));
+    } catch (err) {
+      console.error(err);
+      setError(err?.response?.data?.message || "Failed to remove student");
     }
   };
 
@@ -326,6 +341,16 @@ const ClassroomView = () => {
                                       <Icon icon="mdi:chart-line" />
                                     </Link>
 
+                                    {!!(canEdit && classroom?.is_active) && (
+                                      <button
+                                        type="button"
+                                        onClick={() => removeStudent(s?.id)}
+                                        className="w-32-px h-32-px bg-danger-light text-danger rounded-circle d-inline-flex align-items-center justify-content-center border-0"
+                                        title="Remove Student"
+                                      >
+                                        <Icon icon="mingcute:delete-2-line" />
+                                      </button>
+                                    )}
                                   </td>
                                 </tr>
                               );

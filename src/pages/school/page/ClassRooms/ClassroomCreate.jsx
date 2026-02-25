@@ -6,8 +6,15 @@ import API from "../../../../helper/api";
 import { useAuth } from "../../../../context/AuthContext";
 
 export default function ClassroomCreate() {
-  const { user } = useAuth();
+  const { user, isTeacher, hasAnyPermission } = useAuth();
   const navigate = useNavigate();
+
+  const canViewTeachers = hasAnyPermission([
+    "teachers.view",
+    "teachers.create",
+    "teachers.update",
+    "teachers.delete",
+  ]);
 
   const [name, setName] = useState("");
   const [teacherId, setTeacherId] = useState("");
@@ -23,6 +30,11 @@ export default function ClassroomCreate() {
 
   useEffect(() => {
     const fetchTeachers = async () => {
+      // Teachers without view permission shouldn't try to fetch all teachers
+      if (!canViewTeachers) {
+        return;
+      }
+
       setLoadingTeachers(true);
       try {
         const res = await API.get("/school/teachers");
@@ -37,14 +49,16 @@ export default function ClassroomCreate() {
         }
       } catch (err) {
         console.error("Failed to fetch teachers:", err);
-        setError("Could not load teachers list");
+        if (err?.response?.status !== 403) {
+          setError("Could not load teachers list");
+        }
       } finally {
         setLoadingTeachers(false);
       }
     };
 
     fetchTeachers();
-  }, [user]);
+  }, [user, isTeacher, canViewTeachers]);
 
   useEffect(() => {
     const today = new Date().toISOString().split("T")[0];
@@ -58,7 +72,8 @@ export default function ClassroomCreate() {
 
   const Required = () => <span className="text-danger ms-1">*</span>;
 
-  const isTeacher = Boolean(user?.email && teachers.some((t) => t.email === user.email));
+  // We are a teacher if isTeacher is true, regardless of the teachers list
+  const userIsTeacher = isTeacher || Boolean(user?.email && teachers.some((t) => t.email === user.email));
 
   const resetForm = () => {
     setName("");
@@ -86,7 +101,7 @@ export default function ClassroomCreate() {
       return;
     }
 
-    if (!teacherId) {
+    if (!teacherId && !userIsTeacher && canViewTeachers) {
       setError("Please select a teacher for this classroom");
       return;
     }
@@ -95,11 +110,14 @@ export default function ClassroomCreate() {
     try {
       const payload = {
         name: name.trim(),
-        teacher_id: parseInt(teacherId, 10),
         start_date: startDate || new Date().toISOString().split("T")[0],
         end_date: endDate || null,
         description: description || null,
       };
+
+      if (teacherId) {
+        payload.teacher_id = parseInt(teacherId, 10);
+      }
 
       const res = await API.post("/school/classrooms", payload);
       const created = res?.data?.classroom || res?.data;
@@ -115,9 +133,9 @@ export default function ClassroomCreate() {
       console.error("Create classroom error:", err);
       setError(
         err?.response?.data?.errors?.name?.[0] ||
-          err?.response?.data?.errors?.teacher_id?.[0] ||
-          err?.response?.data?.message ||
-          "Failed to create classroom. Please try again."
+        err?.response?.data?.errors?.teacher_id?.[0] ||
+        err?.response?.data?.message ||
+        "Failed to create classroom. Please try again."
       );
     } finally {
       setSubmitting(false);
@@ -184,11 +202,11 @@ export default function ClassroomCreate() {
 
                 {loadingTeachers ? (
                   <div className="form-control">Loading teachers...</div>
-                ) : isTeacher ? (
+                ) : (userIsTeacher || !canViewTeachers) ? (
                   <input
                     type="text"
                     className="form-control"
-                    value={teachers.find((t) => t.email === user.email)?.name || "Assigned Teacher"}
+                    value={teachers.find((t) => t.email === user?.email)?.name || user?.name || "Assigned Teacher"}
                     disabled
                   />
                 ) : (

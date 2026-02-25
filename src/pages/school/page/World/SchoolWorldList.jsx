@@ -78,6 +78,7 @@ const normalizeWorldRow = (w) => {
 const SchoolWorldList = () => {
   const { hasPermission, hasAnyPermission } = useAuth();
   const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(true);
   const dtRef = useRef(null);
 
   const canAnyAction = hasAnyPermission([
@@ -113,6 +114,8 @@ const SchoolWorldList = () => {
       setRows(merged);
     } catch (err) {
       console.error("Fetch school worlds failed:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -204,7 +207,14 @@ const SchoolWorldList = () => {
             </thead>
 
             <tbody>
-              {rows.length === 0 ? (
+              {loading ? (
+                <tr>
+                  <td colSpan={canAnyAction ? 9 : 8} className="text-center py-4">
+                    <div className="spinner-border spinner-border-sm" role="status" />
+                    <div className="mt-2 text-muted">Loading worlds…</div>
+                  </td>
+                </tr>
+              ) : rows.length === 0 ? (
                 <tr>
                   <td colSpan={canAnyAction ? 9 : 8} className="text-center">
                     No worlds found

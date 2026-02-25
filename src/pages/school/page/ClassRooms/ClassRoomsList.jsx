@@ -11,6 +11,7 @@ import { useAuth } from "../../../../context/AuthContext";
 const ClassRoomsList = () => {
   const { hasPermission, hasAnyPermission } = useAuth();
   const [classrooms, setClassrooms] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const [message, setMessage] = useState("");
 
@@ -63,6 +64,8 @@ const ClassRoomsList = () => {
     } catch (err) {
       console.error("Fetch classrooms failed:", err);
       setMessage("Failed to load classrooms");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -320,7 +323,14 @@ const ClassRoomsList = () => {
             </thead>
 
             <tbody>
-              {classrooms.length === 0 ? (
+              {loading ? (
+                <tr>
+                  <td colSpan={canAnyAction ? 8 : 7} className="text-center py-4">
+                    <div className="spinner-border spinner-border-sm" role="status" />
+                    <div className="mt-2 text-muted">Loading classrooms…</div>
+                  </td>
+                </tr>
+              ) : classrooms.length === 0 ? (
                 <tr>
                   <td colSpan={canAnyAction ? 8 : 7} className="text-center">
                     No classrooms found
