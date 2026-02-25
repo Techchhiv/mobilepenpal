@@ -85,27 +85,36 @@ class ClassroomController extends Controller
 
         return response()->json([
             'enrollments' => $enrollments,
-            'classroom'   => $classroom,
+            'classroom' => $classroom,
         ]);
     }
 
 
     public function create(StoreClassroomRequest $request)
     {
-        $teacher = Teacher::where('id', $request->teacher_id)
-            ->where('school_id', $request->user()->school_id)
-            ->firstOrFail();
+        $user = $request->user();
+
+        if ($request->filled('teacher_id')) {
+            $teacher = Teacher::where('id', $request->teacher_id)
+                ->where('school_id', $user->school_id)
+                ->firstOrFail();
+        } else {
+            // Find teacher record for the logged-in user
+            $teacher = Teacher::where('school_id', $user->school_id)
+                ->whereRaw('LOWER(email) = ?', [strtolower(trim((string) $user->email))])
+                ->firstOrFail();
+        }
 
         $joinCode = $this->generateUniqueJoinCode($teacher->school_id);
 
         $classroom = Classroom::create([
-            'school_id'  => $teacher->school_id,
+            'school_id' => $teacher->school_id,
             'teacher_id' => $teacher->id,
-            'name'       => $request->name,
+            'name' => $request->name,
             'join_code' => $joinCode,
             'start_date' => $request->start_date ?? now()->toDateString(),
-            'end_date'   => $request->end_date,
-            'is_active'  => true,
+            'end_date' => $request->end_date,
+            'is_active' => true,
         ]);
 
         return response()->json([
@@ -123,7 +132,7 @@ class ClassroomController extends Controller
 
         $school = School::select('id', 'admin_email')->find($classroom->school_id);
 
-        $userEmail  = strtolower(trim((string) $user->email));
+        $userEmail = strtolower(trim((string) $user->email));
         $adminEmail = strtolower(trim((string) ($school->admin_email ?? '')));
 
         $isAdmin = $adminEmail && $userEmail === $adminEmail;
@@ -164,7 +173,7 @@ class ClassroomController extends Controller
 
         $school = School::select('id', 'admin_email')->find($classroom->school_id);
 
-        $userEmail  = strtolower(trim((string) $user->email));
+        $userEmail = strtolower(trim((string) $user->email));
         $adminEmail = strtolower(trim((string) ($school->admin_email ?? '')));
 
         $isAdmin = $adminEmail && $userEmail === $adminEmail;
@@ -197,7 +206,7 @@ class ClassroomController extends Controller
 
         $school = School::select('id', 'admin_email')->find($classroom->school_id);
 
-        $userEmail  = strtolower(trim((string) $user->email));
+        $userEmail = strtolower(trim((string) $user->email));
         $adminEmail = strtolower(trim((string) ($school->admin_email ?? '')));
 
         $isAdmin = $adminEmail && $userEmail === $adminEmail;
@@ -244,7 +253,7 @@ class ClassroomController extends Controller
 
         $school = School::select('id', 'admin_email')->find($classroom->school_id);
 
-        $userEmail  = strtolower(trim((string) $user->email));
+        $userEmail = strtolower(trim((string) $user->email));
         $adminEmail = strtolower(trim((string) ($school->admin_email ?? '')));
 
         $isAdmin = $adminEmail && $userEmail === $adminEmail;
@@ -286,7 +295,7 @@ class ClassroomController extends Controller
         }
 
         $school = School::select('id', 'admin_email')->find($classroom->school_id);
-        $userEmail  = strtolower(trim((string) $user->email));
+        $userEmail = strtolower(trim((string) $user->email));
         $adminEmail = strtolower(trim((string) ($school->admin_email ?? '')));
 
         $isAdmin = $adminEmail && $userEmail === $adminEmail;
@@ -318,30 +327,33 @@ class ClassroomController extends Controller
             : now();
 
         $enrolledMoment = $enrolledAt->copy();
-        $leftMoment     = $leftAt->copy();
+        $leftMoment = $leftAt->copy();
 
         $intersectRange = function (Carbon $reqFrom, Carbon $reqTo) use ($enrolledMoment, $leftMoment) {
             $usedFrom = $reqFrom->copy();
-            $usedTo   = $reqTo->copy();
+            $usedTo = $reqTo->copy();
 
-            if ($usedFrom->lt($enrolledMoment)) $usedFrom = $enrolledMoment->copy();
-            if ($usedTo->gt($leftMoment))       $usedTo   = $leftMoment->copy();
+            if ($usedFrom->lt($enrolledMoment))
+                $usedFrom = $enrolledMoment->copy();
+            if ($usedTo->gt($leftMoment))
+                $usedTo = $leftMoment->copy();
 
-            if ($usedFrom->gt($usedTo)) return [null, null];
+            if ($usedFrom->gt($usedTo))
+                return [null, null];
             return [$usedFrom, $usedTo];
         };
 
         $rawType = strtolower((string) $request->query('type', 'week'));
         $type = match ($rawType) {
-            'daily', 'day'     => 'day',
-            'weekly', 'week'   => 'week',
+            'daily', 'day' => 'day',
+            'weekly', 'week' => 'week',
             'monthly', 'month' => 'month',
-            default            => 'week',
+            default => 'week',
         };
 
-        $date  = $request->query('date');
-        $from  = $request->query('from');
-        $to    = $request->query('to');
+        $date = $request->query('date');
+        $from = $request->query('from');
+        $to = $request->query('to');
         $month = $request->query('month');
 
         $classroomId = null;
@@ -352,7 +364,7 @@ class ClassroomController extends Controller
             $requested = $date ? Carbon::parse($date) : now();
 
             $reqFrom = $requested->copy()->startOfDay();
-            $reqTo   = $requested->copy()->endOfDay();
+            $reqTo = $requested->copy()->endOfDay();
 
             [$usedFrom, $usedTo] = $intersectRange($reqFrom, $reqTo);
 
@@ -380,16 +392,16 @@ class ClassroomController extends Controller
             }
 
             $summary['range'] = [
-                'enrolled_at'     => $enrolledMoment->toDateTimeString(),
-                'left_at'         => $leftMoment->toDateTimeString(),
-                'requested_date'  => $requested->toDateString(),
-                'used_date'       => $usedFrom?->toDateString(),
+                'enrolled_at' => $enrolledMoment->toDateTimeString(),
+                'left_at' => $leftMoment->toDateTimeString(),
+                'requested_date' => $requested->toDateString(),
+                'used_date' => $usedFrom?->toDateString(),
             ];
         } elseif ($type === 'month') {
             $monthStr = $month ?: now()->format('Y-m');
 
             $reqFrom = Carbon::createFromFormat('Y-m', $monthStr)->startOfMonth()->startOfDay();
-            $reqTo   = Carbon::createFromFormat('Y-m', $monthStr)->endOfMonth()->endOfDay();
+            $reqTo = Carbon::createFromFormat('Y-m', $monthStr)->endOfMonth()->endOfDay();
 
             [$usedFrom, $usedTo] = $intersectRange($reqFrom, $reqTo);
 
@@ -404,12 +416,12 @@ class ClassroomController extends Controller
             }
 
             $summary['range'] = [
-                'enrolled_at'     => $enrolledMoment->toDateTimeString(),
-                'left_at'         => $leftMoment->toDateTimeString(),
-                'requested_from'  => $reqFrom->toDateString(),
-                'requested_to'    => $reqTo->toDateString(),
-                'used_from'       => $usedFrom?->toDateString(),
-                'used_to'         => $usedTo?->toDateString(),
+                'enrolled_at' => $enrolledMoment->toDateTimeString(),
+                'left_at' => $leftMoment->toDateTimeString(),
+                'requested_from' => $reqFrom->toDateString(),
+                'requested_to' => $reqTo->toDateString(),
+                'used_from' => $usedFrom?->toDateString(),
+                'used_to' => $usedTo?->toDateString(),
             ];
         } else {
             $reqTo = $to
@@ -456,20 +468,20 @@ class ClassroomController extends Controller
             }
 
             $summary['range'] = [
-                'enrolled_at'     => $enrolledMoment->toDateTimeString(),
-                'left_at'         => $leftMoment->toDateTimeString(),
-                'requested_from'  => $reqFrom->toDateString(),
-                'requested_to'    => $reqTo->toDateString(),
-                'used_from'       => $usedFrom?->toDateString(),
-                'used_to'         => $usedTo?->toDateString(),
+                'enrolled_at' => $enrolledMoment->toDateTimeString(),
+                'left_at' => $leftMoment->toDateTimeString(),
+                'requested_from' => $reqFrom->toDateString(),
+                'requested_to' => $reqTo->toDateString(),
+                'used_from' => $usedFrom?->toDateString(),
+                'used_to' => $usedTo?->toDateString(),
             ];
         }
 
         return response()->json([
-            'classroom'  => $classroom,
+            'classroom' => $classroom,
             'enrollment' => $enrollment,
-            'student'    => $student,
-            'summary'    => $summary,
+            'student' => $student,
+            'summary' => $summary,
         ]);
     }
 
@@ -483,7 +495,7 @@ class ClassroomController extends Controller
 
         $school = School::select('id', 'admin_email')->find($classroom->school_id);
 
-        $userEmail  = strtolower(trim((string) $user->email));
+        $userEmail = strtolower(trim((string) $user->email));
         $adminEmail = strtolower(trim((string) ($school->admin_email ?? '')));
 
         $isAdmin = $adminEmail && $userEmail === $adminEmail;

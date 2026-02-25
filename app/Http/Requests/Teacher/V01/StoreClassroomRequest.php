@@ -10,7 +10,7 @@ class StoreClassroomRequest extends FormRequest
     {
         return [
             // 'branch_id'   => ['required', 'exists:branches,id'],
-            'teacher_id' => ['required', 'exists:teachers,id'],
+            'teacher_id' => ['nullable', 'exists:teachers,id'],
             'name'        => ['required', 'string', 'max:255'],
             // 'grade_level' => ['nullable', 'string', 'max:50'],
             // 'subject'     => ['nullable', 'string', 'max:100'],
