@@ -52,7 +52,7 @@ Route::middleware('auth:api')->group(function () {
     /* -------------------------------
        Admin Routes
     --------------------------------*/
-    Route::prefix('admin')->group(function () {
+    Route::prefix('admin')->name('admin.')->group(function () {
 
         // Schools → Super Admin OR Client Manager
         Route::middleware(['permission:menu.manage_clients'])->group(function () {
@@ -131,7 +131,7 @@ Route::middleware('auth:api')->group(function () {
     });
 
 
-    Route::prefix('school')->middleware('auth:api')->group(function () {
+    Route::prefix('school')->name('school.')->middleware('auth:api')->group(function () {
 
         // School dashboard (any school-admin)
 
