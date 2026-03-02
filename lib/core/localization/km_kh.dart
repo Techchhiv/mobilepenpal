@@ -281,6 +281,9 @@ final Map<String, String> kmKH = {
   'start': 'ចាប់ផ្តើម',
   "locked": 'ចាក់សោ',
   'level_locked': "វគ្គនេះត្រូវបានចាក់សោរ 🔒",
+  'subscribe': 'ជាវ',
+  'premium_content': 'មាតិកាពិសេស',
+  'subscribe_to_unlock': 'ជាវដើម្បីដោះសោ 👑',
   'progress': 'វឌ្ឍនភាព',
   'lessons': 'មេរៀន',
   'stars': 'ផ្កាយ',
@@ -302,7 +305,6 @@ final Map<String, String> kmKH = {
   'digits': 'លេខ',
   'independent_vowels': 'ស្រៈពេញតួរ',
   'dependent_vowels': 'ស្រៈនិស័្សយ',
-
 
   // ===== Home & Dashboard =====
   'achievements': 'សមិទ្ធផល',

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:developer' as dev;
 import 'dart:math';
 
 import 'package:dio/dio.dart';
@@ -10,10 +11,12 @@ import 'package:get/get.dart';
 import 'package:mobilepenpal/core/network/route_builder.dart';
 import 'package:mobilepenpal/core/utils/math_generation.dart';
 import 'package:mobilepenpal/core/utils/number_format_utils.dart';
+import 'package:mobilepenpal/core/utils/stroke_preprocessor.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_animation_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_audio_controller.dart';
 import 'package:mobilepenpal/data/models/stage/stage.dart';
 import 'package:mobilepenpal/data/models/stage/stage_exercise.dart';
+import 'package:mobilepenpal/data/services/onnx_inference_service.dart';
 import 'package:mobilepenpal/data/services/world_service.dart';
 import 'package:mobilepenpal/presentation/routes/app_routes.dart';
 import 'package:mobilepenpal/presentation/widgets/app_snackbar.dart';
@@ -509,6 +512,43 @@ class StageController extends GetxController {
     onPointerUp();
   }
 
+  Future<Map<String, dynamic>?> _predictLocal(
+    String modelType,
+    int boardIndex,
+  ) async {
+    try {
+      final result = StrokePreprocessor.preprocessForModel(
+        modelType,
+        _rawStrokesList[boardIndex],
+      );
+
+      if (modelType == 'math' && !result.isSingleSegment) {
+        String combined = '';
+        for (int i = 0; i < result.segments.length; i++) {
+          final data = await OnnxInferenceService.instance.predict(
+            modelType,
+            result.segments[i],
+            result.shapes[i],
+          );
+          combined += (data['prediction'] ?? '').toString().trim();
+        }
+        return {'prediction': combined, 'segments': result.segments.length};
+      } else {
+        return await OnnxInferenceService.instance.predict(
+          modelType,
+          result.segments[0],
+          result.shapes[0],
+        );
+      }
+    } catch (e) {
+      dev.log(
+        'Local ONNX inference failed for $modelType: $e',
+        name: 'StageController',
+      );
+      return null;
+    }
+  }
+
   Future<void> checkDrawing() async {
     final exercise = currentExercise;
     if (exercise == null) return;
@@ -530,18 +570,21 @@ class StageController extends GetxController {
         for (int i = 0; i < boards; i++) {
           if (_rawStrokesList[i].isEmpty) continue;
 
-          final payload = getXYStrokeWithTime(
-            modelType: modelType,
-            boardIndex: i,
-          );
-          final strokes = (payload['strokes'] as List)
-              .cast<Map<String, dynamic>>();
+          Map<String, dynamic>? data = await _predictLocal(modelType, i);
 
-          final data = await _worldService.predictDrawingVector(
-            strokes: strokes,
-            modelType: payload['model_type'] as String,
-            cancelToken: cancelToken,
-          );
+          if (data == null) {
+            final payload = getXYStrokeWithTime(
+              modelType: modelType,
+              boardIndex: i,
+            );
+            final strokes = (payload['strokes'] as List)
+                .cast<Map<String, dynamic>>();
+            data = await _worldService.predictDrawingVector(
+              strokes: strokes,
+              modelType: payload['model_type'] as String,
+              cancelToken: cancelToken,
+            );
+          }
           if (myReqId != _redId) return;
           combinedPred += (data['prediction'] ?? '').toString().trim();
         }
@@ -552,18 +595,21 @@ class StageController extends GetxController {
         isCorrect =
             expected != null && predValue != null && predValue == expected;
       } else {
-        final payload = getXYStrokeWithTime(
-          modelType: modelType,
-          boardIndex: 0,
-        );
-        final strokes = (payload['strokes'] as List)
-            .cast<Map<String, dynamic>>();
-
-        final data = await _worldService.predictDrawingVector(
-          strokes: strokes,
-          modelType: payload['model_type'] as String,
-          cancelToken: cancelToken,
-        );
+        Map<String, dynamic>? data = await _predictLocal(modelType, 0);
+        // data = null;
+        if (data == null) {
+          final payload = getXYStrokeWithTime(
+            modelType: modelType,
+            boardIndex: 0,
+          );
+          final strokes = (payload['strokes'] as List)
+              .cast<Map<String, dynamic>>();
+          data = await _worldService.predictDrawingVector(
+            strokes: strokes,
+            modelType: payload['model_type'] as String,
+            cancelToken: cancelToken,
+          );
+        }
         if (myReqId != _redId) return;
 
         prediction = (data['prediction'] ?? '').toString().trim();

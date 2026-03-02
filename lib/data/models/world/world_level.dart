@@ -16,6 +16,8 @@ class WorldLevel {
   final int totalStars;
   final bool isCompleted;
   final bool isUnlocked;
+  final bool isPremium;
+  final bool isLockedBySubscription;
 
   WorldLevel({
     required this.id,
@@ -31,6 +33,8 @@ class WorldLevel {
     required this.totalStars,
     required this.isCompleted,
     required this.isUnlocked,
+    required this.isPremium,
+    required this.isLockedBySubscription,
   });
 
   static bool _toBool(dynamic value) {
@@ -55,6 +59,8 @@ class WorldLevel {
       totalStars: (json['total_stars'] ?? 0) as int,
       isCompleted: _toBool(json['is_completed']),
       isUnlocked: _toBool(json['is_unlocked']),
+      isPremium: _toBool(json['is_premium']),
+      isLockedBySubscription: _toBool(json['is_locked_by_subscription']),
     );
   }
 

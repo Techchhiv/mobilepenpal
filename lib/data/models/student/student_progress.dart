@@ -8,6 +8,8 @@ class StudentProgress {
 
   final bool isUnlocked;
   final bool isCompleted;
+  final bool isPremium;
+  final bool isLockedBySubscription;
 
   final int levelsCompleted;
   final int levelsTotal;
@@ -21,6 +23,8 @@ class StudentProgress {
     required this.descriptionEn,
     required this.isUnlocked,
     required this.isCompleted,
+    required this.isPremium,
+    required this.isLockedBySubscription,
     required this.levelsCompleted,
     required this.levelsTotal,
     required this.levelsRemaining,
@@ -42,6 +46,8 @@ class StudentProgress {
       descriptionEn: (json['description_en'] ?? '') as String,
       isUnlocked: _toBool(json['is_unlocked']),
       isCompleted: _toBool(json['is_completed']),
+      isPremium: _toBool(json['is_premium']),
+      isLockedBySubscription: _toBool(json['is_locked_by_subscription']),
       levelsCompleted: (json['levels_completed'] ?? 0) as int,
       levelsTotal: (json['levels_total'] ?? 0) as int,
       levelsRemaining: (json['levels_remaining'] ?? 0) as int,
@@ -49,17 +55,19 @@ class StudentProgress {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'name_en': nameEn,
-        'description': description,
-        'description_en': descriptionEn,
-        'is_unlocked': isUnlocked,
-        'is_completed': isCompleted,
-        'levels_completed': levelsCompleted,
-        'levels_total': levelsTotal,
-        'levels_remaining': levelsRemaining,
-      };
+    'id': id,
+    'name': name,
+    'name_en': nameEn,
+    'description': description,
+    'description_en': descriptionEn,
+    'is_unlocked': isUnlocked,
+    'is_completed': isCompleted,
+    'is_premium': isPremium,
+    'is_locked_by_subscription': isLockedBySubscription,
+    'levels_completed': levelsCompleted,
+    'levels_total': levelsTotal,
+    'levels_remaining': levelsRemaining,
+  };
 
   // optional helpers
   double get progress =>

@@ -94,6 +94,8 @@ class StudentHome extends StatelessWidget {
                             itemBuilder: (_, index) {
                               final progress = list[index];
                               final unlocked = progress.isUnlocked == true;
+                              final isSubLocked =
+                                  progress.isLockedBySubscription;
                               final locale = Get.find<LocaleController>();
                               final title = locale.isKhmer
                                   ? (progress.name)
@@ -101,6 +103,22 @@ class StudentHome extends StatelessWidget {
                               final subtitle = locale.isKhmer
                                   ? (progress.description)
                                   : (progress.descriptionEn);
+
+                              // Subscription-locked worlds: visible but tapping shows upgrade prompt
+                              final Color primaryColor = isSubLocked
+                                  ? const Color(0xFFB8860B)
+                                  : _getColorByIndex(index);
+
+                              String buttonLabel;
+                              if (isSubLocked) {
+                                buttonLabel = '👑 ${'subscribe'.tr}';
+                              } else if (!unlocked) {
+                                buttonLabel = 'locked'.tr;
+                              } else if (progress.levelsCompleted > 0) {
+                                buttonLabel = 'continue'.tr;
+                              } else {
+                                buttonLabel = 'start'.tr;
+                              }
 
                               return Padding(
                                 padding: const EdgeInsets.only(bottom: 14),
@@ -112,19 +130,17 @@ class StudentHome extends StatelessWidget {
                                       : 'in_progress'.tr,
                                   completedLessons: progress.levelsCompleted,
                                   totalLessons: progress.levelsTotal,
-                                  buttonText: unlocked
-                                      ? (progress.levelsCompleted > 0
-                                            ? 'continue'.tr
-                                            : 'start'.tr)
-                                      : 'locked'.tr,
-                                  primaryColor: _getColorByIndex(index),
+                                  buttonText: buttonLabel,
+                                  primaryColor: primaryColor,
                                   badgeColor: progress.isCompleted
                                       ? Colors.green
                                       : const Color(0xFFFF9800),
-                                  onTap: unlocked
-                                      ? () => _openWorld(progress.id)
-                                      : null,
-                                  isLocked: !unlocked,
+                                  onTap: isSubLocked
+                                      ? () => _showSubscriptionPrompt()
+                                      : (unlocked
+                                            ? () => _openWorld(progress.id)
+                                            : null),
+                                  isLocked: !unlocked && !isSubLocked,
                                 ),
                               );
                             },
@@ -156,6 +172,18 @@ class StudentHome extends StatelessWidget {
         snackPosition: SnackPosition.BOTTOM,
       );
     }
+  }
+
+  void _showSubscriptionPrompt() {
+    Get.snackbar(
+      '👑 ${'premium_content'.tr}',
+      'subscribe_to_unlock'.tr,
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: const Color(0xFFB8860B),
+      colorText: Colors.white,
+      duration: const Duration(seconds: 3),
+      icon: const Icon(Icons.lock_outline, color: Colors.white),
+    );
   }
 
   final List<Color> _courseColors = [

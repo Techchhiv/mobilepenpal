@@ -285,6 +285,9 @@ final Map<String, String> enUS = {
   'start': 'Start',
   "locked": 'Locked',
   'level_locked': "This level is locked 🔒",
+  'subscribe': 'Subscribe',
+  'premium_content': 'Premium Content',
+  'subscribe_to_unlock': 'Subscribe to unlock this content 👑',
   'progress': 'Progress',
   'lessons': 'lessons',
   'stars': 'Stars',
@@ -306,7 +309,6 @@ final Map<String, String> enUS = {
   'digits': 'Digits',
   'independent_vowels': 'Ind. vowels',
   'dependent_vowels': 'Dep. vowels',
-
 
   // ===== Home & Dashboard =====
   'achievements': 'Achievements',

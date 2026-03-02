@@ -57,6 +57,7 @@ dependencies:
   mobile_scanner: ^7.1.4
   http: ^1.6.0
   connectivity_plus: ^7.0.0
+  onnxruntime_v2: ^1.23.2+2
   internet_connection_checker_plus: ^2.9.1+2
   path_provider: ^2.1.5
 
@@ -104,16 +105,12 @@ flutter:
     - assets/audios/dependent_vowels/
     - assets/audios/sfx/
 
-    # - assets/models/best_consonant.onnx
-    # - assets/models/best_dependent_vowel.onnx
-    # - assets/models/best_independent_vowel.onnx
-    # - assets/models/best_digit.onnx
-    # - assets/models/best_consonant.onnx.data
-    # - assets/models/best_dependent_vowel.onnx.data
-    # - assets/models/best_independent_vowel.onnx.data
-    # - assets/models/best_digit.onnx.data
-    
     - assets/strokes/strokes.json
+    - assets/models/best_consonant.onnx
+    - assets/models/best_dependent_vowel.onnx
+    - assets/models/best_independent_vowel.onnx
+    - assets/models/best_digit.onnx
+    - assets/models/best_math.onnx
     # - assets/icons/logo.png
     # - images/a_dot_ham.jpeg
 

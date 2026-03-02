@@ -10,6 +10,7 @@ import 'package:mobilepenpal/core/localization/locale_controller.dart';
 
 import 'package:mobilepenpal/core/theme/app_theme.dart';
 import 'package:mobilepenpal/core/theme/theme_controller.dart';
+import 'package:mobilepenpal/data/services/onnx_inference_service.dart';
 import 'package:mobilepenpal/presentation/routes/app_pages.dart';
 import 'package:mobilepenpal/presentation/routes/app_routes.dart';
 import 'package:mobilepenpal/presentation/widgets/app_snackbar.dart';
@@ -31,6 +32,7 @@ void main() async {
   final isLoggedIn = token != null && token.trim().isNotEmpty;
 
   await GetStorage().write('is_logged_in', isLoggedIn);
+  OnnxInferenceService.instance.init();
 
   runApp(MyApp(initialRoute: isLoggedIn ? AppRoutes.home : AppRoutes.splash));
 }

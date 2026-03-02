@@ -205,6 +205,11 @@ class _WorldMapState extends State<WorldMap> with TickerProviderStateMixin {
   }
 
   Future<void> _onLevelTap(WorldLevel level) async {
+    if (level.isLockedBySubscription) {
+      _showSnackBar('👑 ${'subscribe_to_unlock'.tr}', const Color(0xFFB8860B));
+      return;
+    }
+
     final bool isUnlocked = _boolish(level.isUnlocked);
 
     if (!isUnlocked) {
@@ -432,6 +437,8 @@ class LevelCircle extends StatelessWidget {
       level.isUnlocked == 1 ||
       level.isUnlocked == '1';
 
+  bool get _isSubLocked => level.isLockedBySubscription == true;
+
   double get _progress =>
       ((level.completionPercentage) / 100.0).clamp(0.0, 1.0);
 
@@ -446,15 +453,17 @@ class LevelCircle extends StatelessWidget {
 
     final title = (level.name).trim();
 
-    final Color borderColor = _isCompleted
-        ? Colors.green.shade700
-        : (isCurrent ? AppColors.primary : Colors.blue.shade700);
+    final Color borderColor = _isSubLocked
+        ? const Color(0xFFB8860B)
+        : (_isCompleted
+              ? Colors.green.shade700
+              : (isCurrent ? AppColors.primary : Colors.blue.shade700));
 
     final Color waveColor = _isCompleted
         ? Colors.green.shade600
         : Colors.blue.shade600;
 
-    final bool animateWave = _isUnlocked && !_isCompleted;
+    final bool animateWave = _isUnlocked && !_isCompleted && !_isSubLocked;
 
     Widget body = SizedBox(
       width: ring,
@@ -469,6 +478,7 @@ class LevelCircle extends StatelessWidget {
               text: title.isEmpty ? 'Level' : title,
               isCurrent: isCurrent,
               isUnlocked: _isUnlocked,
+              isSubLocked: _isSubLocked,
             ),
           ),
 
@@ -494,7 +504,8 @@ class LevelCircle extends StatelessWidget {
                           amplitudeMin: waveAmplitudeMin,
                           wavelengthFactor: waveWavelengthFactor,
                           progress: _isUnlocked ? _progress : 0.0,
-                          locked: !_isUnlocked,
+                          locked: !_isUnlocked && !_isSubLocked,
+                          subLocked: _isSubLocked,
                           completed: _isCompleted,
                           waveColor: waveColor,
                           backgroundColor: Colors.white.withValues(alpha: 0.92),
@@ -503,7 +514,9 @@ class LevelCircle extends StatelessWidget {
                       ),
                     ),
 
-                    if (_isUnlocked)
+                    if (_isSubLocked)
+                      const Text('👑', style: TextStyle(fontSize: 22))
+                    else if (_isUnlocked)
                       _NumberBadge(text: '${level.orderIndex}')
                     else
                       const Icon(
@@ -614,20 +627,26 @@ class _LevelTitlePill extends StatelessWidget {
   final String text;
   final bool isCurrent;
   final bool isUnlocked;
+  final bool isSubLocked;
 
   const _LevelTitlePill({
     required this.text,
     required this.isCurrent,
     required this.isUnlocked,
+    required this.isSubLocked,
   });
 
   @override
   Widget build(BuildContext context) {
     final bg = Colors.white;
-    final borderColor = isCurrent
-        ? AppColors.primary
-        : Colors.green.withValues(alpha: 0.10);
-    final fg = isUnlocked ? Colors.black : Colors.black.withValues(alpha: 0.60);
+    final borderColor = isSubLocked
+        ? const Color(0xFFB8860B)
+        : (isCurrent
+              ? AppColors.primary
+              : Colors.green.withValues(alpha: 0.10));
+    final fg = (isUnlocked || isSubLocked)
+        ? Colors.black
+        : Colors.black.withValues(alpha: 0.60);
 
     return Container(
       constraints: BoxConstraints(maxWidth: 170),
@@ -635,7 +654,10 @@ class _LevelTitlePill extends StatelessWidget {
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: borderColor, width: isCurrent ? 2 : 1),
+        border: Border.all(
+          color: borderColor,
+          width: (isCurrent || isSubLocked) ? 2 : 1,
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.14),
@@ -664,6 +686,7 @@ class _WaveCirclePainter extends CustomPainter {
   final Animation<double>? wave;
   final double progress;
   final bool locked;
+  final bool subLocked;
   final bool completed;
 
   final Color waveColor;
@@ -678,6 +701,7 @@ class _WaveCirclePainter extends CustomPainter {
     required this.wave,
     required this.progress,
     required this.locked,
+    required this.subLocked,
     required this.completed,
     required this.waveColor,
     required this.backgroundColor,
@@ -695,7 +719,9 @@ class _WaveCirclePainter extends CustomPainter {
 
     final baseColor = locked
         ? Colors.grey.shade400
-        : (completed ? Colors.green : backgroundColor);
+        : (subLocked
+              ? const Color(0xFFFFD700).withValues(alpha: 0.30)
+              : (completed ? Colors.green : backgroundColor));
 
     final bgPaint = Paint()
       ..color = baseColor
@@ -703,7 +729,7 @@ class _WaveCirclePainter extends CustomPainter {
 
     canvas.drawCircle(center, radius, bgPaint);
 
-    if (!locked && !completed) {
+    if (!locked && !subLocked && !completed) {
       final clipPath = Path()..addOval(rect);
       canvas.save();
       canvas.clipPath(clipPath);
@@ -753,6 +779,7 @@ class _WaveCirclePainter extends CustomPainter {
   bool shouldRepaint(covariant _WaveCirclePainter oldDelegate) {
     return oldDelegate.progress != progress ||
         oldDelegate.locked != locked ||
+        oldDelegate.subLocked != subLocked ||
         oldDelegate.completed != completed ||
         oldDelegate.waveColor != waveColor ||
         oldDelegate.backgroundColor != backgroundColor ||
