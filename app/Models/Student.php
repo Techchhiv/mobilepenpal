@@ -19,7 +19,7 @@ class Student extends Authenticatable
         'firebase_uid'
     ];
 
-     protected $casts = [
+    protected $casts = [
         // 'date_of_birth' => 'date',
         'enrollment_year' => 'integer',
     ];
@@ -37,5 +37,32 @@ class Student extends Authenticatable
     public function exerciseAttempts()
     {
         return $this->hasMany(StudentExerciseAttempt::class);
+    }
+
+    public function subscriptions()
+    {
+        return $this->hasMany(Subscription::class);
+    }
+
+    public function school()
+    {
+        return $this->belongsTo(School::class);
+    }
+
+    public function hasActiveSubscription(): bool
+    {
+        if ($this->school_id) {
+            return Subscription::where('school_id', $this->school_id)
+                ->where('active', true)
+                ->where('start_date', '<=', now())
+                ->where('end_date', '>=', now())
+                ->exists();
+        }
+
+        return $this->subscriptions()
+            ->where('active', true)
+            ->where('start_date', '<=', now())
+            ->where('end_date', '>=', now())
+            ->exists();
     }
 }

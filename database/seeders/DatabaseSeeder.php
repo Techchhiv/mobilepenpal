@@ -21,8 +21,8 @@ class DatabaseSeeder extends Seeder
             StudentSeeder::class,
             ExerciseSeeder::class,
             WorldLevelStageSeeder::class,
-                // TeacherRolesSeeder::class
-            StudentExerciseAttemptSeeder::class,
+            // TeacherRolesSeeder::class
+            // StudentExerciseAttemptSeeder::class,
         ]);
 
         // \App\Models\User::factory(10)->create();

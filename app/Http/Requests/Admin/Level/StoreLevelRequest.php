@@ -14,8 +14,9 @@ class StoreLevelRequest extends FormRequest
             'description' => ['nullable', 'string'],
             'description_en' => ['nullable', 'string'],
 
-            'order_index'            => ['nullable', 'integer', 'min:1'],
-            'is_active'              => ['nullable', 'boolean'],
+            'order_index' => ['nullable', 'integer', 'min:1'],
+            'is_active' => ['nullable', 'boolean'],
+            'is_premium' => ['nullable', 'boolean'],
             'is_unlocked_by_default' => ['nullable', 'boolean'],
         ];
     }

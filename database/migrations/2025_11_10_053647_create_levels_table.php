@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      *
@@ -18,6 +17,7 @@ return new class extends Migration
             $table->foreignId('world_id')->constrained()->onDelete('cascade');
 
             $table->boolean('is_active')->default(true);
+            $table->boolean('is_premium')->default(false);
             $table->boolean('is_unlocked_by_default')->default(false);
 
             $table->string('name');
@@ -28,7 +28,7 @@ return new class extends Migration
             $table->integer('order_index');
 
             $table->timestamps();
-            
+
             $table->index(['world_id', 'is_active']);
             $table->index(['world_id', 'order_index']);
         });

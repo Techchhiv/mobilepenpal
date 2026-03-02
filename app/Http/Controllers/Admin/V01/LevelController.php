@@ -22,7 +22,8 @@ class LevelController extends Controller
         $withStages = $request->boolean('with_stages', false);
 
         $world = World::find($worldId);
-        if (!$world) return $this->returnError('World not found', 404);
+        if (!$world)
+            return $this->returnError('World not found', 404);
 
         $levelsQuery = Level::where('world_id', $worldId)
             // ->where('is_active', true)
@@ -33,12 +34,14 @@ class LevelController extends Controller
         }
 
         if ($withStages) {
-            $levelsQuery->with(['stages' => function ($q) use ($includeInactive) {
-                if (!$includeInactive) {
-                    $q->where('is_active', true);
+            $levelsQuery->with([
+                'stages' => function ($q) use ($includeInactive) {
+                    if (!$includeInactive) {
+                        $q->where('is_active', true);
+                    }
+                    $q->orderBy('order_index');
                 }
-                $q->orderBy('order_index');
-            }]);
+            ]);
         } else {
             $levelsQuery->withCount([
                 'stages as stages_count',
@@ -67,7 +70,8 @@ class LevelController extends Controller
         $world = null;
         if ($request->filled('world_id')) {
             $world = World::find((int) $worldId);
-            if (!$world) return $this->returnError('World not found', 404);
+            if (!$world)
+                return $this->returnError('World not found', 404);
         }
 
         $levelsQuery = Level::query();
@@ -112,7 +116,8 @@ class LevelController extends Controller
             ? $levelsQuery->paginate($perPage)->appends($request->query())
             : $levelsQuery->get();
 
-        if ($world) $this->setResult('world', $world);
+        if ($world)
+            $this->setResult('world', $world);
         $this->setResult('levels', $levels);
 
         return $this->returnResponse();
@@ -123,14 +128,18 @@ class LevelController extends Controller
     {
         $includeInactive = $request->boolean('include_inactive', true);
 
-        $level = Level::with(['world', 'stages' => function ($q) use ($includeInactive) {
-            if (!$includeInactive) {
-                $q->where('is_active', true);
+        $level = Level::with([
+            'world',
+            'stages' => function ($q) use ($includeInactive) {
+                if (!$includeInactive) {
+                    $q->where('is_active', true);
+                }
+                $q->orderBy('order_index');
             }
-            $q->orderBy('order_index');
-        }])->find($id);
+        ])->find($id);
 
-        if (!$level) return $this->returnError('Level not found', 404);
+        if (!$level)
+            return $this->returnError('Level not found', 404);
 
         $this->setResult('level', $level);
         return $this->returnResponse();
@@ -139,7 +148,8 @@ class LevelController extends Controller
     public function store(StoreLevelRequest $request, int $worldId)
     {
         $world = World::find($worldId);
-        if (!$world) return $this->returnError('World not found', 404);
+        if (!$world)
+            return $this->returnError('World not found', 404);
 
         $data = $request->validated();
         unset($data['order_index']);
@@ -151,6 +161,7 @@ class LevelController extends Controller
             }
 
             $data['is_active'] = $data['is_active'] ?? true;
+            $data['is_premium'] = $data['is_premium'] ?? false;
             $data['is_unlocked_by_default'] = $data['is_unlocked_by_default'] ?? false;
 
             $data['world_id'] = $worldId;
@@ -170,7 +181,8 @@ class LevelController extends Controller
         $worldId = (int) $data['world_id'];
 
         $world = World::find($worldId);
-        if (!$world) return $this->returnError('World not found', 404);
+        if (!$world)
+            return $this->returnError('World not found', 404);
 
         $level = DB::transaction(function () use ($data, $worldId) {
             if (!isset($data['order_index'])) {
@@ -179,6 +191,7 @@ class LevelController extends Controller
             }
 
             $data['is_active'] = $data['is_active'] ?? true;
+            $data['is_premium'] = $data['is_premium'] ?? false;
             $data['is_unlocked_by_default'] = $data['is_unlocked_by_default'] ?? false;
 
             $data['world_id'] = $worldId;
@@ -193,7 +206,8 @@ class LevelController extends Controller
     public function update(UpdateLevelRequest $request, int $id)
     {
         $level = Level::find($id);
-        if (!$level) return $this->returnError('Level not found', 404);
+        if (!$level)
+            return $this->returnError('Level not found', 404);
 
         $data = $request->validated();
 
@@ -207,7 +221,8 @@ class LevelController extends Controller
     public function toggle(int $id)
     {
         $level = Level::with('world')->find($id);
-        if (!$level) return $this->returnError('Level not found', 404);
+        if (!$level)
+            return $this->returnError('Level not found', 404);
 
         $wasActive = (bool) $level->is_active;
         $level->is_active = !$level->is_active;
@@ -224,7 +239,8 @@ class LevelController extends Controller
     public function reorder(Request $request, int $id)
     {
         $level = Level::find($id);
-        if (!$level) return $this->returnError('Level not found', 404);
+        if (!$level)
+            return $this->returnError('Level not found', 404);
 
         $data = $request->validate([
             'order_index' => ['required', 'integer', 'min:1'],
@@ -240,7 +256,8 @@ class LevelController extends Controller
             $to = max(1, min($to, $total));
             $from = (int) $level->order_index;
 
-            if ($to === $from) return;
+            if ($to === $from)
+                return;
 
             Level::where('id', $level->id)->update(['order_index' => 0]);
 
@@ -280,7 +297,8 @@ class LevelController extends Controller
                 ->where('is_active', true)
                 ->exists();
 
-            if ($hasActiveStage) break;
+            if ($hasActiveStage)
+                break;
 
             $nextLevel = Level::where('world_id', $worldId)
                 ->where('is_active', true)
@@ -298,14 +316,16 @@ class LevelController extends Controller
             ->orderBy('order_index')
             ->first();
 
-        if (!$firstStage) return;
+        if (!$firstStage)
+            return;
 
         $studentIds = StudentLevelProgress::where('level_id', $disabledLevel->id)
             ->where('is_unlocked', true)
             ->where('is_completed', false)
             ->pluck('student_id');
 
-        if ($studentIds->isEmpty()) return;
+        if ($studentIds->isEmpty())
+            return;
 
         DB::transaction(function () use ($studentIds, $nextLevel, $firstStage) {
             foreach ($studentIds as $studentId) {
@@ -316,7 +336,7 @@ class LevelController extends Controller
 
                 $progress = StudentStageProgress::firstOrNew([
                     'student_id' => $studentId,
-                    'stage_id'   => $firstStage->id,
+                    'stage_id' => $firstStage->id,
                 ]);
 
                 if (!$progress->exists) {

@@ -19,6 +19,7 @@ class StoreWorldRequest extends FormRequest
             'description_en' => ['nullable', 'string'],
 
             'is_active' => ['nullable', 'boolean'],
+            'is_premium' => ['nullable', 'boolean'],
             'is_unlocked_by_default' => ['nullable', 'boolean'],
             'order_index' => ['nullable', 'integer', 'min:1'],
         ];

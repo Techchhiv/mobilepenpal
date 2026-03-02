@@ -19,6 +19,9 @@ class WorldIndexResource extends JsonResource
         $levelsTotal = (int) ($this->levels_count ?? 0);
         $levelsCompleted = (int) ($this->completed_levels_count ?? 0);
 
+        $isPremium = (bool) $this->is_premium;
+        $hasSubscription = auth()->user()?->hasActiveSubscription() ?? false;
+
         return [
             'id' => (int) $this->id,
 
@@ -29,6 +32,8 @@ class WorldIndexResource extends JsonResource
 
             'is_unlocked' => $isUnlocked,
             'is_completed' => $this->studentProgress ? (bool) $this->studentProgress->is_completed : false,
+            'is_premium' => $isPremium,
+            'is_locked_by_subscription' => $isPremium && !$hasSubscription,
 
             'levels_completed' => $levelsCompleted,
             'levels_total' => $levelsTotal,

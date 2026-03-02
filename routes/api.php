@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\V01\LevelController;
+use App\Http\Controllers\Admin\V01\SubscriptionController as AdminSubscriptionController;
 use App\Http\Controllers\Admin\V01\WorldController;
 use App\Http\Controllers\School\V01\WorldController as SchoolWorldController;
 use Illuminate\Support\Facades\Route;
@@ -54,18 +55,33 @@ Route::middleware('auth:api')->group(function () {
     --------------------------------*/
     Route::prefix('admin')->group(function () {
 
-        // Schools → Super Admin OR Client Manager
+        // Schools
         Route::middleware(['permission:menu.manage_clients'])->group(function () {
             Route::get('/schools/generate-key', [SchoolController::class, 'generateKey']);
             Route::apiResource('schools', SchoolController::class)->only(['index', 'store', 'update', 'destroy']);
         });
 
         Route::middleware(['permission:menu.payments'])->group(function () {
+            // New manual activation routes (using the new Admin V01 controller)
+            Route::post('/subscriptions/school/{schoolId}/activate', [AdminSubscriptionController::class, 'activateSchool']);
+            Route::post('/subscriptions/student/{studentId}/activate', [AdminSubscriptionController::class, 'activateStudent']);
+
+            // Renewal routes
+            Route::post('/subscriptions/school/{schoolId}/renew', [AdminSubscriptionController::class, 'renewSchool']);
+            Route::post('/subscriptions/student/{studentId}/renew', [AdminSubscriptionController::class, 'renewStudent']);
+
+            // Listing routes
+            Route::get('/subscriptions/schools', [AdminSubscriptionController::class, 'schools']);
+            Route::get('/subscriptions/students', [AdminSubscriptionController::class, 'students']);
+
+            Route::get('/subscriptions/active', [AdminSubscriptionController::class, 'active']);
+
+            // Existing routes (you can keep or remove depending on if you want to use the new one exclusively)
             Route::get('/schools/{school}/subscriptions', [SubscriptionController::class, 'index']);
             Route::post('/schools/{school}/subscriptions', [SubscriptionController::class, 'store']);
         });
 
-        // Users / Roles / Permissions → anyone with the correct permissions
+        // Users
         Route::middleware(['auth:api', 'permission:users.manage|roles.manage|permissions.manage'])->group(function () {
             Route::apiResource('users', AdminUserController::class)->only(['index', 'store', 'update', 'destroy']);
             Route::apiResource('roles', AdminRoleController::class)->only(['index', 'store', 'update', 'destroy']);
@@ -132,8 +148,8 @@ Route::middleware('auth:api')->group(function () {
 
 
     Route::prefix('school')->middleware('auth:api')->group(function () {
-
         // School dashboard (any school-admin)
+        Route::get('/dashboard', [\App\Http\Controllers\School\V01\DashboardController::class, 'index']);
 
         // Manage teachers (school-admin only)
         Route::middleware('permission:teachers.view|teachers.create|teachers.update|teachers.delete')->group(function () {

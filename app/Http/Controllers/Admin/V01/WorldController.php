@@ -73,27 +73,34 @@ class WorldController extends Controller
         $withStages = $request->boolean('with_stages', false);
 
         $world = World::query()
-            ->whereNull('school_id') // admin-owned only
+            ->whereNull('school_id')
             ->whereKey($id)
-            ->with(['levels' => function ($q) use ($includeInactive, $withStages) {
-                if (!$includeInactive) $q->where('is_active', true);
-                $q->orderBy('order_index');
+            ->with([
+                'levels' => function ($q) use ($includeInactive, $withStages) {
+                    if (!$includeInactive)
+                        $q->where('is_active', true);
+                    $q->orderBy('order_index');
 
-                if ($withStages) {
-                    $q->with(['stages' => function ($sq) use ($includeInactive) {
-                        if (!$includeInactive) $sq->where('is_active', true);
-                        $sq->orderBy('order_index');
-                    }]);
-                } else {
-                    $q->withCount([
-                        'stages as stages_count',
-                        'stages as active_stages_count' => fn($sq) => $sq->where('is_active', true),
-                    ]);
+                    if ($withStages) {
+                        $q->with([
+                            'stages' => function ($sq) use ($includeInactive) {
+                                if (!$includeInactive)
+                                    $sq->where('is_active', true);
+                                $sq->orderBy('order_index');
+                            }
+                        ]);
+                    } else {
+                        $q->withCount([
+                            'stages as stages_count',
+                            'stages as active_stages_count' => fn($sq) => $sq->where('is_active', true),
+                        ]);
+                    }
                 }
-            }])
+            ])
             ->first();
 
-        if (!$world) return $this->returnError('World not found', 404);
+        if (!$world)
+            return $this->returnError('World not found', 404);
 
         $assignedSchoolIds = [];
         $assignedSchools = [];
@@ -144,6 +151,7 @@ class WorldController extends Controller
 
             $data['audience'] = $data['audience'] ?? 'public';
             $data['is_active'] = $data['is_active'] ?? true;
+            $data['is_premium'] = $data['is_premium'] ?? false;
             $data['is_unlocked_by_default'] = $data['is_unlocked_by_default'] ?? false;
 
             if (!isset($data['order_index'])) {
@@ -180,7 +188,8 @@ class WorldController extends Controller
     public function update(UpdateWorldRequest $request, int $id)
     {
         $world = World::whereNull('school_id')->find($id);
-        if (!$world) return $this->returnError('World not found', 404);
+        if (!$world)
+            return $this->returnError('World not found', 404);
 
         $data = $request->validated();
 
@@ -191,11 +200,9 @@ class WorldController extends Controller
             $world->fill($data);
             $world->save();
 
-            // if switching away from assigned, disable pivots
             if ($world->audience !== 'assigned') {
                 SchoolWorld::where('world_id', $world->id)->update(['is_enabled' => false]);
             } else {
-                // still assigned: optionally update/append assignments if school_ids provided
                 if (!empty($schoolIds)) {
                     foreach ($schoolIds as $sid) {
                         $row = SchoolWorld::where('school_id', $sid)->where('world_id', $world->id)->first();
@@ -226,7 +233,8 @@ class WorldController extends Controller
             'is_active' => DB::raw('NOT is_active'),
         ]);
 
-        if ($updated === 0) return $this->returnError('World not found', 404);
+        if ($updated === 0)
+            return $this->returnError('World not found', 404);
 
         $world = World::find($id);
 
@@ -249,7 +257,8 @@ class WorldController extends Controller
             ->whereIn('audience', ['public', 'schools'])
             ->find($id);
 
-        if (!$world) return $this->returnError('World not found or not reorderable globally', 404);
+        if (!$world)
+            return $this->returnError('World not found or not reorderable globally', 404);
 
         DB::transaction(function () use ($world, $target) {
             $total = (int) World::whereNull('school_id')
@@ -259,7 +268,8 @@ class WorldController extends Controller
             $newPos = max(1, min($target, $total));
             $oldPos = (int) $world->order_index;
 
-            if ($newPos === $oldPos) return;
+            if ($newPos === $oldPos)
+                return;
 
             if ($newPos < $oldPos) {
                 World::whereNull('school_id')
@@ -281,10 +291,6 @@ class WorldController extends Controller
         return $this->returnResponse();
     }
 
-    /**
-     * Assign an admin world (audience=assigned) to one or more schools.
-     * This appends to each school's stack (school_worlds.order_index).
-     */
     public function assignToSchools(Request $request, int $id)
     {
         $data = $request->validate([
@@ -293,7 +299,8 @@ class WorldController extends Controller
         ]);
 
         $world = World::whereNull('school_id')->find($id);
-        if (!$world) return $this->returnError('World not found', 404);
+        if (!$world)
+            return $this->returnError('World not found', 404);
 
         DB::transaction(function () use ($world, $data) {
             $world->audience = 'assigned';
@@ -332,7 +339,8 @@ class WorldController extends Controller
         ]);
 
         $world = World::whereNull('school_id')->find($id);
-        if (!$world) return $this->returnError('World not found', 404);
+        if (!$world)
+            return $this->returnError('World not found', 404);
 
         SchoolWorld::where('world_id', $world->id)
             ->whereIn('school_id', array_map('intval', $data['school_ids']))
@@ -356,14 +364,16 @@ class WorldController extends Controller
         $to = (int) $data['order_index'];
 
         $world = World::whereNull('school_id')->find($id);
-        if (!$world) return $this->returnError('World not found', 404);
+        if (!$world)
+            return $this->returnError('World not found', 404);
 
         $row = SchoolWorld::where('school_id', $schoolId)
             ->where('world_id', $world->id)
             ->where('is_enabled', true)
             ->first();
 
-        if (!$row) return $this->returnError('World is not assigned to this school', 404);
+        if (!$row)
+            return $this->returnError('World is not assigned to this school', 404);
 
         DB::transaction(function () use ($row, $schoolId, $to) {
             $total = (int) SchoolWorld::where('school_id', $schoolId)
@@ -373,7 +383,8 @@ class WorldController extends Controller
             $to = max(1, min($to, $total));
             $from = (int) $row->order_index;
 
-            if ($to === $from) return;
+            if ($to === $from)
+                return;
 
             SchoolWorld::where('id', $row->id)->update(['order_index' => 0]);
 
@@ -446,7 +457,7 @@ class WorldController extends Controller
         DB::transaction(function () use ($studentId, $world) {
             $worldProgress = StudentWorldProgress::firstOrNew([
                 'student_id' => $studentId,
-                'world_id'   => $world->id,
+                'world_id' => $world->id,
             ]);
 
             if (!$worldProgress->exists) {
@@ -469,7 +480,7 @@ class WorldController extends Controller
 
             $levelProgress = StudentLevelProgress::firstOrNew([
                 'student_id' => $studentId,
-                'level_id'   => $firstLevel->id,
+                'level_id' => $firstLevel->id,
             ]);
 
             if (!$levelProgress->exists) {
@@ -491,7 +502,7 @@ class WorldController extends Controller
 
             $stageProgress = StudentStageProgress::firstOrNew([
                 'student_id' => $studentId,
-                'stage_id'   => $firstStage->id,
+                'stage_id' => $firstStage->id,
             ]);
 
             if (!$stageProgress->exists) {

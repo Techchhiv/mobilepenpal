@@ -96,11 +96,16 @@ class WorldController extends Controller
         $stage = Stage::query()
             ->where('is_active', true)
             ->whereHas('level.world', fn($q) => $q->whereIn('worlds.id', $visibleWorldIds)->where('worlds.is_active', true))
-            ->with('exercises')
+            ->with(['exercises', 'level.world'])
             ->find($stageId);
 
         if (!$stage)
             return $this->returnError('Stage not found', 404);
+
+        $isPremiumContent = ($stage->level?->is_premium || $stage->level?->world?->is_premium);
+        if ($isPremiumContent && !auth()->user()->hasActiveSubscription()) {
+            return $this->returnError('Subscription required to access this content', 403);
+        }
 
         $this->setResult('stage', new StageWithExercisesResource($stage));
         return $this->returnResponse();
@@ -132,6 +137,12 @@ class WorldController extends Controller
 
         if (!$allowedStage) {
             return $this->returnError('Stage not found', 404);
+        }
+
+        $stage = Stage::with('level.world')->find($stageId);
+        $isPremiumContent = ($stage->level?->is_premium || $stage->level?->world?->is_premium);
+        if ($isPremiumContent && !auth()->user()->hasActiveSubscription()) {
+            return $this->returnError('Subscription required to access this content', 403);
         }
 
         $durationSeconds = (int) $request->input('duration_seconds', 0);

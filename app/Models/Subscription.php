@@ -8,8 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 class Subscription extends Model
 {
     use HasFactory;
-     protected $fillable = [
+    protected $fillable = [
         'school_id',
+        'student_id',
         'plan',
         'amount',
         'start_date',
@@ -20,5 +21,10 @@ class Subscription extends Model
     public function school()
     {
         return $this->belongsTo(School::class);
+    }
+
+    public function student()
+    {
+        return $this->belongsTo(Student::class);
     }
 }

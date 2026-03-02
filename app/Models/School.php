@@ -74,4 +74,14 @@ class School extends Model
     public function branches(){
         return $this->hasMany(Branch::class);
     }
+
+    public function students()
+    {
+        return $this->hasMany(Student::class);
+    }
+
+    public function teachers()
+    {
+        return $this->hasMany(Teacher::class, 'school_id');
+    }
 }

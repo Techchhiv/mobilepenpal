@@ -11,6 +11,13 @@ class LevelWithProgressResource extends JsonResource
         $totalStages = $this->stages->count();
         $completedStages = $this->completedStagesProgress->count();
 
+        $isPremium = (bool) $this->is_premium;
+        $hasSubscription = auth()->user()?->hasActiveSubscription() ?? false;
+
+        // A level is also locked if its parent world is premium
+        $worldPremium = (bool) ($this->world?->is_premium ?? false);
+        $isLockedBySub = ($isPremium || $worldPremium) && !$hasSubscription;
+
         return [
             'id' => (int) $this->id,
 
@@ -31,6 +38,8 @@ class LevelWithProgressResource extends JsonResource
             'total_stars' => (int) ($this->studentProgress->total_stars ?? 0),
             'is_completed' => (bool) ($this->studentProgress->is_completed ?? false),
             'is_unlocked' => (bool) ($this->studentProgress->is_unlocked ?? false),
+            'is_premium' => $isPremium,
+            'is_locked_by_subscription' => $isLockedBySub,
         ];
     }
 }

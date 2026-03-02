@@ -15,8 +15,9 @@ class UpdateLevelRequest extends FormRequest
             'description' => ['sometimes', 'nullable', 'string'],
             'description_en' => ['sometimes', 'nullable', 'string'],
 
-            'order_index'            => ['sometimes', 'integer', 'min:1'],
-            'is_active'              => ['sometimes', 'boolean'],
+            'order_index' => ['sometimes', 'integer', 'min:1'],
+            'is_active' => ['sometimes', 'boolean'],
+            'is_premium' => ['sometimes', 'boolean'],
             'is_unlocked_by_default' => ['sometimes', 'boolean'],
         ];
     }

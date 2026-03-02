@@ -14,7 +14,7 @@ class UserDetailResource extends JsonResource
      */
     public function toArray($request)
     {
-        return collect(parent::toArray($request))->except([
+        $data = collect(parent::toArray($request))->except([
             // 'school_id',
             // 'school_key',
             // 'enrollment_year',
@@ -22,5 +22,9 @@ class UserDetailResource extends JsonResource
             'created_at',
             'updated_at',
         ]);
+
+        $data['has_subscription'] = $this->resource->hasActiveSubscription();
+
+        return $data;
     }
 }

@@ -105,21 +105,22 @@ class WorldLevelStageSeeder extends Seeder
                 'ោះ'
             ];
 
-            $halfConsonants = array_slice($consonants, 0, 10);
-
             $worldDefs = [
+                // ===== PUBLIC WORLDS (for general/public users) =====
                 [
-                    'key' => 'public_consonants_half',
+                    'key' => 'public_consonants',
                     'audience' => 'public',
                     'order_index' => 1,
                     'name_km' => 'ព្យញ្ជនៈ',
                     'name_en' => 'Consonants',
                     'desc_km' => 'រៀនគូរព្យញ្ជនៈខ្មែរ',
                     'desc_en' => 'Learn Khmer consonants',
-                    'chars' => $halfConsonants,
+                    'chars' => $consonants,
                     'character_type' => 'consonants',
                     'chunk' => 5,
                     'is_unlocked_by_default' => true,
+                    'is_premium' => false,
+                    'premium_after_level' => 2,
                 ],
                 [
                     'key' => 'public_digits',
@@ -133,62 +134,12 @@ class WorldLevelStageSeeder extends Seeder
                     'character_type' => 'digits',
                     'chunk' => 5,
                     'is_unlocked_by_default' => true,
+                    'is_premium' => false,
                 ],
-                // [
-                //     'key' => 'public_math',
-                //     'audience' => 'public',
-                //     'order_index' => 3,
-                //     'name_km' => 'គណិតវិទ្យា',
-                //     'name_en' => 'Math',
-                //     'desc_km' => 'ហាត់គណិតវិទ្យា (បូក ដក គុណ ចែក)',
-                //     'desc_en' => 'Practice math (add, sub, mul, div)',
-                //     'chars' => [],
-                //     'character_type' => 'math',
-                //     'chunk' => 5,
-                //     'is_unlocked_by_default' => true,
-                // ],
-                // [
-                //     'key' => 'schools_math',
-                //     'audience' => 'schools',
-                //     'order_index' => 7,
-                //     'name_km' => 'គណិតវិទ្យា',
-                //     'name_en' => 'Math',
-                //     'desc_km' => 'ហាត់គណិតវិទ្យា (បូក ដក គុណ ចែក)',
-                //     'desc_en' => 'Practice math (add, sub, mul, div)',
-                //     'chars' => [],
-                //     'character_type' => 'math',
-                //     'chunk' => 5,
-                // ],
-
-                // Schools (all school accounts can see)
                 [
-                    'key' => 'schools_consonants_full',
-                    'audience' => 'schools',
+                    'key' => 'public_independent_vowels',
+                    'audience' => 'public',
                     'order_index' => 3,
-                    'name_km' => 'ព្យញ្ជនៈ',
-                    'name_en' => 'Consonants',
-                    'desc_km' => 'រៀនគូរព្យញ្ជនៈខ្មែរ',
-                    'desc_en' => 'Learn Khmer consonants',
-                    'chars' => $consonants,
-                    'character_type' => 'consonants',
-                    'chunk' => 5,
-                ],
-                [
-                    'key' => 'schools_digits',
-                    'audience' => 'schools',
-                    'order_index' => 4,
-                    'name_km' => 'លេខ',
-                    'name_en' => 'Digits',
-                    'desc_km' => 'រៀនគូរលេខខ្មែរ',
-                    'desc_en' => 'Learn Khmer digits',
-                    'chars' => $digits,
-                    'character_type' => 'digits',
-                    'chunk' => 5,
-                ],
-                [
-                    'key' => 'schools_independent_vowels',
-                    'audience' => 'schools',
-                    'order_index' => 5,
                     'name_km' => 'ស្រៈពេញតួ',
                     'name_en' => 'Independent Vowels',
                     'desc_km' => 'រៀនគូរស្រៈពេញតួ',
@@ -196,11 +147,13 @@ class WorldLevelStageSeeder extends Seeder
                     'chars' => $independentVowels,
                     'character_type' => 'independent_vowels',
                     'chunk' => 5,
+                    'is_unlocked_by_default' => false,
+                    'is_premium' => true,
                 ],
                 [
-                    'key' => 'schools_dependent_vowels',
-                    'audience' => 'schools',
-                    'order_index' => 6,
+                    'key' => 'public_dependent_vowels',
+                    'audience' => 'public',
+                    'order_index' => 4,
                     'name_km' => 'ស្រៈនិស្ស័យ',
                     'name_en' => 'Dependent Vowels',
                     'desc_km' => 'រៀនគូរស្រៈនិស្ស័យ',
@@ -208,6 +161,62 @@ class WorldLevelStageSeeder extends Seeder
                     'chars' => $dependentVowels,
                     'character_type' => 'dependent_vowels',
                     'chunk' => 5,
+                    'is_unlocked_by_default' => false,
+                    'is_premium' => true,
+                ],
+
+                // ===== SCHOOL WORLDS (for school accounts) =====
+                [
+                    'key' => 'schools_consonants_full',
+                    'audience' => 'schools',
+                    'order_index' => 5,
+                    'name_km' => 'ព្យញ្ជនៈ',
+                    'name_en' => 'Consonants',
+                    'desc_km' => 'រៀនគូរព្យញ្ជនៈខ្មែរ',
+                    'desc_en' => 'Learn Khmer consonants',
+                    'chars' => $consonants,
+                    'character_type' => 'consonants',
+                    'chunk' => 5,
+                    'is_premium' => false,
+                ],
+                [
+                    'key' => 'schools_digits',
+                    'audience' => 'schools',
+                    'order_index' => 6,
+                    'name_km' => 'លេខ',
+                    'name_en' => 'Digits',
+                    'desc_km' => 'រៀនគូរលេខខ្មែរ',
+                    'desc_en' => 'Learn Khmer digits',
+                    'chars' => $digits,
+                    'character_type' => 'digits',
+                    'chunk' => 5,
+                    'is_premium' => false,
+                ],
+                [
+                    'key' => 'schools_independent_vowels',
+                    'audience' => 'schools',
+                    'order_index' => 7,
+                    'name_km' => 'ស្រៈពេញតួ',
+                    'name_en' => 'Independent Vowels',
+                    'desc_km' => 'រៀនគូរស្រៈពេញតួ',
+                    'desc_en' => 'Learn independent vowels',
+                    'chars' => $independentVowels,
+                    'character_type' => 'independent_vowels',
+                    'chunk' => 5,
+                    'is_premium' => false,
+                ],
+                [
+                    'key' => 'schools_dependent_vowels',
+                    'audience' => 'schools',
+                    'order_index' => 8,
+                    'name_km' => 'ស្រៈនិស្ស័យ',
+                    'name_en' => 'Dependent Vowels',
+                    'desc_km' => 'រៀនគូរស្រៈនិស្ស័យ',
+                    'desc_en' => 'Learn dependent vowels',
+                    'chars' => $dependentVowels,
+                    'character_type' => 'dependent_vowels',
+                    'chunk' => 5,
+                    'is_premium' => false,
                 ],
             ];
 
@@ -219,7 +228,8 @@ class WorldLevelStageSeeder extends Seeder
                     nameEn: $def['name_en'],
                     descKm: $def['desc_km'],
                     descEn: $def['desc_en'],
-                    unlocked: $def['is_unlocked_by_default'] ?? false
+                    unlocked: $def['is_unlocked_by_default'] ?? false,
+                    isPremium: $def['is_premium'] ?? false,
                 );
 
                 $this->seedWorldContent(
@@ -228,6 +238,7 @@ class WorldLevelStageSeeder extends Seeder
                     chars: $def['chars'],
                     characterType: $def['character_type'],
                     chunk: $def['chunk'],
+                    premiumAfterLevel: $def['premium_after_level'] ?? null,
                 );
             }
         });
@@ -264,13 +275,15 @@ class WorldLevelStageSeeder extends Seeder
         string $nameEn,
         ?string $descKm,
         ?string $descEn,
-        ?bool $unlocked = false
+        ?bool $unlocked = false,
+        ?bool $isPremium = false,
     ): World {
         $data = [
             'school_id' => null,
             'audience' => $audience,
             'order_index' => $orderIndex,
             'is_active' => true,
+            'is_premium' => $isPremium,
             'is_unlocked_by_default' => $unlocked,
             'name' => $nameKm,
             'description' => $descKm,
@@ -286,7 +299,7 @@ class WorldLevelStageSeeder extends Seeder
         return World::create($data);
     }
 
-    private function seedWorldContent(World $world, string $worldKey, array $chars, string $characterType, int $chunk = 5): void
+    private function seedWorldContent(World $world, string $worldKey, array $chars, string $characterType, int $chunk = 5, ?int $premiumAfterLevel = null): void
     {
         if ($characterType === 'math') {
             $this->seedMathWorldContent($world);
@@ -303,12 +316,16 @@ class WorldLevelStageSeeder extends Seeder
         foreach ($chunks as $levelIndex => $levelChars) {
             [$levelNameKm, $levelNameEn] = $this->makeLevelName($characterType, $levelChars);
 
+            $levelNumber = $levelIndex + 1;
+            $isPremiumLevel = ($premiumAfterLevel !== null && $levelNumber > $premiumAfterLevel);
+
             $levelData = [
                 'world_id' => $world->id,
                 'name' => $levelNameKm,
-                'description' => "កម្រិត " . ($levelIndex + 1),
-                'order_index' => $levelIndex + 1,
+                'description' => "កម្រិត " . $levelNumber,
+                'order_index' => $levelNumber,
                 'is_active' => true,
+                'is_premium' => $isPremiumLevel,
                 'is_unlocked_by_default' => false,
             ];
 
@@ -316,7 +333,7 @@ class WorldLevelStageSeeder extends Seeder
                 $levelData['name_en'] = $levelNameEn;
             }
             if (Schema::hasColumn('levels', 'description_en')) {
-                $levelData['description_en'] = "Level " . ($levelIndex + 1);
+                $levelData['description_en'] = "Level " . $levelNumber;
             }
 
             $level = Level::create($levelData);
@@ -329,7 +346,6 @@ class WorldLevelStageSeeder extends Seeder
                     'name' => $stageNameKm,
                     'description' => "ហាត់សរសេរ {$ch}",
                     'order_index' => $stageIndex + 1,
-                    // 'max_stars' => 3,
                     'is_active' => true,
                     'is_unlocked_by_default' => false,
                 ];

@@ -40,7 +40,8 @@ class StudentProgress
     {
         return DB::transaction(function () use ($studentId, $stageId, $results) {
             $stage = Stage::with(['level.world'])->find($stageId);
-            if (!$stage) return null;
+            if (!$stage)
+                return null;
 
             $totalExercises = $results['total_exercises'];
             $correctAttempts = $results['correct_attempts'];
@@ -91,11 +92,15 @@ class StudentProgress
 
     private function calculateStarsEarned($score, $maxStars)
     {
-        if ($maxStars <= 0) return 0;
+        if ($maxStars <= 0)
+            return 0;
 
-        if ($score >= 100) return $maxStars;
-        if ($score >= 66) return min(2, $maxStars);
-        if ($score >= 33) return min(1, $maxStars);
+        if ($score >= 100)
+            return $maxStars;
+        if ($score >= 66)
+            return min(2, $maxStars);
+        if ($score >= 33)
+            return min(1, $maxStars);
         return 0;
     }
 
@@ -164,13 +169,13 @@ class StudentProgress
 
         $levelProgress = StudentLevelProgress::firstOrNew([
             'student_id' => $studentId,
-            'level_id'   => $nextLevel->id,
+            'level_id' => $nextLevel->id,
         ]);
 
         $levelProgress->is_unlocked = true;
         if (!$levelProgress->exists) {
             $levelProgress->is_completed = false;
-            $levelProgress->total_stars  = 0;
+            $levelProgress->total_stars = 0;
         }
         $levelProgress->save();
 
@@ -182,7 +187,7 @@ class StudentProgress
         if ($firstStage) {
             $progress = StudentStageProgress::firstOrNew([
                 'student_id' => $studentId,
-                'stage_id'   => $firstStage->id,
+                'stage_id' => $firstStage->id,
             ]);
 
             if (!$progress->exists) {
@@ -256,10 +261,11 @@ class StudentProgress
 
     private function unlockNextWorld($studentId, $currentWorld)
     {
-        $worldIds = $this->visibleWorldIdsForStudent((int)$studentId);
+        $worldIds = $this->visibleWorldIdsForStudent((int) $studentId);
 
-        $pos = array_search((int)$currentWorld->id, $worldIds, true);
-        if ($pos === false) return;
+        $pos = array_search((int) $currentWorld->id, $worldIds, true);
+        if ($pos === false)
+            return;
 
         for ($i = $pos + 1; $i < count($worldIds); $i++) {
             $wid = (int) $worldIds[$i];
@@ -281,7 +287,7 @@ class StudentProgress
         if ($nextStage) {
             $progress = StudentStageProgress::firstOrNew([
                 'student_id' => $studentId,
-                'stage_id'   => $nextStage->id,
+                'stage_id' => $nextStage->id,
             ]);
 
             if (!$progress->exists) {
@@ -313,7 +319,8 @@ class StudentProgress
                     ->orderBy('order_index')
                     ->first();
 
-                if (!$firstLevel) continue;
+                if (!$firstLevel)
+                    continue;
 
                 $firstStage = Stage::where('level_id', $firstLevel->id)
                     ->where('is_active', true)
@@ -348,12 +355,13 @@ class StudentProgress
 
     public function initializeWorldProgress($studentId, $worldId)
     {
-        $world = $this->visibleWorldQueryForStudent((int)$studentId)
-            ->where('worlds.id', (int)$worldId)
+        $world = $this->visibleWorldQueryForStudent((int) $studentId)
+            ->where('worlds.id', (int) $worldId)
             ->first();
-        if (!$world) return false;
+        if (!$world)
+            return false;
 
-        $this->ensureWorldUnlocked((int)$studentId, (int)$worldId);
+        $this->ensureWorldUnlocked((int) $studentId, (int) $worldId);
 
         $firstLevel = Level::where('world_id', $worldId)
             ->where('is_active', true)
@@ -361,9 +369,10 @@ class StudentProgress
             ->orderBy('order_index')
             ->first();
 
-        if (!$firstLevel) return true;
+        if (!$firstLevel)
+            return true;
 
-        $this->ensureLevelUnlocked((int)$studentId, (int)$firstLevel->id);
+        $this->ensureLevelUnlocked((int) $studentId, (int) $firstLevel->id);
 
         $firstStage = Stage::where('level_id', $firstLevel->id)
             ->where('is_active', true)
@@ -371,7 +380,7 @@ class StudentProgress
             ->first();
 
         if ($firstStage) {
-            $this->ensureStageUnlocked((int)$studentId, (int)$firstStage->id);
+            $this->ensureStageUnlocked((int) $studentId, (int) $firstStage->id);
         }
 
         return true;
@@ -408,7 +417,7 @@ class StudentProgress
 
         $incorrectAttempts = max($totalExercises - $correctAttempts, 0);
 
-        $sessionStars   = 0;
+        $sessionStars = 0;
         $stageCompleted = false;
 
         if ($stageId && $totalExercises > 0) {
@@ -427,23 +436,23 @@ class StudentProgress
         /** @var StudentDailyStat $stat */
         $stat = StudentDailyStat::firstOrNew([
             'student_id' => $studentId,
-            'date'       => $date,
+            'date' => $date,
         ]);
 
         if (!$stat->exists) {
             $stat->exercises_attempted = 0;
-            $stat->correct_attempts    = 0;
-            $stat->incorrect_attempts  = 0;
-            $stat->stages_completed    = 0;
-            $stat->stars_earned        = 0;
-            $stat->time_spent_seconds  = 0;
+            $stat->correct_attempts = 0;
+            $stat->incorrect_attempts = 0;
+            $stat->stages_completed = 0;
+            $stat->stars_earned = 0;
+            $stat->time_spent_seconds = 0;
         }
 
         $stat->exercises_attempted += $totalExercises;
-        $stat->correct_attempts    += $correctAttempts;
-        $stat->incorrect_attempts  += $incorrectAttempts;
-        $stat->stars_earned        += $sessionStars;
-        $stat->time_spent_seconds  += $durationSeconds;
+        $stat->correct_attempts += $correctAttempts;
+        $stat->incorrect_attempts += $incorrectAttempts;
+        $stat->stars_earned += $sessionStars;
+        $stat->time_spent_seconds += $durationSeconds;
 
         if ($stageCompleted) {
             $stat->stages_completed += 1;
@@ -459,7 +468,7 @@ class StudentProgress
             ->get();
 
         foreach ($defaultWorlds as $world) {
-            $this->ensureWorldUnlocked($studentId, (int)$world->id);
+            $this->ensureWorldUnlocked($studentId, (int) $world->id);
 
 
             $this->initializeDefaultUnlockedLevelsAndStages($studentId, $world->id, true);
@@ -503,9 +512,9 @@ class StudentProgress
         }
 
         foreach ($defaultLevels as $level) {
-            $this->ensureWorldUnlocked($studentId, (int)$level->world_id);
+            $this->ensureWorldUnlocked($studentId, (int) $level->world_id);
 
-            $this->ensureLevelUnlocked($studentId, (int)$level->id);
+            $this->ensureLevelUnlocked($studentId, (int) $level->id);
 
             $defaultStages = Stage::where('level_id', $level->id)
                 ->where('is_active', true)
@@ -526,7 +535,7 @@ class StudentProgress
                 ->first();
 
             if ($firstStage) {
-                $this->ensureStageUnlocked($studentId, (int)$firstStage->id);
+                $this->ensureStageUnlocked($studentId, (int) $firstStage->id);
             }
         }
     }
@@ -574,7 +583,8 @@ class StudentProgress
             ]
         );
 
-        if ($progress->status === 'completed') return;
+        if ($progress->status === 'completed')
+            return;
 
         if ($progress->status === null || $progress->status === 'locked') {
             $progress->status = 'unlocked';
@@ -592,7 +602,8 @@ class StudentProgress
                 return $lvl->stages()->where('is_active', true)->exists();
             });
 
-        if (!$nextLevel) return null;
+        if (!$nextLevel)
+            return null;
 
         $firstStageId = Stage::where('level_id', $nextLevel->id)
             ->where('is_active', true)
@@ -606,7 +617,6 @@ class StudentProgress
     {
         $schoolId = (int) (Student::whereKey($studentId)->value('school_id') ?? 0);
 
-        // General user (no school): only admin public
         if ($schoolId <= 0) {
             return World::query()
                 ->whereNull('school_id')
@@ -616,10 +626,6 @@ class StudentProgress
                 ->orderBy('id');
         }
 
-        // School student:
-        // - school-owned worlds (worlds.school_id = schoolId)
-        // - admin "schools" worlds (unless hidden by pivot is_enabled=false)
-        // - admin "assigned" worlds (only if pivot exists + enabled)
         return World::query()
             ->leftJoin('school_worlds as sw', function ($join) use ($schoolId) {
                 $join->on('sw.world_id', '=', 'worlds.id')
@@ -628,22 +634,17 @@ class StudentProgress
             ->where('worlds.is_active', true)
             ->where(function ($q) use ($schoolId) {
 
-                // 1) school-owned worlds
                 $q->where('worlds.school_id', $schoolId)
 
-                    // 2) admin "schools" worlds (visible unless hidden for this school)
                     ->orWhere(function ($qq) {
                         $qq->whereNull('worlds.school_id')
                             ->where('worlds.audience', 'schools')
                             ->where(function ($vis) {
-                                // visible if NO override row (normal case),
-                                // OR override row exists and enabled (future-proof)
                                 $vis->whereNull('sw.id')
                                     ->orWhere('sw.is_enabled', true);
                             });
                     })
 
-                    // 3) admin "assigned" worlds (must be enabled in pivot)
                     ->orWhere(function ($qq) {
                         $qq->whereNull('worlds.school_id')
                             ->where('worlds.audience', 'assigned')
@@ -684,7 +685,8 @@ class StudentProgress
             ->orderBy('order_index')
             ->first();
 
-        if (!$firstLevel) return false;
+        if (!$firstLevel)
+            return false;
 
         return Stage::where('level_id', $firstLevel->id)
             ->where('is_active', true)
