@@ -88,42 +88,49 @@ class HomePage extends StatelessWidget {
                   phase: 0.10,
                 ),
 
-                Column(
-                  children: [
-                    const SizedBox(height: 12),
-
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Obx(() => _buildHeroHeader(context)),
+                Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      maxWidth: Env.globalMaxWidth,
                     ),
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 12),
 
-                    const SizedBox(height: 12),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Obx(() => _buildHeroHeader(context)),
+                        ),
 
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: _buildModeCard(),
+                        const SizedBox(height: 12),
+
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: _buildModeCard(),
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Obx(() {
+                              final isStudent =
+                                  homeController.currentMode.value == 'student';
+
+                              return IndexedStack(
+                                index: isStudent ? 0 : 1,
+                                children: [
+                                  StudentHome(homeController: homeController),
+                                  ParentHome(homeController: homeController),
+                                ],
+                              );
+                            }),
+                          ),
+                        ),
+                      ],
                     ),
-
-                    const SizedBox(height: 12),
-
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Obx(() {
-                          final isStudent =
-                              homeController.currentMode.value == 'student';
-
-                          return IndexedStack(
-                            index: isStudent ? 0 : 1,
-                            children: [
-                              StudentHome(homeController: homeController),
-                              ParentHome(homeController: homeController),
-                            ],
-                          );
-                        }),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ],
             ),

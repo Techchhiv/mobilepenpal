@@ -159,48 +159,86 @@ class LevelDetailPage extends GetView<LevelController> {
       );
     }
 
-    return Column(
-      children: [
-        Expanded(
-          flex: 1,
-          child: Center(
-            child: Lottie.asset(
-              'assets/animated/pencil.json',
-              repeat: true,
-              animate: true,
-              width: 80,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final bool isTablet = constraints.maxWidth > 500;
+        return Column(
+          children: [
+            Expanded(
+              flex: 1,
+              child: Center(
+                child: Lottie.asset(
+                  'assets/animated/pencil.json',
+                  repeat: true,
+                  animate: true,
+                  width: 80,
+                ),
+                // child: Image.asset(
+                //   'assets/images/illustrations/boy.png',
+                //   height: 100,
+                // ),
+              ),
             ),
-            // child: Image.asset(
-            //   'assets/images/illustrations/boy.png',
-            //   height: 100,
-            // ),
-          ),
-        ),
-        Expanded(flex: 1, child: _buildStagesCarousel(level.stages)),
-      ],
+            Expanded(
+              flex: isTablet ? 2 : 1,
+              child: _buildStagesCarousel(level.stages),
+            ),
+          ],
+        );
+      },
     );
   }
 
   Widget _buildStagesCarousel(List<LevelStage> stages) {
-    return Obx(() {
-      final pc = PageController(
-        initialPage: controller.initialStageIndex.value,
-      );
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final bool isTablet = constraints.maxWidth > 500;
+        final double fraction = isTablet ? 0.5 : 1.0;
 
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!pc.hasClients) return;
-        pc.jumpToPage(controller.initialStageIndex.value);
-      });
+        return Obx(() {
+          final pc = PageController(
+            initialPage: controller.initialStageIndex.value,
+            viewportFraction: fraction,
+          );
 
-      return PageView.builder(
-        controller: pc,
-        itemCount: stages.length,
-        itemBuilder: (context, index) {
-          final stage = stages[index];
-          return _buildStageCard(stage, index + 1, stages.length);
-        },
-      );
-    });
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!pc.hasClients) return;
+            pc.jumpToPage(controller.initialStageIndex.value);
+          });
+
+          return PageView.builder(
+            controller: pc,
+            physics: const BouncingScrollPhysics(),
+            itemCount: stages.length,
+            itemBuilder: (context, index) {
+              return AnimatedBuilder(
+                animation: pc,
+                builder: (context, child) {
+                  double value = 1.0;
+
+                  if (isTablet) {
+                    if (pc.hasClients && pc.position.haveDimensions) {
+                      value = pc.page! - index;
+                      value = (1 - (value.abs() * 0.15)).clamp(0.85, 1.0);
+                    } else {
+                      value = index == controller.initialStageIndex.value
+                          ? 1.0
+                          : 0.85;
+                    }
+                  }
+
+                  return Transform.scale(
+                    scale: Curves.easeOut.transform(value),
+                    child: child,
+                  );
+                },
+                child: _buildStageCard(stages[index], index + 1, stages.length),
+              );
+            },
+          );
+        });
+      },
+    );
   }
 
   Widget _buildStageCard(LevelStage stage, int stageNumber, int totalStages) {

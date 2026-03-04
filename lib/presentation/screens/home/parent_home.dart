@@ -47,39 +47,30 @@ class ParentHome extends StatelessWidget {
                 onRefresh: () async {
                   await homeController.refreshHome();
                 },
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    return SingleChildScrollView(
-                      physics: const AlwaysScrollableScrollPhysics(
-                        parent: BouncingScrollPhysics(),
-                      ),
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(
-                          minHeight: constraints.maxHeight,
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Obx(() {
-                              final c = Get.find<HomeController>();
-                              if (!c.hasSchool) return const SizedBox.shrink();
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(
+                    parent: BouncingScrollPhysics(),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Obx(() {
+                        final c = Get.find<HomeController>();
+                        if (!c.hasSchool) return const SizedBox.shrink();
 
-                              return Column(
-                                children: [
-                                  _buildClassroomSection(),
-                                  const SizedBox(height: 16),
-                                ],
-                              );
-                            }),
-                            _buildSubscriptionSection(),
-                            const SizedBox(height: 12),
-                            ParentSummaryCard(homeController: homeController),
-                            const SizedBox(height: 24),
+                        return Column(
+                          children: [
+                            _buildClassroomSection(),
+                            const SizedBox(height: 16),
                           ],
-                        ),
-                      ),
-                    );
-                  },
+                        );
+                      }),
+                      _buildSubscriptionSection(),
+                      const SizedBox(height: 12),
+                      ParentSummaryCard(homeController: homeController),
+                      const SizedBox(height: 24),
+                    ],
+                  ),
                 ),
               ),
             ),

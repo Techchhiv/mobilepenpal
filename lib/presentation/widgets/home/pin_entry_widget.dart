@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:mobilepenpal/core/config/env.dart';
 import 'package:mobilepenpal/core/theme/app_colors.dart';
 import 'package:mobilepenpal/data/controllers/home/pin_controller.dart';
 import 'package:mobilepenpal/data/services/home_service.dart';
@@ -194,50 +195,58 @@ class PinWidget extends StatelessWidget {
       controller: controller,
     );
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        for (final row in [
-          [1, 2, 3],
-          [4, 5, 6],
-          [7, 8, 9],
-        ])
-          Padding(
-            padding: const EdgeInsets.only(bottom: 15.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: row.map((n) => num(n)).toList(),
-            ),
-          ),
-
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: Env.globalMaxWidth),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            _buildNumpadButton(
-              child: const Text(
-                'C',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+            for (final row in [
+              [1, 2, 3],
+              [4, 5, 6],
+              [7, 8, 9],
+            ])
+              Padding(
+                padding: const EdgeInsets.only(bottom: 20.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: row.map((n) => num(n)).toList(),
                 ),
               ),
-              onTap: () => controller.onClear(mode),
-              id: 'clear',
-              showBorder: false,
-              controller: controller,
-            ),
-            num(0),
-            _buildNumpadButton(
-              child: const Icon(Icons.backspace_outlined, color: Colors.white),
-              onTap: () => controller.onBackspace(mode),
-              id: 'backspace',
-              showBorder: false,
-              controller: controller,
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildNumpadButton(
+                  child: const Text(
+                    'C',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  onTap: () => controller.onClear(mode),
+                  id: 'clear',
+                  showBorder: false,
+                  controller: controller,
+                ),
+                num(0),
+                _buildNumpadButton(
+                  child: const Icon(
+                    Icons.backspace_outlined,
+                    color: Colors.white,
+                  ),
+                  onTap: () => controller.onBackspace(mode),
+                  id: 'backspace',
+                  showBorder: false,
+                  controller: controller,
+                ),
+              ],
             ),
           ],
         ),
-      ],
+      ),
     );
   }
 }

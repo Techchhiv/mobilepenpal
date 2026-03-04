@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lottie/lottie.dart';
 import 'package:mobilepenpal/core/utils/number_format_utils.dart';
+import 'package:mobilepenpal/core/config/env.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_summary_controller.dart';
 import 'package:mobilepenpal/presentation/widgets/loading_overly.dart';
 
@@ -173,60 +174,65 @@ class StageSummaryPage extends GetView<StageSummaryController> {
   }
 
   Widget _buildBottomButtons() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16),
-      child: Row(
-        children: [
-          Expanded(
-            child: GestureDetector(
-              onTap: controller.retryStage,
-              child: Container(
-                height: 56,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1FB9FF),
-                  borderRadius: BorderRadius.circular(28),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.25),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: Env.globalMaxWidth),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16),
+          child: Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: controller.retryStage,
+                  child: Container(
+                    height: 56,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1FB9FF),
+                      borderRadius: BorderRadius.circular(28),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.25),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                child: Center(
-                  child: Icon(Icons.replay, color: Colors.white, size: 32),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: GestureDetector(
-              onTap: controller.continueNext,
-              child: Container(
-                height: 56,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF34C759),
-                  borderRadius: BorderRadius.circular(28),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.25),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
+                    child: Center(
+                      child: Icon(Icons.replay, color: Colors.white, size: 32),
                     ),
-                  ],
-                ),
-                child: Center(
-                  child: Icon(
-                    Icons.arrow_forward,
-                    color: Colors.white,
-                    size: 32,
                   ),
                 ),
               ),
-            ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: GestureDetector(
+                  onTap: controller.continueNext,
+                  child: Container(
+                    height: 56,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF34C759),
+                      borderRadius: BorderRadius.circular(28),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.25),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Center(
+                      child: Icon(
+                        Icons.arrow_forward,
+                        color: Colors.white,
+                        size: 32,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

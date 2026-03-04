@@ -361,7 +361,7 @@ class StageController extends GetxController {
       character: ex.character,
     );
 
-    // await _loadStampImage();
+    await _loadStampImage();
 
     if (playAudioAfter) {
       await Future.delayed(const Duration(milliseconds: 150));
@@ -481,9 +481,9 @@ class StageController extends GetxController {
       _currentStrokeList[i] = null;
     }
 
-    // if (_currentStampImage != null) {
-    //   _applyStampBrush();
-    // }
+    if (_currentStampImage != null) {
+      _applyStampBrush();
+    }
 
     if (!isMathCurrent) {
       anim.restartGuideFromStart();

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_drawing_board/flutter_drawing_board.dart';
 import 'package:get/get.dart';
 import 'package:lottie/lottie.dart';
+import 'package:mobilepenpal/core/config/env.dart';
 import 'package:mobilepenpal/core/network/route_builder.dart';
 import 'package:mobilepenpal/core/theme/app_colors.dart';
 import 'package:mobilepenpal/core/utils/number_format_utils.dart';
@@ -60,50 +61,58 @@ class StageDetailPage extends GetView<StageController> {
                 ),
 
                 SafeArea(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 16,
-                    ),
-                    child: Column(
-                      children: [
-                        _buildTopBar(Get.context!),
-                        const SizedBox(height: 16),
-                        Obx(() {
-                          final show = controller.showIllustration;
-                          return AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 220),
-                            switchInCurve: Curves.easeOut,
-                            switchOutCurve: Curves.easeIn,
-                            transitionBuilder: (child, anim) => SizeTransition(
-                              sizeFactor: anim,
-                              axisAlignment: -1.0,
-                              child: child,
-                            ),
-                            child: show
-                                ? Column(
-                                    key: const ValueKey('illus'),
-                                    children: [
-                                      _buildIllustration(),
-                                      SizedBox(height: 0),
-                                    ],
-                                  )
-                                : const SizedBox(key: ValueKey('no_illus')),
-                          );
-                        }),
-                        Obx(
-                          () => controller.showIllustration
-                              ? const SizedBox.shrink()
-                              : const SizedBox(height: 20),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(
+                        maxWidth: Env.globalMaxWidth,
+                      ),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 16,
                         ),
-                        _buildDrawingBoard(),
-                        const SizedBox(height: 8),
-                        _buildCharacterOptions(),
+                        child: Column(
+                          children: [
+                            _buildTopBar(Get.context!),
+                            const SizedBox(height: 16),
+                            Obx(() {
+                              final show = controller.showIllustration;
+                              return AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 220),
+                                switchInCurve: Curves.easeOut,
+                                switchOutCurve: Curves.easeIn,
+                                transitionBuilder: (child, anim) =>
+                                    SizeTransition(
+                                      sizeFactor: anim,
+                                      axisAlignment: -1.0,
+                                      child: child,
+                                    ),
+                                child: show
+                                    ? Column(
+                                        key: const ValueKey('illus'),
+                                        children: [
+                                          _buildIllustration(),
+                                          SizedBox(height: 0),
+                                        ],
+                                      )
+                                    : const SizedBox(key: ValueKey('no_illus')),
+                              );
+                            }),
+                            Obx(
+                              () => controller.showIllustration
+                                  ? const SizedBox.shrink()
+                                  : const SizedBox(height: 20),
+                            ),
+                            _buildDrawingBoard(),
+                            const SizedBox(height: 8),
+                            _buildCharacterOptions(),
 
-                        const SizedBox(height: 24),
-                        _buildBottomButtons(),
-                        const SizedBox(height: 8),
-                      ],
+                            const SizedBox(height: 24),
+                            _buildBottomButtons(),
+                            const SizedBox(height: 8),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -122,6 +131,7 @@ class StageDetailPage extends GetView<StageController> {
         children: [
           Container(
             width: 50,
+            height: 50,
             decoration: BoxDecoration(
               // color: Colors.orange.shade300,
               borderRadius: BorderRadius.circular(25),
@@ -130,7 +140,7 @@ class StageDetailPage extends GetView<StageController> {
             clipBehavior: Clip.antiAlias,
             child: Image.asset(
               'assets/images/illustrations/pencil.png',
-              fit: BoxFit.fill,
+              fit: BoxFit.contain,
             ),
           ),
           const SizedBox(width: 12),
@@ -247,8 +257,8 @@ class StageDetailPage extends GetView<StageController> {
           GestureDetector(
             onTap: () => _showPauseDialog(context),
             child: Container(
-              width: 40,
-              height: 40,
+              width: 50,
+              height: 50,
               decoration: const BoxDecoration(
                 color: Colors.white60,
                 shape: BoxShape.circle,
@@ -946,6 +956,7 @@ class StageDetailPage extends GetView<StageController> {
             vertical: 18,
           ),
           child: Container(
+            constraints: BoxConstraints(maxWidth: 400),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(28),
               gradient: LinearGradient(

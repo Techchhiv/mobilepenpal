@@ -25,5 +25,7 @@ class Env {
 
   static const String apiVersion = 'v1';
 
+  static const double globalMaxWidth = 600.0;
+
   static const String accessToken = 'student_token';
 }
