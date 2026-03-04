@@ -6,6 +6,8 @@ import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/world_controller.dart';
 import 'package:mobilepenpal/presentation/routes/app_routes.dart';
 import 'package:mobilepenpal/presentation/widgets/home/course_card.dart';
+import 'package:mobilepenpal/presentation/widgets/home/premium_course_card.dart';
+import 'package:mobilepenpal/presentation/widgets/home/subscribe_modal.dart';
 
 class StudentHome extends StatelessWidget {
   final HomeController homeController;
@@ -104,20 +106,34 @@ class StudentHome extends StatelessWidget {
                                   ? (progress.description)
                                   : (progress.descriptionEn);
 
-                              // Subscription-locked worlds: visible but tapping shows upgrade prompt
                               final Color primaryColor = isSubLocked
                                   ? const Color(0xFFB8860B)
                                   : _getColorByIndex(index);
 
                               String buttonLabel;
                               if (isSubLocked) {
-                                buttonLabel = '👑 ${'subscribe'.tr}';
+                                buttonLabel = 'subscribe'.tr;
                               } else if (!unlocked) {
                                 buttonLabel = 'locked'.tr;
                               } else if (progress.levelsCompleted > 0) {
                                 buttonLabel = 'continue'.tr;
                               } else {
                                 buttonLabel = 'start'.tr;
+                              }
+
+                              if (isSubLocked) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 14),
+                                  child: PremiumCourseCard(
+                                    courseTitle: title,
+                                    courseSubtitle: subtitle,
+                                    badgeText: 'premium'.tr,
+                                    completedLessons: progress.levelsCompleted,
+                                    totalLessons: progress.levelsTotal,
+                                    buttonText: buttonLabel,
+                                    onTap: () => _showSubscriptionPrompt(),
+                                  ),
+                                );
                               }
 
                               return Padding(
@@ -135,11 +151,9 @@ class StudentHome extends StatelessWidget {
                                   badgeColor: progress.isCompleted
                                       ? Colors.green
                                       : const Color(0xFFFF9800),
-                                  onTap: isSubLocked
-                                      ? () => _showSubscriptionPrompt()
-                                      : (unlocked
-                                            ? () => _openWorld(progress.id)
-                                            : null),
+                                  onTap: unlocked
+                                      ? () => _openWorld(progress.id)
+                                      : null,
                                   isLocked: !unlocked && !isSubLocked,
                                 ),
                               );
@@ -175,15 +189,7 @@ class StudentHome extends StatelessWidget {
   }
 
   void _showSubscriptionPrompt() {
-    Get.snackbar(
-      '👑 ${'premium_content'.tr}',
-      'subscribe_to_unlock'.tr,
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: const Color(0xFFB8860B),
-      colorText: Colors.white,
-      duration: const Duration(seconds: 3),
-      icon: const Icon(Icons.lock_outline, color: Colors.white),
-    );
+    Get.dialog(const SubscribeModal());
   }
 
   final List<Color> _courseColors = [

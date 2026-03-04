@@ -197,8 +197,7 @@ class HomeController extends GetxController {
     }
     if (isClassroomLoading.value) return;
 
-    final userId =
-        student.value?.id.toString() ?? '0'; 
+    final userId = student.value?.id.toString() ?? '0';
     final attemptKey = 'classroom_attempted_$userId';
     final attempted = _box.read(attemptKey) == true;
 
@@ -220,7 +219,7 @@ class HomeController extends GetxController {
       );
     } finally {
       isClassroomLoading.value = false;
-      await _box.write(attemptKey, true); // ✅ mark attempted
+      await _box.write(attemptKey, true);
     }
   }
 

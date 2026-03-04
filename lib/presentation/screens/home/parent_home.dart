@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobilepenpal/core/theme/app_colors.dart';
+import 'package:mobilepenpal/core/utils/report_format.dart';
 import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
 import 'package:mobilepenpal/presentation/screens/home/qr_scanner_page.dart';
 import 'package:mobilepenpal/presentation/widgets/home/parent_summary_page.dart';
+import 'package:mobilepenpal/presentation/widgets/home/subscribe_modal.dart';
 import 'package:mobilepenpal/presentation/widgets/input_modal.dart';
 import 'package:shimmer/shimmer.dart';
 
@@ -65,10 +67,12 @@ class ParentHome extends StatelessWidget {
                               return Column(
                                 children: [
                                   _buildClassroomSection(),
-                                  const SizedBox(height: 24),
+                                  const SizedBox(height: 16),
                                 ],
                               );
                             }),
+                            _buildSubscriptionSection(),
+                            const SizedBox(height: 12),
                             ParentSummaryCard(homeController: homeController),
                             const SizedBox(height: 24),
                           ],
@@ -167,6 +171,137 @@ class ParentHome extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           body,
+        ],
+      );
+    });
+  }
+
+  Widget _buildSubscriptionSection() {
+    return Obx(() {
+      final student = homeController.student.value;
+      if (student == null) return const SizedBox.shrink();
+
+      final hasSchool = homeController.hasSchool;
+      if (hasSchool) return const SizedBox.shrink();
+
+      final hasSub = student.hasSubscription;
+      final rawPlan = student.subscriptionPlan ?? 'premium';
+      final plan = rawPlan.toLowerCase().tr;
+      final start = student.subscriptionStartDate;
+      final end = student.subscriptionEndDate;
+
+      String durationText = '';
+      if (hasSub && start != null && end != null) {
+        final st = DateTime.tryParse(start);
+        final en = DateTime.tryParse(end);
+        if (st != null && en != null) {
+          durationText = '${st.toJoinDateLabel()} — ${en.toJoinDateLabel()}';
+        } else {
+          durationText = '$start to $end';
+        }
+      }
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'subscription_status'.tr,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+          SizedBox(height: 12),
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () {
+                if (!hasSub) {
+                  Get.dialog(const SubscribeModal());
+                }
+              },
+              borderRadius: BorderRadius.circular(22),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(22),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.08),
+                      blurRadius: 16,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                  border: Border.all(
+                    color: Colors.black.withValues(alpha: 0.03),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: hasSub
+                            ? const Color(0xFFFEF3C7)
+                            : _brand.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Icon(
+                        hasSub
+                            ? Icons.star_rounded
+                            : Icons.star_outline_rounded,
+                        color: hasSub ? const Color(0xFFF59E0B) : _brand,
+                        size: 26,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            hasSub ? '$plan ${'plan'.tr}' : 'free_plan'.tr,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w900,
+                              fontSize: 16,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          if (hasSub && durationText.isNotEmpty)
+                            Text(
+                              durationText,
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey[700],
+                                fontWeight: FontWeight.w600,
+                              ),
+                            )
+                          else if (!hasSub)
+                            Text(
+                              'upgrade_for_more'.tr,
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey[600],
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    if (!hasSub)
+                      Icon(
+                        Icons.chevron_right_rounded,
+                        color: Colors.grey[400],
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
         ],
       );
     });

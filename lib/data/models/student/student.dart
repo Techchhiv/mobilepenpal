@@ -21,6 +21,10 @@ class Student {
   final int? enrollmentYear;
 
   final bool isActive;
+  final bool hasSubscription;
+  final String? subscriptionPlan;
+  final String? subscriptionStartDate;
+  final String? subscriptionEndDate;
 
   Student({
     required this.id,
@@ -41,6 +45,10 @@ class Student {
     this.address,
     this.enrollmentYear,
     required this.isActive,
+    this.hasSubscription = false,
+    this.subscriptionPlan,
+    this.subscriptionStartDate,
+    this.subscriptionEndDate,
   });
 
   static int? _toInt(dynamic v) {
@@ -55,6 +63,7 @@ class Student {
   }
 
   static bool _toBool(dynamic v) {
+    if (v == null) return false;
     if (v is bool) return v;
     if (v is int) return v == 1;
     return v.toString() == '1' || v.toString().toLowerCase() == 'true';
@@ -80,6 +89,10 @@ class Student {
       address: _toStringOrNull(json['address']),
       enrollmentYear: _toInt(json['enrollment_year']),
       isActive: _toBool(json['is_active']),
+      hasSubscription: _toBool(json['has_subscription']),
+      subscriptionPlan: _toStringOrNull(json['subscription_plan']),
+      subscriptionStartDate: _toStringOrNull(json['subscription_start_date']),
+      subscriptionEndDate: _toStringOrNull(json['subscription_end_date']),
     );
   }
 
@@ -103,6 +116,10 @@ class Student {
       'address': address,
       'enrollment_year': enrollmentYear,
       'is_active': isActive,
+      'has_subscription': hasSubscription,
+      'subscription_plan': subscriptionPlan,
+      'subscription_start_date': subscriptionStartDate,
+      'subscription_end_date': subscriptionEndDate,
     };
   }
 }

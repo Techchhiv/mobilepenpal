@@ -2,11 +2,14 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:developer' as dev;
 import 'dart:math';
+import 'dart:ui' as ui;
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_drawing_board/flutter_drawing_board.dart';
+import 'package:flutter_drawing_board/paint_contents.dart';
+import 'package:mobilepenpal/presentation/widgets/world/image_stamp_content.dart';
 import 'package:get/get.dart';
 import 'package:mobilepenpal/core/network/route_builder.dart';
 import 'package:mobilepenpal/core/utils/math_generation.dart';
@@ -54,9 +57,7 @@ class StageController extends GetxController {
     if (isMathCurrent) {
       final expected = mathExpected.value;
       if (expected != null) {
-        return expected
-            .toString()
-            .length; // Remove .abs() so negative signs get a board
+        return expected.toString().length;
       }
     }
     return 1;
@@ -98,6 +99,8 @@ class StageController extends GetxController {
   final attempts = <Map<String, dynamic>>[].obs;
 
   static Map<String, dynamic>? _strokesDbCache;
+
+  ui.Image? _currentStampImage;
 
   late final StageAnimationController anim;
   bool _ownsAnim = false;
@@ -358,12 +361,64 @@ class StageController extends GetxController {
       character: ex.character,
     );
 
+    // await _loadStampImage();
+
     if (playAudioAfter) {
       await Future.delayed(const Duration(milliseconds: 150));
       await audio.autoPlayCharacter(
         type: ex.characterType ?? '',
         ch: ex.character,
       );
+    }
+  }
+
+  Future<void> _loadStampImage() async {
+    final path = anim.illustrationAssetPath.value;
+
+    if (path.isEmpty) {
+      _currentStampImage = null;
+      _applyDefaultBrush();
+      return;
+    }
+
+    try {
+      final data = await rootBundle.load(path);
+      final codec = await ui.instantiateImageCodec(
+        data.buffer.asUint8List(),
+        targetWidth: 64,
+        targetHeight: 64,
+      );
+      final frame = await codec.getNextFrame();
+      _currentStampImage = frame.image;
+      _applyStampBrush();
+    } catch (e) {
+      dev.log('Failed to load stamp image: $e', name: 'StageController');
+      _currentStampImage = null;
+      _applyDefaultBrush();
+    }
+  }
+
+  void _applyStampBrush() {
+    final img = _currentStampImage;
+    if (img == null) {
+      _applyDefaultBrush();
+      return;
+    }
+    final stamp = ImageStampContent(
+      stampImage: img,
+      stampSize: 24.0 * scale,
+      spacing: 16.0 * scale,
+    );
+    for (var c in drawingControllers) {
+      c.setPaintContent(stamp);
+    }
+  }
+
+  void _applyDefaultBrush() {
+    final defaultLine = SimpleLine();
+    for (var c in drawingControllers) {
+      c.setPaintContent(defaultLine);
+      c.setStyle(color: Colors.black, strokeWidth: 6);
     }
   }
 
@@ -425,6 +480,10 @@ class StageController extends GetxController {
       _rawStrokesList[i].clear();
       _currentStrokeList[i] = null;
     }
+
+    // if (_currentStampImage != null) {
+    //   _applyStampBrush();
+    // }
 
     if (!isMathCurrent) {
       anim.restartGuideFromStart();
