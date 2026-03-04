@@ -7,11 +7,33 @@ bool get _isKhmerLocale {
 }
 
 const _monthsEn = [
-  'Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec',
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
 ];
 
 const _monthsKm = [
-  'មករា','កុម្ភៈ','មីនា','មេសា','ឧសភា','មិថុនា','កក្កដា','សីហា','កញ្ញា','តុលា','វិច្ឆិកា','ធ្នូ',
+  'មករា',
+  'កុម្ភៈ',
+  'មីនា',
+  'មេសា',
+  'ឧសភា',
+  'មិថុនា',
+  'កក្កដា',
+  'សីហា',
+  'កញ្ញា',
+  'តុលា',
+  'វិច្ឆិកា',
+  'ធ្នូ',
 ];
 
 extension StudyTimeFormat on int {
@@ -124,6 +146,8 @@ extension ReportCharacterFormat on String? {
         return '×';
       case 'div':
         return '÷';
+      case 'math':
+        return 'math'.tr;
       default:
         return NumberFormatUtils.digitsByLocale(raw);
     }
