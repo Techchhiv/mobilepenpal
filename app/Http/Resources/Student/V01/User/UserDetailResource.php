@@ -23,7 +23,12 @@ class UserDetailResource extends JsonResource
             'updated_at',
         ]);
 
-        $data['has_subscription'] = $this->resource->hasActiveSubscription();
+        $activeSubscription = $this->resource->getActiveSubscription();
+
+        $data['has_subscription'] = $activeSubscription !== null;
+        $data['subscription_plan'] = $activeSubscription ? $activeSubscription->plan : null;
+        $data['subscription_start_date'] = $activeSubscription ? $activeSubscription->start_date : null;
+        $data['subscription_end_date'] = $activeSubscription ? $activeSubscription->end_date : null;
 
         return $data;
     }

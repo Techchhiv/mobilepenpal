@@ -55,6 +55,8 @@ Route::middleware('auth:api')->group(function () {
     --------------------------------*/
     Route::prefix('admin')->name('admin.')->group(function () {
 
+        Route::get('/reports/schools', [\App\Http\Controllers\Admin\V01\DashboardController::class, 'index']);
+
         // Schools
         Route::middleware(['permission:menu.manage_clients'])->group(function () {
             Route::get('/schools/generate-key', [SchoolController::class, 'generateKey']);

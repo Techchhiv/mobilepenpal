@@ -49,20 +49,25 @@ class Student extends Authenticatable
         return $this->belongsTo(School::class);
     }
 
-    public function hasActiveSubscription(): bool
+    public function getActiveSubscription()
     {
         if ($this->school_id) {
             return Subscription::where('school_id', $this->school_id)
                 ->where('active', true)
                 ->where('start_date', '<=', now())
                 ->where('end_date', '>=', now())
-                ->exists();
+                ->first();
         }
 
         return $this->subscriptions()
             ->where('active', true)
             ->where('start_date', '<=', now())
             ->where('end_date', '>=', now())
-            ->exists();
+            ->first();
+    }
+
+    public function hasActiveSubscription(): bool
+    {
+        return $this->getActiveSubscription() !== null;
     }
 }

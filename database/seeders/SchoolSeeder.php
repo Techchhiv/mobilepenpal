@@ -19,12 +19,6 @@ class SchoolSeeder extends Seeder
                 'admin_email' => 'itc@gmail.com',
                 'admin_password' => 'password123',
             ],
-            [
-                'name' => 'Demo School B',
-                'school_key' => 'SCH-DEMO-B',
-                'admin_email' => 'b@gmail.com',
-                'admin_password' => 'password123',
-            ],
         ];
 
         foreach ($schools as $s) {
