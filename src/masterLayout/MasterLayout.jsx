@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Icon } from "@iconify/react";
-import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
+import { Link, NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import ThemeToggleButton from "../helper/ThemeToggleButton";
-import API from "../helper/api";
 import penLogo from "../assets/images/pen_logo.png";
 import "../assets/css/Layout.css";
 
@@ -17,6 +16,7 @@ const MasterLayout = ({ children }) => {
 
   const showManageClients = isSuperAdmin || hasPermission("menu.manage_clients");
   const showPayments = isSuperAdmin || hasPermission("menu.payments");
+  const showSubscriptions = isSuperAdmin || hasPermission("menu.subscription");
   const showAnalytics = isSuperAdmin || hasPermission("menu.analytics");
   const showReports = isSuperAdmin || hasPermission("menu.reports");
   const showManageUsers = isSuperAdmin || hasPermission("users.manage");
@@ -37,6 +37,8 @@ const MasterLayout = ({ children }) => {
       p.startsWith("/admin/exercises")
     ) {
       setOpenDropdownKey("world");
+    } else if (p.startsWith("/admin/subscriptions")) {
+      setOpenDropdownKey("subscriptions");
     } else {
       setOpenDropdownKey(null);
     }
@@ -83,7 +85,14 @@ const MasterLayout = ({ children }) => {
 
         <div className="sidebar-menu-area">
           <ul className="sidebar-menu" id="sidebar-menu">
-            <li className="sidebar-menu-group-title">Application</li>
+            {/* <li className="sidebar-menu-group-title">Application</li> */}
+
+            <li>
+              <NavLink to="/admin" end>
+                <Icon icon="mdi:view-dashboard" className="menu-icon" />
+                <span>Dashboard</span>
+              </NavLink>
+            </li>
 
             {showManageClients && (
               <li>
@@ -91,6 +100,54 @@ const MasterLayout = ({ children }) => {
                   <Icon icon="mdi:account-multiple" className="menu-icon" />
                   <span>Manage Clients</span>
                 </NavLink>
+              </li>
+            )}
+
+            {showSubscriptions && (
+              <li className={`dropdown ${openDropdownKey === "subscriptions" ? "open" : ""}`}>
+                <a
+                  href="#subscriptions"
+                  className={`menu-trigger ${openDropdownKey === "subscriptions" ? "active-page" : ""}`}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setOpenDropdownKey((prev) => (prev === "subscriptions" ? null : "subscriptions"));
+                  }}
+                >
+                  <Icon icon="mdi:card-account-details-star" className="menu-icon" />
+                  <span>Subscriptions</span>
+                  <Icon
+                    icon={openDropdownKey === "subscriptions" ? "mdi:chevron-up" : "mdi:chevron-down"}
+                    className="caret ms-auto"
+                  />
+                </a>
+
+                <ul
+                  className="sidebar-submenu"
+                  style={{
+                    maxHeight: openDropdownKey === "subscriptions" ? "600px" : "0px",
+                    overflow: "hidden",
+                    transition: "max-height .25s ease",
+                  }}
+                >
+                  <li>
+                    <NavLink
+                      to="/admin/subscriptions/schools"
+                      className={({ isActive }) => (isActive ? "active-page" : "")}
+                    >
+                      <i className="ri-circle-fill circle-icon text-primary-600 w-auto" />
+                      School Subscriptions
+                    </NavLink>
+                  </li>
+                  <li>
+                    <NavLink
+                      to="/admin/subscriptions/users"
+                      className={({ isActive }) => (isActive ? "active-page" : "")}
+                    >
+                      <i className="ri-circle-fill circle-icon text-warning-main w-auto" />
+                      User Subscriptions
+                    </NavLink>
+                  </li>
+                </ul>
               </li>
             )}
 

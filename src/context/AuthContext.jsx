@@ -16,13 +16,13 @@ function deriveAuth(userObj) {
   const isSuperAdmin = roleNames.includes("super-admin");
   const isSchoolAdmin = roleNames.includes("school-admin");
   const isTeacher = roleNames.includes("teacher");
-
+  const isSchoolUser = isSchoolAdmin || isTeacher || roleNames.includes("student") || roleNames.includes("parent");
 
   const hasRole = role => roleNames.includes(role.toLowerCase());
   const hasPermission = perm => isSuperAdmin || permNames.includes(perm.toLowerCase());
   const hasAnyPermission = perms => isSuperAdmin || perms.some(p => permNames.includes(p.toLowerCase()));
 
-  return { roleNames, permNames, isSuperAdmin, isSchoolAdmin,isTeacher, hasRole, hasPermission, hasAnyPermission };
+  return { roleNames, permNames, isSuperAdmin, isSchoolAdmin, isTeacher, isSchoolUser, hasRole, hasPermission, hasAnyPermission };
 }
 
 export const AuthProvider = ({ children }) => {
@@ -84,7 +84,8 @@ export const AuthProvider = ({ children }) => {
       isAuthenticated: !!user,
       isSuperAdmin: derived.isSuperAdmin,
       isSchoolAdmin: derived.isSchoolAdmin,
-      isTeacher: derived.isTeacher, 
+      isTeacher: derived.isTeacher,
+      isSchoolUser: derived.isSchoolUser,
       hasRole: derived.hasRole,
       hasPermission: derived.hasPermission,
       hasAnyPermission: derived.hasAnyPermission,

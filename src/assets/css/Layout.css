@@ -62,25 +62,27 @@
 
 @media (max-width: 991.98px) {
   .sidebar.active {
-    width: 260px !important;   
+    width: 260px !important;
     max-width: 85vw !important;
   }
 
-  .sidebar.active .sidebar-menu > li > a,
-  .sidebar.active .sidebar-menu > li > .menu-trigger {
+  .sidebar.active .sidebar-menu>li>a,
+  .sidebar.active .sidebar-menu>li>.menu-trigger {
     display: flex !important;
     align-items: center !important;
     justify-content: flex-start !important;
-    gap: 12px !important;       
-    padding: 10px 14px !important;   
+    gap: 12px !important;
+    padding: 10px 14px !important;
     white-space: nowrap !important;
   }
 
   /* Ensure icons don't squash text */
   .sidebar.active .sidebar-menu .menu-icon {
-    margin-right: 0 !important; /* gap handles spacing */
+    margin-right: 0 !important;
+    /* gap handles spacing */
     flex: 0 0 auto !important;
   }
+
   .sidebar.active .sidebar-menu li a span,
   .sidebar.active .sidebar-menu li .menu-trigger span {
     display: inline !important;
@@ -98,4 +100,18 @@
   .sidebar:hover {
     width: 260px !important;
   }
+}
+
+.sidebar-menu .menu-trigger .caret {
+  transition: transform 0.3s ease;
+}
+
+.sidebar-menu .menu-trigger:hover .caret,
+.sidebar-menu .menu-trigger.active-page .caret {
+  opacity: 1 !important;
+  display: block !important;
+}
+
+.sidebar-menu .menu-trigger::after {
+  display: none !important;
 }

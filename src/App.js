@@ -10,13 +10,15 @@ import OAuthSuccess from "./helper/OAuthSuccess";
 import AccessDeniedPage from "./pages/AccessDeniedPage";
 
 // ---------- Admin Pages ----------
-import HomePageOne from "./pages/HomePageOne";
+import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
 import AdminUsersPage from "./pages/admin/AdminUsersPage";
 import AdminRolesPage from "./pages/admin/AdminRolesPage";
 import AdminPermissionsPage from "./pages/admin/AdminPermissionsPage";
 import ManageClientsPage from "./pages/admin/ManageClientsPage";
 import ManagePaymentsPage from "./pages/admin/ManagePaymentsPage";
 import SchoolPayments from "./pages/admin/SchoolPayments";
+import SchoolSubscriptionsPage from "./pages/admin/Subscriptions/SchoolSubscriptionsPage";
+import UserSubscriptionsPage from "./pages/admin/Subscriptions/UserSubscriptionsPage";
 
 // ---------- School Pages ----------
 import SchoolSignInLayer from "./pages/school/page/SchoolSignin";
@@ -79,7 +81,7 @@ export default function App() {
           path="/admin"
           element={
             <Gate>
-              <HomePageOne />
+              <AdminDashboardPage />
             </Gate>
           }
         />
@@ -109,6 +111,12 @@ export default function App() {
             path="/admin/schools/:schoolId/payments"
             element={<SchoolPayments />}
           />
+        </Route>
+
+        {/* ---------- Subscriptions ---------- */}
+        <Route element={<Gate anyPerm={["menu.subscription"]} />}>
+          <Route path="/admin/subscriptions/schools" element={<SchoolSubscriptionsPage />} />
+          <Route path="/admin/subscriptions/users" element={<UserSubscriptionsPage />} />
         </Route>
 
         <Route

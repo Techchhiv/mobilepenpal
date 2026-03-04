@@ -3,7 +3,7 @@ import { useAuth } from "../../context/AuthContext";
 import LoadingSpinner from "../LoadingSpinner";
 
 export default function Gate({ anyPerm = [], allPerm = [], children }) {
-  const { loading, isAuthenticated, user, isSuperAdmin, isSchoolAdmin, hasPermission, hasAnyPermission } = useAuth();
+  const { loading, isAuthenticated, user, isSuperAdmin, isSchoolAdmin, isSchoolUser, hasPermission, hasAnyPermission } = useAuth();
   const location = useLocation();
 
   if (loading) return <LoadingSpinner />;
@@ -12,7 +12,17 @@ export default function Gate({ anyPerm = [], allPerm = [], children }) {
     return <Navigate to="/sign-in-admin" replace state={{ from: location }} />;
   }
 
-  
+  const isAdminRoute = location.pathname.startsWith("/admin");
+  const isSchoolRoute = location.pathname.startsWith("/school");
+
+  if (isAdminRoute && isSchoolUser) {
+    return <Navigate to="/school" replace />;
+  }
+
+  if (isSchoolRoute && !isSchoolUser) {
+    return <Navigate to="/admin" replace />;
+  }
+
   if (isSuperAdmin) return children || <Outlet />;
 
   // Check permissions
