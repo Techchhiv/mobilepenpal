@@ -7,6 +7,7 @@ import 'package:mobilepenpal/core/theme/app_colors.dart';
 import 'package:mobilepenpal/core/utils/number_format_utils.dart';
 import 'package:mobilepenpal/data/controllers/world/level_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_controller.dart';
+import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
 import 'package:mobilepenpal/data/models/level/level_stage.dart';
 import 'package:mobilepenpal/presentation/routes/app_routes.dart';
 import 'package:mobilepenpal/presentation/widgets/app_snackbar.dart';
@@ -121,6 +122,22 @@ class LevelDetailPage extends GetView<LevelController> {
                     ],
                   ),
                 ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: IconButton(
+                icon: const Icon(Icons.home, color: Colors.white, size: 28),
+                onPressed: () async {
+                  controller.isLoading.value = true;
+                  try {
+                    final homeController = Get.find<HomeController>();
+                    await homeController.fetchStudentProfile();
+                  } finally {
+                    controller.isLoading.value = false;
+                    Get.offAllNamed(AppRoutes.home);
+                  }
+                },
               ),
             ),
           ],

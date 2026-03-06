@@ -158,6 +158,13 @@ class StageController extends GetxController {
   final progressAnimatingStarIndex = (-1).obs;
   final progressStarScale = 1.0.obs;
 
+  /// Gogomath-style: remaining stars (starts at 3, decreases on each wrong exercise).
+  final remainingStars = 3.obs;
+
+  /// Per-exercise dot states for the progress bar.
+  /// Length == totalExercises. Each entry is correct / wrong / pending.
+  final exerciseDotStates = <StarState>[].obs;
+
   int get totalExercises => exercises.length;
 
   int get completedExercises => attempts.length.clamp(0, totalExercises);
@@ -167,15 +174,7 @@ class StageController extends GetxController {
   }
 
   int get starsEarnedByScore {
-    final total = totalExercises;
-    if (total <= 0) return 0;
-
-    final pct = (correctExercises / total) * 100.0;
-
-    if (pct >= 100.0) return 3;
-    if (pct >= 66.0) return 2;
-    if (pct >= 33.0) return 1;
-    return 0;
+    return remainingStars.value.clamp(0, 3);
   }
 
   bool get canSkip =>
@@ -268,6 +267,10 @@ class StageController extends GetxController {
 
       anim.resetStars(total: exercises.length);
 
+      remainingStars.value = 3;
+      exerciseDotStates.assignAll(
+        List.filled(exercises.length, StarState.pending),
+      );
       attempts.clear();
       _updateProgressUI(animate: false);
 
@@ -361,7 +364,7 @@ class StageController extends GetxController {
       character: ex.character,
     );
 
-    await _loadStampImage();
+    // await _loadStampImage();
 
     if (playAudioAfter) {
       await Future.delayed(const Duration(milliseconds: 150));
@@ -424,30 +427,48 @@ class StageController extends GetxController {
 
   void _updateProgressUI({bool animate = true}) {
     final total = totalExercises;
-    final correct = correctExercises;
+    final completed = completedExercises;
+    final wrong = completed - correctExercises;
 
+    // Progress bar tracks completion (correct or wrong).
     stageProgress.value = (total <= 0)
         ? 0.0
-        : (correct / total).clamp(0.0, 1.0);
+        : (completed / total).clamp(0.0, 1.0);
 
-    final earned = starsEarnedByScore;
-
-    final next = List<StarState>.generate(
-      3,
-      (i) => i < earned ? StarState.correct : StarState.pending,
-    );
-
-    if (animate) {
-      for (int i = 0; i < 3; i++) {
-        if (progressStarStates[i] != StarState.correct &&
-            next[i] == StarState.correct) {
-          _popProgressStar(i);
-          break;
-        }
+    // Build per-exercise dot states from the attempts list.
+    final dots = List<StarState>.generate(total, (i) {
+      if (i < attempts.length) {
+        return attempts[i]['is_correct'] == true
+            ? StarState.correct
+            : StarState.wrong;
       }
+      return StarState.pending;
+    });
+    exerciseDotStates.assignAll(dots);
+
+    // Compute achievable stars based on max possible correct answers.
+    final chunkSize = (total / 3.0).ceil();
+    final maxPossibleCorrect = total - wrong;
+    int achievable;
+    if (total <= 0) {
+      achievable = 0;
+    } else if (maxPossibleCorrect >= total) {
+      achievable = 3;
+    } else if (maxPossibleCorrect >= (2 * total / 3.0).ceil()) {
+      achievable = 2;
+    } else if (maxPossibleCorrect >= chunkSize) {
+      achievable = 1;
+    } else {
+      achievable = 0;
     }
 
-    progressStarStates.assignAll(next);
+    final prevRemaining = remainingStars.value;
+    remainingStars.value = achievable;
+
+    // Animate star pop when a star is lost.
+    if (animate && achievable < prevRemaining) {
+      _popProgressStar(achievable);
+    }
   }
 
   Future<void> _popProgressStar(int i) async {
@@ -481,9 +502,9 @@ class StageController extends GetxController {
       _currentStrokeList[i] = null;
     }
 
-    if (_currentStampImage != null) {
-      _applyStampBrush();
-    }
+    // if (_currentStampImage != null) {
+    //   _applyStampBrush();
+    // }
 
     if (!isMathCurrent) {
       anim.restartGuideFromStart();
@@ -858,10 +879,14 @@ class StageController extends GetxController {
     anim.resetStars(total: exercises.length);
 
     stageProgress.value = 0.0;
+    remainingStars.value = 3;
+    exerciseDotStates.assignAll(
+      List.filled(exercises.length, StarState.pending),
+    );
     progressStarStates.assignAll([
-      StarState.pending,
-      StarState.pending,
-      StarState.pending,
+      StarState.correct,
+      StarState.correct,
+      StarState.correct,
     ]);
     progressAnimatingStarIndex.value = -1;
     progressStarScale.value = 1.0;

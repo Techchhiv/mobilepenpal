@@ -158,91 +158,134 @@ class StageDetailPage extends GetView<StageController> {
                 ),
                 child: Obx(() {
                   final total = controller.totalExercises;
-                  final progress = (total <= 0)
-                      ? 0.0
-                      : controller.stageProgress.value.clamp(0.0, 1.0);
+                  final dotStates = controller.exerciseDotStates;
+                  final reqs = <int>[];
+                  if (total >= 3) {
+                    reqs.add((total / 3).ceil());
+                    reqs.add((total * 2 / 3).ceil());
+                    reqs.add(total);
+                  } else {
+                    for (int i = 1; i <= total; i++) {
+                      reqs.add(i);
+                    }
+                  }
 
-                  final starStates = controller.progressStarStates;
-                  final animIndex = controller.progressAnimatingStarIndex.value;
-                  final scale = controller.progressStarScale.value;
+                  int correctCount = 0;
+                  final starPositions = <int>{};
+
+                  for (int i = 0; i < controller.completedExercises; i++) {
+                    if (dotStates[i] == StarState.correct) {
+                      correctCount++;
+                      if (reqs.contains(correctCount)) {
+                        starPositions.add(i);
+                      }
+                    }
+                  }
+
+                  for (final r in reqs) {
+                    if (r > correctCount) {
+                      final needed = r - correctCount;
+                      final pos = controller.completedExercises + needed - 1;
+                      if (pos < total) {
+                        starPositions.add(pos);
+                      }
+                    }
+                  }
 
                   return LayoutBuilder(
                     builder: (context, cst) {
                       final w = cst.maxWidth;
                       final h = cst.maxHeight;
 
-                      const starSize = 48.0;
                       const barHeight = 12.0;
+                      const dotSize = 18.0;
+                      const starSize = 38.0;
 
                       final barTop = (h - barHeight) / 2;
+                      final dotTop = barTop + (barHeight / 2) - (dotSize / 2);
                       final starTop = barTop + (barHeight / 2) - (starSize / 2);
 
-                      const thresholds = <double>[0.33, 0.66, 1.0];
-
-                      final usable = (w - starSize).clamp(0.0, w);
-                      final centers = thresholds
-                          .map((t) => (starSize / 2) + t * usable)
-                          .toList();
-
-                      String assetFor(StarState st) {
-                        switch (st) {
-                          case StarState.correct:
-                            return 'assets/animated/star.json';
-                          case StarState.wrong:
-                            return 'assets/animated/star_red.json';
-                          // case StarState.pending:
-                          default:
-                            return 'assets/animated/star_border.json';
+                      // Position items evenly across the bar.
+                      final positions = <double>[];
+                      if (total > 0) {
+                        for (int i = 0; i < total; i++) {
+                          final t = (i + 0.5) / total;
+                          positions.add(t * w);
                         }
                       }
 
                       return Stack(
                         clipBehavior: Clip.none,
                         children: [
-                          Positioned(
-                            left: 0,
-                            right: 0,
-                            top: barTop,
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(999),
-                              child: LinearProgressIndicator(
-                                value: progress,
-                                minHeight: barHeight,
-                                backgroundColor: Colors.black.withValues(
-                                  alpha: 0.08,
-                                ),
-                                valueColor: AlwaysStoppedAnimation(
-                                  AppColors.buttonPrimary,
-                                ),
-                              ),
-                            ),
-                          ),
+                          // Items (dots or stars).
+                          for (int i = 0; i < total; i++)
+                            () {
+                              final isStar = starPositions.contains(i);
 
-                          for (int i = 0; i < 3; i++)
-                            Positioned(
-                              left: (centers[i] - starSize / 2).clamp(
-                                0.0,
-                                w - starSize,
-                              ),
-                              top: starTop,
-                              child: AnimatedScale(
-                                scale: (animIndex == i) ? scale : 1.0,
-                                duration: const Duration(milliseconds: 180),
-                                curve: Curves.easeOutBack,
-                                child: SizedBox(
-                                  width: starSize,
-                                  height: starSize,
-                                  child: Lottie.asset(
-                                    assetFor(starStates[i]),
-                                    repeat: false,
-                                    animate:
-                                        (animIndex == i) ||
-                                        (starStates[i] != StarState.pending),
-                                    fit: BoxFit.contain,
+                              // Determine exercise state.
+                              final state = i < dotStates.length
+                                  ? dotStates[i]
+                                  : StarState.pending;
+
+                              // Star position: show Lottie star if pending or correct.
+                              if (isStar && state != StarState.wrong) {
+                                final asset = state == StarState.correct
+                                    ? 'assets/animated/star.json'
+                                    : 'assets/animated/star_border.json';
+
+                                return Positioned(
+                                  left: (positions[i] - starSize / 2).clamp(
+                                    0.0,
+                                    w - starSize,
+                                  ),
+                                  top: starTop,
+                                  child: SizedBox(
+                                    width: starSize,
+                                    height: starSize,
+                                    child: Lottie.asset(
+                                      asset,
+                                      repeat: false,
+                                      animate: state == StarState.correct,
+                                      fit: BoxFit.contain,
+                                    ),
+                                  ),
+                                );
+                              }
+
+                              // Regular dot.
+                              Color fill;
+                              Color border;
+                              switch (state) {
+                                case StarState.correct:
+                                  fill = AppColors.buttonPrimary;
+                                  border = Colors.white;
+                                  break;
+                                case StarState.wrong:
+                                  fill = Colors.redAccent;
+                                  border = Colors.white;
+                                  break;
+                                default:
+                                  fill = Colors.grey.shade300;
+                                  border = Colors.grey.shade400;
+                              }
+
+                              return Positioned(
+                                left: (positions[i] - dotSize / 2).clamp(
+                                  0.0,
+                                  w - dotSize,
+                                ),
+                                top: dotTop,
+                                child: Container(
+                                  width: dotSize,
+                                  height: dotSize,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: fill,
+                                    border: Border.all(color: border, width: 2),
                                   ),
                                 ),
-                              ),
-                            ),
+                              );
+                            }(),
                         ],
                       );
                     },
@@ -463,155 +506,217 @@ class StageDetailPage extends GetView<StageController> {
     );
   }
 
+  Widget _buildAttemptsIndicator() {
+    return Obx(() {
+      final left = controller.attemptLeft.value;
+      if (left >= StageController.maxAttemptsPerExercise) {
+        return const SizedBox.shrink();
+      }
+
+      return Padding(
+        padding: EdgeInsets.only(bottom: 16.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(StageController.maxAttemptsPerExercise, (
+            index,
+          ) {
+            final isFilled = index < left;
+            return Padding(
+              padding: EdgeInsets.only(left: 2.0),
+              child: Icon(
+                isFilled ? Icons.favorite : Icons.favorite_border,
+                color: Colors.redAccent,
+                size: 26,
+                shadows: [
+                  Shadow(
+                    color: Colors.black26,
+                    offset: Offset(0, 2),
+                    blurRadius: 4,
+                  ),
+                ],
+              ),
+            );
+          }),
+        ),
+      );
+    });
+  }
+
   Widget _buildDrawingBoard() {
     return Expanded(
-      child: Obx(() {
-        final boardsNum = controller.activeBoardCount;
-        return LayoutBuilder(
-          builder: (context, constraints) {
-            const maxFeedbackScale = 1.06;
-            final gap = 0.0;
-            final totalGap = (boardsNum > 1) ? gap * (boardsNum - 1) : 0.0;
-            final maxBoardWidth = (constraints.maxWidth - totalGap) / boardsNum;
-            final width = maxBoardWidth / maxFeedbackScale;
-            final height = (boardsNum > 1)
-                ? (constraints.maxHeight * 0.75 / maxFeedbackScale)
-                : (width < constraints.maxHeight
-                      ? width
-                      : constraints.maxHeight);
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Positioned.fill(
+            child: Obx(() {
+              final boardsNum = controller.activeBoardCount;
+              return LayoutBuilder(
+                builder: (context, constraints) {
+                  const maxFeedbackScale = 1.06;
+                  final gap = 0.0;
+                  final totalGap = (boardsNum > 1)
+                      ? gap * (boardsNum - 1)
+                      : 0.0;
+                  final maxBoardWidth =
+                      (constraints.maxWidth - totalGap) / boardsNum;
+                  final width = maxBoardWidth / maxFeedbackScale;
+                  final height = (boardsNum > 1)
+                      ? (constraints.maxHeight * 0.75 / maxFeedbackScale)
+                      : (width < constraints.maxHeight
+                            ? width
+                            : constraints.maxHeight);
 
-            if (controller.boardWidth.value != width ||
-                controller.boardHeight.value != height) {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                controller.updateBoardSize(width, height: height);
-              });
-            }
+                  if (controller.boardWidth.value != width ||
+                      controller.boardHeight.value != height) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      controller.updateBoardSize(width, height: height);
+                    });
+                  }
 
-            return Center(
-              child: Obx(() {
-                final feedbackState = controller.anim.feedback.value;
-                final dx = feedbackState == DrawFeedback.wrong
-                    ? controller.anim.shakeOffset.value
-                    : 0.0;
+                  return Center(
+                    child: Obx(() {
+                      final feedbackState = controller.anim.feedback.value;
+                      final dx = feedbackState == DrawFeedback.wrong
+                          ? controller.anim.shakeOffset.value
+                          : 0.0;
 
-                double scale;
-                switch (feedbackState) {
-                  case DrawFeedback.correct:
-                    scale = 1.05;
-                    break;
-                  case DrawFeedback.wrong:
-                    scale = 1.06;
-                    break;
-                  default:
-                    scale = 1.0;
-                }
+                      double scale;
+                      switch (feedbackState) {
+                        case DrawFeedback.correct:
+                          scale = 1.05;
+                          break;
+                        case DrawFeedback.wrong:
+                          scale = 1.06;
+                          break;
+                        default:
+                          scale = 1.0;
+                      }
 
-                return AnimatedScale(
-                  scale: scale,
-                  duration: const Duration(milliseconds: 150),
-                  curve: Curves.easeOut,
-                  child: Transform.translate(
-                    offset: Offset(dx, 0),
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: List.generate(boardsNum, (index) {
-                            return Padding(
-                              padding: EdgeInsets.only(
-                                right: index < boardsNum - 1 ? 6.0 : 0,
-                              ),
-                              child: _buildSingleBoard(width, height, index),
-                            );
-                          }),
-                        ),
-                        Align(
-                          alignment: Alignment.center,
-                          child: ConfettiWidget(
-                            confettiController:
-                                controller.anim.confettiController,
-                            blastDirectionality: BlastDirectionality.explosive,
-                            emissionFrequency: 0.01,
-                            numberOfParticles: 25,
-                            maxBlastForce: 30,
-                            minBlastForce: 10,
-                            gravity: 0.25,
-                            shouldLoop: false,
-                          ),
-                        ),
-                        Obx(() {
-                          final praise = controller.anim.praiseText.value;
-                          final isVisible =
-                              feedbackState == DrawFeedback.correct &&
-                              praise.isNotEmpty;
-
-                          return Positioned(
-                            top: 10,
-                            child: AnimatedScale(
-                              scale: isVisible ? 1.0 : 0.0,
-                              duration: const Duration(milliseconds: 1000),
-                              curve: Curves.elasticOut,
-                              child: AnimatedOpacity(
-                                opacity: isVisible ? 1.0 : 0.0,
-                                duration: const Duration(milliseconds: 500),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 10,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.yellow.shade700,
-                                    borderRadius: BorderRadius.circular(16),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withValues(
-                                          alpha: 0.20,
-                                        ),
-                                        blurRadius: 6,
-                                        offset: const Offset(0, 3),
-                                      ),
-                                    ],
-                                    border: Border.all(
-                                      color: Colors.white.withValues(
-                                        alpha: 0.8,
-                                      ),
-                                      width: 2,
+                      return AnimatedScale(
+                        scale: scale,
+                        duration: const Duration(milliseconds: 150),
+                        curve: Curves.easeOut,
+                        child: Transform.translate(
+                          offset: Offset(dx, 0),
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: List.generate(boardsNum, (index) {
+                                  return Padding(
+                                    padding: EdgeInsets.only(
+                                      right: index < boardsNum - 1 ? 6.0 : 0,
                                     ),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const Icon(
-                                        Icons.star,
-                                        color: Colors.white,
-                                        size: 18,
-                                      ),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        praise,
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+                                    child: _buildSingleBoard(
+                                      width,
+                                      height,
+                                      index,
+                                    ),
+                                  );
+                                }),
+                              ),
+                              Align(
+                                alignment: Alignment.center,
+                                child: ConfettiWidget(
+                                  confettiController:
+                                      controller.anim.confettiController,
+                                  blastDirectionality:
+                                      BlastDirectionality.explosive,
+                                  emissionFrequency: 0.01,
+                                  numberOfParticles: 25,
+                                  maxBlastForce: 30,
+                                  minBlastForce: 10,
+                                  gravity: 0.25,
+                                  shouldLoop: false,
                                 ),
                               ),
-                            ),
-                          );
-                        }),
-                      ],
-                    ),
-                  ),
-                );
-              }),
-            );
-          },
-        );
-      }),
+                              Obx(() {
+                                final praise = controller.anim.praiseText.value;
+                                final isVisible =
+                                    feedbackState == DrawFeedback.correct &&
+                                    praise.isNotEmpty;
+
+                                return Positioned(
+                                  top: 10,
+                                  child: AnimatedScale(
+                                    scale: isVisible ? 1.0 : 0.0,
+                                    duration: const Duration(
+                                      milliseconds: 1000,
+                                    ),
+                                    curve: Curves.elasticOut,
+                                    child: AnimatedOpacity(
+                                      opacity: isVisible ? 1.0 : 0.0,
+                                      duration: const Duration(
+                                        milliseconds: 500,
+                                      ),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 16,
+                                          vertical: 10,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Colors.yellow.shade700,
+                                          borderRadius: BorderRadius.circular(
+                                            16,
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withValues(
+                                                alpha: 0.20,
+                                              ),
+                                              blurRadius: 6,
+                                              offset: const Offset(0, 3),
+                                            ),
+                                          ],
+                                          border: Border.all(
+                                            color: Colors.white.withValues(
+                                              alpha: 0.8,
+                                            ),
+                                            width: 2,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            const Icon(
+                                              Icons.star,
+                                              color: Colors.white,
+                                              size: 18,
+                                            ),
+                                            const SizedBox(width: 6),
+                                            Text(
+                                              praise,
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }),
+                            ],
+                          ),
+                        ),
+                      );
+                    }),
+                  );
+                },
+              );
+            }),
+          ),
+          Positioned(
+            top: 0,
+            right: 12,
+            child: IgnorePointer(child: _buildAttemptsIndicator()),
+          ),
+        ],
+      ),
     );
   }
 
