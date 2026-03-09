@@ -443,5 +443,11 @@ final Map<String, String> kmKH = {
 
   // ===== Praise =====
   'praise_excellent': 'ល្អណាស់!',
-  'praise_well_done': 'ធ្វើបានល្អ',
+  'praise_well_done': 'ធ្វើបានល្អ 👍',
+
+  // ===== Subscription =====
+  'school_subscription_title': 'មាតិកាពិសេស',
+  'school_subscription_message':
+      'មាតិកានេះត្រូវការការបើកប្រាក់ប្រីមៀម។ សូមទាក់ទងអ្នកគ្រប់គ្រងសាលារៀនរបស់អ្នកដើម្បីដំណើរការ។',
+  'contact_school_admin': 'ទាក់ទងអ្នកគ្រប់គ្រង',
 };

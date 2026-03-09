@@ -449,4 +449,10 @@ final Map<String, String> enUS = {
   // ===== Praise =====
   'praise_excellent': 'Excellent!',
   'praise_well_done': 'Well done!',
+
+  // ===== Subscription =====
+  'school_subscription_title': 'Premium Content',
+  'school_subscription_message':
+      'This content requires a premium subscription. Please contact your school administrator to activate access for your account.',
+  'contact_school_admin': 'Contact School Admin',
 };
