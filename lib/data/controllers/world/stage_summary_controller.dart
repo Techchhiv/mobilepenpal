@@ -93,7 +93,9 @@ class StageSummaryController extends GetxController
       levelController.worldId = worldId;
       levelController.levelId = levelId;
 
+      levelController.currentLevel.value = null;
       await levelController.fetchLevelDetail();
+      levelController.update();
 
       bool hitLevel = false;
 

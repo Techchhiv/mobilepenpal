@@ -14,6 +14,7 @@ import 'package:get/get.dart';
 import 'package:mobilepenpal/core/network/route_builder.dart';
 import 'package:mobilepenpal/core/utils/math_generation.dart';
 import 'package:mobilepenpal/core/utils/number_format_utils.dart';
+import 'package:mobilepenpal/core/utils/stroke_feedback_util.dart';
 import 'package:mobilepenpal/core/utils/stroke_preprocessor.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_animation_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_audio_controller.dart';
@@ -364,7 +365,7 @@ class StageController extends GetxController {
       character: ex.character,
     );
 
-    // await _loadStampImage();
+    await _loadStampImage();
 
     if (playAudioAfter) {
       await Future.delayed(const Duration(milliseconds: 150));
@@ -465,7 +466,6 @@ class StageController extends GetxController {
     final prevRemaining = remainingStars.value;
     remainingStars.value = achievable;
 
-    // Animate star pop when a star is lost.
     if (animate && achievable < prevRemaining) {
       _popProgressStar(achievable);
     }
@@ -502,9 +502,9 @@ class StageController extends GetxController {
       _currentStrokeList[i] = null;
     }
 
-    // if (_currentStampImage != null) {
-    //   _applyStampBrush();
-    // }
+    if (_currentStampImage != null) {
+      _applyStampBrush();
+    }
 
     if (!isMathCurrent) {
       anim.restartGuideFromStart();
@@ -718,6 +718,19 @@ class StageController extends GetxController {
     if (!isCorrect) {
       unawaited(audio.playWrongSfx());
 
+      // ── Stroke comparison feedback ──
+      if (!isMathCurrent && strokeStrokesNorm.isNotEmpty) {
+        final hint = StrokeFeedbackUtil.getFeedback(
+          userRawStrokes: _rawStrokesList[0],
+          templateStrokesPx: strokeStrokesNorm,
+          boardWidth: boardWidth.value,
+          boardHeight: boardHeight.value,
+        );
+        if (hint != null) {
+          anim.praiseText.value = hint.tr;
+        }
+      }
+
       attemptLeft.value = (attemptLeft.value - 1).clamp(
         0,
         maxAttemptsPerExercise,
@@ -754,13 +767,16 @@ class StageController extends GetxController {
 
       _updateProgressUI();
 
-      await Future.delayed(const Duration(milliseconds: 300));
-      anim.feedback.value = DrawFeedback.none;
-      anim.clearPraise();
-
+      // Don't clear praise here if it's the last attempt; let the transition handle it.
       if (_isLastExercise) {
+        await Future.delayed(const Duration(milliseconds: 300));
+        anim.feedback.value = DrawFeedback.none;
+        anim.clearPraise();
         await _finishStageIfLast();
       } else {
+        await Future.delayed(const Duration(milliseconds: 1200));
+        anim.feedback.value = DrawFeedback.none;
+        anim.clearPraise();
         nextExercise();
         clearBoard();
       }
@@ -829,6 +845,9 @@ class StageController extends GetxController {
           clearBoard();
         },
       );
+
+      anim.feedback.value = DrawFeedback.none;
+      anim.clearPraise();
 
       if (_isLastExercise) {
         await _finishStageIfLast();

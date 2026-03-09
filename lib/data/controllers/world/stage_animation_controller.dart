@@ -214,7 +214,10 @@ class StageAnimationController extends GetxController
 
   void showCorrect({required int starIndex}) {
     feedback.value = DrawFeedback.correct;
-    praiseText.value = ['ល្អណាស់!', 'ធ្វើបានល្អ 👍'][Random().nextInt(2)];
+    praiseText.value = [
+      'praise_excellent'.tr,
+      'praise_well_done'.tr,
+    ][Random().nextInt(2)];
     confettiController.play();
 
     markCorrect(starIndex);
@@ -223,10 +226,9 @@ class StageAnimationController extends GetxController
 
   Future<void> showWrongAndReset({required VoidCallback onAfterReset}) async {
     feedback.value = DrawFeedback.wrong;
-    praiseText.value = '';
     _shakeController.forward(from: 0);
 
-    await Future.delayed(const Duration(milliseconds: 400));
+    await Future.delayed(const Duration(milliseconds: 1200));
     feedback.value = DrawFeedback.none;
 
     await Future.delayed(const Duration(milliseconds: 300));

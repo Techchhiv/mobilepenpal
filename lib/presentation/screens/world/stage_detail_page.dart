@@ -391,11 +391,28 @@ class StageDetailPage extends GetView<StageController> {
                                 padding: EdgeInsets.symmetric(
                                   horizontal: spacing / 2,
                                 ),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: SizedBox(
-                                    width: itemSize,
-                                    height: itemSize,
+                                child: Container(
+                                  width: itemSize,
+                                  height: itemSize,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: Colors.grey.shade300,
+                                      width: 1,
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withValues(
+                                          alpha: 0.08,
+                                        ),
+                                        blurRadius: 6,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(11),
                                     child: path.isEmpty
                                         ? const SizedBox.shrink()
                                         : Image.asset(
@@ -423,11 +440,28 @@ class StageDetailPage extends GetView<StageController> {
                                   padding: EdgeInsets.symmetric(
                                     horizontal: spacing / 2,
                                   ),
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(12),
-                                    child: SizedBox(
-                                      width: itemSize,
-                                      height: itemSize,
+                                  child: Container(
+                                    width: itemSize,
+                                    height: itemSize,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: Colors.grey.shade300,
+                                        width: 1,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withValues(
+                                            alpha: 0.08,
+                                          ),
+                                          blurRadius: 6,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(11),
                                       child: path.isEmpty
                                           ? const SizedBox.shrink()
                                           : Image.asset(
@@ -456,8 +490,16 @@ class StageDetailPage extends GetView<StageController> {
                   width: 100,
                   height: 100,
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.8),
-                    borderRadius: BorderRadius.circular(10),
+                    color: AppColors.primary,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey.shade300, width: 1.5),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.08),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(10),
@@ -633,12 +675,14 @@ class StageDetailPage extends GetView<StageController> {
                               ),
                               Obx(() {
                                 final praise = controller.anim.praiseText.value;
+                                final isWrong =
+                                    feedbackState == DrawFeedback.wrong;
                                 final isVisible =
-                                    feedbackState == DrawFeedback.correct &&
+                                    feedbackState != DrawFeedback.none &&
                                     praise.isNotEmpty;
 
                                 return Positioned(
-                                  top: 10,
+                                  top: 50,
                                   child: AnimatedScale(
                                     scale: isVisible ? 1.0 : 0.0,
                                     duration: const Duration(
@@ -651,12 +695,14 @@ class StageDetailPage extends GetView<StageController> {
                                         milliseconds: 500,
                                       ),
                                       child: Container(
-                                        padding: const EdgeInsets.symmetric(
+                                        padding: EdgeInsets.symmetric(
                                           horizontal: 16,
                                           vertical: 10,
                                         ),
                                         decoration: BoxDecoration(
-                                          color: Colors.yellow.shade700,
+                                          color: isWrong
+                                              ? Colors.redAccent
+                                              : Colors.yellow.shade700,
                                           borderRadius: BorderRadius.circular(
                                             16,
                                           ),
@@ -679,12 +725,14 @@ class StageDetailPage extends GetView<StageController> {
                                         child: Row(
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
-                                            const Icon(
-                                              Icons.star,
+                                            Icon(
+                                              isWrong
+                                                  ? Icons.info_outline
+                                                  : Icons.star,
                                               color: Colors.white,
                                               size: 18,
                                             ),
-                                            const SizedBox(width: 6),
+                                            SizedBox(width: 6),
                                             Text(
                                               praise,
                                               style: const TextStyle(
@@ -769,8 +817,10 @@ class StageDetailPage extends GetView<StageController> {
                               letterSubpathsNorm: letter,
                               toBoardPx: (o) => o,
                               fillEnabled: true,
-                              strokeEnabled: false,
+                              strokeEnabled: true,
                               fillOpacity: 0.15,
+                              strokeOpacity: 0.25,
+                              strokeWidth: 2.0,
                             ),
                           ),
                         ),

@@ -438,4 +438,15 @@ final Map<String, String> enUS = {
   'tip_public_wifi_sign_in':
       'Tip: If you’re on public Wi-Fi, you may need to sign in first.',
   'still_offline': 'Still no internet connection.',
+
+  // ===== Stroke Feedback =====
+  'feedback_draw_slowly': 'Draw slowly following the guide!',
+  'feedback_wrong_count': 'Wrong number of strokes!',
+  'feedback_out_of_bounds': "Don't draw outside!",
+  'feedback_wrong_direction': 'Wrong direction!',
+  'feedback_wrong_order': 'Wrong order!',
+
+  // ===== Praise =====
+  'praise_excellent': 'Excellent!',
+  'praise_well_done': 'Well done!',
 };

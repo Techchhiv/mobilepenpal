@@ -433,4 +433,15 @@ final Map<String, String> kmKH = {
   'tip_public_wifi_sign_in':
       'គន្លឹះ៖ ប្រសិនបើអ្នកប្រើ Wi-Fi សាធារណៈ អ្នកអាចត្រូវចូល (Sign in) ជាមុនសិន។',
   'still_offline': 'នៅតែគ្មានអ៊ីនធឺណិត។',
+
+  // ===== Stroke Feedback =====
+  'feedback_draw_slowly': 'គូរយឺតៗតាមស្រមោល!',
+  'feedback_wrong_count': 'គូរខុសចំនួនបន្ទាត់សរសេរ!',
+  'feedback_out_of_bounds': 'កុំគូរចេញក្រៅ!',
+  'feedback_wrong_direction': 'គូរខុសទិសដៅ!',
+  'feedback_wrong_order': 'គូរខុសលំដាប់!',
+
+  // ===== Praise =====
+  'praise_excellent': 'ល្អណាស់!',
+  'praise_well_done': 'ធ្វើបានល្អ',
 };
