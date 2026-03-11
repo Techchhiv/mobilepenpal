@@ -394,23 +394,23 @@ class StageDetailPage extends GetView<StageController> {
                                 child: Container(
                                   width: itemSize,
                                   height: itemSize,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(
-                                      color: Colors.grey.shade300,
-                                      width: 1,
-                                    ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withValues(
-                                          alpha: 0.08,
-                                        ),
-                                        blurRadius: 6,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ],
-                                  ),
+                                  // decoration: BoxDecoration(
+                                  //   color: AppColors.primary,
+                                  //   borderRadius: BorderRadius.circular(12),
+                                  //   border: Border.all(
+                                  //     color: Colors.grey.shade300,
+                                  //     width: 1.5,
+                                  //   ),
+                                  //   boxShadow: [
+                                  //     BoxShadow(
+                                  //       color: Colors.black.withValues(
+                                  //         alpha: 0.08,
+                                  //       ),
+                                  //       blurRadius: 6,
+                                  //       offset: const Offset(0, 2),
+                                  //     ),
+                                  //   ],
+                                  // ),
                                   child: ClipRRect(
                                     borderRadius: BorderRadius.circular(11),
                                     child: path.isEmpty

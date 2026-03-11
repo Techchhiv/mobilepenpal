@@ -168,19 +168,26 @@ class StrokeFeedbackUtil {
 
       if (uStroke.length < 2 || tStroke.length < 2) continue;
 
-      // User stroke start→end vector.
-      final uStart = Offset(
-        (uStroke.first['x'] as num).toDouble(),
-        (uStroke.first['y'] as num).toDouble(),
-      );
-      final uEnd = Offset(
-        (uStroke.last['x'] as num).toDouble(),
-        (uStroke.last['y'] as num).toDouble(),
-      );
-      final uDir = uEnd - uStart;
+      Offset getDirUser(List<Map<String, dynamic>> pts) {
+        final s = Offset((pts.first['x'] as num).toDouble(), (pts.first['y'] as num).toDouble());
+        for (int j = 1; j < pts.length; j++) {
+          final p = Offset((pts[j]['x'] as num).toDouble(), (pts[j]['y'] as num).toDouble());
+          if ((p - s).distance > 15) return p - s;
+        }
+        final e = Offset((pts.last['x'] as num).toDouble(), (pts.last['y'] as num).toDouble());
+        return e - s;
+      }
 
-      // Template stroke start→end vector.
-      final tDir = tStroke.last - tStroke.first;
+      Offset getDirTemplate(List<Offset> pts) {
+        final s = pts.first;
+        for (int j = 1; j < pts.length; j++) {
+          if ((pts[j] - s).distance > 15) return pts[j] - s;
+        }
+        return pts.last - s;
+      }
+
+      final uDir = getDirUser(uStroke);
+      final tDir = getDirTemplate(tStroke);
 
       // Skip very short strokes (dots / taps).
       if (uDir.distance < 5 || tDir.distance < 5) continue;

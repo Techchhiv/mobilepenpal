@@ -676,7 +676,6 @@ class StageController extends GetxController {
             expected != null && predValue != null && predValue == expected;
       } else {
         Map<String, dynamic>? data = await _predictLocal(modelType, 0);
-        // data = null;
         if (data == null) {
           final payload = getXYStrokeWithTime(
             modelType: modelType,
@@ -718,8 +717,9 @@ class StageController extends GetxController {
     if (!isCorrect) {
       unawaited(audio.playWrongSfx());
 
-      // ── Stroke comparison feedback ──
-      if (!isMathCurrent && strokeStrokesNorm.isNotEmpty) {
+      if (!isMathCurrent &&
+          strokeStrokesNorm.isNotEmpty &&
+          letterSubpathsNorm.isNotEmpty) {
         final hint = StrokeFeedbackUtil.getFeedback(
           userRawStrokes: _rawStrokesList[0],
           templateStrokesPx: strokeStrokesNorm,
