@@ -207,53 +207,11 @@ class LevelDetailPage extends GetView<LevelController> {
   }
 
   Widget _buildStagesCarousel(List<LevelStage> stages) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final bool isTablet = constraints.maxWidth > 500;
-        final double fraction = isTablet ? 0.5 : 1.0;
-
-        return Obx(() {
-          final pc = PageController(
-            initialPage: controller.initialStageIndex.value,
-            viewportFraction: fraction,
-          );
-
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (!pc.hasClients) return;
-            pc.jumpToPage(controller.initialStageIndex.value);
-          });
-
-          return PageView.builder(
-            controller: pc,
-            physics: const BouncingScrollPhysics(),
-            itemCount: stages.length,
-            itemBuilder: (context, index) {
-              return AnimatedBuilder(
-                animation: pc,
-                builder: (context, child) {
-                  double value = 1.0;
-
-                  if (isTablet) {
-                    if (pc.hasClients && pc.position.haveDimensions) {
-                      value = pc.page! - index;
-                      value = (1 - (value.abs() * 0.15)).clamp(0.85, 1.0);
-                    } else {
-                      value = index == controller.initialStageIndex.value
-                          ? 1.0
-                          : 0.85;
-                    }
-                  }
-
-                  return Transform.scale(
-                    scale: Curves.easeOut.transform(value),
-                    child: child,
-                  );
-                },
-                child: _buildStageCard(stages[index], index + 1, stages.length),
-              );
-            },
-          );
-        });
+    return _StagesCarousel(
+      itemCount: stages.length,
+      initialIndex: controller.initialStageIndex.value,
+      itemBuilder: (context, index) {
+        return _buildStageCard(stages[index], index + 1, stages.length);
       },
     );
   }
@@ -434,5 +392,96 @@ class LevelDetailPage extends GetView<LevelController> {
     } finally {
       controller.isLoading.value = false;
     }
+  }
+}
+
+class _StagesCarousel extends StatefulWidget {
+  final int itemCount;
+  final int initialIndex;
+  final Widget Function(BuildContext context, int index) itemBuilder;
+
+  const _StagesCarousel({
+    required this.itemCount,
+    required this.initialIndex,
+    required this.itemBuilder,
+  });
+
+  @override
+  State<_StagesCarousel> createState() => _StagesCarouselState();
+}
+
+class _StagesCarouselState extends State<_StagesCarousel> {
+  late PageController _pc;
+  late double _fraction;
+
+  @override
+  void initState() {
+    super.initState();
+    _fraction = 1.0;
+    _pc = PageController(
+      initialPage: widget.initialIndex,
+      viewportFraction: _fraction,
+    );
+    
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_pc.hasClients) {
+        _pc.jumpToPage(widget.initialIndex);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _pc.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final bool isTablet = constraints.maxWidth > 500;
+        final double newFraction = isTablet ? 0.5 : 1.0;
+
+        if (_fraction != newFraction) {
+          _fraction = newFraction;
+          final int currentPage = _pc.hasClients
+              ? _pc.page?.round() ?? widget.initialIndex
+              : widget.initialIndex;
+          _pc.dispose();
+          _pc = PageController(
+            initialPage: currentPage,
+            viewportFraction: _fraction,
+          );
+        }
+
+        return PageView.builder(
+          controller: _pc,
+          physics: const BouncingScrollPhysics(),
+          itemCount: widget.itemCount,
+          itemBuilder: (context, index) {
+            return AnimatedBuilder(
+              animation: _pc,
+              builder: (context, child) {
+                double value = 1.0;
+                if (isTablet) {
+                  if (_pc.hasClients && _pc.position.haveDimensions) {
+                    value = _pc.page! - index;
+                    value = (1 - (value.abs() * 0.15)).clamp(0.85, 1.0);
+                  } else {
+                    value = index == widget.initialIndex ? 1.0 : 0.85;
+                  }
+                }
+                return Transform.scale(
+                  scale: Curves.easeOut.transform(value),
+                  child: child,
+                );
+              },
+              child: widget.itemBuilder(context, index),
+            );
+          },
+        );
+      },
+    );
   }
 }

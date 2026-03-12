@@ -731,12 +731,18 @@ class StageController extends GetxController {
         }
       }
 
+      final hasFeedbackText = anim.praiseText.value.isNotEmpty;
+      final wrongDisplayDuration = hasFeedbackText
+          ? const Duration(milliseconds: 1200)
+          : const Duration(milliseconds: 550);
+
       attemptLeft.value = (attemptLeft.value - 1).clamp(
         0,
         maxAttemptsPerExercise,
       );
       isSkipLocked.value = true;
       await anim.showWrongAndReset(
+        customDuration: wrongDisplayDuration,
         onAfterReset: () {
           clearBoard();
           if (!isMathCurrent) anim.restartGuideFromStart();
@@ -767,14 +773,13 @@ class StageController extends GetxController {
 
       _updateProgressUI();
 
-      // Don't clear praise here if it's the last attempt; let the transition handle it.
       if (_isLastExercise) {
         await Future.delayed(const Duration(milliseconds: 300));
         anim.feedback.value = DrawFeedback.none;
         anim.clearPraise();
         await _finishStageIfLast();
       } else {
-        await Future.delayed(const Duration(milliseconds: 1200));
+        await Future.delayed(wrongDisplayDuration);
         anim.feedback.value = DrawFeedback.none;
         anim.clearPraise();
         nextExercise();
@@ -841,6 +846,7 @@ class StageController extends GetxController {
       await anim.playStarPop(currentExerciseIndex.value);
 
       await anim.showWrongAndReset(
+        customDuration: const Duration(milliseconds: 550),
         onAfterReset: () {
           clearBoard();
         },

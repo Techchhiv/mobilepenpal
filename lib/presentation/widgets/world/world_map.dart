@@ -165,20 +165,14 @@ class _WorldMapState extends State<WorldMap> with TickerProviderStateMixin {
       if (levels.isEmpty) return;
 
       final screenW = MediaQuery.of(context).size.width;
-      final tileH = _tileHeight(screenW);
 
       final neededH = _requiredContentHeight(
         levelCount: levels.length,
         screenWidth: screenW,
       );
 
-      final tileCount = _tileCountForHeight(
-        contentHeight: neededH,
-        tileHeight: tileH,
-      );
-
       final viewportH = MediaQuery.of(context).size.height;
-      final contentH = max(tileCount * tileH, viewportH);
+      final contentH = max(neededH, viewportH);
 
       final spacing = _scaled(_levelSpacingDesign, screenW);
       final bottomInset = _scaled(_bottomInsetDesign, screenW);
@@ -265,13 +259,13 @@ class _WorldMapState extends State<WorldMap> with TickerProviderStateMixin {
       screenWidth: screenW,
     );
 
+    final viewportH = MediaQuery.of(context).size.height;
+    final contentH = max(neededH, viewportH);
+
     final tileCount = _tileCountForHeight(
-      contentHeight: neededH,
+      contentHeight: contentH,
       tileHeight: tileH,
     );
-
-    final viewportH = MediaQuery.of(context).size.height;
-    final contentH = max(tileCount * tileH, viewportH);
 
     return SingleChildScrollView(
       controller: _scrollController,

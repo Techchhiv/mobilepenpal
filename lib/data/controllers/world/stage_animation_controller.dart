@@ -224,11 +224,14 @@ class StageAnimationController extends GetxController
     playStarPop(starIndex);
   }
 
-  Future<void> showWrongAndReset({required VoidCallback onAfterReset}) async {
+  Future<void> showWrongAndReset({
+    required VoidCallback onAfterReset,
+    Duration? customDuration,
+  }) async {
     feedback.value = DrawFeedback.wrong;
     _shakeController.forward(from: 0);
 
-    await Future.delayed(const Duration(milliseconds: 1200));
+    await Future.delayed(customDuration ?? const Duration(milliseconds: 1200));
     feedback.value = DrawFeedback.none;
 
     await Future.delayed(const Duration(milliseconds: 300));

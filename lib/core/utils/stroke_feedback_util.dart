@@ -40,10 +40,15 @@ class StrokeFeedbackUtil {
     final filteredStrokes = userRawStrokes.where((stroke) {
       if (stroke.length < 3) return false;
       final first = stroke.first;
-      final last = stroke.last;
-      final dx = (last['x'] as num).toDouble() - (first['x'] as num).toDouble();
-      final dy = (last['y'] as num).toDouble() - (first['y'] as num).toDouble();
-      return sqrt(dx * dx + dy * dy) > 8; // ignore strokes < 8px
+      final startX = (first['x'] as num).toDouble();
+      final startY = (first['y'] as num).toDouble();
+      for (int i = 1; i < stroke.length; i++) {
+        final p = stroke[i];
+        final dx = (p['x'] as num).toDouble() - startX;
+        final dy = (p['y'] as num).toDouble() - startY;
+        if (sqrt(dx * dx + dy * dy) > 8) return true;
+      }
+      return false;
     }).toList();
 
     // If filtering removed everything, treat as no meaningful input.
@@ -68,12 +73,6 @@ class StrokeFeedbackUtil {
     final templateCount = templateStrokesPx.length;
 
     if (userCount != templateCount) {
-      // If the user only drew 1 stroke when the template expects 2+,
-      // it's likely a casual scribble rather than a real attempt.
-      // Give the generic guidance instead of the specific count error.
-      if (userCount == 1 && templateCount >= 2) {
-        return 'feedback_draw_slowly';
-      }
       return 'feedback_wrong_count';
     }
 
@@ -82,14 +81,18 @@ class StrokeFeedbackUtil {
       userRawStrokes: filteredStrokes,
       templateStrokesPx: templateStrokesPx,
     );
-    if (orderHint != null) return orderHint;
+    if (orderHint != null) {
+      return orderHint;
+    }
 
     // ── 4. Stroke direction ──────────────────────────────────────────
     final directionHint = _checkStrokeDirection(
       userRawStrokes: filteredStrokes,
       templateStrokesPx: templateStrokesPx,
     );
-    if (directionHint != null) return directionHint;
+    if (directionHint != null) {
+      return directionHint;
+    }
 
     // ── 5. Default fallback ──────────────────────────────────────────
     return 'feedback_draw_slowly';
@@ -166,36 +169,33 @@ class StrokeFeedbackUtil {
       final uStroke = userRawStrokes[i];
       final tStroke = templateStrokesPx[i];
 
-      if (uStroke.length < 2 || tStroke.length < 2) continue;
+      if (uStroke.length < 5 || tStroke.length < 3) continue;
 
-      Offset getDirUser(List<Map<String, dynamic>> pts) {
-        final s = Offset((pts.first['x'] as num).toDouble(), (pts.first['y'] as num).toDouble());
-        for (int j = 1; j < pts.length; j++) {
-          final p = Offset((pts[j]['x'] as num).toDouble(), (pts[j]['y'] as num).toDouble());
-          if ((p - s).distance > 15) return p - s;
+      final uStart = Offset((uStroke.first['x'] as num).toDouble(), (uStroke.first['y'] as num).toDouble());
+      final uEnd = Offset((uStroke.last['x'] as num).toDouble(), (uStroke.last['y'] as num).toDouble());
+      final tStart = tStroke.first;
+      final tEnd = tStroke.last;
+
+      if ((tStart - tEnd).distance > 20) {
+        // Open stroke: compare sum of distances for forward vs reverse mapping
+        final dForward = (uStart - tStart).distance + (uEnd - tEnd).distance;
+        final dReverse = (uStart - tEnd).distance + (uEnd - tStart).distance;
+        if (dReverse < dForward) {
+          return 'feedback_wrong_direction';
         }
-        final e = Offset((pts.last['x'] as num).toDouble(), (pts.last['y'] as num).toDouble());
-        return e - s;
-      }
+      } else {
+        // Closed loop (start and end are near each other)
+        // Check structural progression at 25% and 75% marks
+        final u25 = Offset((uStroke[uStroke.length ~/ 4]['x'] as num).toDouble(), (uStroke[uStroke.length ~/ 4]['y'] as num).toDouble());
+        final t25 = tStroke[tStroke.length ~/ 4];
+        final t75 = tStroke[tStroke.length * 3 ~/ 4];
 
-      Offset getDirTemplate(List<Offset> pts) {
-        final s = pts.first;
-        for (int j = 1; j < pts.length; j++) {
-          if ((pts[j] - s).distance > 15) return pts[j] - s;
+        final dForward = (u25 - t25).distance;
+        final dReverse = (u25 - t75).distance;
+        
+        if (dReverse < dForward - 10) {
+          return 'feedback_wrong_direction';
         }
-        return pts.last - s;
-      }
-
-      final uDir = getDirUser(uStroke);
-      final tDir = getDirTemplate(tStroke);
-
-      // Skip very short strokes (dots / taps).
-      if (uDir.distance < 5 || tDir.distance < 5) continue;
-
-      // Dot product < 0 means the vectors point in opposite directions.
-      final dot = uDir.dx * tDir.dx + uDir.dy * tDir.dy;
-      if (dot < 0) {
-        return 'feedback_wrong_direction';
       }
     }
 
@@ -242,6 +242,11 @@ class StrokeFeedbackUtil {
 
       if (bestIdx < previousBestMatch) {
         return 'feedback_wrong_order';
+      }
+      if (bestIdx == previousBestMatch && bestIdx != i) {
+        if ((tStarts[i] - tStarts[bestIdx]).distance > 15) {
+          return 'feedback_wrong_order';
+        }
       }
       previousBestMatch = bestIdx;
     }

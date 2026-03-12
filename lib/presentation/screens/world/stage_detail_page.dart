@@ -1175,6 +1175,7 @@ class StageDetailPage extends GetView<StageController> {
 
                   Row(
                     children: [
+                      // Home Button
                       Expanded(
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
@@ -1229,7 +1230,33 @@ class StageDetailPage extends GetView<StageController> {
                           child: const Icon(Icons.home_rounded, size: 34),
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 8),
+
+                      Expanded(
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            elevation: 0,
+                            backgroundColor: Colors.white,
+                            foregroundColor: Colors.orange.shade500,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(22),
+                              side: BorderSide(
+                                color: Colors.orange.shade200,
+                                width: 2,
+                              ),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                          ),
+                          onPressed: () async {
+                            Navigator.of(ctx).pop();
+                            await controller.resetForRetry();
+                          },
+                          child: const Icon(Icons.refresh_rounded, size: 34),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+
+                      // Resume Button
                       Expanded(
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
