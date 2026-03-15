@@ -17,4 +17,6 @@ class AppRoutes {
   static const classroom = '/classroom/:classroomId';
 
   static const setting = '/setting';
+
+  static const adventureStage = '/adventure/stage';
 }

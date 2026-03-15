@@ -11,32 +11,24 @@ import 'package:flutter_drawing_board/flutter_drawing_board.dart';
 import 'package:flutter_drawing_board/paint_contents.dart';
 import 'package:mobilepenpal/presentation/widgets/world/image_stamp_content.dart';
 import 'package:get/get.dart';
-import 'package:mobilepenpal/core/network/route_builder.dart';
-import 'package:mobilepenpal/core/utils/math_generation.dart';
-import 'package:mobilepenpal/core/utils/number_format_utils.dart';
 import 'package:mobilepenpal/core/utils/character_option_utils.dart';
 import 'package:mobilepenpal/core/utils/stroke_feedback_util.dart';
 import 'package:mobilepenpal/core/utils/stroke_preprocessor.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_animation_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_audio_controller.dart';
-import 'package:mobilepenpal/data/models/stage/stage.dart';
+import 'package:mobilepenpal/data/models/exercise/exercise.dart';
 import 'package:mobilepenpal/data/models/stage/stage_exercise.dart';
 import 'package:mobilepenpal/data/services/onnx_inference_service.dart';
 import 'package:mobilepenpal/data/services/world_service.dart';
-import 'package:mobilepenpal/presentation/routes/app_routes.dart';
-import 'package:mobilepenpal/presentation/widgets/app_snackbar.dart';
+import 'package:mobilepenpal/data/controllers/shop/shop_controller.dart';
 
-class StageController extends GetxController {
-  StageController({WorldService? worldService})
-    : _worldService = worldService ?? WorldService();
-
-  final WorldService _worldService;
+class AdventureStageController extends GetxController {
+  final WorldService _worldService = WorldService();
 
   final isLoading = false.obs;
   final isSubmitting = false.obs;
   final isSkipLocked = false.obs;
 
-  final currentStage = Rxn<Stage>();
   final exercises = <StageExercise>[].obs;
   final lastError = RxnString();
 
@@ -46,24 +38,12 @@ class StageController extends GetxController {
   CancelToken? _cancelToken;
   int _redId = 0;
 
-  late int worldId;
-  late int levelId;
-  late int stageId;
-
   final List<DrawingController> drawingControllers = List.generate(
     3,
     (_) => DrawingController(),
   );
 
-  int get activeBoardCount {
-    if (isMathCurrent) {
-      final expected = mathExpected.value;
-      if (expected != null) {
-        return expected.toString().length;
-      }
-    }
-    return 1;
-  }
+  int get activeBoardCount => 1;
 
   final letterSubpathsNorm = <List<Offset>>[].obs;
   final strokeStrokesNorm = <List<Offset>>[].obs;
@@ -89,14 +69,6 @@ class StageController extends GetxController {
 
   final currentExerciseIndex = 0.obs;
   final selectedCharacter = ''.obs;
-
-  final MathGenerator _mathGen = MathGenerator();
-
-  final mathPrompt = ''.obs;
-  final mathExpected = RxnInt();
-  final currentMathOp = RxnString();
-
-  final Map<String, MathQuestion> _mathCache = {};
 
   final attempts = <Map<String, dynamic>>[].obs;
 
@@ -133,65 +105,44 @@ class StageController extends GetxController {
   bool get _isLastExercise =>
       currentExerciseIndex.value >= exercises.length - 1;
 
-  int get _sessionDurationSeconds {
-    if (_sessionStart == null) return 0;
-    return DateTime.now().difference(_sessionStart!).inSeconds;
-  }
-
   bool get showIllustration {
     final t = (currentExercise?.characterType ?? '').trim().toLowerCase();
-    return t == 'consonants' || t == 'digits' || t == 'math';
+    return t == 'consonants' || t == 'digits';
   }
-
-  bool get isMathCurrent {
-    final t = (currentExercise?.characterType ?? '').trim().toLowerCase();
-    return t == 'math';
-  }
-
-  String _mathKeyFor(StageExercise ex) => '${ex.id}:${ex.repeatSlot}';
 
   final stageProgress = 0.0.obs;
-
-  final progressStarStates = <StarState>[
-    StarState.pending,
-    StarState.pending,
-    StarState.pending,
-  ].obs;
-  final progressAnimatingStarIndex = (-1).obs;
-  final progressStarScale = 1.0.obs;
-
-  /// Gogomath-style: remaining stars (starts at 3, decreases on each wrong exercise).
   final remainingStars = 3.obs;
-
-  /// Per-exercise dot states for the progress bar.
-  /// Length == totalExercises. Each entry is correct / wrong / pending.
   final exerciseDotStates = <StarState>[].obs;
 
   int get totalExercises => exercises.length;
-
   int get completedExercises => attempts.length.clamp(0, totalExercises);
-
   int get correctExercises {
     return attempts.where((a) => a['is_correct'] == true).length;
   }
 
-  int get starsEarnedByScore {
-    return remainingStars.value.clamp(0, 3);
-  }
+  int get starsEarnedByScore => remainingStars.value.clamp(0, 3);
 
   bool get canSkip =>
       !isSubmitting.value &&
       !isSkipLocked.value &&
       anim.feedback.value == DrawFeedback.none;
 
+  String categoryLabel = '';
+
+  List<String> get characterVowelFormsList {
+    final ex = currentExercise;
+    if (ex == null) return const [];
+
+    return CharacterOptionUtils.generateOptions(
+      character: ex.character,
+      type: ex.characterType,
+      example: ex.example,
+    );
+  }
+
   @override
   void onInit() {
     super.onInit();
-
-    final p = Get.parameters;
-    worldId = int.tryParse(p['worldId'] ?? '') ?? 0;
-    levelId = int.tryParse(p['levelId'] ?? '') ?? 0;
-    stageId = int.tryParse(p['stageId'] ?? '') ?? 0;
 
     for (var c in drawingControllers) {
       c.setStyle(color: Colors.black, strokeWidth: 6);
@@ -204,7 +155,6 @@ class StageController extends GetxController {
       anim = Get.put(StageAnimationController());
       _ownsAnim = true;
     }
-    // Initial sync
     anim.setBoardSize(width: boardWidth.value, height: boardHeight.value);
 
     if (Get.isRegistered<StageAudioController>()) {
@@ -217,11 +167,48 @@ class StageController extends GetxController {
 
     loadStrokeDb();
 
-    if (currentStage.value != null && currentStage.value!.id == stageId) return;
+    // Load exercises from route arguments
+    final args = Get.arguments as Map<String, dynamic>?;
+    if (args != null) {
+      categoryLabel = args['categoryLabel'] as String? ?? '';
+      final exerciseList = args['exercises'] as List<Exercise>? ?? [];
+      _initFromExercises(exerciseList);
+    }
+  }
 
-    if (stageId > 0) fetchStageDetail();
+  void _initFromExercises(List<Exercise> exerciseList) {
+    // Convert Exercise to StageExercise for compatibility
+    final stageExercises = exerciseList.asMap().entries.map((entry) {
+      final e = entry.value;
+      return StageExercise(
+        id: e.id,
+        prompt: e.prompt,
+        character: e.character,
+        example: e.example,
+        question: e.question,
+        options: e.options,
+        instruction: e.instruction,
+        hint: e.hint,
+        orderIndex: entry.key,
+        characterType: e.characterType,
+        difficulty: e.difficulty,
+        mathOp: e.mathOp,
+      );
+    }).toList();
 
-    anim.resetStars();
+    exercises.assignAll(stageExercises);
+
+    anim.resetStars(total: exercises.length);
+    remainingStars.value = 3;
+    exerciseDotStates.assignAll(
+      List.filled(exercises.length, StarState.pending),
+    );
+    attempts.clear();
+    _updateProgressUI(animate: false);
+
+    if (exercises.isEmpty) return;
+    _startAtExercise(0, playAudioAfter: true);
+    _sessionStart = DateTime.now();
   }
 
   @override
@@ -243,83 +230,15 @@ class StageController extends GetxController {
     super.onClose();
   }
 
-  Future<void> fetchStageDetail() async {
-    isLoading.value = true;
-    lastError.value = null;
-
-    try {
-      final response = await _worldService.getStageById(stageId);
-      if (response.code != 200) {
-        lastError.value = response.message;
-        return;
-      }
-
-      final stage = response.data;
-      if (stage == null) {
-        lastError.value = 'Stage data is empty';
-        return;
-      }
-
-      currentStage.value = stage;
-      exercises.assignAll(stage.exercises);
-
-      _mathCache.clear();
-      mathPrompt.value = '';
-      mathExpected.value = null;
-
-      anim.resetStars(total: exercises.length);
-
-      remainingStars.value = 3;
-      exerciseDotStates.assignAll(
-        List.filled(exercises.length, StarState.pending),
-      );
-      attempts.clear();
-      _updateProgressUI(animate: false);
-
-      if (exercises.isEmpty) return;
-      _startAtExercise(0, playAudioAfter: true);
-      _sessionStart = DateTime.now();
-    } catch (e) {
-      lastError.value = 'Failed to load stage details: $e';
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
-  Future<void> loadStage({
-    required int newStageId,
-    int? newWorldId,
-    int? newLevelId,
-  }) async {
-    stageId = newStageId;
-    if (newWorldId != null) worldId = newWorldId;
-    if (newLevelId != null) levelId = newLevelId;
-    anim.resetStars();
-    _resetSessionState(clearGuide: true);
-    await fetchStageDetail();
-    anim.resetStars(total: exercises.length);
-  }
-
   void selectExerciseByIndex(int index) {
     if (index < 0 || index >= exercises.length) return;
     audio.stopVoice();
     _startAtExercise(index);
   }
 
-  void selectExerciseByCharacter(String char) {
-    final index = exercises.indexWhere((e) => e.character == char);
-    if (index != -1) selectExerciseByIndex(index);
-  }
-
   void nextExercise() {
     if (currentExerciseIndex.value < exercises.length - 1) {
       selectExerciseByIndex(currentExerciseIndex.value + 1);
-    }
-  }
-
-  void previousExercise() {
-    if (currentExerciseIndex.value > 0) {
-      selectExerciseByIndex(currentExerciseIndex.value - 1);
     }
   }
 
@@ -333,30 +252,6 @@ class StageController extends GetxController {
     clearBoard();
 
     final ex = exercises[index];
-    final t = (ex.characterType ?? '').trim().toLowerCase();
-    if (t == 'math') {
-      final key = _mathKeyFor(ex);
-
-      final diff = parseMathDifficulty(ex.difficulty);
-      final q = _mathCache.putIfAbsent(key, () {
-        return _mathGen.generate(difficulty: diff, opKeyRaw: ex.mathOp);
-      });
-      mathPrompt.value = q.toPrompt(withQuestionMark: true);
-      mathExpected.value = q.expectedAnswer;
-      currentMathOp.value = q.opKey;
-
-      letterSubpathsNorm.clear();
-      strokeStrokesNorm.clear();
-      anim.setGuideFromPx(strokesPx: const []);
-      anim.stopGuide();
-
-      selectedCharacter.value = '';
-      return;
-    }
-
-    mathPrompt.value = '';
-    mathExpected.value = null;
-    currentMathOp.value = null;
 
     selectedCharacter.value = ex.character;
     setGuideForCharacter(selectedCharacter.value);
@@ -397,7 +292,10 @@ class StageController extends GetxController {
       _currentStampImage = frame.image;
       _applyStampBrush();
     } catch (e) {
-      dev.log('Failed to load stamp image: $e', name: 'StageController');
+      dev.log(
+        'Failed to load stamp image: $e',
+        name: 'AdventureStageController',
+      );
       _currentStampImage = null;
       _applyDefaultBrush();
     }
@@ -432,12 +330,10 @@ class StageController extends GetxController {
     final completed = completedExercises;
     final wrong = completed - correctExercises;
 
-    // Progress bar tracks completion (correct or wrong).
     stageProgress.value = (total <= 0)
         ? 0.0
         : (completed / total).clamp(0.0, 1.0);
 
-    // Build per-exercise dot states from the attempts list.
     final dots = List<StarState>.generate(total, (i) {
       if (i < attempts.length) {
         return attempts[i]['is_correct'] == true
@@ -448,7 +344,6 @@ class StageController extends GetxController {
     });
     exerciseDotStates.assignAll(dots);
 
-    // Compute achievable stars based on max possible correct answers.
     final chunkSize = (total / 3.0).ceil();
     final maxPossibleCorrect = total - wrong;
     int achievable;
@@ -464,21 +359,7 @@ class StageController extends GetxController {
       achievable = 0;
     }
 
-    final prevRemaining = remainingStars.value;
     remainingStars.value = achievable;
-
-    if (animate && achievable < prevRemaining) {
-      _popProgressStar(achievable);
-    }
-  }
-
-  Future<void> _popProgressStar(int i) async {
-    progressAnimatingStarIndex.value = i;
-    progressStarScale.value = 1.25;
-    await Future.delayed(const Duration(milliseconds: 140));
-    progressStarScale.value = 1.0;
-    await Future.delayed(const Duration(milliseconds: 120));
-    progressAnimatingStarIndex.value = -1;
   }
 
   Future<void> playCurrentCharacterAudio() async {
@@ -507,12 +388,7 @@ class StageController extends GetxController {
       _applyStampBrush();
     }
 
-    if (!isMathCurrent) {
-      anim.restartGuideFromStart();
-    } else {
-      anim.stopGuide();
-      anim.setGuideFromPx(strokesPx: const []);
-    }
+    anim.restartGuideFromStart();
   }
 
   void onPointerDown() {
@@ -548,9 +424,7 @@ class StageController extends GetxController {
     }
 
     if (totalDistance < 248.0) {
-      if (!isMathCurrent) {
-        anim.restartGuideFromStart();
-      }
+      anim.restartGuideFromStart();
       return;
     }
 
@@ -603,28 +477,15 @@ class StageController extends GetxController {
         _rawStrokesList[boardIndex],
       );
 
-      if (modelType == 'math' && !result.isSingleSegment) {
-        String combined = '';
-        for (int i = 0; i < result.segments.length; i++) {
-          final data = await OnnxInferenceService.instance.predict(
-            modelType,
-            result.segments[i],
-            result.shapes[i],
-          );
-          combined += (data['prediction'] ?? '').toString().trim();
-        }
-        return {'prediction': combined, 'segments': result.segments.length};
-      } else {
-        return await OnnxInferenceService.instance.predict(
-          modelType,
-          result.segments[0],
-          result.shapes[0],
-        );
-      }
+      return await OnnxInferenceService.instance.predict(
+        modelType,
+        result.segments[0],
+        result.shapes[0],
+      );
     } catch (e) {
       dev.log(
         'Local ONNX inference failed for $modelType: $e',
-        name: 'StageController',
+        name: 'AdventureStageController',
       );
       return null;
     }
@@ -643,72 +504,33 @@ class StageController extends GetxController {
 
     bool isCorrect = false;
     String prediction = '';
-    final boards = activeBoardCount;
 
     try {
-      if (isMathCurrent && boards > 1) {
-        String combinedPred = '';
-        for (int i = 0; i < boards; i++) {
-          if (_rawStrokesList[i].isEmpty) continue;
-
-          Map<String, dynamic>? data = await _predictLocal(modelType, i);
-
-          if (data == null) {
-            final payload = getXYStrokeWithTime(
-              modelType: modelType,
-              boardIndex: i,
-            );
-            final strokes = (payload['strokes'] as List)
-                .cast<Map<String, dynamic>>();
-            data = await _worldService.predictDrawingVector(
-              strokes: strokes,
-              modelType: payload['model_type'] as String,
-              cancelToken: cancelToken,
-            );
-          }
-          if (myReqId != _redId) return;
-          combinedPred += (data['prediction'] ?? '').toString().trim();
-        }
-        prediction = combinedPred;
-
-        final expected = mathExpected.value;
-        final predValue = NumberFormatUtils.parseIntAny(prediction);
-        isCorrect =
-            expected != null && predValue != null && predValue == expected;
-      } else {
-        Map<String, dynamic>? data = await _predictLocal(modelType, 0);
-        if (data == null) {
-          final payload = getXYStrokeWithTime(
-            modelType: modelType,
-            boardIndex: 0,
-          );
-          final strokes = (payload['strokes'] as List)
-              .cast<Map<String, dynamic>>();
-          data = await _worldService.predictDrawingVector(
-            strokes: strokes,
-            modelType: payload['model_type'] as String,
-            cancelToken: cancelToken,
-          );
-        }
-        if (myReqId != _redId) return;
-
-        prediction = (data['prediction'] ?? '').toString().trim();
-
-        if (isMathCurrent) {
-          final expected = mathExpected.value;
-          final predValue = NumberFormatUtils.parseIntAny(prediction);
-          isCorrect =
-              expected != null && predValue != null && predValue == expected;
-        } else {
-          final expected = exercise.character.trim();
-          isCorrect = prediction == expected;
-        }
+      Map<String, dynamic>? data = await _predictLocal(modelType, 0);
+      if (data == null) {
+        final payload = getXYStrokeWithTime(
+          modelType: modelType,
+          boardIndex: 0,
+        );
+        final strokes = (payload['strokes'] as List)
+            .cast<Map<String, dynamic>>();
+        data = await _worldService.predictDrawingVector(
+          strokes: strokes,
+          modelType: payload['model_type'] as String,
+          cancelToken: cancelToken,
+        );
       }
+      if (myReqId != _redId) return;
+
+      prediction = (data['prediction'] ?? '').toString().trim();
+
+      final expected = exercise.character.trim();
+      isCorrect = prediction == expected;
     } on DioException catch (e) {
       if (CancelToken.isCancel(e)) return;
     } catch (e) {
       lastError.value = 'Predict failed: $e';
-      isCorrect = isMathCurrent ? false : (Random().nextDouble() <= 0.9);
+      isCorrect = (Random().nextDouble() <= 0.9);
     } finally {
       if (myReqId == _redId) {
         _cancelToken = null;
@@ -718,9 +540,7 @@ class StageController extends GetxController {
     if (!isCorrect) {
       unawaited(audio.playWrongSfx());
 
-      if (!isMathCurrent &&
-          strokeStrokesNorm.isNotEmpty &&
-          letterSubpathsNorm.isNotEmpty) {
+      if (strokeStrokesNorm.isNotEmpty && letterSubpathsNorm.isNotEmpty) {
         final hint = StrokeFeedbackUtil.getFeedback(
           userRawStrokes: _rawStrokesList[0],
           templateStrokesPx: strokeStrokesNorm,
@@ -746,7 +566,7 @@ class StageController extends GetxController {
         customDuration: wrongDisplayDuration,
         onAfterReset: () {
           clearBoard();
-          if (!isMathCurrent) anim.restartGuideFromStart();
+          anim.restartGuideFromStart();
         },
       );
 
@@ -759,17 +579,12 @@ class StageController extends GetxController {
       anim.markWrong(currentExerciseIndex.value);
       unawaited(anim.playStarPop(currentExerciseIndex.value));
 
-      final label = isMathCurrent
-          ? (mathExpected.value?.toString() ?? '')
-          : exercise.character;
-
       attempts.add({
         'exercise_id': exercise.id,
         'user_answer': prediction,
-        'label': label,
+        'label': exercise.character,
         'stroke': getXYStrokes(),
         'is_correct': false,
-        if (isMathCurrent) 'math_op': currentMathOp.value,
       });
 
       _updateProgressUI();
@@ -778,7 +593,7 @@ class StageController extends GetxController {
         await Future.delayed(const Duration(milliseconds: 300));
         anim.feedback.value = DrawFeedback.none;
         anim.clearPraise();
-        await _finishStageIfLast();
+        await _finishAdventure();
       } else {
         await Future.delayed(wrongDisplayDuration);
         anim.feedback.value = DrawFeedback.none;
@@ -792,17 +607,12 @@ class StageController extends GetxController {
     anim.showCorrect(starIndex: currentExerciseIndex.value);
     unawaited(audio.playCorrectSfx());
 
-    final label = isMathCurrent
-        ? (mathExpected.value?.toString() ?? '')
-        : exercise.character;
-
     attempts.add({
       'exercise_id': exercise.id,
       'user_answer': prediction.isNotEmpty ? prediction : exercise.character,
-      'label': label,
+      'label': exercise.character,
       'stroke': getXYStrokes(),
       'is_correct': true,
-      if (isMathCurrent) 'math_op': currentMathOp.value,
     });
     _updateProgressUI();
 
@@ -811,7 +621,7 @@ class StageController extends GetxController {
     anim.clearPraise();
 
     if (_isLastExercise) {
-      await _finishStageIfLast();
+      await _finishAdventure();
     } else {
       nextExercise();
       clearBoard();
@@ -828,17 +638,12 @@ class StageController extends GetxController {
       final exercise = currentExercise;
       if (exercise == null) return;
 
-      final label = isMathCurrent
-          ? (mathExpected.value?.toString() ?? '')
-          : exercise.character;
-
       attempts.add({
         'exercise_id': exercise.id,
         'user_answer': '',
-        'label': label,
-        'stroke': getAllXYStrokesCombined(),
+        'label': exercise.character,
+        'stroke': getXYStrokes(),
         'is_correct': false,
-        if (isMathCurrent) 'math_op': currentMathOp.value,
       });
 
       _updateProgressUI();
@@ -857,7 +662,7 @@ class StageController extends GetxController {
       anim.clearPraise();
 
       if (_isLastExercise) {
-        await _finishStageIfLast();
+        await _finishAdventure();
         return;
       }
 
@@ -866,29 +671,32 @@ class StageController extends GetxController {
     });
   }
 
-  Future<void> _finishStageIfLast() async {
-    final summary = await submitExerciseBatch(
-      List<Map<String, dynamic>>.from(attempts),
-      durationSeconds: _sessionDurationSeconds,
+  Future<void> _finishAdventure() async {
+    final correct = correctExercises;
+    final total = totalExercises;
+    final stars = starsEarnedByScore;
+
+    // Award points via ShopController
+    final points = ShopController.calculatePoints(
+      correct: correct,
+      total: total,
+      stars: stars,
     );
 
-    attempts.clear();
-    _updateProgressUI(animate: false);
-    for (var c in drawingControllers) {
-      c.clear();
+    if (Get.isRegistered<ShopController>()) {
+      Get.find<ShopController>().addPoints(points);
     }
-    hasDrawnStrokeList.fillRange(0, hasDrawnStrokeList.length, false);
-    _sessionStart = null;
 
-    if (summary == null) return;
-
-    final summaryRoute = RouteBuilder.build(AppRoutes.summary, {
-      'worldId': worldId.toString(),
-      'levelId': levelId.toString(),
-      'stageId': stageId.toString(),
-    });
-
-    Get.offNamed(summaryRoute, arguments: {'summary': summary});
+    // Go back with the results
+    Get.back(
+      result: {
+        'correct': correct,
+        'total': total,
+        'stars': stars,
+        'points': points,
+        'attempts': List<Map<String, dynamic>>.from(attempts),
+      },
+    );
   }
 
   Future<void> resetForRetry() async {
@@ -909,13 +717,6 @@ class StageController extends GetxController {
     exerciseDotStates.assignAll(
       List.filled(exercises.length, StarState.pending),
     );
-    progressStarStates.assignAll([
-      StarState.correct,
-      StarState.correct,
-      StarState.correct,
-    ]);
-    progressAnimatingStarIndex.value = -1;
-    progressStarScale.value = 1.0;
 
     _updateProgressUI(animate: false);
 
@@ -927,49 +728,6 @@ class StageController extends GetxController {
     }
 
     clearBoard();
-  }
-
-  Future<Map<String, dynamic>?> submitExerciseBatch(
-    List<Map<String, dynamic>> attempts, {
-    int durationSeconds = 0,
-  }) async {
-    isSubmitting.value = true;
-    try {
-      final response = await _worldService.submitExerciseBatch(
-        attempts,
-        stageId: stageId,
-        durationSeconds: durationSeconds,
-      );
-
-      if (response.code != 200) {
-        AppSnackbar.show(
-          response.message.isNotEmpty ? response.message : 'Request failed',
-          title: 'Error',
-          backgroundColor: Colors.redAccent,
-        );
-        return null;
-      }
-
-      final data = response.data ?? <String, dynamic>{};
-      return data['summary'] as Map<String, dynamic>? ?? {};
-    } catch (e) {
-      Get.snackbar('Error', 'Failed to submit exercises: $e');
-      return null;
-    } finally {
-      isSubmitting.value = false;
-    }
-  }
-
-  List<dynamic> getAllXYStrokesCombined() {
-    final out = <dynamic>[];
-    for (int i = 0; i < activeBoardCount; i++) {
-      final s = getXYStrokes(boardIndex: i);
-      if (s.isNotEmpty) {
-        if (out.isNotEmpty) out.add('#');
-        out.addAll(s);
-      }
-    }
-    return out;
   }
 
   List<dynamic> getXYStrokes({int boardIndex = 0}) {
@@ -1013,17 +771,6 @@ class StageController extends GetxController {
     };
   }
 
-  List<String> get characterVowelFormsList {
-    final ex = currentExercise;
-    if (ex == null) return const [];
-
-    return CharacterOptionUtils.generateOptions(
-      character: ex.character,
-      type: ex.characterType,
-      example: ex.example,
-    );
-  }
-
   Future<void> loadStrokeDb() async {
     if (_strokesDbCache != null) return;
 
@@ -1043,13 +790,6 @@ class StageController extends GetxController {
 
     final db = _strokesDbCache;
     final items = db?['items'] as Map<String, dynamic>?;
-
-    if (isMathCurrent) {
-      letterSubpathsNorm.clear();
-      strokeStrokesNorm.clear();
-      anim.setGuideFromPx(strokesPx: const []);
-      return;
-    }
 
     final entry = items?[ch.trim()] as Map<String, dynamic>?;
 
@@ -1157,24 +897,6 @@ class StageController extends GetxController {
         .toList();
   }
 
-  void _resetSessionState({bool clearGuide = false}) {
-    attempts.clear();
-    _updateProgressUI(animate: false);
-    currentExerciseIndex.value = 0;
-    selectedCharacter.value = '';
-    exercises.clear();
-    currentStage.value = null;
-    _sessionStart = null;
-
-    _mathCache.clear();
-    mathPrompt.value = '';
-    mathExpected.value = null;
-    currentMathOp.value = null;
-
-    clearBoard();
-    if (clearGuide) anim.setGuideFromPx(strokesPx: const []);
-  }
-
   void _cancelPredictIfAny() {
     if (_cancelToken != null && !(_cancelToken!.isCancelled)) {
       _cancelToken!.cancel();
@@ -1206,7 +928,7 @@ class StageController extends GetxController {
     try {
       return await fn();
     } finally {
-      if (Get.isRegistered<StageController>()) {
+      if (Get.isRegistered<AdventureStageController>()) {
         isSkipLocked.value = false;
       }
     }

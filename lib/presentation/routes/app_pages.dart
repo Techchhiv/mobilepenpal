@@ -1,4 +1,6 @@
 import 'package:get/get.dart';
+import 'package:mobilepenpal/core/bindings/adventure_stage_binding.dart';
+import 'package:mobilepenpal/presentation/screens/adventure/adventure_stage_page.dart';
 import 'package:mobilepenpal/core/bindings/auth_binding.dart';
 import 'package:mobilepenpal/core/bindings/classroom_binding.dart';
 import 'package:mobilepenpal/core/bindings/home_binding.dart';
@@ -98,6 +100,13 @@ class AppPages {
         return ClassroomPage(classroomId: id);
       },
       binding: ClassroomBinding(),
+      middlewares: [AuthMiddleware()],
+    ),
+
+    GetPage(
+      name: AppRoutes.adventureStage,
+      page: () => const AdventureStagePage(),
+      binding: AdventureStageBinding(),
       middlewares: [AuthMiddleware()],
     ),
   ];

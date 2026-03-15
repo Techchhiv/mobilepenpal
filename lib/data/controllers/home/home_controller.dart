@@ -14,6 +14,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:mobilepenpal/presentation/widgets/app_snackbar.dart';
 import 'package:mobilepenpal/presentation/widgets/confirm_modal.dart';
 import 'package:mobilepenpal/presentation/widgets/home/pin_entry_widget.dart';
+import 'package:mobilepenpal/data/controllers/shop/shop_controller.dart';
 
 enum SummaryView { daily, weekly }
 
@@ -44,6 +45,14 @@ class HomeController extends GetxController {
   var selectedMonth = ''.obs;
 
   String get avatarUrl => student.value?.avatar ?? '';
+
+  ShopAvatar? get currentShopAvatar {
+    if (Get.isRegistered<ShopController>()) {
+      final shop = Get.find<ShopController>();
+      return shop.currentAvatar;
+    }
+    return null;
+  }
 
   bool get hasSchool {
     final id = student.value?.schoolId;

@@ -3,6 +3,7 @@ import 'package:mobilepenpal/core/config/env.dart';
 import 'package:mobilepenpal/core/network/endpoint/world.dart';
 import 'package:mobilepenpal/data/models/api_response.dart';
 import 'package:mobilepenpal/core/network/api_client.dart';
+import 'package:mobilepenpal/data/models/exercise/exercise.dart';
 import 'package:mobilepenpal/data/models/level/level.dart';
 import 'package:mobilepenpal/data/models/stage/stage.dart';
 import 'package:mobilepenpal/data/models/world/world.dart';
@@ -25,6 +26,28 @@ class WorldService {
       fromData: (data) {
         if (data is List) {
           return data.map((world) => World.fromJson(world)).toList();
+        }
+        return [];
+      },
+    );
+
+    return result;
+  }
+
+  Future<ApiResponse<List<Exercise>>> getExercises() async {
+    final result = await _apiClient.request<List<Exercise>>(
+      method: 'GET',
+      path: WorldEndpoints.exercises,
+      fromData: (data) {
+        // Backend returns {"exercises": [...]} via setResult('exercises', ...)
+        List? list;
+        if (data is Map && data['exercises'] is List) {
+          list = data['exercises'] as List;
+        } else if (data is List) {
+          list = data;
+        }
+        if (list != null) {
+          return list.map((e) => Exercise.fromJson(e)).toList();
         }
         return [];
       },

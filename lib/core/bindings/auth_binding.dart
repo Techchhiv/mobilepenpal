@@ -1,6 +1,5 @@
 import 'package:get/get.dart';
 import 'package:mobilepenpal/data/controllers/auth/auth_controller.dart';
-import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
 import 'package:mobilepenpal/data/services/auth_service.dart';
 
 class AuthBinding extends Bindings {
@@ -8,6 +7,5 @@ class AuthBinding extends Bindings {
   void dependencies() {
     Get.lazyPut<AuthService>(() => AuthService());
     Get.lazyPut<AuthController>(() => AuthController(), fenix: true);
-    Get.lazyPut<HomeController>(() => HomeController());
   }
 }

@@ -1,22 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobilepenpal/core/config/env.dart';
-import 'package:mobilepenpal/core/network/route_builder.dart';
 import 'package:mobilepenpal/core/theme/app_colors.dart';
-import 'package:mobilepenpal/core/utils/number_format_utils.dart';
-import 'package:mobilepenpal/data/controllers/world/level_controller.dart';
-import 'package:mobilepenpal/data/controllers/world/stage_controller.dart';
-import 'package:mobilepenpal/data/controllers/world/stage_animation_controller.dart';
-import 'package:mobilepenpal/presentation/routes/app_routes.dart';
-import 'package:mobilepenpal/presentation/widgets/app_snackbar.dart';
-import 'package:mobilepenpal/presentation/widgets/loading_overly.dart';
+import 'package:mobilepenpal/data/controllers/adventure/adventure_stage_controller.dart';
 import 'package:mobilepenpal/presentation/widgets/world/stage_components/stage_drawing_board.dart';
 import 'package:mobilepenpal/presentation/widgets/world/stage_components/stage_illustration.dart';
 import 'package:mobilepenpal/presentation/widgets/world/stage_components/stage_top_bar.dart';
 import 'package:mobilepenpal/presentation/widgets/world/stage_components/stage_pause_dialog.dart';
 
-class StageDetailPage extends GetView<StageController> {
-  const StageDetailPage({super.key});
+class AdventureStagePage extends GetView<AdventureStageController> {
+  const AdventureStagePage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -28,166 +21,118 @@ class StageDetailPage extends GetView<StageController> {
         _showPauseDialog(context);
       },
       child: Scaffold(
-        body: Obx(
-          () => LoadingOverlay(
-            isLoading: controller.isSubmitting.value,
-            child: Stack(
-              children: [
-                Positioned.fill(
-                  child: Image.asset(
-                    "assets/images/backgrounds/stage_background.png",
-                    fit: BoxFit.cover,
-                  ),
-                ),
-
-                Positioned.fill(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          const Color(0xFF2B7A78).withValues(alpha: 1),
-                          const Color(0xFF6B9F8E).withValues(alpha: 0.0),
-                        ],
-                        stops: const [0.15, 0.45],
-                      ),
-                    ),
-                  ),
-                ),
-
-                SafeArea(
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(
-                        maxWidth: Env.globalMaxWidth,
-                      ),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 16,
-                        ),
-                        child: Column(
-                          children: [
-                            Obx(
-                              () => StageTopBar(
-                                totalExercises: controller.totalExercises,
-                                completedExercises:
-                                    controller.completedExercises,
-                                exerciseDotStates: controller.exerciseDotStates
-                                    .toList(),
-                                onActionTap: () =>
-                                    _showPauseDialog(Get.context!),
-                                actionIcon: Icons.pause,
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            Obx(() {
-                              final show = controller.showIllustration;
-                              return AnimatedSwitcher(
-                                duration: const Duration(milliseconds: 220),
-                                switchInCurve: Curves.easeOut,
-                                switchOutCurve: Curves.easeIn,
-                                transitionBuilder: (child, anim) =>
-                                    SizeTransition(
-                                      sizeFactor: anim,
-                                      axisAlignment: -1.0,
-                                      child: child,
-                                    ),
-                                child: show
-                                    ? Column(
-                                        key: const ValueKey('illus'),
-                                        children: [
-                                          _buildIllustrationWrapper(),
-                                          const SizedBox(height: 0),
-                                        ],
-                                      )
-                                    : const SizedBox(
-                                        key: ValueKey('no_illus'),
-                                        height: 20,
-                                      ),
-                              );
-                            }),
-                            Obx(
-                              () => StageDrawingBoard(
-                                boardWidth: controller.boardWidth.value,
-                                boardHeight: controller.boardHeight.value,
-                                onUpdateBoardSize: controller.updateBoardSize,
-                                drawingControllers:
-                                    controller.drawingControllers,
-                                letterSubpathsNorm:
-                                    controller.letterSubpathsNorm,
-                                scale: controller.scale,
-                                onPointerDown: controller.onRawPointerDown,
-                                onPointerMove: controller.onRawPointerMove,
-                                onPointerUp: controller.onRawPointerUp,
-                                attemptLeft: controller.attemptLeft.value,
-                                maxAttempts:
-                                    StageController.maxAttemptsPerExercise,
-                                feedbackState: controller.anim.feedback.value,
-                                shakeOffset: controller.anim.shakeOffset.value,
-                                praiseText: controller.anim.praiseText.value,
-                                confettiController:
-                                    controller.anim.confettiController,
-                                guideCirclePx:
-                                    controller.anim.guideCirclePx.value,
-                                isGuiding: controller.anim.isGuiding.value,
-                                showGuiding:
-                                    true, // TODO: Link to a setting if needed
-                                activeBoardCount: controller.activeBoardCount,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            _buildCharacterOptions(),
-                            const SizedBox(height: 24),
-                            _buildBottomButtons(),
-                            const SizedBox(height: 8),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+        body: Stack(
+          children: [
+            Positioned.fill(
+              child: Image.asset(
+                "assets/images/backgrounds/stage_background.png",
+                fit: BoxFit.cover,
+              ),
             ),
-          ),
-        ),
-      ),
-    );
-  }
 
-  /// Wraps the shared [StageIllustration] and provides values from controller.
-  Widget _buildIllustrationWrapper() {
-    return Obx(() {
-      Widget? mathWidget;
-      if (controller.isMathCurrent) {
-        final raw = controller.mathPrompt.value;
-        final km = NumberFormatUtils.digitsByLocale(raw, forceKhmer: true);
-        mathWidget = Center(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                km,
-                style: const TextStyle(
-                  fontSize: 64,
-                  fontWeight: FontWeight.w900,
-                  color: Colors.white,
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      const Color(0xFF2B7A78).withValues(alpha: 1),
+                      const Color(0xFF6B9F8E).withValues(alpha: 0.0),
+                    ],
+                    stops: const [0.15, 0.45],
+                  ),
                 ),
               ),
             ),
-          ),
-        );
-      }
 
-      return StageIllustration(
-        illustrationAssetPath: controller.anim.illustrationAssetPath.value,
-        illustrationLabel: controller.anim.illustrationLabel.value,
-        selectedCharacter: controller.selectedCharacter.value,
-        mathPromptWidget: mathWidget,
-      );
-    });
+            SafeArea(
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    maxWidth: Env.globalMaxWidth,
+                  ),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 16,
+                    ),
+                    child: Column(
+                      children: [
+                        Obx(
+                          () => StageTopBar(
+                            totalExercises: controller.totalExercises,
+                            completedExercises: controller.completedExercises,
+                            exerciseDotStates: controller.exerciseDotStates
+                                .toList(),
+                            onActionTap: () => _showPauseDialog(context),
+                            actionIcon: Icons.pause,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Obx(() {
+                          if (!controller.showIllustration) {
+                            return const SizedBox(
+                              key: ValueKey('no_illus'),
+                              height: 20,
+                            );
+                          }
+                          return Column(
+                            key: const ValueKey('illus'),
+                            children: [
+                              StageIllustration(
+                                illustrationAssetPath:
+                                    controller.anim.illustrationAssetPath.value,
+                                illustrationLabel:
+                                    controller.anim.illustrationLabel.value,
+                                selectedCharacter:
+                                    controller.selectedCharacter.value,
+                              ),
+                              const SizedBox(height: 0),
+                            ],
+                          );
+                        }),
+                        Obx(
+                          () => StageDrawingBoard(
+                            boardWidth: controller.boardWidth.value,
+                            boardHeight: controller.boardHeight.value,
+                            onUpdateBoardSize: controller.updateBoardSize,
+                            drawingControllers: controller.drawingControllers,
+                            letterSubpathsNorm: controller.letterSubpathsNorm,
+                            scale: controller.scale,
+                            onPointerDown: controller.onRawPointerDown,
+                            onPointerMove: controller.onRawPointerMove,
+                            onPointerUp: controller.onRawPointerUp,
+                            attemptLeft: controller.attemptLeft.value,
+                            maxAttempts:
+                                AdventureStageController.maxAttemptsPerExercise,
+                            feedbackState: controller.anim.feedback.value,
+                            shakeOffset: controller.anim.shakeOffset.value,
+                            praiseText: controller.anim.praiseText.value,
+                            confettiController:
+                                controller.anim.confettiController,
+                            guideCirclePx: controller.anim.guideCirclePx.value,
+                            isGuiding: controller.anim.isGuiding.value,
+                            showGuiding:
+                                true, // TODO: Link to a setting if needed
+                            activeBoardCount: controller.activeBoardCount,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        _buildCharacterOptions(),
+                        const SizedBox(height: 24),
+                        _buildBottomButtons(),
+                        const SizedBox(height: 8),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildCharacterOptions() {
@@ -195,8 +140,8 @@ class StageDetailPage extends GetView<StageController> {
       final forms = controller.characterVowelFormsList;
       if (forms.isEmpty) return const SizedBox.shrink();
 
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 18),
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         child: SizedBox(
           height: 64,
           child: LayoutBuilder(
@@ -297,7 +242,6 @@ class StageDetailPage extends GetView<StageController> {
                                       );
                                     },
                                   ),
-
                                 Material(
                                   color: Colors.transparent,
                                   shape: const CircleBorder(),
@@ -442,37 +386,11 @@ class StageDetailPage extends GetView<StageController> {
       barrierColor: Colors.black.withValues(alpha: 0.35),
       builder: (ctx) {
         return StagePauseDialog(
-          onHome: () async {
-            Navigator.of(ctx).pop();
-            controller.isSubmitting.value = true;
-            try {
-              controller.clearBoard();
-              controller.attempts.clear();
-              final levelController = Get.find<LevelController>();
-              await levelController.fetchLevelDetail();
-              final level = levelController.currentLevel.value;
-              if (level == null || level.id != controller.levelId) {
-                AppSnackbar.show(
-                  title: 'error'.tr,
-                  'Failed to load level'.tr,
-                  backgroundColor: Colors.red,
-                );
-                return;
-              }
-              final levelRoute = RouteBuilder.build(AppRoutes.level, {
-                'worldId': controller.worldId.toString(),
-                'levelId': controller.levelId.toString(),
-              });
-              Get.offAllNamed(levelRoute);
-            } finally {
-              controller.isSubmitting.value = false;
-            }
+          onHome: () {
+            Get.back();
+            Get.back();
           },
-          onRestart: () async {
-            Navigator.of(ctx).pop();
-            await controller.resetForRetry();
-          },
-          onResume: () => Navigator.of(ctx).pop(),
+          onResume: () => Get.back(),
         );
       },
     );

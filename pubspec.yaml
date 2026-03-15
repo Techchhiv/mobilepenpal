@@ -94,6 +94,7 @@ flutter:
     - assets/images/decorations/
     - assets/images/consonants/
     - assets/images/digits/
+    - assets/images/avatars/
 
     - assets/animated/
 

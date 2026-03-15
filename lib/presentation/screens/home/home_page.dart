@@ -15,6 +15,11 @@ import 'package:mobilepenpal/presentation/screens/home/student_home.dart';
 import 'package:mobilepenpal/presentation/widgets/loading_overly.dart';
 import 'package:mobilepenpal/presentation/widgets/home/mode_switcher.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:mobilepenpal/data/controllers/home/navigation_controller.dart';
+import 'package:mobilepenpal/presentation/screens/adventure/adventure_page.dart';
+import 'package:mobilepenpal/presentation/screens/daily_challenge/daily_challenge_page.dart';
+import 'package:mobilepenpal/presentation/screens/shop/shop_page.dart';
+import 'package:mobilepenpal/data/controllers/shop/shop_controller.dart';
 
 class HomePage extends StatelessWidget {
   HomePage({super.key});
@@ -23,6 +28,7 @@ class HomePage extends StatelessWidget {
   final AuthController authController = Get.find<AuthController>();
   final WorldController worldController = Get.find<WorldController>();
   final HomeAnimationController anim = Get.find<HomeAnimationController>();
+  final NavigationController navController = Get.find<NavigationController>();
 
   final box = GetStorage();
 
@@ -36,118 +42,170 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        children: [
-          Obx(() {
-            final isStudent = homeController.currentMode.value == 'student';
+    return Obx(() {
+      return Scaffold(
+        body: IndexedStack(
+          index: navController.currentIndex.value,
+          children: [
+            _buildCourseTab(context, homeController, worldController, anim),
+            AdventurePage(),
+            DailyChallengePage(),
+            ShopPage(),
+          ],
+        ),
+        bottomNavigationBar: BottomNavigationBar(
+          currentIndex: navController.currentIndex.value,
+          onTap: navController.changePage,
+          type: BottomNavigationBarType.fixed,
+          backgroundColor: Colors.white,
+          selectedItemColor: AppColors.primary,
+          unselectedItemColor: Colors.grey.withValues(alpha: 0.5),
+          showSelectedLabels: false,
+          showUnselectedLabels: false,
+          items: [
+            BottomNavigationBarItem(
+              icon: const Icon(Icons.menu_book_rounded),
+              label: '',
+            ),
+            BottomNavigationBarItem(
+              icon: const Icon(Icons.explore_rounded),
+              label: '',
+            ),
+            BottomNavigationBarItem(
+              icon: const Icon(Icons.bolt_rounded),
+              label: '',
+            ),
+            BottomNavigationBarItem(
+              icon: const Icon(Icons.storefront_rounded),
+              label: '',
+            ),
+          ],
+        ),
+      );
+    });
+  }
 
-            return AnimatedSwitcher(
-              duration: const Duration(milliseconds: 240),
-              switchInCurve: Curves.easeOut,
-              switchOutCurve: Curves.easeIn,
-              child: Container(
-                key: ValueKey<bool>(isStudent),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: isStudent
-                        ? const [
-                            Color(0xFFF3FBFF),
-                            Color(0xFFF7F8FF),
-                            Color(0xFFFFF7F2),
-                          ]
-                        : const [
-                            AppColors.primary,
-                            Color(0xFF1e8c79),
-                            Color(0xFF49aa7c),
-                          ],
+  Widget _buildCourseTab(
+    BuildContext context,
+    HomeController homeController,
+    WorldController worldController,
+    HomeAnimationController anim,
+  ) {
+    return Stack(
+      children: [
+        Obx(() {
+          final isStudent = homeController.currentMode.value == 'student';
+
+          return AnimatedSwitcher(
+            duration: const Duration(milliseconds: 240),
+            switchInCurve: Curves.easeOut,
+            switchOutCurve: Curves.easeIn,
+            child: Container(
+              key: ValueKey<bool>(isStudent),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: isStudent
+                      ? const [
+                          Color(0xFFF3FBFF),
+                          Color(0xFFF7F8FF),
+                          Color(0xFFFFF7F2),
+                        ]
+                      : const [
+                          AppColors.primary,
+                          Color(0xFF1e8c79),
+                          Color(0xFF49aa7c),
+                        ],
+                ),
+              ),
+            ),
+          );
+        }),
+
+        SafeArea(
+          child: Stack(
+            children: [
+              _buildDecorRotatedSquareAnimated(
+                anim: anim,
+                left: -80,
+                top: 75,
+                phase: 0.10,
+              ),
+              _buildDecorRotatedSquareAnimated(
+                anim: anim,
+                right: -80,
+                top: 140,
+                phase: 0.10,
+              ),
+              _buildDecorRotatedSquareAnimated(
+                anim: anim,
+                right: -80,
+                bottom: 50,
+                phase: 0.10,
+              ),
+
+              Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    maxWidth: Env.globalMaxWidth,
+                  ),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 12),
+
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Obx(
+                          () => _buildHeroHeader(context, homeController),
+                        ),
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: _buildModeCard(homeController),
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Obx(() {
+                            final isStudent =
+                                homeController.currentMode.value == 'student';
+
+                            return IndexedStack(
+                              index: isStudent ? 0 : 1,
+                              children: [
+                                StudentHome(homeController: homeController),
+                                ParentHome(homeController: homeController),
+                              ],
+                            );
+                          }),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
-            );
-          }),
-
-          SafeArea(
-            child: Stack(
-              children: [
-                _buildDecorRotatedSquareAnimated(
-                  left: -80,
-                  top: 75,
-                  phase: 0.10,
-                ),
-                _buildDecorRotatedSquareAnimated(
-                  right: -80,
-                  top: 140,
-                  phase: 0.10,
-                ),
-                _buildDecorRotatedSquareAnimated(
-                  right: -80,
-                  bottom: 50,
-                  phase: 0.10,
-                ),
-
-                Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(
-                      maxWidth: Env.globalMaxWidth,
-                    ),
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 12),
-
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: Obx(() => _buildHeroHeader(context)),
-                        ),
-
-                        const SizedBox(height: 12),
-
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: _buildModeCard(),
-                        ),
-
-                        const SizedBox(height: 12),
-
-                        Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            child: Obx(() {
-                              final isStudent =
-                                  homeController.currentMode.value == 'student';
-
-                              return IndexedStack(
-                                index: isStudent ? 0 : 1,
-                                children: [
-                                  StudentHome(homeController: homeController),
-                                  ParentHome(homeController: homeController),
-                                ],
-                              );
-                            }),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
+            ],
           ),
+        ),
 
-          Obx(() {
-            return LoadingOverlay(
-              isLoading: worldController.isLoading.value,
-              child: const SizedBox.expand(),
-            );
-          }),
-        ],
-      ),
+        Obx(() {
+          return LoadingOverlay(
+            isLoading: worldController.isLoading.value,
+            child: const SizedBox.expand(),
+          );
+        }),
+      ],
     );
   }
 
-  Widget _buildHeroHeader(BuildContext context) {
+  Widget _buildHeroHeader(BuildContext context, HomeController homeController) {
     final isStudent = homeController.currentMode.value == 'student';
 
     final isLoadingProfile =
@@ -228,27 +286,7 @@ class HomePage extends StatelessWidget {
                 child: ClipOval(
                   child: isLoadingProfile
                       ? Center(child: shimmerCircle(46))
-                      : (homeController.avatarUrl.isNotEmpty
-                            ? Image.network(
-                                Env.backendUrl + homeController.avatarUrl,
-                                fit: BoxFit.cover,
-                                loadingBuilder: (context, child, progress) {
-                                  if (progress == null) return child;
-                                  return Center(child: shimmerCircle(46));
-                                },
-                                errorBuilder: (_, __, ___) {
-                                  return const Icon(
-                                    Icons.person,
-                                    size: 34,
-                                    color: Colors.white,
-                                  );
-                                },
-                              )
-                            : const Icon(
-                                Icons.person,
-                                size: 34,
-                                color: Colors.white,
-                              )),
+                      : _buildAvatarContent(homeController),
                 ),
               ),
 
@@ -312,7 +350,27 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _buildModeCard() {
+  Widget _buildAvatarContent(HomeController homeController) {
+    final ShopAvatar? shopAvatar = homeController.currentShopAvatar;
+
+    if (shopAvatar != null && shopAvatar.id != 'default') {
+      if (shopAvatar.assetPath != null) {
+        return Padding(
+          padding: const EdgeInsets.all(8),
+          child: Image.asset(shopAvatar.assetPath!, fit: BoxFit.contain),
+        );
+      }
+      return Icon(
+        shopAvatar.icon ?? Icons.person,
+        size: 34,
+        color: Colors.white,
+      );
+    }
+
+    return const Icon(Icons.person, size: 34, color: Colors.white);
+  }
+
+  Widget _buildModeCard(HomeController homeController) {
     return Container(
       margin: EdgeInsets.symmetric(vertical: 10),
       // padding: const EdgeInsets.all(12),
@@ -340,6 +398,7 @@ class HomePage extends StatelessWidget {
   }
 
   Widget _buildDecorRotatedSquareAnimated({
+    required HomeAnimationController anim,
     double? left,
     double? top,
     double? right,
