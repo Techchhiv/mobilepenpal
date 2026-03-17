@@ -4,6 +4,7 @@ use App\Http\Controllers\Student\V01\AuthController;
 use App\Http\Controllers\Student\V01\ClassroomController;
 use App\Http\Controllers\Student\V01\UserController;
 use App\Http\Controllers\Student\V01\WorldController;
+use App\Http\Controllers\Student\V01\ShopController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -25,8 +26,13 @@ Route::prefix('profile')->group(function () {
     Route::get('/summary/monthly', [UserController::class, 'monthlySummary']);
 });
 
+Route::prefix('shop')->group(function () {
+    Route::post('/purchase-avatar', [ShopController::class, 'purchaseAvatar']);
+});
+
 Route::prefix('worlds')->group(function () {
     Route::get('', [WorldController::class, 'index']);
+    Route::get('/exercises', [WorldController::class, 'exercises']);
     Route::get('{id}', [WorldController::class, 'showWorld']);
     Route::get('/level/{levelId}', [WorldController::class, 'showLevel']);
     Route::get('/level/stage/{stageId}', [WorldController::class, 'showStage']);

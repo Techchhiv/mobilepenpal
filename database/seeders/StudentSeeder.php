@@ -33,6 +33,7 @@ class StudentSeeder extends Seeder
                 'enrollment_year' => '2024',
                 // 'mode' => 'student',
                 'is_active' => true,
+                'coin' => 1000,
             ],
             [
                 'school_id' => $itcSchoolId,
@@ -82,6 +83,10 @@ class StudentSeeder extends Seeder
                 'enrollment_year' => $studentData['enrollment_year'],
                 // 'mode' => $studentData['mode'] ?? 'student',
                 'is_active' => $studentData['is_active'],
+                'coin' => $studentData['coin'] ?? 0,
+                'xp' => $studentData['xp'] ?? 0,
+                'streak' => $studentData['streak'] ?? 0,
+                'unlocked_avatars' => $studentData['unlocked_avatars'] ?? [],
             ]);
         }
     }

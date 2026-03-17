@@ -42,6 +42,11 @@ return new class extends Migration
             // $table->integer('streak')->default(0);
             // $table->integer('time_spent')->default(0);
             // $table->timestamp('last_played')->nullable();
+                        
+            $table->integer('coin')->default(0);
+            $table->integer('xp')->default(0);
+            $table->integer('streak')->default(0);
+            $table->json('unlocked_avatars')->nullable();
 
             $table->string('address')->nullable();
             $table->year('enrollment_year')->nullable();

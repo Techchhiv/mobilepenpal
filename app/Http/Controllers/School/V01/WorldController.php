@@ -228,6 +228,7 @@ class WorldController extends Controller
                 'order_index' => $nextWorldOrder,
                 'is_active' => $data['is_active'] ?? true,
                 'is_unlocked_by_default' => $data['is_unlocked_by_default'] ?? false,
+                'is_premium' => true,
             ]);
 
             SchoolWorld::updateOrCreate(

@@ -409,18 +409,18 @@ class WorldLevelStageSeeder extends Seeder
             }
         }
 
-        foreach ($difficulties as $i => $diff) {
-            [$kmName, $enName] = match ($diff) {
-                'easy' => ['ងាយ', 'Easy'],
-                'medium' => ['មធ្យម', 'Medium'],
-                'hard' => ['ពិបាក', 'Hard'],
-                'very_hard' => ['ពិបាកខ្លាំង', 'Very Hard'],
-                default => [$diff, ucfirst($diff)],
+        foreach ($ops as $i => $op) {
+            [$kmName, $enName] = match ($op) {
+                'add' => ['បូក', 'Addition'],
+                'sub' => ['ដក', 'Subtraction'],
+                'mul' => ['គុណ', 'Multiplication'],
+                'div' => ['ចែក', 'Division'],
+                default => [$op, ucfirst($op)],
             };
 
             $levelData = [
                 'world_id' => $world->id,
-                'name' => "គណិតវិទ្យា - {$kmName}",
+                'name' => "ប្រមាណវិធី {$kmName}",
                 'description' => "កម្រិតគណិតវិទ្យា ({$kmName})",
                 'order_index' => $i + 1,
                 'is_active' => true,
@@ -437,26 +437,26 @@ class WorldLevelStageSeeder extends Seeder
             $level = Level::create($levelData);
 
             $order = 1;
-            foreach ($ops as $op) {
-                [$stageKmName, $stageEnName] = match ($op) {
-                    'add' => ['បូក', 'Addition'],
-                    'sub' => ['ដក', 'Subtraction'],
-                    'mul' => ['គុណ', 'Multiplication'],
-                    'div' => ['ចែក', 'Division'],
-                    default => [$op, ucfirst($op)],
+            foreach ($difficulties as $diff) {
+                [$stageKmName, $stageEnName] = match ($diff) {
+                    'easy' => ['ងាយ', 'Easy'],
+                    'medium' => ['មធ្យម', 'Medium'],
+                    'hard' => ['ពិបាក', 'Hard'],
+                    'very_hard' => ['ពិបាកខ្លាំង', 'Very Hard'],
+                    default => [$diff, ucfirst($diff)],
                 };
 
                 $stageData = [
                     'level_id' => $level->id,
-                    'name' => "{$stageKmName}",
-                    'description' => "ហាត់{$stageKmName}",
+                    'name' => "កម្រិត - {$stageKmName}",
+                    'description' => "ហាត់កម្រិត {$stageKmName}",
                     'order_index' => $order++,
                     'is_active' => true,
                     'is_unlocked_by_default' => false,
                 ];
 
                 if (Schema::hasColumn('stages', 'name_en')) {
-                    $stageData['name_en'] = "Math - {$stageEnName}";
+                    $stageData['name_en'] = "Difficulty - {$stageEnName}";
                 }
                 if (Schema::hasColumn('stages', 'description_en')) {
                     $stageData['description_en'] = "Practice {$stageEnName}";

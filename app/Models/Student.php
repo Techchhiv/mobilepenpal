@@ -22,6 +22,7 @@ class Student extends Authenticatable
     protected $casts = [
         // 'date_of_birth' => 'date',
         'enrollment_year' => 'integer',
+        'unlocked_avatars' => 'array',
     ];
 
     public function levelProgress()

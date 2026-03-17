@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Student\V01;
 use App\Helpers\StudentProgress;
 use App\Http\Resources\Student\V01\World\LevelWithStageResource;
 use App\Http\Resources\Student\V01\World\StageWithExercisesResource;
+use App\Http\Resources\Student\V01\World\AdventureExerciseResource;
 use App\Http\Resources\Student\V01\World\WorldIndexResource;
 use App\Http\Resources\Student\V01\World\WorldWithLevelResource;
 use App\Models\Classroom;
@@ -230,6 +231,18 @@ class WorldController extends Controller
         });
 
         $this->setResult('summary', $summary);
+        return $this->returnResponse();
+    }
+    
+    public function exercises(): JsonResponse
+    {
+        $exercises = Exercise::query()
+            ->orderBy('character_type')
+            ->orderBy('difficulty')
+            ->orderBy('id')
+            ->get();
+
+        $this->setResult('exercises', AdventureExerciseResource::collection($exercises));
         return $this->returnResponse();
     }
 }

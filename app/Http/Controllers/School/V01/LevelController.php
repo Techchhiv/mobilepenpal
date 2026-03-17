@@ -14,23 +14,29 @@ class LevelController extends Controller
     public function index(Request $request, int $worldId)
     {
         $schoolId = (int) (auth()->user()->school_id ?? 0);
-        if ($schoolId <= 0) return $this->returnError('School account required', 403);
+        if ($schoolId <= 0)
+            return $this->returnError('School account required', 403);
 
         $includeInactive = $request->boolean('include_inactive', true);
         $withStages = $request->boolean('with_stages', false);
 
         $world = World::where('school_id', $schoolId)->find($worldId);
-        if (!$world) return $this->returnError('World not found', 404);
+        if (!$world)
+            return $this->returnError('World not found', 404);
 
         $q = Level::where('world_id', $worldId)->orderBy('order_index');
 
-        if (!$includeInactive) $q->where('is_active', true);
+        if (!$includeInactive)
+            $q->where('is_active', true);
 
         if ($withStages) {
-            $q->with(['stages' => function ($sq) use ($includeInactive) {
-                if (!$includeInactive) $sq->where('is_active', true);
-                $sq->orderBy('order_index');
-            }]);
+            $q->with([
+                'stages' => function ($sq) use ($includeInactive) {
+                    if (!$includeInactive)
+                        $sq->where('is_active', true);
+                    $sq->orderBy('order_index');
+                }
+            ]);
         } else {
             $q->withCount([
                 'stages as stages_count',
@@ -48,20 +54,26 @@ class LevelController extends Controller
     public function show(Request $request, int $id)
     {
         $schoolId = (int) (auth()->user()->school_id ?? 0);
-        if ($schoolId <= 0) return $this->returnError('School account required', 403);
+        if ($schoolId <= 0)
+            return $this->returnError('School account required', 403);
 
         $includeInactive = $request->boolean('include_inactive', true);
 
         $level = Level::query()
             ->where('id', $id)
             ->whereHas('world', fn($w) => $w->where('school_id', $schoolId))
-            ->with(['world', 'stages' => function ($sq) use ($includeInactive) {
-                if (!$includeInactive) $sq->where('is_active', true);
-                $sq->orderBy('order_index');
-            }])
+            ->with([
+                'world',
+                'stages' => function ($sq) use ($includeInactive) {
+                    if (!$includeInactive)
+                        $sq->where('is_active', true);
+                    $sq->orderBy('order_index');
+                }
+            ])
             ->first();
 
-        if (!$level) return $this->returnError('Level not found', 404);
+        if (!$level)
+            return $this->returnError('Level not found', 404);
 
         $this->setResult('level', $level);
         return $this->returnResponse();
@@ -70,10 +82,12 @@ class LevelController extends Controller
     public function store(StoreLevelRequest $request, int $worldId)
     {
         $schoolId = (int) (auth()->user()->school_id ?? 0);
-        if ($schoolId <= 0) return $this->returnError('School account required', 403);
+        if ($schoolId <= 0)
+            return $this->returnError('School account required', 403);
 
         $world = World::where('school_id', $schoolId)->find($worldId);
-        if (!$world) return $this->returnError('World not found', 404);
+        if (!$world)
+            return $this->returnError('World not found', 404);
 
         $data = $request->validated();
 
@@ -86,6 +100,7 @@ class LevelController extends Controller
             $data['world_id'] = $worldId;
             $data['is_active'] = $data['is_active'] ?? true;
             $data['is_unlocked_by_default'] = $data['is_unlocked_by_default'] ?? false;
+            $data['is_premium'] = true;
 
             return Level::create($data);
         });
@@ -97,13 +112,15 @@ class LevelController extends Controller
     public function update(UpdateLevelRequest $request, int $id)
     {
         $schoolId = (int) (auth()->user()->school_id ?? 0);
-        if ($schoolId <= 0) return $this->returnError('School account required', 403);
+        if ($schoolId <= 0)
+            return $this->returnError('School account required', 403);
 
         $level = Level::where('id', $id)
             ->whereHas('world', fn($w) => $w->where('school_id', $schoolId))
             ->first();
 
-        if (!$level) return $this->returnError('Level not found', 404);
+        if (!$level)
+            return $this->returnError('Level not found', 404);
 
         $data = $request->validated();
 
@@ -117,13 +134,15 @@ class LevelController extends Controller
     public function toggle(int $id)
     {
         $schoolId = (int) (auth()->user()->school_id ?? 0);
-        if ($schoolId <= 0) return $this->returnError('School account required', 403);
+        if ($schoolId <= 0)
+            return $this->returnError('School account required', 403);
 
         $level = Level::where('id', $id)
             ->whereHas('world', fn($w) => $w->where('school_id', $schoolId))
             ->first();
 
-        if (!$level) return $this->returnError('Level not found', 404);
+        if (!$level)
+            return $this->returnError('Level not found', 404);
 
         $level->is_active = !$level->is_active;
         $level->save();
@@ -135,7 +154,8 @@ class LevelController extends Controller
     public function reorder(Request $request, int $id)
     {
         $schoolId = (int) (auth()->user()->school_id ?? 0);
-        if ($schoolId <= 0) return $this->returnError('School account required', 403);
+        if ($schoolId <= 0)
+            return $this->returnError('School account required', 403);
 
         $data = $request->validate([
             'order_index' => ['required', 'integer', 'min:1'],
@@ -147,7 +167,8 @@ class LevelController extends Controller
             ->whereHas('world', fn($w) => $w->where('school_id', $schoolId))
             ->first();
 
-        if (!$level) return $this->returnError('Level not found', 404);
+        if (!$level)
+            return $this->returnError('Level not found', 404);
 
         DB::transaction(function () use ($level, $to) {
             $worldId = (int) $level->world_id;
@@ -156,7 +177,8 @@ class LevelController extends Controller
             $to = max(1, min($to, $total));
             $from = (int) $level->order_index;
 
-            if ($to === $from) return;
+            if ($to === $from)
+                return;
 
             Level::where('id', $level->id)->update(['order_index' => 0]);
 
