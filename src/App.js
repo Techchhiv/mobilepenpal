@@ -17,6 +17,7 @@ import AdminPermissionsPage from "./pages/admin/AdminPermissionsPage";
 import ManageClientsPage from "./pages/admin/ManageClientsPage";
 import ManagePaymentsPage from "./pages/admin/ManagePaymentsPage";
 import SchoolPayments from "./pages/admin/SchoolPayments";
+import AdminSchoolReportsPage from "./pages/admin/AdminSchoolReportsPage";
 
 // ---------- School Pages ----------
 import SchoolSignInLayer from "./pages/school/page/SchoolSignin";
@@ -67,6 +68,11 @@ export default function App() {
         >
           <Route path="/admin/payments" element={<ManagePaymentsPage />} />
           <Route path="/admin/schools/:schoolId/payments" element={<SchoolPayments />} />
+        </Route>
+
+        {/* ---------- School Reports ---------- */}
+        <Route element={<Gate anyPerm={["menu.reports"]} />}>
+          <Route path="/admin/reports" element={<AdminSchoolReportsPage />} />
         </Route>
 
 
