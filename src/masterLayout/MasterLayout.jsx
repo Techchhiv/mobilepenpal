@@ -1,4 +1,3 @@
-// src/masterLayout/MasterLayout.jsx
 import React, { useEffect, useState } from "react";
 import { Icon } from "@iconify/react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
@@ -6,6 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import ThemeToggleButton from "../helper/ThemeToggleButton";
 import API from "../helper/api";
 import penLogo from "../assets/images/pen_logo.png";
+import "../assets/css/Layout.css";
 
 const MasterLayout = ({ children }) => {
   const { user, loading, logout, hasRole, hasPermission, isSuperAdmin } = useAuth();
@@ -22,6 +22,7 @@ const MasterLayout = ({ children }) => {
   const showManageUsers = isSuperAdmin || hasPermission("users.manage");
   const showRoles = isSuperAdmin || hasPermission("roles.manage");
   const showPermissions = isSuperAdmin || hasPermission("permissions.manage");
+  const showWorldManage = isSuperAdmin
 
   useEffect(() => {
     const p = location.pathname;
@@ -29,6 +30,13 @@ const MasterLayout = ({ children }) => {
       setOpenDropdownKey("access");
     } else if (p.startsWith("/admin/schools") || p.startsWith("/admin/payments")) {
       setOpenDropdownKey("management");
+    } else if (
+      p.startsWith("/admin/worlds") ||
+      p.startsWith("/admin/levels") ||
+      p.startsWith("/admin/stages") ||
+      p.startsWith("/admin/exercises")
+    ) {
+      setOpenDropdownKey("world");
     } else {
       setOpenDropdownKey(null);
     }
@@ -40,12 +48,27 @@ const MasterLayout = ({ children }) => {
     logout();
   };
 
+  const closeMobileSidebar = () => {
+    setMobileMenu(false);
+    setSidebarActive(false);
+    setOpenDropdownKey(null);
+  };
+
+
   return (
-    <section className={mobileMenu ? "overlay active" : "overlay"}>
+    <section className={mobileMenu ? "overlay active" : "overlay"}
+      onClick={(e) => {
+        if (!mobileMenu) return;
+        if (e.target.closest(".sidebar")) return;
+        closeMobileSidebar();
+      }}>
       {/* Sidebar */}
-      <aside className={sidebarActive ? "sidebar active" : "sidebar"}>
+      <aside className={sidebarActive || mobileMenu ? "sidebar active" : "sidebar"}>
         <button
-          onClick={() => setMobileMenu(false)}
+          onClick={() => {
+            setMobileMenu(false);
+            setSidebarActive(false);
+          }}
           type="button"
           className="sidebar-close-btn"
         >
@@ -68,6 +91,75 @@ const MasterLayout = ({ children }) => {
                   <Icon icon="mdi:account-multiple" className="menu-icon" />
                   <span>Manage Clients</span>
                 </NavLink>
+              </li>
+            )}
+
+            {showWorldManage && (
+              <li className={`dropdown ${openDropdownKey === "world" ? "open" : ""}`}>
+                <a
+                  href="#world"
+                  className={`menu-trigger ${openDropdownKey === "world" ? "active-page" : ""}`}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setOpenDropdownKey((prev) => (prev === "world" ? null : "world"));
+                  }}
+                >
+                  <Icon icon="mdi:earth" className="menu-icon" />
+                  <span>World Management</span>
+                  <Icon
+                    icon={openDropdownKey === "world" ? "mdi:chevron-up" : "mdi:chevron-down"}
+                    className="caret ms-auto"
+                  />
+                </a>
+
+                <ul
+                  className="sidebar-submenu"
+                  style={{
+                    maxHeight: openDropdownKey === "world" ? "600px" : "0px",
+                    overflow: "hidden",
+                    transition: "max-height .25s ease",
+                  }}
+                >
+                  <li>
+                    <NavLink
+                      to="/admin/worlds"
+                      className={({ isActive }) => (isActive ? "active-page" : "")}
+                    >
+                      <i className="ri-circle-fill circle-icon text-primary-600 w-auto" />
+                      Manage Worlds
+                    </NavLink>
+                  </li>
+
+                  {/* <li>
+                    <NavLink
+                      to="/admin/levels"
+                      className={({ isActive }) => (isActive ? "active-page" : "")}
+                    >
+                      <i className="ri-circle-fill circle-icon text-warning-main w-auto" />
+                      Manage Levels
+                    </NavLink>
+                  </li> */}
+
+                  {/* <li>
+                    <NavLink
+                      to="/admin/stages"
+                      className={({ isActive }) => (isActive ? "active-page" : "")}
+                    >
+                      <i className="ri-circle-fill circle-icon text-info-main w-auto" />
+                      Manage Stages
+                    </NavLink>
+                  </li> */}
+
+                  <li>
+                    <NavLink
+                      to="/admin/exercises"
+                      className={({ isActive }) => (isActive ? "active-page" : "")}
+                    >
+                      <i className="ri-circle-fill circle-icon text-success-main w-auto" />
+                      Manage Exercises
+                    </NavLink>
+                  </li>
+                </ul>
               </li>
             )}
 
@@ -104,9 +196,8 @@ const MasterLayout = ({ children }) => {
               >
                 <a
                   href="#access"
-                  className={`menu-trigger ${
-                    openDropdownKey === "access" ? "active-page" : ""
-                  }`}
+                  className={`menu-trigger ${openDropdownKey === "access" ? "active-page" : ""
+                    }`}
                   onClick={(e) => {
                     e.preventDefault();
                     setOpenDropdownKey((prev) =>

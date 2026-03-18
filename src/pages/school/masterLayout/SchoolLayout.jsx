@@ -1,4 +1,3 @@
-// src/pages/school/layout/SchoolLayout.jsx
 import React, { useEffect, useState } from "react";
 import { Icon } from "@iconify/react";
 import { Link, NavLink, useNavigate, useLocation } from "react-router-dom";
@@ -6,26 +5,30 @@ import ThemeToggleButton from "../../../helper/ThemeToggleButton";
 import API from "../../../helper/api";
 import { useAuth } from "../../../context/AuthContext";
 import penLogo from "../../../assets/images/pen_logo.png";
+import "../../../assets/css/Layout.css";
+
 
 const SchoolLayout = ({ children }) => {
-  const { user, loading, logout, hasPermission,isSchoolAdmin } = useAuth();
+  const { user, loading, logout, hasPermission, isSchoolAdmin } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   const [sidebarActive, setSidebarActive] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
   const [openDropdownKey, setOpenDropdownKey] = useState(null);
+  const isSidebarOpen = sidebarActive || mobileMenu;
 
   const showManageUsers = hasPermission("users.manage");
   const showRoles = hasPermission("roles.manage");
   const showPermissions = hasPermission("permissions.manage");
   const showTeacher = hasPermission("teachers.view");
   const showClassRooms = hasPermission("classrooms.view");
+  const showStudents = hasPermission("children.view")
+  const showWorldManage = isSchoolAdmin || hasPermission("worlds.view")
 
-
-  // Open dropdown based on route
   useEffect(() => {
     const p = location.pathname;
+
     if (
       p.startsWith("/school/users") ||
       p.startsWith("/school/roles") ||
@@ -38,6 +41,13 @@ const SchoolLayout = ({ children }) => {
       p.startsWith("/school/performance")
     ) {
       setOpenDropdownKey("management");
+    } else if (
+      p.startsWith("/school/worlds") ||
+      p.startsWith("/school/levels") ||
+      p.startsWith("/school/stages") ||
+      p.startsWith("/school/exercises")
+    ) {
+      setOpenDropdownKey("world");
     } else {
       setOpenDropdownKey(null);
     }
@@ -56,11 +66,21 @@ const SchoolLayout = ({ children }) => {
   if (loading) return <div>Loading...</div>;
 
   return (
-    <section className={mobileMenu ? "overlay active" : "overlay"}>
-      {/* Sidebar */}
-      <aside className={sidebarActive ? "sidebar active" : "sidebar"}>
+    <section
+      className={mobileMenu ? "overlay active" : "overlay"}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          setMobileMenu(false);
+          setSidebarActive(false);
+        }
+      }}
+    >
+      <aside className={isSidebarOpen ? "sidebar active" : "sidebar"}>
         <button
-          onClick={() => setMobileMenu(false)}
+          onClick={() => {
+            setMobileMenu(false);
+            setSidebarActive(false);
+          }}
           type="button"
           className="sidebar-close-btn"
         >
@@ -77,39 +97,61 @@ const SchoolLayout = ({ children }) => {
           <ul className="sidebar-menu">
             <li className="sidebar-menu-group-title">School Dashboard</li>
 
-           {showTeacher && (
-             <li>
-              <NavLink
-                to="/school/teachers_list"
-                className={({ isActive }) => (isActive ? "active-page" : "")}
-              >
-                <Icon icon="mdi:teach" className="menu-icon" />
-                <span>Manage Teachers</span>
-              </NavLink>
-            </li>
-           )}
-
             <li>
               <NavLink
-                to="/school/students"
-                className={({ isActive }) => (isActive ? "active-page" : "")}
+                to="/school"
               >
-                <Icon icon="mdi:account-school" className="menu-icon" />
-                <span>Manage Students</span>
+                <Icon icon="mdi:chart-timeline-variant" className="menu-icon" />
+                <span>Dashboard</span>
               </NavLink>
             </li>
+            {showTeacher && (
+              <li>
+                <NavLink
+                  to="/school/teachers"
+                  className={({ isActive }) => (isActive ? "active-page" : "")}
+                >
+                  <Icon icon="mdi:teach" className="menu-icon" />
+                  <span>Manage Teachers</span>
+                </NavLink>
+              </li>
+            )}
 
-           {showClassRooms && (
-               <li>
-              <NavLink
-                to="/school/classroomslist"
-                className={({ isActive }) => (isActive ? "active-page" : "")}
-              >
-                <Icon icon="mdi:chart-bar" className="menu-icon" />
-                <span>Class Rooms</span>
-              </NavLink>
-            </li>
-           )}
+            {showStudents && (
+              <li>
+                <NavLink
+                  to="/school/students"
+                  className={({ isActive }) => (isActive ? "active-page" : "")}
+                >
+                  <Icon icon="mdi:account-school" className="menu-icon" />
+                  <span>Manage Students</span>
+                </NavLink>
+              </li>
+            )}
+
+            {showClassRooms && (
+              <li>
+                <NavLink
+                  to="/school/classrooms"
+                  className={({ isActive }) => (isActive ? "active-page" : "")}
+                >
+                  <Icon icon="mdi:chart-bar" className="menu-icon" />
+                  <span>Class Rooms</span>
+                </NavLink>
+              </li>
+            )}
+
+            {showWorldManage && (
+              <li>
+                <NavLink
+                  to="/school/worlds"
+                  className={({ isActive }) => (isActive ? "active-page" : "")}
+                >
+                  <Icon icon="mdi:earth" className="menu-icon" />
+                  <span>Manage Worlds</span>
+                </NavLink>
+              </li>
+            )}
 
             {/* Manage Users / Roles / Permissions */}
             {(showManageUsers || showRoles || showPermissions) && (
@@ -150,6 +192,7 @@ const SchoolLayout = ({ children }) => {
                       </NavLink>
                     </li>
                   )}
+
                   {/* {showRoles && (
                     <li>
                       <NavLink
@@ -180,7 +223,7 @@ const SchoolLayout = ({ children }) => {
       </aside>
 
       {/* Main Content */}
-      <main className={sidebarActive ? "dashboard-main active" : "dashboard-main"}>
+      <main className={isSidebarOpen ? "dashboard-main active" : "dashboard-main"}>
         <div className="navbar-header">
           <div className="row align-items-center justify-content-between">
             <div className="col-auto">
@@ -196,7 +239,10 @@ const SchoolLayout = ({ children }) => {
                   />
                 </button>
                 <button
-                  onClick={() => setMobileMenu(true)}
+                  onClick={() => {
+                    setMobileMenu(true);
+                    setSidebarActive(true);
+                  }}
                   type="button"
                   className="sidebar-mobile-toggle"
                 >

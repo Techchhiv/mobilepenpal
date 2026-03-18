@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import $ from "jquery";
 import "datatables.net-dt/js/dataTables.dataTables.js";
 import { Icon } from "@iconify/react";
@@ -10,24 +10,25 @@ import SchoolLayout from "../../masterLayout/SchoolLayout";
 
 const ONLINE_GRACE_MS = 2 * 60 * 1000;
 
-const Trunc = ({ value, maxWidth = 220 }) => {
+const Trunc = ({ value, maxWidth = 200 }) => {
   const v = value ?? "—";
   return (
-    <div className="text-truncate" style={{ maxWidth }} title={String(v)}>
+    <div
+      className="text-truncate"
+      style={{ maxWidth }}
+      title={String(v)}
+    >
       {v}
     </div>
   );
 };
 
-const TeacherList = () => {
+const StudentList = () => {
   const { hasPermission, hasAnyPermission } = useAuth();
-  const [teachers, setTeachers] = useState([]);
+  const [students, setStudents] = useState([]);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
-
   const dtRef = useRef(null);
-  const tableId = "teacherTable";
-
 
   const [previewSrc, setPreviewSrc] = useState(null);
   const closePreview = () => setPreviewSrc(null);
@@ -38,68 +39,70 @@ const TeacherList = () => {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [previewSrc]);
 
-  const canAnyAction = hasAnyPermission([
-    "teachers.view",
-    "teachers.update",
-    "teachers.delete",
-  ]);
+  const fullName = (s) =>
+    [s?.first_name, s?.last_name].filter(Boolean).join(" ").trim() || "—";
 
-  const photoUrl = (photo) => {
-    if (!photo) return null;
-
-    if (String(photo).startsWith("http")) return photo;
-
-    return `${API_BASE_URL}/${String(photo).replace(/^\/+/, "")}`;
-  };
-
-
-  const isOnline = (t) => {
-    const flag = t?.is_online === true || String(t?.is_online) === "1";
-    const last = t?.last_seen_at ? new Date(t.last_seen_at) : null;
+  const isOnline = (s) => {
+    const flag = s?.is_online === true || String(s?.is_online) === "1";
+    const last = s?.last_seen_at ? new Date(s.last_seen_at) : null;
     const fresh = last ? Date.now() - last.getTime() <= ONLINE_GRACE_MS : false;
     return flag || fresh;
   };
 
-  const normalizeTeacher = (t) => ({
-    ...t,
+  const normalizeStudent = (s) => ({
+    ...s,
     active:
-      t?.is_active === true || String(t?.is_active ?? t?.status ?? "0") === "1",
-    online: isOnline(t),
+      s?.is_active === true ||
+      String(s?.is_active ?? s?.status ?? "0") === "1",
+    online: isOnline(s),
+    name: fullName(s),
   });
 
-  const fetchTeachers = async () => {
+  const avatarUrl = (avatar) => {
+    if (!avatar) return null;
+    return String(avatar).startsWith("http")
+      ? avatar
+      : `${API_BASE_URL}/${String(avatar).replace(/^\/+/, "")}`;
+  };
+
+  const fetchStudents = async () => {
     try {
-      const res = await API.get("/school/teachers");
-      const rows = Array.isArray(res.data) ? res.data : [];
-      setTeachers(rows.map(normalizeTeacher));
+      const res = await API.get("/school/students");
+      const rows = Array.isArray(res.data?.student?.data)
+        ? res.data.student.data
+        : [];
+      setStudents(rows.map(normalizeStudent));
     } catch (err) {
-      console.error("Fetch teachers failed:", err);
+      console.error("Fetch students failed:", err);
     } finally {
       setLoading(false);
     }
   };
 
-
   useEffect(() => {
-    fetchTeachers();
+    fetchStudents();
   }, []);
 
-
   useEffect(() => {
-    const id = setInterval(fetchTeachers, 20000);
+    const id = setInterval(fetchStudents, 20000);
     return () => clearInterval(id);
   }, []);
 
+  const canAnyAction = hasAnyPermission([
+    "children.view",
+    "children.update",
+    "children.delete",
+  ]);
+
 
   useEffect(() => {
-
     if (dtRef.current) {
       dtRef.current.destroy();
       dtRef.current = null;
     }
 
-    if (teachers.length > 0) {
-      dtRef.current = $("#teacherTable").DataTable({
+    if (students.length > 0) {
+      dtRef.current = $("#studentTable").DataTable({
         destroy: true,
         pageLength: 10,
         scrollX: true,
@@ -111,11 +114,11 @@ const TeacherList = () => {
           { targets: 1, width: "90px" },
           { targets: 2, width: "220px" },
           { targets: 3, width: "160px" },
-          { targets: 4, width: "240px" },
-          { targets: 5, width: "160px" },
-          { targets: 6, width: "180px" },
-          { targets: 7, width: "120px" },
-          ...(canAnyAction ? [{ targets: 8, width: "170px" }] : []),
+          { targets: 4, width: "90px" },
+          { targets: 5, width: "110px" },
+          { targets: 6, width: "160px" },
+          { targets: 7, width: "220px" },
+          ...(canAnyAction ? [{ targets: 8, width: "150px" }] : []),
         ],
       });
     }
@@ -126,32 +129,14 @@ const TeacherList = () => {
         dtRef.current = null;
       }
     };
-  }, [teachers, canAnyAction]);
+  }, [students, canAnyAction]);
 
-
-
-  useEffect(() => {
-    if (!dtRef.current) return;
-
-
-    const t = setTimeout(() => {
-      try {
-        dtRef.current.columns.adjust().draw(false);
-      } catch (e) {
-
-        console.warn("DataTable adjust failed:", e);
-      }
-    }, 0);
-
-    return () => clearTimeout(t);
-  }, [teachers]);
-
-  const deleteTeacher = async (id) => {
-    if (!window.confirm("Delete this teacher?")) return;
+  const deleteStudent = async (id) => {
+    if (!window.confirm("Delete this student?")) return;
     try {
-      await API.delete(`/school/teachers/${id}`);
-      setTeachers((prev) => prev.filter((t) => t.id !== id));
-      setMessage("Teacher deleted successfully");
+      await API.delete(`/school/students/${id}`);
+      setStudents((prev) => prev.filter((s) => s.id !== id));
+      setMessage("Student deleted successfully");
     } catch (err) {
       setMessage(err?.response?.data?.message || "Delete failed");
       console.error(err);
@@ -162,15 +147,15 @@ const TeacherList = () => {
     <SchoolLayout>
       <div className="card basic-data-table">
         <div className="card-header d-flex justify-content-between align-items-center">
-          <h5>Teachers</h5>
+          <h5>Students</h5>
 
-          {hasPermission("teachers.create") && (
-            <Link to="/school/teachers/create">
+          {hasPermission("children.create") && (
+            <Link to="/school/students/create">
               <button
                 type="button"
                 className="btn btn-primary-600 radius-3 px-20 py-11"
               >
-                Add Teacher
+                Add Student
               </button>
             </Link>
           )}
@@ -179,21 +164,17 @@ const TeacherList = () => {
         {message && <div className="alert alert-success">{message}</div>}
 
         <div className="card-body">
-          <table
-            className="table bordered-table mb-0"
-            id={tableId}
-            data-page-length={10}
-          >
+          <table className="table bordered-table mb-0" id="studentTable">
             <thead>
               <tr>
                 <th>#</th>
-                <th>Photo</th>
+                <th>Avatar</th>
                 <th>Name</th>
-                <th>Teacher ID</th>
-                <th>Email</th>
+                <th>Nickname</th>
+                <th>Age</th>
+                <th>Gender</th>
                 <th>Phone</th>
-                <th>Subject</th>
-                <th>Online</th>
+                <th>Parent</th>
                 {canAnyAction && <th>Action</th>}
               </tr>
             </thead>
@@ -203,24 +184,31 @@ const TeacherList = () => {
                 <tr>
                   <td colSpan={canAnyAction ? 9 : 8} className="text-center py-4">
                     <div className="spinner-border spinner-border-sm" role="status" />
-                    <div className="mt-2 text-muted">Loading teachers…</div>
+                    <div className="mt-2 text-muted">Loading students…</div>
                   </td>
                 </tr>
-              ) : teachers.length === 0 ? (
+              ) : students.length === 0 ? (
                 <tr>
                   <td colSpan={canAnyAction ? 9 : 8} className="text-center">
-                    No teachers found
+                    No students found
                   </td>
                 </tr>
               ) : (
-                teachers.map((t, idx) => {
+                students.map((s, idx) => {
+                  const url = avatarUrl(s.avatar);
+                  const parentName =
+                    [s.parent_first_name, s.parent_last_name]
+                      .filter(Boolean)
+                      .join(" ")
+                      .trim() || "—";
+
                   return (
-                    <tr key={t.id}>
+                    <tr key={s.id}>
                       <td>{idx + 1}</td>
 
                       <td>
                         {(() => {
-                          const url = photoUrl(t.photo);
+                          const url = avatarUrl(s.avatar);
 
                           if (url) {
                             return (
@@ -233,7 +221,7 @@ const TeacherList = () => {
                               >
                                 <img
                                   src={url}
-                                  alt={t.name}
+                                  alt={s.name}
                                   style={{
                                     width: 40,
                                     height: 40,
@@ -249,8 +237,12 @@ const TeacherList = () => {
                           return (
                             <div
                               className="d-inline-flex align-items-center justify-content-center bg-light text-muted"
-                              style={{ width: 40, height: 40, borderRadius: "50%" }}
-                              title="No photo"
+                              style={{
+                                width: 40,
+                                height: 40,
+                                borderRadius: "50%",
+                              }}
+                              title="No avatar"
                             >
                               <Icon icon="mdi:account" width={22} />
                             </div>
@@ -258,47 +250,18 @@ const TeacherList = () => {
                         })()}
                       </td>
 
-                      <td>
-                        <Trunc value={t.name} maxWidth={220} />
-                      </td>
-
-                      <td>
-                        <Trunc value={t.teacher_id} maxWidth={160} />
-                      </td>
-
-                      <td>
-                        <Trunc value={t.email} maxWidth={240} />
-                      </td>
-
-                      <td>
-                        <Trunc value={t.phone || "—"} maxWidth={160} />
-                      </td>
-
-                      <td>
-                        <Trunc value={t.subject || "—"} maxWidth={180} />
-                      </td>
-
-                      <td>
-                        <span
-                          className={`px-24 py-4 rounded-pill fw-medium text-sm ${t.online
-                            ? "bg-success-focus text-success-main"
-                            : "bg-danger-focus text-danger-main"
-                            }`}
-                          title={
-                            t.last_seen_at
-                              ? `Last seen: ${new Date(t.last_seen_at).toLocaleString()}`
-                              : ""
-                          }
-                        >
-                          {t.online ? "Online" : "Offline"}
-                        </span>
-                      </td>
+                      <td><Trunc value={s.name} maxWidth={220} /></td>
+                      <td><Trunc value={s.nickname || "—"} maxWidth={160} /></td>
+                      <td>{s.age ?? "—"}</td>
+                      <td>{s.gender || "—"}</td>
+                      <td><Trunc value={s.phone || "—"} maxWidth={160} /></td>
+                      <td><Trunc value={parentName} maxWidth={220} /></td>
 
                       {canAnyAction && (
                         <td>
-                          {hasPermission("teachers.view") && (
+                          {hasPermission("children.view") && (
                             <Link
-                              to={`/school/teachers/${t.id}`}
+                              to={`/school/students/${s.id}`}
                               className="w-32-px h-32-px me-8 bg-primary-light text-primary-600 rounded-circle d-inline-flex align-items-center justify-content-center"
                               title="View"
                             >
@@ -306,9 +269,9 @@ const TeacherList = () => {
                             </Link>
                           )}
 
-                          {hasPermission("teachers.update") && (
+                          {hasPermission("children.update") && (
                             <Link
-                              to={`/school/teachers/${t.id}/edit`}
+                              to={`/school/students/${s.id}/edit`}
                               className="w-32-px h-32-px me-8 bg-success-focus text-success-main rounded-circle d-inline-flex align-items-center justify-content-center"
                               title="Edit"
                             >
@@ -316,10 +279,10 @@ const TeacherList = () => {
                             </Link>
                           )}
 
-                          {hasPermission("teachers.delete") && (
+                          {hasPermission("children.delete") && (
                             <button
                               type="button"
-                              onClick={() => deleteTeacher(t.id)}
+                              onClick={() => deleteStudent(s.id)}
                               className="w-32-px h-32-px me-8 bg-danger-focus text-danger-main rounded-circle d-inline-flex align-items-center justify-content-center border-0"
                               title="Delete"
                             >
@@ -337,6 +300,7 @@ const TeacherList = () => {
         </div>
       </div>
 
+      {/* ✅ Image only preview, click outside closes */}
       {previewSrc && (
         <div
           className="position-fixed top-0 start-0 w-100 h-100"
@@ -354,7 +318,7 @@ const TeacherList = () => {
         >
           <img
             src={previewSrc}
-            alt="Photo Preview"
+            alt="Avatar Preview"
             style={{
               maxWidth: "95vw",
               maxHeight: "90vh",
@@ -369,4 +333,4 @@ const TeacherList = () => {
   );
 };
 
-export default TeacherList;
+export default StudentList;
