@@ -103,16 +103,34 @@ class WorldService {
 
   Future<ApiResponse<Map<String, dynamic>>> submitExerciseBatch(
     List<Map<String, dynamic>> attempts, {
-    required int stageId,
+    int? stageId,
     int? durationSeconds,
+    int? coinsEarned,
+    int? xpEarned,
+    bool isAdventure = false,
   }) async {
     final Map<String, dynamic> payload = {
-      'stage_id': stageId,
       'attempts': attempts,
     };
 
+    if (stageId != null && stageId > 0) {
+      payload['stage_id'] = stageId;
+    }
+
+    if (isAdventure) {
+      payload['is_adventure'] = true;
+    }
+
     if (durationSeconds != null && durationSeconds > 0) {
       payload['duration_seconds'] = durationSeconds;
+    }
+
+    if (coinsEarned != null && coinsEarned > 0) {
+      payload['coins_earned'] = coinsEarned;
+    }
+
+    if (xpEarned != null && xpEarned > 0) {
+      payload['xp_earned'] = xpEarned;
     }
 
     final result = await _apiClient.request<Map<String, dynamic>>(

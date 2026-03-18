@@ -161,8 +161,6 @@ class StudentHome extends StatelessWidget {
                           )),
             ),
           ),
-
-          const SizedBox(height: 12),
         ],
       );
     });

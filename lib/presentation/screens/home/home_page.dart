@@ -53,33 +53,29 @@ class HomePage extends StatelessWidget {
             ShopPage(),
           ],
         ),
-        bottomNavigationBar: BottomNavigationBar(
-          currentIndex: navController.currentIndex.value,
-          onTap: navController.changePage,
-          type: BottomNavigationBarType.fixed,
-          backgroundColor: Colors.white,
-          selectedItemColor: AppColors.primary,
-          unselectedItemColor: Colors.grey.withValues(alpha: 0.5),
-          showSelectedLabels: false,
-          showUnselectedLabels: false,
-          items: [
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.menu_book_rounded),
-              label: '',
+        bottomNavigationBar: Container(
+          height: 52 + MediaQuery.of(context).padding.bottom,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, -5),
+              ),
+            ],
+          ),
+          child: SafeArea(
+            top: false,
+            child: Row(
+              children: [
+                _buildNavItem(0, Icons.menu_book_rounded),
+                _buildNavItem(1, Icons.explore_rounded),
+                _buildNavItem(2, Icons.bolt_rounded),
+                _buildNavItem(3, Icons.storefront_rounded),
+              ],
             ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.explore_rounded),
-              label: '',
-            ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.bolt_rounded),
-              label: '',
-            ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.storefront_rounded),
-              label: '',
-            ),
-          ],
+          ),
         ),
       );
     });
@@ -124,6 +120,7 @@ class HomePage extends StatelessWidget {
         }),
 
         SafeArea(
+          bottom: false,
           child: Stack(
             children: [
               _buildDecorRotatedSquareAnimated(
@@ -368,6 +365,39 @@ class HomePage extends StatelessWidget {
     }
 
     return const Icon(Icons.person, size: 34, color: Colors.white);
+  }
+
+  Widget _buildNavItem(int index, IconData icon) {
+    return Expanded(
+      child: InkWell(
+        onTap: () => navController.changePage(index),
+        splashColor: AppColors.primary.withValues(alpha: 0.1),
+        highlightColor: Colors.transparent,
+        child: Obx(() {
+          final isSelected = navController.currentIndex.value == index;
+          return Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                color: isSelected ? AppColors.primary : Colors.grey.shade400,
+                size: 28,
+              ),
+              if (isSelected)
+                Container(
+                  margin: const EdgeInsets.only(top: 4),
+                  width: 4,
+                  height: 4,
+                  decoration: const BoxDecoration(
+                    color: AppColors.primary,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+            ],
+          );
+        }),
+      ),
+    );
   }
 
   Widget _buildModeCard(HomeController homeController) {

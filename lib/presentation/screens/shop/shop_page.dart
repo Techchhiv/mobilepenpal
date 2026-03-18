@@ -60,7 +60,7 @@ class ShopPage extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'your_points'.tr.isEmpty ? 'Your Points' : 'your_points'.tr,
+                  'your_points'.tr,
                   style: TextStyle(
                     fontSize: 13,
                     color: Colors.white.withValues(alpha: 0.8),
@@ -235,7 +235,7 @@ class ShopPage extends StatelessWidget {
               )
             else if (selected)
               Text(
-                'In Use',
+                'in_use'.tr,
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
@@ -243,9 +243,9 @@ class ShopPage extends StatelessWidget {
                 ),
               )
             else
-              const Text(
-                'Owned',
-                style: TextStyle(
+              Text(
+                'owned'.tr,
+                style: const TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w500,
                   color: AppColors.textGray40,
@@ -348,8 +348,8 @@ class ShopPage extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text(
                   isAlreadySelected
-                      ? 'This avatar is currently in use!'
-                      : 'Use this avatar?',
+                      ? 'avatar_in_use_desc'.tr
+                      : 'use_this_avatar'.tr,
                   style: const TextStyle(
                     fontSize: 14,
                     color: AppColors.textGray60,
@@ -359,7 +359,7 @@ class ShopPage extends StatelessWidget {
                 const SizedBox(height: 24),
                 if (isAlreadySelected)
                   ElevatedButton(
-                    onPressed: () => Get.back(),
+                    onPressed: () => Navigator.of(context).pop(),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       shape: RoundedRectangleBorder(
@@ -367,9 +367,9 @@ class ShopPage extends StatelessWidget {
                       ),
                       minimumSize: const Size(140, 44),
                     ),
-                    child: const Text(
-                      'OK',
-                      style: TextStyle(
+                    child: Text(
+                      'ok'.tr.toUpperCase(),
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                         color: Colors.white,
@@ -381,10 +381,10 @@ class ShopPage extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       TextButton(
-                        onPressed: () => Get.back(),
-                        child: const Text(
-                          'Cancel',
-                          style: TextStyle(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: Text(
+                          'cancel'.tr,
+                          style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
                           ),
@@ -394,18 +394,7 @@ class ShopPage extends StatelessWidget {
                       ElevatedButton(
                         onPressed: () {
                           controller.selectAvatar(avatar.id);
-                          Get.back();
-                          Get.snackbar(
-                            'Avatar Changed!',
-                            'Now using ${avatar.name}',
-                            snackPosition: SnackPosition.BOTTOM,
-                            backgroundColor:
-                                AppColors.primary.withValues(alpha: 0.9),
-                            colorText: Colors.white,
-                            duration: const Duration(seconds: 2),
-                            margin: const EdgeInsets.all(16),
-                            borderRadius: 12,
-                          );
+                          Navigator.of(context).pop();
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: avatar.color,
@@ -414,8 +403,8 @@ class ShopPage extends StatelessWidget {
                           ),
                           minimumSize: const Size(140, 44),
                         ),
-                        child: const Text(
-                          'Select',
+                        child: Text(
+                          'select_avatar'.tr,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
@@ -470,7 +459,7 @@ class ShopPage extends StatelessWidget {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      '${avatar.price} points',
+                      'points_count'.trParams({'count': '${avatar.price}'}),
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
@@ -500,7 +489,7 @@ class ShopPage extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          'Not enough points!\nYou need ${avatar.price - controller.totalPoints.value} more.',
+                          'not_enough_points'.tr + '\n' + 'need_more_points'.trParams({'amount': '${avatar.price - controller.totalPoints.value}'}),
                           style: TextStyle(
                             fontSize: 13,
                             color: Colors.red.shade600,
@@ -512,7 +501,7 @@ class ShopPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton(
-                    onPressed: () => Get.back(),
+                    onPressed: () => Navigator.of(context).pop(),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.grey.shade400,
                       shape: RoundedRectangleBorder(
@@ -520,9 +509,9 @@ class ShopPage extends StatelessWidget {
                       ),
                       minimumSize: const Size(140, 44),
                     ),
-                    child: const Text(
-                      'OK',
-                      style: TextStyle(
+                    child: Text(
+                      'ok'.tr.toUpperCase(),
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                         color: Colors.white,
@@ -531,7 +520,7 @@ class ShopPage extends StatelessWidget {
                   ),
                 ] else ...[
                   Obx(() => Text(
-                        'Your balance: ${controller.totalPoints.value} points',
+                        'your_balance'.trParams({'amount': '${controller.totalPoints.value}'}),
                         style: const TextStyle(
                           fontSize: 13,
                           color: AppColors.textGray60,
@@ -542,10 +531,10 @@ class ShopPage extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       TextButton(
-                        onPressed: () => Get.back(),
-                        child: const Text(
-                          'Cancel',
-                          style: TextStyle(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: Text(
+                          'cancel'.tr,
+                          style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
                           ),
@@ -553,22 +542,9 @@ class ShopPage extends StatelessWidget {
                       ),
                       const SizedBox(width: 16),
                       ElevatedButton(
-                        onPressed: () {
-                          final success = controller.purchaseAvatar(avatar.id);
-                          Get.back();
-                          if (success) {
-                            Get.snackbar(
-                              '🎉 Avatar Unlocked!',
-                              '${avatar.name} is now yours!',
-                              snackPosition: SnackPosition.BOTTOM,
-                              backgroundColor:
-                                  avatar.color.withValues(alpha: 0.9),
-                              colorText: Colors.white,
-                              duration: const Duration(seconds: 2),
-                              margin: const EdgeInsets.all(16),
-                              borderRadius: 12,
-                            );
-                          }
+                        onPressed: () async {
+                          await controller.purchaseAvatar(avatar.id);
+                          if (context.mounted) Navigator.of(context).pop();
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: avatar.color,
@@ -587,7 +563,7 @@ class ShopPage extends StatelessWidget {
                             ),
                             const SizedBox(width: 6),
                             Text(
-                              'Buy for ${avatar.price}',
+                              'buy_for'.trParams({'price': '${avatar.price}'}),
                               style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,

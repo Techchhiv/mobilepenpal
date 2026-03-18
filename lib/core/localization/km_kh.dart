@@ -450,4 +450,17 @@ final Map<String, String> kmKH = {
   'school_subscription_message':
       'មាតិកានេះត្រូវការការបើកប្រាក់ប្រីមៀម។ សូមទាក់ទងអ្នកគ្រប់គ្រងសាលារៀនរបស់អ្នកដើម្បីដំណើរការ។',
   'contact_school_admin': 'ទាក់ទងអ្នកគ្រប់គ្រង',
+
+  // ===== Shop =====
+  'your_points': 'ពិន្ទុរបស់អ្នក',
+  'in_use': 'កំពុងប្រើប្រាស់',
+  'owned': 'មានហើយ',
+  'select_avatar': 'ជ្រើសរើស',
+  'buy_for': 'ទិញក្នុងតម្លៃ @price',
+  'use_this_avatar': 'ប្រើរូបតំណាងនេះ?',
+  'avatar_in_use_desc': 'រូបតំណាងនេះកំពុងប្រើប្រាស់!',
+  'not_enough_points': 'មិនមានពិន្ទុគ្រប់គ្រាន់ទេ!',
+  'need_more_points': 'អ្នកត្រូវការ @amount បន្ថែមទៀត',
+  'your_balance': 'តុល្យភាពរបស់អ្នក៖ @amount ពិន្ទុ',
+  'points_count': '@count ពិន្ទុ',
 };

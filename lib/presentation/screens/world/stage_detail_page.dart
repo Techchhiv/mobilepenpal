@@ -7,6 +7,8 @@ import 'package:mobilepenpal/core/utils/number_format_utils.dart';
 import 'package:mobilepenpal/data/controllers/world/level_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_animation_controller.dart';
+import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
+import 'package:mobilepenpal/data/controllers/shop/shop_controller.dart';
 import 'package:mobilepenpal/presentation/routes/app_routes.dart';
 import 'package:mobilepenpal/presentation/widgets/app_snackbar.dart';
 import 'package:mobilepenpal/presentation/widgets/loading_overly.dart';
@@ -70,16 +72,42 @@ class StageDetailPage extends GetView<StageController> {
                         child: Column(
                           children: [
                             Obx(
-                              () => StageTopBar(
-                                totalExercises: controller.totalExercises,
-                                completedExercises:
-                                    controller.completedExercises,
-                                exerciseDotStates: controller.exerciseDotStates
-                                    .toList(),
-                                onActionTap: () =>
-                                    _showPauseDialog(Get.context!),
-                                actionIcon: Icons.pause,
-                              ),
+                              () {
+                                Widget? avatarWidget;
+                                if (Get.isRegistered<HomeController>()) {
+                                  final homeController = Get.find<HomeController>();
+                                  final ShopAvatar? shopAvatar = homeController.currentShopAvatar;
+                                  
+                                  if (shopAvatar != null && shopAvatar.id != 'default') {
+                                    if (shopAvatar.assetPath != null) {
+                                      avatarWidget = Padding(
+                                        padding: const EdgeInsets.all(6),
+                                        child: Image.asset(shopAvatar.assetPath!, fit: BoxFit.contain),
+                                      );
+                                    } else {
+                                      avatarWidget = Icon(
+                                        shopAvatar.icon ?? Icons.person,
+                                        size: 28,
+                                        color: Colors.white,
+                                      );
+                                    }
+                                  } else {
+                                    avatarWidget = const Icon(Icons.person, size: 28, color: Colors.white);
+                                  }
+                                }
+
+                                return StageTopBar(
+                                  totalExercises: controller.totalExercises,
+                                  completedExercises:
+                                      controller.completedExercises,
+                                  exerciseDotStates: controller.exerciseDotStates
+                                      .toList(),
+                                  onActionTap: () =>
+                                      _showPauseDialog(Get.context!),
+                                  actionIcon: Icons.pause,
+                                  avatarWidget: avatarWidget,
+                                );
+                              }
                             ),
                             const SizedBox(height: 16),
                             Obx(() {
@@ -125,6 +153,8 @@ class StageDetailPage extends GetView<StageController> {
                                 maxAttempts:
                                     StageController.maxAttemptsPerExercise,
                                 feedbackState: controller.anim.feedback.value,
+                                praiseFeedbackState:
+                                    controller.anim.praiseFeedback.value,
                                 shakeOffset: controller.anim.shakeOffset.value,
                                 praiseText: controller.anim.praiseText.value,
                                 confettiController:

@@ -15,6 +15,7 @@ class StageAnimationController extends GetxController
   final feedback = DrawFeedback.none.obs;
   final shakeOffset = 0.0.obs;
   final praiseText = ''.obs;
+  final praiseFeedback = DrawFeedback.none.obs;
 
   late final AnimationController _shakeController;
   late final Animation<double> _shakeAnimation;
@@ -214,6 +215,7 @@ class StageAnimationController extends GetxController
 
   void showCorrect({required int starIndex}) {
     feedback.value = DrawFeedback.correct;
+    praiseFeedback.value = DrawFeedback.correct;
     praiseText.value = [
       'praise_excellent'.tr,
       'praise_well_done'.tr,
@@ -229,16 +231,21 @@ class StageAnimationController extends GetxController
     Duration? customDuration,
   }) async {
     feedback.value = DrawFeedback.wrong;
+    praiseFeedback.value = DrawFeedback.wrong;
     _shakeController.forward(from: 0);
 
     await Future.delayed(customDuration ?? const Duration(milliseconds: 1200));
     feedback.value = DrawFeedback.none;
+    clearPraise();
 
     await Future.delayed(const Duration(milliseconds: 300));
     onAfterReset();
   }
 
-  void clearPraise() => praiseText.value = '';
+  void clearPraise() {
+    praiseText.value = '';
+    praiseFeedback.value = DrawFeedback.none;
+  }
 
   void _advanceGuideStroke() {
     if (guideStrokesPx.isEmpty) return;

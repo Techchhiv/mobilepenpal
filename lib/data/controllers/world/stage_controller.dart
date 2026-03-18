@@ -780,7 +780,6 @@ class StageController extends GetxController {
         anim.clearPraise();
         await _finishStageIfLast();
       } else {
-        await Future.delayed(wrongDisplayDuration);
         anim.feedback.value = DrawFeedback.none;
         anim.clearPraise();
         nextExercise();

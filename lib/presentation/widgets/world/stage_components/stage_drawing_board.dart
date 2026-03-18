@@ -29,6 +29,7 @@ class StageDrawingBoard extends StatelessWidget {
     required this.attemptLeft,
     required this.maxAttempts,
     required this.feedbackState,
+    required this.praiseFeedbackState,
     required this.shakeOffset,
     required this.praiseText,
     required this.confettiController,
@@ -36,6 +37,7 @@ class StageDrawingBoard extends StatelessWidget {
     required this.isGuiding,
     this.showGuiding = true,
     this.activeBoardCount = 1,
+    this.topLeadingOverlay,
   });
 
   final double boardWidth;
@@ -52,6 +54,7 @@ class StageDrawingBoard extends StatelessWidget {
 
   // Animation values
   final DrawFeedback feedbackState;
+  final DrawFeedback praiseFeedbackState;
   final double shakeOffset;
   final String praiseText;
   final ConfettiController confettiController;
@@ -60,6 +63,7 @@ class StageDrawingBoard extends StatelessWidget {
   final bool showGuiding;
 
   final int activeBoardCount;
+  final Widget? topLeadingOverlay;
 
   @override
   Widget build(BuildContext context) {
@@ -67,11 +71,15 @@ class StageDrawingBoard extends StatelessWidget {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          Positioned.fill(
-            child: _buildBoards(),
-          ),
+          Positioned.fill(child: _buildBoards()),
+          if (topLeadingOverlay != null)
+            Positioned(
+              top: -4,
+              left: 8,
+              child: IgnorePointer(child: topLeadingOverlay!),
+            ),
           Positioned(
-            top: 4,
+            top: -2,
             right: 8,
             child: IgnorePointer(
               child: StageAttemptsIndicator(
@@ -158,7 +166,11 @@ class StageDrawingBoard extends StatelessWidget {
                   ),
 
                   // Praise text overlay
-                  _buildPraiseText(feedbackState, praiseText),
+                  _buildPraiseText(
+                    feedbackState,
+                    praiseFeedbackState,
+                    praiseText,
+                  ),
                 ],
               ),
             ),
@@ -255,8 +267,12 @@ class StageDrawingBoard extends StatelessWidget {
     );
   }
 
-  Widget _buildPraiseText(DrawFeedback feedback, String text) {
-    final isWrong = feedback == DrawFeedback.wrong;
+  Widget _buildPraiseText(
+    DrawFeedback feedback,
+    DrawFeedback praiseFeedback,
+    String text,
+  ) {
+    final isWrong = praiseFeedback == DrawFeedback.wrong;
     final isVisible = feedback != DrawFeedback.none && text.isNotEmpty;
 
     return Positioned(

@@ -1,10 +1,10 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:mobilepenpal/core/utils/adventure_stage_navigation_helper.dart';
 import 'package:mobilepenpal/core/theme/app_colors.dart';
 import 'package:mobilepenpal/presentation/widgets/loading_overly.dart';
 import 'package:mobilepenpal/data/controllers/adventure/adventure_controller.dart';
-import 'package:mobilepenpal/presentation/routes/app_routes.dart';
 
 class AdventurePage extends StatefulWidget {
   AdventurePage({super.key});
@@ -102,22 +102,10 @@ class _AdventurePageState extends State<AdventurePage>
   }
 
   Future<void> _onStageTap(AdventureStage stage) async {
-    controller.isTransitioning.value = true;
-
-    // Simulate/Allow for preparation time as requested
-    await Future.delayed(const Duration(milliseconds: 800));
-
-    try {
-      await Get.toNamed(
-        AppRoutes.adventureStage,
-        arguments: {
-          'categoryLabel': stage.label,
-          'exercises': stage.exercises,
-        },
-      );
-    } finally {
-      controller.isTransitioning.value = false;
-    }
+    await AdventureStageNavigationHelper.openStage(
+      stage: stage,
+      adventureController: controller,
+    );
   }
 
   @override
@@ -284,6 +272,11 @@ class _AdventurePageState extends State<AdventurePage>
           spacing: spacing,
         );
 
+        final unlockedIdx = controller.unlockedStageIndex.value;
+        final isLocked = i > unlockedIdx;
+        final isFinished = i < unlockedIdx;
+        final isCurrent = i == unlockedIdx;
+
         return Positioned(
           left: left,
           top: y - (_bubbleSize / 2),
@@ -291,7 +284,9 @@ class _AdventurePageState extends State<AdventurePage>
             stage: stages[i],
             bounce: _bounceCtrl,
             bounceHeight: 8.0,
-            isCurrent: i == 0,
+            isCurrent: isCurrent,
+            isLocked: isLocked,
+            isFinished: isFinished,
             onTap: _onStageTap,
           ),
         );
@@ -305,6 +300,8 @@ class _AdventureStageCircle extends StatelessWidget {
   final Animation<double> bounce;
   final double bounceHeight;
   final bool isCurrent;
+  final bool isLocked;
+  final bool isFinished;
   final Function(AdventureStage) onTap;
 
   const _AdventureStageCircle({
@@ -312,12 +309,16 @@ class _AdventureStageCircle extends StatelessWidget {
     required this.bounce,
     required this.bounceHeight,
     required this.isCurrent,
+    required this.isLocked,
+    required this.isFinished,
     required this.onTap,
   });
 
-  Color get _stageColor =>
-      _AdventurePageState._categoryColors[stage.categoryType] ??
-      AppColors.primary;
+  Color get _stageColor {
+    if (isLocked) return Colors.grey.shade400;
+    return _AdventurePageState._categoryColors[stage.categoryType] ??
+        AppColors.primary;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -330,20 +331,18 @@ class _AdventureStageCircle extends StatelessWidget {
         clipBehavior: Clip.none,
         alignment: Alignment.center,
         children: [
-          // Title pill above the circle
           Positioned(
             top: -52,
             child: _StageTitlePill(
               text: stage.label,
               subtitle: '${stage.exercises.length} exercises',
               color: _stageColor,
+              isLocked: isLocked,
             ),
           ),
 
-          // Glow halo for current stage
           if (isCurrent) _GlowHalo(size: 90, color: _stageColor),
 
-          // Circle button
           Material(
             color: Colors.transparent,
             shape: const CircleBorder(),
@@ -352,17 +351,18 @@ class _AdventureStageCircle extends StatelessWidget {
               height: ring,
               child: InkWell(
                 customBorder: const CircleBorder(),
-                onTap: () => onTap(stage),
+                onTap: isLocked ? null : () => onTap(stage),
                 child: Container(
                   width: ring,
                   height: ring,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.white.withValues(alpha: 0.92),
-                    border: Border.all(
-                      color: _stageColor,
-                      width: 3,
-                    ),
+                    color: isLocked
+                        ? Colors.grey.shade100
+                        : isFinished
+                        ? _stageColor
+                        : Colors.white.withValues(alpha: 0.92),
+                    border: Border.all(color: _stageColor, width: 3),
                     boxShadow: [
                       BoxShadow(
                         color: _stageColor.withValues(alpha: 0.3),
@@ -372,20 +372,48 @@ class _AdventureStageCircle extends StatelessWidget {
                     ],
                   ),
                   child: Center(
-                    child: Text(
-                      '${stage.index + 1}',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 22,
-                        height: 1.0,
-                        color: _stageColor,
-                      ),
-                    ),
+                    child: isLocked
+                        ? Icon(Icons.lock_rounded, color: _stageColor, size: 28)
+                        : Text(
+                            '${stage.index + 1}',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w900,
+                              fontSize: 22,
+                              height: 1.0,
+                              color: isFinished ? Colors.white : _stageColor,
+                            ),
+                          ),
                   ),
                 ),
               ),
             ),
           ),
+
+          // Checkmark badge for finished stages
+          if (isFinished)
+            Positioned(
+              right: -4,
+              bottom: -4,
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 4,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  Icons.check_circle_rounded,
+                  color: _stageColor,
+                  size: 24,
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -407,11 +435,13 @@ class _StageTitlePill extends StatelessWidget {
   final String text;
   final String subtitle;
   final Color color;
+  final bool isLocked;
 
   const _StageTitlePill({
     required this.text,
     required this.subtitle,
     required this.color,
+    this.isLocked = false,
   });
 
   @override
@@ -434,7 +464,7 @@ class _StageTitlePill extends StatelessWidget {
       child: Column(
         children: [
           Text(
-            text,
+            isLocked ? "Locked" : text,
             textAlign: TextAlign.center,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -445,16 +475,17 @@ class _StageTitlePill extends StatelessWidget {
               height: 1.2,
             ),
           ),
-          Text(
-            subtitle,
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            style: TextStyle(
-              color: Colors.grey.shade500,
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
+          if (!isLocked)
+            Text(
+              subtitle,
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              style: TextStyle(
+                color: Colors.grey.shade500,
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+              ),
             ),
-          ),
         ],
       ),
     );

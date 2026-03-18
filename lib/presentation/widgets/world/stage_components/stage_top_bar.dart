@@ -15,6 +15,7 @@ class StageTopBar extends StatelessWidget {
     required this.exerciseDotStates,
     required this.onActionTap,
     this.actionIcon = Icons.pause,
+    this.avatarWidget,
   });
 
   /// Total number of exercises in this stage.
@@ -32,6 +33,9 @@ class StageTopBar extends StatelessWidget {
   /// Icon displayed on the action button.
   final IconData actionIcon;
 
+  /// Custom avatar widget to display instead of the pencil.
+  final Widget? avatarWidget;
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -43,12 +47,19 @@ class StageTopBar extends StatelessWidget {
             width: 50,
             height: 50,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(25),
+              shape: BoxShape.circle,
+              color: Colors.white.withValues(alpha: 0.22),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.35),
+                width: 2,
+              ),
             ),
-            clipBehavior: Clip.antiAlias,
-            child: Image.asset(
-              'assets/images/illustrations/pencil.png',
-              fit: BoxFit.contain,
+            child: ClipOval(
+              child: avatarWidget ??
+                  Image.asset(
+                    'assets/images/illustrations/pencil.png',
+                    fit: BoxFit.contain,
+                  ),
             ),
           ),
           const SizedBox(width: 12),

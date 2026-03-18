@@ -19,4 +19,5 @@ class AppRoutes {
   static const setting = '/setting';
 
   static const adventureStage = '/adventure/stage';
+  static const adventureSummary = '/adventure/summary';
 }

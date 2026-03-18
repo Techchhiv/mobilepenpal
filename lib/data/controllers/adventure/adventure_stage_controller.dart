@@ -9,6 +9,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_drawing_board/flutter_drawing_board.dart';
 import 'package:flutter_drawing_board/paint_contents.dart';
+import 'package:get_storage/get_storage.dart';
+import 'package:mobilepenpal/core/utils/adventure_shadow_score_util.dart';
 import 'package:mobilepenpal/presentation/widgets/world/image_stamp_content.dart';
 import 'package:get/get.dart';
 import 'package:mobilepenpal/core/utils/character_option_utils.dart';
@@ -16,14 +18,22 @@ import 'package:mobilepenpal/core/utils/stroke_feedback_util.dart';
 import 'package:mobilepenpal/core/utils/stroke_preprocessor.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_animation_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_audio_controller.dart';
+import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
 import 'package:mobilepenpal/data/models/exercise/exercise.dart';
 import 'package:mobilepenpal/data/models/stage/stage_exercise.dart';
+import 'package:mobilepenpal/data/models/student/student.dart';
 import 'package:mobilepenpal/data/services/onnx_inference_service.dart';
 import 'package:mobilepenpal/data/services/world_service.dart';
 import 'package:mobilepenpal/data/controllers/shop/shop_controller.dart';
+import 'package:mobilepenpal/presentation/routes/app_routes.dart';
+import 'package:mobilepenpal/presentation/widgets/app_snackbar.dart';
 
 class AdventureStageController extends GetxController {
+  AdventureStageController({this.autoLoadFromArguments = true});
+
   final WorldService _worldService = WorldService();
+  final GetStorage _box = GetStorage();
+  final bool autoLoadFromArguments;
 
   final isLoading = false.obs;
   final isSubmitting = false.obs;
@@ -31,6 +41,7 @@ class AdventureStageController extends GetxController {
 
   final exercises = <StageExercise>[].obs;
   final lastError = RxnString();
+  int stageIndex = 0;
 
   static const int maxAttemptsPerExercise = 3;
   final attemptLeft = maxAttemptsPerExercise.obs;
@@ -95,6 +106,8 @@ class AdventureStageController extends GetxController {
   bool get hasDrawnAnyStroke => hasDrawnStrokeList.any((e) => e);
   Timer? idle;
   DateTime? _sessionStart;
+  bool _shouldAutoPlayInitialAudio = false;
+  bool _isPlayingDeferredInitialAudio = false;
 
   StageExercise? get currentExercise =>
       (currentExerciseIndex.value >= 0 &&
@@ -165,14 +178,68 @@ class AdventureStageController extends GetxController {
       _ownsAudio = true;
     }
 
-    loadStrokeDb();
+    if (autoLoadFromArguments) {
+      final args = Get.arguments as Map<String, dynamic>?;
+      if (args != null) {
+        final exerciseList =
+            (args['exercises'] as List? ?? const <dynamic>[])
+                .whereType<Exercise>()
+                .toList();
+        unawaited(
+          prepareStage(
+            categoryLabel: args['categoryLabel'] as String? ?? '',
+            stageIndex: args['stageIndex'] as int? ?? 0,
+            exerciseList: exerciseList,
+            deferInitialAudio: true,
+          ),
+        );
+      }
+    }
+  }
 
-    // Load exercises from route arguments
-    final args = Get.arguments as Map<String, dynamic>?;
-    if (args != null) {
-      categoryLabel = args['categoryLabel'] as String? ?? '';
-      final exerciseList = args['exercises'] as List<Exercise>? ?? [];
+  Future<void> prepareStage({
+    required String categoryLabel,
+    required int stageIndex,
+    required List<Exercise> exerciseList,
+    bool deferInitialAudio = true,
+  }) async {
+    isLoading.value = true;
+    lastError.value = null;
+
+    this.categoryLabel = categoryLabel;
+    this.stageIndex = stageIndex;
+    _shouldAutoPlayInitialAudio = deferInitialAudio;
+    _isPlayingDeferredInitialAudio = false;
+
+    try {
+      try {
+        await loadStrokeDb();
+      } catch (e) {
+        dev.log(
+          'loadStrokeDb error during prepareStage: $e',
+          name: 'AdventureStageController',
+        );
+      }
       _initFromExercises(exerciseList);
+
+      if (exercises.isEmpty) {
+        selectedCharacter.value = '';
+        letterSubpathsNorm.clear();
+        strokeStrokesNorm.clear();
+        anim.setGuideFromPx(strokesPx: const []);
+        return;
+      }
+
+      await _startAtExercise(0, playAudioAfter: !deferInitialAudio);
+      _sessionStart = DateTime.now();
+    } catch (e) {
+      lastError.value = 'Failed to prepare adventure stage: $e';
+      dev.log(
+        'prepareStage error: $e',
+        name: 'AdventureStageController',
+      );
+    } finally {
+      isLoading.value = false;
     }
   }
 
@@ -204,11 +271,37 @@ class AdventureStageController extends GetxController {
       List.filled(exercises.length, StarState.pending),
     );
     attempts.clear();
+    earnedCoins.value = 0;
+    triggerCoinAnim.value = 0;
+    earnedXp.value = 0;
+    triggerXpAnim.value = 0;
     _updateProgressUI(animate: false);
+    anim.feedback.value = DrawFeedback.none;
+    anim.clearPraise();
 
     if (exercises.isEmpty) return;
-    _startAtExercise(0, playAudioAfter: true);
-    _sessionStart = DateTime.now();
+  }
+
+  Future<void> playDeferredInitialAudioIfNeeded() async {
+    if (!_shouldAutoPlayInitialAudio || _isPlayingDeferredInitialAudio) {
+      return;
+    }
+
+    final ex = currentExercise;
+    if (ex == null || isLoading.value) return;
+
+    _shouldAutoPlayInitialAudio = false;
+    _isPlayingDeferredInitialAudio = true;
+
+    try {
+      await Future.delayed(const Duration(milliseconds: 150));
+      await audio.autoPlayCharacter(
+        type: ex.characterType ?? '',
+        ch: ex.character,
+      );
+    } finally {
+      _isPlayingDeferredInitialAudio = false;
+    }
   }
 
   @override
@@ -324,6 +417,11 @@ class AdventureStageController extends GetxController {
       c.setStyle(color: Colors.black, strokeWidth: 6);
     }
   }
+
+  final earnedCoins = 0.obs;
+  final triggerCoinAnim = 0.obs;
+  final earnedXp = 0.obs;
+  final triggerXpAnim = 0.obs;
 
   void _updateProgressUI({bool animate = true}) {
     final total = totalExercises;
@@ -585,6 +683,8 @@ class AdventureStageController extends GetxController {
         'label': exercise.character,
         'stroke': getXYStrokes(),
         'is_correct': false,
+        'xp_earned': 0,
+        'shadow_iou': 0.0,
       });
 
       _updateProgressUI();
@@ -595,7 +695,6 @@ class AdventureStageController extends GetxController {
         anim.clearPraise();
         await _finishAdventure();
       } else {
-        await Future.delayed(wrongDisplayDuration);
         anim.feedback.value = DrawFeedback.none;
         anim.clearPraise();
         nextExercise();
@@ -607,12 +706,27 @@ class AdventureStageController extends GetxController {
     anim.showCorrect(starIndex: currentExerciseIndex.value);
     unawaited(audio.playCorrectSfx());
 
+    final shadowScore = AdventureShadowScoreUtil.calculate(
+      userRawStrokes: _rawStrokesList[0],
+      templateStrokesPx: strokeStrokesNorm,
+      boardWidth: boardWidth.value,
+      boardHeight: boardHeight.value,
+    );
+
+    // Earn coin!
+    earnedCoins.value++;
+    triggerCoinAnim.value++;
+    earnedXp.value += shadowScore.xp;
+    triggerXpAnim.value++;
+
     attempts.add({
       'exercise_id': exercise.id,
       'user_answer': prediction.isNotEmpty ? prediction : exercise.character,
       'label': exercise.character,
       'stroke': getXYStrokes(),
       'is_correct': true,
+      'xp_earned': shadowScore.xp,
+      'shadow_iou': shadowScore.iou,
     });
     _updateProgressUI();
 
@@ -644,6 +758,8 @@ class AdventureStageController extends GetxController {
         'label': exercise.character,
         'stroke': getXYStrokes(),
         'is_correct': false,
+        'xp_earned': 0,
+        'shadow_iou': 0.0,
       });
 
       _updateProgressUI();
@@ -676,27 +792,123 @@ class AdventureStageController extends GetxController {
     final total = totalExercises;
     final stars = starsEarnedByScore;
 
-    // Award points via ShopController
-    final points = ShopController.calculatePoints(
-      correct: correct,
-      total: total,
-      stars: stars,
-    );
+    final points = earnedCoins.value;
+    final xp = earnedXp.value;
 
-    if (Get.isRegistered<ShopController>()) {
-      Get.find<ShopController>().addPoints(points);
-    }
+    // Submit to backend
+    final duration = _sessionStart != null
+        ? DateTime.now().difference(_sessionStart!).inSeconds
+        : 0;
 
-    // Go back with the results
-    Get.back(
-      result: {
+    await _submitAdventureResults(durationSeconds: duration);
+
+    // Navigate to Adventure Summary
+    Get.offNamed(
+      AppRoutes.adventureSummary,
+      arguments: {
         'correct': correct,
         'total': total,
         'stars': stars,
         'points': points,
+        'xp': xp,
+        'stageIndex': stageIndex,
         'attempts': List<Map<String, dynamic>>.from(attempts),
+        'coins': earnedCoins.value,
       },
     );
+  }
+
+  Future<void> _submitAdventureResults({required int durationSeconds}) async {
+    if (attempts.isEmpty) return;
+
+    isSubmitting.value = true;
+    try {
+      final response = await _worldService.submitExerciseBatch(
+        List<Map<String, dynamic>>.from(attempts),
+        durationSeconds: durationSeconds,
+        coinsEarned: earnedCoins.value,
+        xpEarned: earnedXp.value,
+        isAdventure: true,
+      );
+
+      if (response.code != 200) {
+        AppSnackbar.show(
+          response.message.isNotEmpty
+              ? response.message
+              : 'Failed to save adventure results',
+          title: 'Error',
+          backgroundColor: Colors.redAccent,
+        );
+        return;
+      }
+
+      final data = response.data ?? const <String, dynamic>{};
+      final summary = _readMap(data['summary']);
+
+      await _syncStudentStats(
+        currentCoin:
+            _readInt(data['current_coin']) ?? _readInt(summary?['current_coin']),
+        currentXp:
+            _readInt(data['current_xp']) ?? _readInt(summary?['current_xp']),
+        streak: _readInt(summary?['streak']),
+      );
+    } catch (e) {
+      AppSnackbar.show(
+        'Failed to save adventure results',
+        title: 'Error',
+        backgroundColor: Colors.redAccent,
+      );
+    } finally {
+      isSubmitting.value = false;
+    }
+  }
+
+  Future<void> _syncStudentStats({
+    int? currentCoin,
+    int? currentXp,
+    int? streak,
+  }) async {
+    if (currentCoin == null && currentXp == null && streak == null) return;
+
+    if (Get.isRegistered<HomeController>()) {
+      final homeController = Get.find<HomeController>();
+      final currentStudent = homeController.student.value;
+
+      if (currentStudent != null) {
+        final updatedStudent = Student.fromJson({
+          ...currentStudent.toJson(),
+          if (currentCoin != null) 'coin': currentCoin,
+          if (currentXp != null) 'xp': currentXp,
+          if (streak != null) 'streak': streak,
+        });
+
+        homeController.student.value = updatedStudent;
+        await _box.write('student', updatedStudent.toJson());
+      }
+    }
+
+    if (currentCoin != null && Get.isRegistered<ShopController>()) {
+      final shopController = Get.find<ShopController>();
+      shopController.totalPoints.value = currentCoin;
+      await _box.write('adventure_points', currentCoin);
+    }
+  }
+
+  int? _readInt(dynamic value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    if (value == null) return null;
+    return int.tryParse(value.toString());
+  }
+
+  Map<String, dynamic>? _readMap(dynamic value) {
+    if (value is Map<String, dynamic>) return value;
+    if (value is Map) {
+      return value.map(
+        (key, val) => MapEntry(key.toString(), val),
+      );
+    }
+    return null;
   }
 
   Future<void> resetForRetry() async {
@@ -706,6 +918,10 @@ class AdventureStageController extends GetxController {
 
     attempts.clear();
     _sessionStart = DateTime.now();
+    earnedCoins.value = 0;
+    triggerCoinAnim.value = 0;
+    earnedXp.value = 0;
+    triggerXpAnim.value = 0;
 
     currentExerciseIndex.value = 0;
     attemptLeft.value = maxAttemptsPerExercise;

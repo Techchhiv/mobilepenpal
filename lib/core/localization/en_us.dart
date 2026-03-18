@@ -455,4 +455,17 @@ final Map<String, String> enUS = {
   'school_subscription_message':
       'This content requires a premium subscription. Please contact your school administrator to activate access for your account.',
   'contact_school_admin': 'Contact School Admin',
+  
+  // ===== Shop =====
+  'your_points': 'Your Points',
+  'in_use': 'In Use',
+  'owned': 'Owned',
+  'select_avatar': 'Select',
+  'buy_for': 'Buy for @price',
+  'use_this_avatar': 'Use this avatar?',
+  'avatar_in_use_desc': 'This avatar is currently in use!',
+  'not_enough_points': 'Not enough points!',
+  'need_more_points': 'You need @amount more.',
+  'your_balance': 'Your balance: @amount points',
+  'points_count': '@count points',
 };

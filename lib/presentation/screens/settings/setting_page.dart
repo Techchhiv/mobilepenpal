@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:mobilepenpal/core/config/env.dart';
 import 'package:mobilepenpal/core/theme/app_colors.dart';
 import 'package:mobilepenpal/data/controllers/home/pin_controller.dart';
 import 'package:mobilepenpal/data/controllers/settings/setting_controller.dart';
 import 'package:mobilepenpal/presentation/screens/settings/change_password_page.dart';
 import 'package:mobilepenpal/presentation/screens/settings/update_profile_page.dart';
 import 'package:mobilepenpal/presentation/widgets/home/pin_entry_widget.dart';
+import 'package:mobilepenpal/data/controllers/shop/shop_controller.dart';
 
 class SettingPage extends StatelessWidget {
   SettingPage({super.key});
@@ -106,57 +106,29 @@ class SettingPage extends StatelessWidget {
     return Row(
       children: [
         Obx(
-          () => GestureDetector(
-            onTap: () => settingController.pickAndUploadImage(),
-            child: Stack(
-              children: [
-                if (settingController.isLoading.value)
-                  Container(
-                    width: 100,
-                    height: 100,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Center(child: CircularProgressIndicator()),
-                  )
-                else
-                  CircleAvatar(
-                    radius: 50,
-                    backgroundColor: Colors.grey[300],
-                    backgroundImage: settingController.avatarUrl.isNotEmpty
-                        ? NetworkImage(
-                            Env.backendUrl + settingController.avatarUrl,
-                          )
-                        : null,
-                    child: settingController.avatarUrl.isEmpty
-                        ? const Icon(
-                            Icons.person,
-                            size: 40,
-                            color: Colors.white,
-                          )
-                        : null,
-                  ),
-                if (!settingController.isLoading.value)
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary,
-                        shape: BoxShape.circle,
+          () {
+            final shopController = Get.find<ShopController>();
+            final avatar = shopController.currentAvatar;
+
+            return CircleAvatar(
+              radius: 50,
+              backgroundColor: avatar.color.withValues(alpha: 0.2),
+              child: avatar.assetPath != null
+                  ? ClipOval(
+                      child: Image.asset(
+                        avatar.assetPath!,
+                        fit: BoxFit.cover,
+                        width: 100,
+                        height: 100,
                       ),
-                      child: const Icon(
-                        Icons.camera_alt,
-                        size: 16,
-                        color: Colors.white,
-                      ),
+                    )
+                  : Icon(
+                      avatar.icon ?? Icons.person,
+                      size: 50,
+                      color: avatar.color,
                     ),
-                  ),
-              ],
-            ),
-          ),
+            );
+          },
         ),
         const SizedBox(width: 16),
         Expanded(

@@ -26,6 +26,9 @@ import 'package:mobilepenpal/presentation/screens/world/stage_detail_page.dart';
 import 'package:mobilepenpal/presentation/screens/world/stage_summary_page.dart';
 import 'app_routes.dart';
 
+import 'package:mobilepenpal/core/bindings/adventure_summary_binding.dart';
+import 'package:mobilepenpal/presentation/screens/adventure/adventure_summary_page.dart';
+
 class AppPages {
   static final routes = [
     GetPage(name: AppRoutes.splash, page: () => SplashPage()),
@@ -107,6 +110,12 @@ class AppPages {
       name: AppRoutes.adventureStage,
       page: () => const AdventureStagePage(),
       binding: AdventureStageBinding(),
+      middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      name: AppRoutes.adventureSummary,
+      page: () => const AdventureSummaryPage(),
+      binding: AdventureSummaryBinding(),
       middlewares: [AuthMiddleware()],
     ),
   ];

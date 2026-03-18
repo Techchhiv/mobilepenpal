@@ -25,6 +25,11 @@ class Student {
   final String? subscriptionPlan;
   final String? subscriptionStartDate;
   final String? subscriptionEndDate;
+  
+  final int coin;
+  final int xp;
+  final int streak;
+  final List<String> unlockedAvatars;
 
   Student({
     required this.id,
@@ -49,6 +54,10 @@ class Student {
     this.subscriptionPlan,
     this.subscriptionStartDate,
     this.subscriptionEndDate,
+    this.coin = 0,
+    this.xp = 0,
+    this.streak = 0,
+    this.unlockedAvatars = const [],
   });
 
   static int? _toInt(dynamic v) {
@@ -67,6 +76,12 @@ class Student {
     if (v is bool) return v;
     if (v is int) return v == 1;
     return v.toString() == '1' || v.toString().toLowerCase() == 'true';
+  }
+
+  static List<String> _toStringList(dynamic v) {
+    if (v == null) return [];
+    if (v is List) return v.map((e) => e.toString()).toList();
+    return [];
   }
 
   factory Student.fromJson(Map<String, dynamic> json) {
@@ -93,6 +108,10 @@ class Student {
       subscriptionPlan: _toStringOrNull(json['subscription_plan']),
       subscriptionStartDate: _toStringOrNull(json['subscription_start_date']),
       subscriptionEndDate: _toStringOrNull(json['subscription_end_date']),
+      coin: _toInt(json['coin']) ?? 0,
+      xp: _toInt(json['xp']) ?? 0,
+      streak: _toInt(json['streak']) ?? 0,
+      unlockedAvatars: _toStringList(json['unlocked_avatars']),
     );
   }
 
@@ -120,6 +139,10 @@ class Student {
       'subscription_plan': subscriptionPlan,
       'subscription_start_date': subscriptionStartDate,
       'subscription_end_date': subscriptionEndDate,
+      'coin': coin,
+      'xp': xp,
+      'streak': streak,
+      'unlocked_avatars': unlockedAvatars,
     };
   }
 }

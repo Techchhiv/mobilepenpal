@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
+import 'package:mobilepenpal/data/models/student/student.dart';
+import 'package:mobilepenpal/data/services/shop_service.dart';
 
 /// Represents an avatar item in the shop.
 class ShopAvatar {
@@ -25,6 +28,7 @@ class ShopAvatar {
 
 class ShopController extends GetxController {
   final GetStorage _box = GetStorage();
+  final ShopService _shopService = ShopService();
 
   static const String _pointsKey = 'adventure_points';
   static const String _unlockedKey = 'unlocked_avatars';
@@ -57,6 +61,27 @@ class ShopController extends GetxController {
   Future<void> _initShop() async {
     await _loadAvatarsFromAssets();
     _loadFromStorage();
+    _syncWithStudent();
+  }
+
+  void _syncWithStudent() {
+    if (Get.isRegistered<HomeController>()) {
+      final homeController = Get.find<HomeController>();
+      
+      // Initial sync
+      if (homeController.student.value != null) {
+        totalPoints.value = homeController.student.value!.coin;
+        unlockedAvatarIds.assignAll(homeController.student.value!.unlockedAvatars);
+      }
+
+      // Reactive sync
+      ever(homeController.student, (Student? s) {
+        if (s != null) {
+          totalPoints.value = s.coin;
+          unlockedAvatarIds.assignAll(s.unlockedAvatars);
+        }
+      });
+    }
   }
 
   Future<void> _loadAvatarsFromAssets() async {
@@ -155,7 +180,12 @@ class ShopController extends GetxController {
     selectedAvatarId.value = _box.read<String>(_selectedKey) ?? 'default';
   }
 
-  bool isUnlocked(String avatarId) => unlockedAvatarIds.contains(avatarId);
+  bool isUnlocked(String avatarId) {
+    if (avatarId == 'default') return true;
+    final avatar = allAvatars.firstWhereOrNull((a) => a.id == avatarId);
+    if (avatar != null && avatar.price == 0) return true;
+    return unlockedAvatarIds.contains(avatarId);
+  }
   bool isSelected(String avatarId) => selectedAvatarId.value == avatarId;
 
   /// Add points earned from an adventure stage
@@ -188,7 +218,7 @@ class ShopController extends GetxController {
   }
 
   /// Try to purchase an avatar
-  bool purchaseAvatar(String avatarId) {
+  Future<bool> purchaseAvatar(String avatarId) async {
     if (isUnlocked(avatarId)) return true;
 
     final avatar = allAvatars.firstWhereOrNull((a) => a.id == avatarId);
@@ -196,13 +226,34 @@ class ShopController extends GetxController {
 
     if (totalPoints.value < avatar.price) return false;
 
-    totalPoints.value -= avatar.price;
-    _box.write(_pointsKey, totalPoints.value);
+    try {
+      // Call Backend API First
+      final response = await _shopService.purchaseAvatar(
+        avatarName: avatar.id,
+        cost: avatar.price,
+      );
 
-    unlockedAvatarIds.add(avatarId);
-    _saveUnlocked();
+      if (response.code != 200) {
+        debugPrint('ShopController: Failed to purchase avatar on backend: ${response.message}');
+        return false;
+      }
 
-    return true;
+      // If backend succeeds, update global student state
+      if (Get.isRegistered<HomeController>()) {
+        Get.find<HomeController>().student.value = response.data;
+      }
+
+      totalPoints.value = response.data!.coin;
+      _box.write(_pointsKey, totalPoints.value);
+
+      unlockedAvatarIds.assignAll(response.data!.unlockedAvatars);
+      _saveUnlocked();
+
+      return true;
+    } catch (e) {
+      debugPrint('ShopController: Error during purchase: $e');
+      return false;
+    }
   }
 
   /// Select an avatar to use

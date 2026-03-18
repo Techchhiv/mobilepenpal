@@ -27,11 +27,13 @@ class AdventureController extends GetxController {
 
   static const String _storageKey = 'adventure_exercises';
   static const int maxExercisesPerStage = 6;
-
+  static const String _unlockedKey = 'adventure_unlocked_index';
+  
   final isLoading = false.obs;
   final isTransitioning = false.obs;
   final stages = <AdventureStage>[].obs;
   final allExercises = <Exercise>[].obs;
+  final unlockedStageIndex = 0.obs;
 
   /// Display labels for each character_type
   static const Map<String, String> categoryLabels = {
@@ -45,7 +47,24 @@ class AdventureController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    _loadUnlockedIndex();
     _loadExercises();
+  }
+
+  void _loadUnlockedIndex() {
+    final val = _box.read<int>(_unlockedKey);
+    if (val != null) {
+      unlockedStageIndex.value = val;
+    }
+  }
+
+  Future<void> completeStage(int index) async {
+    // Only unlock next if we completed the current highest unlocked stage
+    if (index == unlockedStageIndex.value) {
+      unlockedStageIndex.value++;
+      await _box.write(_unlockedKey, unlockedStageIndex.value);
+      dev.log('Unlocked stage ${unlockedStageIndex.value}', name: 'AdventureController');
+    }
   }
 
   Future<void> _loadExercises() async {
