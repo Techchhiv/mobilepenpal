@@ -29,17 +29,17 @@ import SchoolRolesPage from "./pages/school/page/SchoolRolesPage";
 import SchoolPermissionsPage from "./pages/school/page/SchoolPermissionsPage";
 import TeacherList from "./pages/school/page/Teacher/TeacherList";
 import TeacherCreate from "./pages/school/page/Teacher/TeacherCreate";
-import ClassRoomsList from "./pages/school/page/Classrooms/ClassRoomsList";
+import ClassRoomsList from "./pages/school/page/ClassRooms/ClassRoomsList";
 import StudentList from "./pages/school/page/Student/StudentList";
 import StudentCreate from "./pages/school/page/Student/StudentCreate";
 import StudentEdit from "./pages/school/page/Student/StudentEdit";
-import ClassroomCreate from "./pages/school/page/Classrooms/ClassroomCreate";
+import ClassroomCreate from "./pages/school/page/ClassRooms/ClassroomCreate";
 import StudentView from "./pages/school/page/Student/StudentView";
 import TeacherEdit from "./pages/school/page/Teacher/TeacherEdit";
 import TeacherView from "./pages/school/page/Teacher/TeacherView";
-import ClassroomView from "./pages/school/page/Classrooms/ClassromView";
-import ClassroomEdit from "./pages/school/page/Classrooms/ClassroomEdit";
-import ClassroomStudentProgress from "./pages/school/page/Classrooms/ClassroomStudentProgress";
+import ClassroomView from "./pages/school/page/ClassRooms/ClassromView";
+import ClassroomEdit from "./pages/school/page/ClassRooms/ClassroomEdit";
+import ClassroomStudentProgress from "./pages/school/page/ClassRooms/ClassroomStudentProgress";
 import WorldList from "./pages/admin/World/WorldList";
 import WorldView from "./pages/admin/World/WorldView";
 import WorldEdit from "./pages/admin/World/WorldEdit";
@@ -63,6 +63,7 @@ import SchoolWorldEdit from "./pages/school/page/World/SchoolWorldEdit";
 import SchoolLevelList from "./pages/school/page/Level/SchoolLevelList";
 import SchoolLevelEdit from "./pages/school/page/Level/SchoolLevelEdit";
 import SchoolLevelView from "./pages/school/page/Level/SchoolLevelView";
+import AdminSchoolReportsPage from "./pages/admin/AdminSchoolReportsPage";
 
 export default function App() {
   return (
@@ -97,12 +98,15 @@ export default function App() {
           <Route path="/admin/users" element={<AdminUsersPage />} />
           <Route path="/admin/roles" element={<AdminRolesPage />} />
           <Route path="/admin/permissions" element={<AdminPermissionsPage />} />
+          <Route path="/admin/reports" element={<AdminSchoolReportsPage />} />
         </Route>
 
         {/* ---------- Manage Clients (Client Manager only) ---------- */}
         <Route element={<Gate anyPerm={["menu.manage_clients"]} />}>
           <Route path="/admin/schools" element={<ManageClientsPage />} />
         </Route>
+
+
 
         {/* ---------- Payments (Payment Manager only) ---------- */}
         <Route element={<Gate anyPerm={["menu.payments"]} />}>

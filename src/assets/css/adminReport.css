@@ -1,0 +1,235 @@
+
+.school-report-summary-card{
+  border: 1px solid #dbe1ea;
+  border-radius: 12px;
+}
+select::-ms-expand {
+  display: none;
+}
+.filter-container .input-group {
+  border: 1px solid #dbe1ea;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  background: #fff;
+}
+
+.filter-container .input-group .input-group-text,
+.filter-container .input-group .form-control,
+.filter-container .input-group .form-select {
+  border: 0 !important;
+  box-shadow: none !important;
+  
+}
+
+.filter-container .input-group:focus-within {
+  border-color: var(--bs-primary);
+  box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.25);
+}
+
+.filter-container .report-filter-select {
+  color: #1f2937;
+  font-weight: 500;
+  padding-right: 2.25rem;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, #64748b 50%), linear-gradient(135deg, #64748b 50%, transparent 50%);
+  background-position: calc(100% - 18px) calc(50% - 3px), calc(100% - 12px) calc(50% - 3px);
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+}
+
+.filter-container .report-filter-select:hover {
+  background-color: #f8fafc;
+}
+
+.filter-container .report-filter-select option {
+  color: #1f2937;
+  background-color: #ffffff;
+}
+
+.filter-container {
+  border-radius: 12px;
+  margin-top: 16px;
+  background: #fff;
+  border: 1px solid #dbe1ea;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+
+}
+
+.filter-container > .card-header {
+  border-bottom: 1px solid #dbe1ea;
+  border-radius: 12px 12px 0 0;
+  background: #f3f4f6;
+  padding: 14px 26px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+.school-detail-sidebar{
+    border: 1px solid #dbe1ea;
+    border-radius: 12px;
+}
+.school-detail-sidebar-header{
+  padding: 14px 26px;
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid #dbe1ea;
+  align-items: center;
+}
+
+.school-report-table{
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid #dbe1ea;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.school-report-table .school-report-table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.school-report-table .school-report-data-table {
+  min-width: 980px;
+}
+
+.school-report-table .school-report-data-table th,
+.school-report-table .school-report-data-table td {
+  white-space: nowrap;
+}
+
+[data-theme='dark'] .school-report-page {
+  color: #e5e7eb;
+}
+
+[data-theme='dark'] .school-report-page h5,
+[data-theme='dark'] .school-report-page h6,
+[data-theme='dark'] .school-report-page th,
+[data-theme='dark'] .school-report-page td,
+[data-theme='dark'] .school-report-page .text-primary-light,
+[data-theme='dark'] .school-report-page .text-secondary-light {
+  color: #e5e7eb !important;
+}
+
+[data-theme='dark'] .school-report-page .school-report-summary-card,
+[data-theme='dark'] .school-report-page .filter-container,
+[data-theme='dark'] .school-report-page .school-report-table,
+[data-theme='dark'] .school-report-page .school-detail-sidebar {
+  background: #111827;
+  border: 1px solid #374151;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.35);
+}
+
+[data-theme='dark'] .school-report-page .filter-container .card-header,
+[data-theme='dark'] .school-report-page .school-report-table .card-header,
+[data-theme='dark'] .school-report-page .school-report-table .card-footer,
+[data-theme='dark'] .school-report-page .school-detail-sidebar-header,
+[data-theme='dark'] .school-report-page .bg-base {
+  background: #1f2937 !important;
+  border-color: #374151 !important;
+}
+
+[data-theme='dark'] .school-report-page .filter-container .input-group {
+  background: #111827;
+  border-color: #4b5563;
+}
+
+[data-theme='dark'] .school-report-page .filter-container .input-group:focus-within {
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 0.2rem rgba(96, 165, 250, 0.25);
+}
+
+[data-theme='dark'] .school-report-page .filter-container .form-control,
+[data-theme='dark'] .school-report-page .filter-container .form-select,
+[data-theme='dark'] .school-report-page .filter-container .input-group-text,
+[data-theme='dark'] .school-report-page .filter-container .report-filter-select {
+  color: #e5e7eb !important;
+}
+
+[data-theme='dark'] .school-report-page .filter-container .form-control,
+[data-theme='dark'] .school-report-page .filter-container .form-select,
+[data-theme='dark'] .school-report-page .filter-container .input-group-text {
+  background-color: #111827 !important;
+}
+
+[data-theme='dark'] .school-report-page .filter-container .form-control::placeholder {
+  color: #9ca3af;
+}
+
+[data-theme='dark'] .school-report-page .filter-container .report-filter-select {
+  color-scheme: dark;
+  background-color: #111827;
+  background-image: linear-gradient(45deg, transparent 50%, #cbd5e1 50%), linear-gradient(135deg, #cbd5e1 50%, transparent 50%);
+}
+
+[data-theme='dark'] .school-report-page .filter-container .report-filter-select option {
+  background: #111827;
+  color: #e5e7eb;
+}
+
+[data-theme='dark'] .school-report-page .table {
+  --bs-table-bg: #111827;
+  --bs-table-color: #e5e7eb;
+  --bs-table-border-color: #374151;
+}
+
+[data-theme='dark'] .school-report-page .table > :not(caption) > * > * {
+  border-bottom-color: #374151;
+}
+
+[data-theme='dark'] .school-report-page .table thead th {
+  background: #1f2937;
+  color: #f3f4f6;
+}
+
+[data-theme='dark'] .school-report-page .school-list-head tr,
+[data-theme='dark'] .school-report-page .school-list-head th {
+  background: #1f2937;
+}
+
+[data-theme='dark'] .school-report-page tr.bg-primary-focus {
+  background: rgba(59, 130, 246, 0.15) !important;
+}
+
+[data-theme='dark'] .school-report-page .badge.bg-neutral-200 {
+  background: #374151 !important;
+}
+
+[data-theme='dark'] .school-report-page .page-link {
+  background: #1f2937;
+  border-color: #374151;
+  color: #e5e7eb;
+}
+
+[data-theme='dark'] .school-report-page .page-item.active .page-link {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #fff;
+}
+
+[data-theme='dark'] .school-report-page .page-item.disabled .page-link {
+  background: #111827;
+  border-color: #374151;
+  color: #6b7280;
+}
+
+[data-theme='dark'] .school-report-page .school-detail-sidebar hr,
+[data-theme='dark'] .school-report-page .school-detail-sidebar .list-group-item {
+  border-color: #374151 !important;
+  background: transparent;
+  color: #e5e7eb;
+}
+
+[data-theme='dark'] .school-report-page .school-detail-sidebar .text-secondary,
+[data-theme='dark'] .school-report-page .school-detail-sidebar .small {
+  color: #9ca3af !important;
+}
+
+[data-theme='dark'] .school-report-page .school-detail-sidebar .btn-close {
+  filter: invert(1) grayscale(100%);
+}
+
+
