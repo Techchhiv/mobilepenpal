@@ -76,6 +76,7 @@ const SchoolWorldView = () => {
 
     const owned_by_school =
       !!world?.owned_by_school || world?.school_id != null;
+    const is_premium = boolish(world?.is_premium);
     const is_hidden_for_school = !!world?.is_hidden_for_school;
 
     const levels = Array.isArray(world?.levels) ? world.levels : [];
@@ -100,6 +101,7 @@ const SchoolWorldView = () => {
       ...world,
       is_active,
       is_unlocked_by_default,
+      is_premium,
       owned_by_school,
       is_hidden_for_school,
       stack_order_index,
@@ -173,11 +175,11 @@ const SchoolWorldView = () => {
       const errors = err?.response?.data?.errors || {};
       setInsertLevelError(
         errors?.name?.[0] ||
-          errors?.name_en?.[0] ||
-          errors?.description?.[0] ||
-          errors?.description_en?.[0] ||
-          err?.response?.data?.message ||
-          "Failed to create level."
+        errors?.name_en?.[0] ||
+        errors?.description?.[0] ||
+        errors?.description_en?.[0] ||
+        err?.response?.data?.message ||
+        "Failed to create level."
       );
     } finally {
       setInsertLevelLoading(false);
@@ -326,6 +328,13 @@ const SchoolWorldView = () => {
                           {normalized.is_hidden_for_school ? "Hidden" : "Visible"}
                         </span>
                       )}
+
+                      {normalized.is_premium && (
+                        <span className="badge bg-warning text-dark" title={normalized.owned_by_school ? "Worlds created by your school are always premium" : "Premium Content"}>
+                          <Icon icon="mdi:crown" className="me-1" />
+                          {normalized.owned_by_school ? "Premium (Always Included)" : "Premium"}
+                        </span>
+                      )}
                     </div>
 
                     <div className="mt-10 text-muted">
@@ -428,6 +437,7 @@ const SchoolWorldView = () => {
                             <tr>
                               <th>Order</th>
                               <th>Name</th>
+                              <th className="text-center">Premium</th>
                               <th>Status</th>
                               <th>Stages</th>
                               <th style={{ width: 120 }} className="text-center">
@@ -458,6 +468,12 @@ const SchoolWorldView = () => {
                                       {l.name_en ? (
                                         <div className="text-muted small">{l.name_en}</div>
                                       ) : null}
+                                    </td>
+
+                                    <td className="text-center">
+                                      {boolish(l?.is_premium) && (
+                                        <Icon icon="mdi:crown" className="text-warning" width={20} title="Premium" />
+                                      )}
                                     </td>
 
                                     <td>

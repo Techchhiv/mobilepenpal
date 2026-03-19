@@ -29,6 +29,7 @@ const WorldCreate = () => {
     description_en: "",
     audience: "schools",
     is_active: true,
+    is_premium: false,
     is_unlocked_by_default: false,
     school_ids: [],
   });
@@ -48,6 +49,7 @@ const WorldCreate = () => {
       description: "",
       description_en: "",
       is_active: true,
+      is_premium: false,
       is_unlocked_by_default: false,
     });
     setError("");
@@ -112,6 +114,7 @@ const WorldCreate = () => {
         description_en: form.description_en?.trim() || null,
         audience: form.audience,
         is_active: !!form.is_active,
+        is_premium: !!form.is_premium,
         is_unlocked_by_default: !!form.is_unlocked_by_default,
         school_ids: form.audience === "assigned" ? form.school_ids : [],
       };
@@ -137,6 +140,7 @@ const WorldCreate = () => {
         errors?.description?.[0] ||
         errors?.description_en?.[0] ||
         errors?.is_active?.[0] ||
+        errors?.is_premium?.[0] ||
         errors?.is_unlocked_by_default?.[0] ||
         err?.response?.data?.message ||
         "Failed to create world. Please try again."
@@ -216,6 +220,12 @@ const WorldCreate = () => {
                       >
                         {form.is_unlocked_by_default ? "Default Unlock" : "Not Default"}
                       </span>
+                      {form.is_premium && (
+                        <span className="badge bg-warning text-dark">
+                          <Icon icon="mdi:crown" className="me-1" />
+                          Premium
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -359,6 +369,21 @@ const WorldCreate = () => {
                           />
                           <label className="form-check-label" htmlFor="isActive">
                             Active
+                          </label>
+                        </div>
+                      </div>
+
+                      <div className="col-md-6 d-flex align-items-end">
+                        <div className="form-check d-flex align-items-center">
+                          <input
+                            className="form-check-input"
+                            type="checkbox"
+                            id="isPremium"
+                            checked={!!form.is_premium}
+                            onChange={onChange("is_premium")}
+                          />
+                          <label className="form-check-label" htmlFor="isPremium">
+                            Is Premium
                           </label>
                         </div>
                       </div>

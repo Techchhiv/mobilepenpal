@@ -35,6 +35,7 @@ const LevelCreate = () => {
     background_image: "",
     order_index: "",
     is_active: true,
+    is_premium: false,
     is_unlocked_by_default: false,
   });
 
@@ -95,6 +96,7 @@ const LevelCreate = () => {
       background_image: "",
       order_index: "",
       is_active: true,
+      is_premium: false,
       is_unlocked_by_default: false,
     });
     setWorldQ("");
@@ -123,6 +125,7 @@ const LevelCreate = () => {
         description: form.description?.trim() || null,
         background_image: form.background_image?.trim() || null,
         is_active: !!form.is_active,
+        is_premium: !!form.is_premium,
         is_unlocked_by_default: !!form.is_unlocked_by_default,
       };
 
@@ -145,10 +148,10 @@ const LevelCreate = () => {
       const errors = err?.response?.data?.errors || {};
       setError(
         errors?.world_id?.[0] ||
-          errors?.name?.[0] ||
-          errors?.order_index?.[0] ||
-          err?.response?.data?.message ||
-          "Failed to create level. Please try again."
+        errors?.name?.[0] ||
+        errors?.order_index?.[0] ||
+        err?.response?.data?.message ||
+        "Failed to create level. Please try again."
       );
     } finally {
       setSaving(false);
@@ -227,26 +230,30 @@ const LevelCreate = () => {
 
                   <div className="d-flex justify-content-center gap-8 flex-wrap mt-2">
                     <span
-                      className={`px-16 py-4 rounded-pill fw-medium text-sm ${
-                        form.is_active
+                      className={`px-16 py-4 rounded-pill fw-medium text-sm ${form.is_active
                           ? "bg-success-focus text-success-main"
                           : "bg-warning-focus text-warning-main"
-                      }`}
+                        }`}
                     >
                       {form.is_active ? "Active" : "Disabled"}
                     </span>
 
                     <span
-                      className={`px-16 py-4 rounded-pill fw-medium text-sm ${
-                        form.is_unlocked_by_default
+                      className={`px-16 py-4 rounded-pill fw-medium text-sm ${form.is_unlocked_by_default
                           ? "bg-primary-light text-primary-600"
                           : "bg-light text-dark"
-                      }`}
+                        }`}
                     >
                       {form.is_unlocked_by_default
                         ? "Default Unlock"
                         : "Not Default"}
                     </span>
+                    {form.is_premium && (
+                      <span className="px-16 py-4 rounded-pill fw-medium text-sm bg-warning-focus text-warning-main">
+                        <Icon icon="mdi:crown" className="me-1" />
+                        Premium
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -370,36 +377,49 @@ const LevelCreate = () => {
                     </div>
 
                     {/* Toggles */}
-                    <div className="col-md-6">
-                      <div className="form-check mt-2">
-                        <input
-                          className="form-check-input"
-                          type="checkbox"
-                          id="isActive"
-                          checked={!!form.is_active}
-                          onChange={onChange("is_active")}
-                        />
-                        <label className="form-check-label" htmlFor="isActive">
-                          Active
-                        </label>
-                      </div>
-                    </div>
+                    <div className="col-12">
+                      <div className="d-flex justify-content-end gap-5 flex-wrap align-items-center">
+                        <div className="form-check mt-2">
+                          <input
+                            className="form-check-input"
+                            type="checkbox"
+                            id="isActive"
+                            checked={!!form.is_active}
+                            onChange={onChange("is_active")}
+                          />
+                          <label className="form-check-label" htmlFor="isActive">
+                            Active
+                          </label>
+                        </div>
 
-                    <div className="col-md-6">
-                      <div className="form-check mt-2">
-                        <input
-                          className="form-check-input"
-                          type="checkbox"
-                          id="unlockedByDefault"
-                          checked={!!form.is_unlocked_by_default}
-                          onChange={onChange("is_unlocked_by_default")}
-                        />
-                        <label
-                          className="form-check-label"
-                          htmlFor="unlockedByDefault"
-                        >
-                          Unlocked by default
-                        </label>
+                        <div className="form-check mt-2">
+                          <input
+                            className="form-check-input"
+                            type="checkbox"
+                            id="isPremium"
+                            checked={!!form.is_premium}
+                            onChange={onChange("is_premium")}
+                          />
+                          <label className="form-check-label" htmlFor="isPremium">
+                            Is Premium
+                          </label>
+                        </div>
+
+                        <div className="form-check mt-2">
+                          <input
+                            className="form-check-input"
+                            type="checkbox"
+                            id="unlockedByDefault"
+                            checked={!!form.is_unlocked_by_default}
+                            onChange={onChange("is_unlocked_by_default")}
+                          />
+                          <label
+                            className="form-check-label"
+                            htmlFor="unlockedByDefault"
+                          >
+                            Unlocked by default
+                          </label>
+                        </div>
                       </div>
                     </div>
 

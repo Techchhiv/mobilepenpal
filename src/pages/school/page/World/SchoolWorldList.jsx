@@ -62,6 +62,7 @@ const normalizeWorldRow = (w) => {
     ...w,
     owned_by_school: ownedBySchool,
     is_active: isActive,
+    is_premium: normalizeBool(w?.is_premium),
     is_admin_world: isAdmin,
     is_hidden_for_school: isHiddenForSchool,
     sort_index: sortIndex,
@@ -141,12 +142,13 @@ const SchoolWorldList = () => {
           columnDefs: [
             { targets: 0, width: "60px" },
             { targets: 1, width: "80px" },  // Order
-            { targets: 2, width: "150px" }, // Source
-            { targets: 3, width: "220px" }, // Name
-            { targets: 4, width: "300px" }, // Desc
-            { targets: 5, width: "170px" }, // Content
-            { targets: 6, width: "140px" }, // Default Unlock
-            { targets: 7, width: "140px" }, // Status
+            { targets: 2, width: "130px" }, // Source
+            { targets: 3, width: "150px" }, // Name
+            { targets: 4, width: "80px" },  // Premium
+            { targets: 5, width: "220px" }, // Desc
+            { targets: 6, width: "170px" }, // Content
+            { targets: 7, width: "140px" }, // Default Unlock
+            { targets: 8, width: "140px" }, // Status
           ],
         });
       }, 0);
@@ -198,6 +200,7 @@ const SchoolWorldList = () => {
                 <th>Order</th>
                 <th>Source</th>
                 <th>Name</th>
+                <th className="text-center">Premium</th>
                 <th>Description</th>
                 <th className="text-center align-middle">Content</th>
                 <th className="text-center align-middle">Default Unlock</th>
@@ -209,14 +212,14 @@ const SchoolWorldList = () => {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={canAnyAction ? 9 : 8} className="text-center py-4">
+                  <td colSpan={canAnyAction ? 10 : 9} className="text-center py-4">
                     <div className="spinner-border spinner-border-sm" role="status" />
                     <div className="mt-2 text-muted">Loading worlds…</div>
                   </td>
                 </tr>
               ) : rows.length === 0 ? (
                 <tr>
-                  <td colSpan={canAnyAction ? 9 : 8} className="text-center">
+                  <td colSpan={canAnyAction ? 10 : 9} className="text-center">
                     No worlds found
                   </td>
                 </tr>
@@ -233,6 +236,10 @@ const SchoolWorldList = () => {
 
                     <td>
                       <Trunc value={w.name} maxWidth={260} />
+                    </td>
+
+                    <td className="text-center align-middle text-warning">
+                      {w.is_premium && <Icon icon="mdi:crown" width={24} title="Premium" />}
                     </td>
 
                     <td>

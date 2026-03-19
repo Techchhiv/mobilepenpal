@@ -87,13 +87,13 @@ const SchoolWorldCreate = () => {
       const errors = err?.response?.data?.errors || {};
       setError(
         errors?.name?.[0] ||
-          errors?.name_en?.[0] ||
-          errors?.description?.[0] ||
-          errors?.description_en?.[0] ||
-          errors?.is_active?.[0] ||
-          errors?.is_unlocked_by_default?.[0] ||
-          err?.response?.data?.message ||
-          "Failed to create world. Please try again."
+        errors?.name_en?.[0] ||
+        errors?.description?.[0] ||
+        errors?.description_en?.[0] ||
+        errors?.is_active?.[0] ||
+        errors?.is_unlocked_by_default?.[0] ||
+        err?.response?.data?.message ||
+        "Failed to create world. Please try again."
       );
     } finally {
       setSaving(false);
@@ -170,11 +170,15 @@ const SchoolWorldCreate = () => {
                       </span>
 
                       <span
-                        className={`badge ${
-                          form.is_unlocked_by_default ? "bg-primary" : "bg-light text-dark"
-                        }`}
+                        className={`badge ${form.is_unlocked_by_default ? "bg-primary" : "bg-light text-dark"
+                          }`}
                       >
                         {form.is_unlocked_by_default ? "Default Unlock" : "Not Default"}
+                      </span>
+
+                      <span className="badge bg-warning text-dark" title="Worlds created by your school are always premium">
+                        <Icon icon="mdi:crown" className="me-1" />
+                        Premium (Always Included)
                       </span>
                     </div>
                   </div>

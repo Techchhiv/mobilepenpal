@@ -13,6 +13,8 @@ function prettyDate(d) {
     return dt.toLocaleDateString();
 }
 
+const boolish = (v) => v === true || String(v ?? "0") === "1";
+
 const WorldView = () => {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -120,19 +122,14 @@ const WorldView = () => {
     const normalized = useMemo(() => {
         if (!world) return null;
 
-        const is_active =
-            world?.is_active === true || String(world?.is_active ?? "0") === "1";
-
-        const is_unlocked_by_default =
-            world?.is_unlocked_by_default === true ||
-            String(world?.is_unlocked_by_default ?? "0") === "1";
+        const is_active = boolish(world?.is_active);
+        const is_premium = boolish(world?.is_premium);
+        const is_unlocked_by_default = boolish(world?.is_unlocked_by_default);
 
         const levels = Array.isArray(world?.levels) ? world.levels : [];
 
         const levels_count = levels.length;
-        const active_levels_count = levels.filter(
-            (l) => l?.is_active === true || String(l?.is_active ?? "0") === "1"
-        ).length;
+        const active_levels_count = levels.filter((l) => boolish(l?.is_active)).length;
 
         const stages_count = levels.reduce(
             (sum, l) => sum + (Number(l?.stages_count) || 0),
@@ -147,6 +144,7 @@ const WorldView = () => {
         return {
             ...world,
             is_active,
+            is_premium,
             is_unlocked_by_default,
             levels,
             levels_count,
@@ -281,6 +279,13 @@ const WorldView = () => {
                                                     ? "Default Unlock"
                                                     : "Not Default"}
                                             </span>
+
+                                            {normalized.is_premium && (
+                                                <span className="badge bg-warning text-dark">
+                                                    <Icon icon="mdi:crown" className="me-1" />
+                                                    Premium
+                                                </span>
+                                            )}
                                         </div>
 
                                         <div className="mt-10 text-muted">
@@ -382,6 +387,7 @@ const WorldView = () => {
                                                         <tr>
                                                             <th>Order</th>
                                                             <th>Name</th>
+                                                            <th className="text-center">Premium</th>
                                                             <th>Status</th>
                                                             <th>Stages</th>
                                                             <th style={{ width: 120 }} className="text-center">Action</th>
@@ -400,6 +406,11 @@ const WorldView = () => {
                                                                         <td>
                                                                             <div className="fw-medium">{l.name ?? "—"}</div>
                                                                             {l.name_en ? <div className="text-muted small">{l.name_en}</div> : null}
+                                                                        </td>
+                                                                        <td className="text-center">
+                                                                            {(l?.is_premium === true || String(l?.is_premium ?? "0") === "1") && (
+                                                                                <Icon icon="mdi:crown" className="text-warning" width={20} title="Premium" />
+                                                                            )}
                                                                         </td>
                                                                         <td>
                                                                             <span

@@ -21,6 +21,7 @@ const Trunc = ({ value, maxWidth = 240 }) => {
 const normalizeWorld = (w) => ({
     ...w,
     is_active: w?.is_active === true || String(w?.is_active ?? "0") === "1",
+    is_premium: w?.is_premium === true || String(w?.is_premium ?? "0") === "1",
     is_unlocked_by_default:
         w?.is_unlocked_by_default === true ||
         String(w?.is_unlocked_by_default ?? "0") === "1",
@@ -75,11 +76,12 @@ const WorldList = () => {
                     columnDefs: [
                         { targets: 0, width: "60px" },
                         { targets: 1, width: "60px" },
-                        { targets: 2, width: "180px" },
+                        { targets: 2, width: "160px" },
                         { targets: 3, width: "200px" },
-                        { targets: 4, width: "170px" },
-                        // { targets: 5, width: "140px" },
-                        // { targets: 6, width: "140px" },
+                        { targets: 4, width: "100px" }, // Premium
+                        { targets: 5, width: "170px" }, // Content
+                        // { targets: 6, width: "140px" }, // Default Unlock
+                        // { targets: 7, width: "140px" }, // Status
                     ],
                 });
             }, 0);
@@ -129,6 +131,7 @@ const WorldList = () => {
                                 <th>Order</th>
                                 <th>Name</th>
                                 <th>Description</th>
+                                <th className="text-center">Premium</th>
                                 <th className="text-center align-middle">Content</th>
                                 <th className="text-center align-middle">Default Unlock</th>
                                 <th className="text-center align-middle">Status</th>
@@ -139,7 +142,7 @@ const WorldList = () => {
                         <tbody>
                             {worlds.length === 0 ? (
                                 <tr>
-                                    <td colSpan={canAnyAction ? 8 : 7} className="text-center">
+                                    <td colSpan={canAnyAction ? 9 : 8} className="text-center">
                                         No worlds found
                                     </td>
                                 </tr>
@@ -154,6 +157,10 @@ const WorldList = () => {
 
                                         <td>
                                             <Trunc value={w.description || "—"} maxWidth={320} />
+                                        </td>
+
+                                        <td className="text-center align-middle text-warning">
+                                            {w.is_premium && <Icon icon="mdi:crown" width={24} title="Premium" />}
                                         </td>
 
                                         <td>

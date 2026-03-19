@@ -40,6 +40,7 @@ const LevelEdit = () => {
     description: "",
     description_en: "",
     is_active: true,
+    is_premium: false,
     is_unlocked_by_default: false,
   });
 
@@ -84,6 +85,7 @@ const LevelEdit = () => {
         description: lv?.description ?? "",
         description_en: lv?.description_en ?? "",
         is_active: normalizeBool(lv?.is_active),
+        is_premium: normalizeBool(lv?.is_premium),
         is_unlocked_by_default: normalizeBool(lv?.is_unlocked_by_default),
       };
 
@@ -191,6 +193,7 @@ const LevelEdit = () => {
         description: form.description?.trim() || null,
         description_en: form.description_en?.trim() || null,
         is_active: !!form.is_active,
+        is_premium: !!form.is_premium,
         is_unlocked_by_default: !!form.is_unlocked_by_default,
       };
 
@@ -336,6 +339,13 @@ const LevelEdit = () => {
                                   ? "Default Unlock"
                                   : "Not Default"}
                               </span>
+
+                              {form.is_premium && (
+                                <span className="px-16 py-4 rounded-pill fw-medium text-sm bg-warning-focus text-warning-main">
+                                  <Icon icon="mdi:crown" className="me-1" />
+                                  Premium
+                                </span>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -471,35 +481,49 @@ const LevelEdit = () => {
                               placeholder="Optional"
                             />
                           </div>
-                          {/* Toggles */}
-                          <div className="d-flex justify-content-end gap-5 col-12 align-items-center">
-                            <div className="form-check mt-4 d-flex align-content-center">
-                              <input
-                                className="form-check-input"
-                                type="checkbox"
-                                id="isActive"
-                                checked={!!form.is_active}
-                                onChange={onChange("is_active")}
-                              />
-                              <label className="form-check-label" htmlFor="isActive">
-                                Active
-                              </label>
-                            </div>
+                          <div className="col-12">
+                            <div className="d-flex justify-content-end gap-5 flex-wrap align-items-center mt-2">
+                              <div className="form-check d-flex align-content-center m-0">
+                                <input
+                                  className="form-check-input"
+                                  type="checkbox"
+                                  id="isActive"
+                                  checked={!!form.is_active}
+                                  onChange={onChange("is_active")}
+                                />
+                                <label className="form-check-label" htmlFor="isActive">
+                                  Active
+                                </label>
+                              </div>
 
-                            <div className="form-check mt-2 d-flex align-content-center">
-                              <input
-                                className="form-check-input"
-                                type="checkbox"
-                                id="unlockedByDefault"
-                                checked={!!form.is_unlocked_by_default}
-                                onChange={onChange("is_unlocked_by_default")}
-                              />
-                              <label
-                                className="form-check-label"
-                                htmlFor="unlockedByDefault"
-                              >
-                                Unlocked by default
-                              </label>
+                              <div className="form-check d-flex align-content-center m-0">
+                                <input
+                                  className="form-check-input"
+                                  type="checkbox"
+                                  id="isPremium"
+                                  checked={!!form.is_premium}
+                                  onChange={onChange("is_premium")}
+                                />
+                                <label className="form-check-label" htmlFor="isPremium">
+                                  Is Premium
+                                </label>
+                              </div>
+
+                              <div className="form-check d-flex align-content-center m-0">
+                                <input
+                                  className="form-check-input"
+                                  type="checkbox"
+                                  id="unlockedByDefault"
+                                  checked={!!form.is_unlocked_by_default}
+                                  onChange={onChange("is_unlocked_by_default")}
+                                />
+                                <label
+                                  className="form-check-label"
+                                  htmlFor="unlockedByDefault"
+                                >
+                                  Unlocked by default
+                                </label>
+                              </div>
                             </div>
                           </div>
                         </div>

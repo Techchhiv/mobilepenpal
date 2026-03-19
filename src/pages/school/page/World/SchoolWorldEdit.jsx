@@ -224,6 +224,11 @@ const SchoolWorldEdit = () => {
                                                     >
                                                         {form.is_unlocked_by_default ? "Default Unlock" : "Not Default"}
                                                     </span>
+
+                                                    <span className="badge bg-warning text-dark" title="Worlds created by your school are always premium">
+                                                        <Icon icon="mdi:crown" className="me-1" />
+                                                        Premium (Always Included)
+                                                    </span>
                                                 </div>
 
                                                 <div className="mt-10 text-muted small">

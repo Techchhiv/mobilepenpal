@@ -1,4 +1,3 @@
-// src/pages/admin/Subscriptions/SchoolSubscriptionsPage.jsx
 import React, { useEffect, useState, useMemo } from "react";
 import { Icon } from "@iconify/react";
 import MasterLayout from "../../../masterLayout/MasterLayout";
@@ -10,7 +9,7 @@ export default function SchoolSubscriptionsPage() {
     const [err, setErr] = useState("");
     const [msg, setMsg] = useState("");
     const [search, setSearch] = useState("");
-    const [actionLoading, setActionLoading] = useState(null); // schoolId being acted on
+    const [actionLoading, setActionLoading] = useState(null);
 
     const [modal, setModal] = useState(null);
     const [plan, setPlan] = useState("monthly");
@@ -236,6 +235,7 @@ export default function SchoolSubscriptionsPage() {
                                         <input
                                             type="number"
                                             min="0"
+                                            step="0.01"
                                             className="form-control"
                                             value={amount}
                                             onChange={(e) => setAmount(e.target.value)}

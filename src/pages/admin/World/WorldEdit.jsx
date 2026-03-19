@@ -35,6 +35,7 @@ const WorldEdit = () => {
     description_en: "",
     audience: "schools",
     school_ids: [],
+    is_premium: false,
     is_unlocked_by_default: false,
   });
 
@@ -61,6 +62,7 @@ const WorldEdit = () => {
         description_en: w?.description_en ?? "",
         audience: w?.audience ?? "schools",
         school_ids: Array.isArray(assignedIds) ? assignedIds : [],
+        is_premium: w?.is_premium === true || String(w?.is_premium ?? "0") === "1",
         is_unlocked_by_default: w?.is_unlocked_by_default === true || String(w?.is_unlocked_by_default ?? "0") === "1",
       });
     } catch (err) {
@@ -107,6 +109,7 @@ const WorldEdit = () => {
         audience: form.audience,
         school_ids: form.audience === "assigned" ? form.school_ids : [],
 
+        is_premium: !!form.is_premium,
         is_unlocked_by_default: !!form.is_unlocked_by_default,
       });
 
@@ -289,6 +292,13 @@ const WorldEdit = () => {
                             ? "Default Unlock"
                             : "Not Default"}
                         </span>
+
+                        {form.is_premium && (
+                          <span className="badge bg-warning text-dark">
+                            <Icon icon="mdi:crown" className="me-1" />
+                            Premium
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -422,20 +432,38 @@ const WorldEdit = () => {
                         </Field>
 
                         <div className="col-12">
-                          <div className="form-check d-flex align-content-center justify-content-end">
-                            <input
-                              className="form-check-input"
-                              type="checkbox"
-                              id="unlockedByDefault"
-                              checked={!!form.is_unlocked_by_default}
-                              onChange={onChange("is_unlocked_by_default")}
-                            />
-                            <label
-                              className="form-check-label"
-                              htmlFor="unlockedByDefault"
-                            >
-                              Unlocked by default
-                            </label>
+                          <div className="d-flex justify-content-end gap-4 flex-wrap">
+                            <div className="form-check d-flex align-content-center">
+                              <input
+                                className="form-check-input"
+                                type="checkbox"
+                                id="isPremium"
+                                checked={!!form.is_premium}
+                                onChange={onChange("is_premium")}
+                              />
+                              <label
+                                className="form-check-label"
+                                htmlFor="isPremium"
+                              >
+                                Is Premium
+                              </label>
+                            </div>
+
+                            <div className="form-check d-flex align-content-center">
+                              <input
+                                className="form-check-input"
+                                type="checkbox"
+                                id="unlockedByDefault"
+                                checked={!!form.is_unlocked_by_default}
+                                onChange={onChange("is_unlocked_by_default")}
+                              />
+                              <label
+                                className="form-check-label"
+                                htmlFor="unlockedByDefault"
+                              >
+                                Unlocked by default
+                              </label>
+                            </div>
                           </div>
                         </div>
                       </div>

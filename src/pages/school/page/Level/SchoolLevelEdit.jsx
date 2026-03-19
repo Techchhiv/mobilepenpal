@@ -157,12 +157,12 @@ const SchoolLevelEdit = () => {
       const errors = err?.response?.data?.errors || {};
       setError(
         errors?.name?.[0] ||
-          errors?.name_en?.[0] ||
-          errors?.description?.[0] ||
-          errors?.description_en?.[0] ||
-          errors?.order_index?.[0] ||
-          err?.response?.data?.message ||
-          "Failed to update level."
+        errors?.name_en?.[0] ||
+        errors?.description?.[0] ||
+        errors?.description_en?.[0] ||
+        errors?.order_index?.[0] ||
+        err?.response?.data?.message ||
+        "Failed to update level."
       );
     } finally {
       setSaving(false);
@@ -271,24 +271,28 @@ const SchoolLevelEdit = () => {
 
                               <div className="mt-10 d-flex gap-2 flex-wrap">
                                 <span
-                                  className={`px-16 py-4 rounded-pill fw-medium text-sm ${
-                                    form.is_active
+                                  className={`px-16 py-4 rounded-pill fw-medium text-sm ${form.is_active
                                       ? "bg-success-focus text-success-main"
                                       : "bg-warning-focus text-warning-main"
-                                  }`}
+                                    }`}
                                 >
                                   {form.is_active ? "Active" : "Disabled"}
                                 </span>
 
                                 <span
-                                  className={`px-16 py-4 rounded-pill fw-medium text-sm ${
-                                    form.is_unlocked_by_default
+                                  className={`px-16 py-4 rounded-pill fw-medium text-sm ${form.is_unlocked_by_default
                                       ? "bg-primary-light text-primary-600"
                                       : "bg-light text-dark"
-                                  }`}
+                                    }`}
                                 >
                                   {form.is_unlocked_by_default ? "Default Unlock" : "Not Default"}
                                 </span>
+                                {normalized?.owned_by_school && (
+                                  <span className="px-16 py-4 rounded-pill fw-medium text-sm bg-warning-focus text-warning-main" title="Levels created by your school are always premium">
+                                    <Icon icon="mdi:crown" className="me-1" />
+                                    Premium (Always Included)
+                                  </span>
+                                )}
                               </div>
                             </div>
                           </div>
