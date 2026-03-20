@@ -18,10 +18,10 @@ class DatabaseSeeder extends Seeder
         $this->call([
             RbacSeeder::class ,
             SchoolSeeder::class ,
-            StudentSeeder::class ,
             SubscriptionSeeder::class ,
             ExerciseSeeder::class ,
             WorldLevelStageSeeder::class ,
+            StudentSeeder::class ,
             // TeacherRolesSeeder::class
             // StudentExerciseAttemptSeeder::class ,
         ]);

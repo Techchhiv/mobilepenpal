@@ -461,6 +461,54 @@ class StudentProgress
         $stat->save();
     }
 
+    public function updateStudentStreak(int $studentId, int $totalExercisesAdded): int
+    {
+        $today = Carbon::today()->toDateString();
+        $yesterday = Carbon::yesterday()->toDateString();
+        
+        $statToday = StudentDailyStat::where('student_id', $studentId)
+            ->where('date', $today)
+            ->first();
+            
+        if ($statToday && (int)$statToday->exercises_attempted === $totalExercisesAdded) {
+            $student = Student::find($studentId);
+            if (!$student) return 0;
+            
+            $statYesterday = StudentDailyStat::where('student_id', $studentId)
+                ->where('date', $yesterday)
+                ->exists();
+                
+            if ($statYesterday) {
+                $student->streak = ($student->streak ?? 0) + 1;
+            } else {
+                $student->streak = 1;
+            }
+            
+            $student->save();
+            return (int)$student->streak;
+        }
+        
+        return (int)Student::whereKey($studentId)->value('streak') ?? 0;
+    }
+
+    public function refreshStudentStreak(int $studentId): void
+    {
+        $today = Carbon::today()->toDateString();
+        $yesterday = Carbon::yesterday()->toDateString();
+
+        $activeRecently = StudentDailyStat::where('student_id', $studentId)
+            ->whereIn('date', [$today, $yesterday])
+            ->exists();
+
+        if (!$activeRecently) {
+            $student = Student::find($studentId);
+            if ($student && $student->streak > 0) {
+                $student->streak = 0;
+                $student->save();
+            }
+        }
+    }
+
     private function initializeDefaultUnlockedContent(int $studentId): void
     {
         $defaultWorlds = $this->visibleWorldQueryForStudent($studentId)

@@ -1,11 +1,13 @@
 <?php
+
 namespace Database\Seeders;
 
 use App\Models\School;
 use App\Models\Student;
+use App\Models\StudentDailyStat;
+use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
 
 class StudentSeeder extends Seeder
 {
@@ -13,11 +15,10 @@ class StudentSeeder extends Seeder
     {
         $itcSchool = School::where('school_key', 'SCH-QI8AJ1')->first();
         $itcSchoolId = $itcSchool ? $itcSchool->id : 1;
+        $accountStart = Carbon::today()->subWeek()->startOfDay();
 
         $students = [
             [
-                // 'school_id' => 1,
-                // 'school_key' => 'GHS2024',
                 'first_name' => 'Julian',
                 'last_name' => 'Thorne',
                 'nickname' => 'Julian',
@@ -31,7 +32,6 @@ class StudentSeeder extends Seeder
                 'password' => 'password123',
                 'address' => 'Phnom Penh, Cambodia',
                 'enrollment_year' => '2024',
-                // 'mode' => 'student',
                 'is_active' => true,
                 'coin' => 1000,
             ],
@@ -51,21 +51,17 @@ class StudentSeeder extends Seeder
                 'password' => 'password123',
                 'address' => 'Phnom Penh, Cambodia',
                 'enrollment_year' => '2024',
-                // 'mode' => 'student',
                 'is_active' => true,
             ],
         ];
 
         foreach ($students as $studentData) {
-            $existingStudent = Student::where('email', $studentData['email'])
+            $student = Student::query()
+                ->where('email', $studentData['email'])
                 ->orWhere('phone', $studentData['phone'])
-                ->first();
+                ->first() ?? new Student();
 
-            if ($existingStudent) {
-                continue;
-            }
-
-            Student::create([
+            $student->fill([
                 'school_id' => $studentData['school_id'] ?? null,
                 'school_key' => $studentData['school_key'] ?? null,
                 'first_name' => $studentData['first_name'],
@@ -81,13 +77,51 @@ class StudentSeeder extends Seeder
                 'password' => Hash::make($studentData['password']),
                 'address' => $studentData['address'],
                 'enrollment_year' => $studentData['enrollment_year'],
-                // 'mode' => $studentData['mode'] ?? 'student',
                 'is_active' => $studentData['is_active'],
                 'coin' => $studentData['coin'] ?? 0,
                 'xp' => $studentData['xp'] ?? 0,
-                'streak' => $studentData['streak'] ?? 0,
+                'streak' => 0,
                 'unlocked_avatars' => $studentData['unlocked_avatars'] ?? [],
+                'created_at' => $accountStart->copy(),
+                'updated_at' => now(),
+            ]);
+            $student->save();
+
+            $this->seedDailyStreak(
+                student: $student,
+                startDate: $accountStart->copy(),
+            );
+        }
+    }
+
+    private function seedDailyStreak(Student $student, Carbon $startDate): void
+    {
+        StudentDailyStat::where('student_id', $student->id)->delete();
+
+        $lastSeedDate = Carbon::yesterday()->startOfDay();
+        $streakDays = $startDate->diffInDays($lastSeedDate) + 1;
+
+        for ($day = 0; $day < $streakDays; $day++) {
+            $date = $startDate->copy()->addDays($day);
+            $exercisesAttempted = 8 + $day;
+            $correctAttempts = max($exercisesAttempted - 1, 1);
+
+            StudentDailyStat::create([
+                'student_id' => $student->id,
+                'date' => $date->toDateString(),
+                'exercises_attempted' => $exercisesAttempted,
+                'correct_attempts' => $correctAttempts,
+                'incorrect_attempts' => $exercisesAttempted - $correctAttempts,
+                'stages_completed' => 1,
+                'stars_earned' => 2,
+                'time_spent_seconds' => 600 + ($day * 45),
+                'created_at' => $date->copy()->setTime(8, 0),
+                'updated_at' => $date->copy()->setTime(8, 15),
             ]);
         }
+
+        $student->streak = $streakDays;
+        $student->updated_at = now();
+        $student->save();
     }
 }

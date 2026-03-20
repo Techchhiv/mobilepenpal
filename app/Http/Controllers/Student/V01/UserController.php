@@ -34,6 +34,7 @@ class UserController extends Controller
         }
 
         $studentProgress = new StudentProgress();
+        $studentProgress->refreshStudentStreak($authUser->id);
 
         $this->setResult("profile", new UserDetailResource($authUser));
         $this->setResult(

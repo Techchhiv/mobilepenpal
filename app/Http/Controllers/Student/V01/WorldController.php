@@ -23,6 +23,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use App\Models\Student;
 
 class WorldController extends Controller
 {
@@ -117,44 +118,62 @@ class WorldController extends Controller
     {
         $studentId = auth()->id();
         $attempts = $request->input('attempts', []);
+        $isAdventure = filter_var($request->input('is_adventure', false), FILTER_VALIDATE_BOOLEAN);
+        $isDailyChallenge = filter_var($request->input('is_daily_challenge', false), FILTER_VALIDATE_BOOLEAN);
+        $isStagelessSession = $isAdventure || $isDailyChallenge;
 
         if (empty($attempts)) {
             return $this->returnError('No attempts provided', 400);
         }
 
         $stageId = (int) $request->input('stage_id', 0);
-        if ($stageId <= 0) {
+        if (!$isStagelessSession && $stageId <= 0) {
             return $this->returnError('Missing stage_id', 422);
         }
 
-        $progress = new StudentProgress();
-        $visibleWorldIds = $progress->visibleWorldIdsForStudent($studentId);
+        if (!$isStagelessSession) {
+            $progress = new StudentProgress();
+            $visibleWorldIds = $progress->visibleWorldIdsForStudent($studentId);
 
-        $allowedStage = Stage::query()
-            ->whereKey($stageId)
-            ->where('is_active', true)
-            ->whereHas('level.world', fn($q) => $q->whereIn('worlds.id', $visibleWorldIds)->where('worlds.is_active', true))
-            ->exists();
+            $allowedStage = Stage::query()
+                ->whereKey($stageId)
+                ->where('is_active', true)
+                ->whereHas('level.world', fn($q) => $q->whereIn('worlds.id', $visibleWorldIds)->where('worlds.is_active', true))
+                ->exists();
 
-        if (!$allowedStage) {
-            return $this->returnError('Stage not found', 404);
-        }
+            if (!$allowedStage) {
+                return $this->returnError('Stage not found', 404);
+            }
 
-        $stage = Stage::with('level.world')->find($stageId);
-        $isPremiumContent = ($stage->level?->is_premium || $stage->level?->world?->is_premium);
-        if ($isPremiumContent && !auth()->user()->hasActiveSubscription()) {
-            return $this->returnError('Subscription required to access this content', 403);
+            $stage = Stage::with('level.world')->find($stageId);
+            $isPremiumContent = ($stage->level?->is_premium || $stage->level?->world?->is_premium);
+            if ($isPremiumContent && !auth()->user()->hasActiveSubscription()) {
+                return $this->returnError('Subscription required to access this content', 403);
+            }
         }
 
         $durationSeconds = (int) $request->input('duration_seconds', 0);
 
         $summary = [];
+        $currentCoin = 0;
+        $currentXp = 0;
         $progressService = new StudentProgress();
 
-        DB::transaction(function () use ($studentId, $attempts, $progressService, $durationSeconds, $stageId, &$summary) {
+        DB::transaction(function () use (
+            $studentId,
+            $attempts,
+            $progressService,
+            $durationSeconds,
+            $stageId,
+            $isStagelessSession,
+            &$summary,
+            &$currentCoin,
+            &$currentXp,
+            $request
+        ) {
             $firstAttempt = collect($attempts)->first();
             if (!is_array($firstAttempt) || !isset($firstAttempt['exercise_id'])) {
-                throw new \InvalidArgumentException('Invalid attempts payload: missing exercise_id');
+                throw new InvalidArgumentException('Invalid attempts payload: missing exercise_id');
             }
 
             $exerciseIds = collect($attempts)
@@ -163,14 +182,24 @@ class WorldController extends Controller
                 ->unique()
                 ->values();
 
-            $mappedCount = StageExercise::query()
-                ->where('stage_id', $stageId)
-                ->where('is_active', true)
-                ->whereIn('exercise_id', $exerciseIds)
-                ->count();
+            if ($isStagelessSession) {
+                $existingCount = Exercise::query()
+                    ->whereIn('id', $exerciseIds)
+                    ->count();
 
-            if ($mappedCount !== $exerciseIds->count()) {
-                throw new \InvalidArgumentException('One or more exercises do not belong to this stage');
+                if ($existingCount !== $exerciseIds->count()) {
+                    throw new InvalidArgumentException('One or more exercises are invalid');
+                }
+            } else {
+                $mappedCount = StageExercise::query()
+                    ->where('stage_id', $stageId)
+                    ->where('is_active', true)
+                    ->whereIn('exercise_id', $exerciseIds)
+                    ->count();
+
+                if ($mappedCount !== $exerciseIds->count()) {
+                    throw new InvalidArgumentException('One or more exercises do not belong to this stage');
+                }
             }
 
             $totalExercises = 0;
@@ -196,7 +225,7 @@ class WorldController extends Controller
             if ($durationSeconds > 0) {
                 StudentSession::create([
                     'student_id' => $studentId,
-                    'stage_id' => $stageId,
+                    'stage_id' => $isStagelessSession ? null : $stageId,
                     'duration_seconds' => $durationSeconds,
                     'started_at' => now()->subSeconds($durationSeconds),
                     'ended_at' => now(),
@@ -205,12 +234,60 @@ class WorldController extends Controller
 
             $progressService->addDailyStatsFromSession(
                 studentId: $studentId,
-                stageId: $stageId,
+                stageId: $isStagelessSession ? null : $stageId,
                 totalExercises: $totalExercises,
                 correctAttempts: $correctAttempts,
                 durationSeconds: $durationSeconds,
                 date: Carbon::today()
             );
+
+            $newStreak = $progressService->updateStudentStreak($studentId, $totalExercises);
+
+            $coinsEarned = (int) $request->input('coins_earned', 0);
+            $xpEarned = (int) $request->input('xp_earned', 0);
+            $student = Student::find($studentId);
+            if ($student) {
+                if ($coinsEarned > 0) {
+                    $student->coin = ($student->coin ?? 0) + $coinsEarned;
+                }
+                if ($xpEarned > 0) {
+                    $student->xp = ($student->xp ?? 0) + $xpEarned;
+                }
+                if ($coinsEarned > 0 || $xpEarned > 0) {
+                    $student->save();
+                }
+                $currentCoin = (int) ($student->coin ?? 0);
+                $currentXp = (int) ($student->xp ?? 0);
+            }
+
+            if ($isStagelessSession) {
+                $score = $totalExercises > 0
+                    ? (int) round(($correctAttempts / $totalExercises) * 100)
+                    : 0;
+
+                $starsEarned = 0;
+                if ($score >= 100) {
+                    $starsEarned = 3;
+                } elseif ($score >= 66) {
+                    $starsEarned = 2;
+                } elseif ($score >= 33) {
+                    $starsEarned = 1;
+                }
+
+                $summary = [
+                    'stars_earned' => $starsEarned,
+                    'correct_answers' => $correctAttempts,
+                    'total_questions' => $totalExercises,
+                    'is_new_best' => false,
+                    'next_stage_id' => null,
+                    'is_last' => false,
+                    'current_coin' => $currentCoin,
+                    'current_xp' => $currentXp,
+                    'streak' => $newStreak,
+                ];
+
+                return;
+            }
 
             $results = [
                 'total_exercises' => $totalExercises,
@@ -227,13 +304,18 @@ class WorldController extends Controller
                 'is_new_best' => $progressResult['is_new_best'] ?? false,
                 'next_stage_id' => $progressResult['next_stage_id'] ?? null,
                 'is_last' => $progressResult['is_last'] ?? false,
+                'current_coin' => $currentCoin,
+                'current_xp' => $currentXp,
+                'streak' => $newStreak,
             ];
         });
 
         $this->setResult('summary', $summary);
+        $this->setResult('current_coin', $currentCoin);
+        $this->setResult('current_xp', $currentXp);
         return $this->returnResponse();
     }
-    
+
     public function exercises(): JsonResponse
     {
         $exercises = Exercise::query()
