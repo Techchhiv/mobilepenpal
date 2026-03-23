@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\V01\LevelController;
+use App\Http\Controllers\Admin\V01\ReportController;
 use App\Http\Controllers\Admin\V01\SubscriptionController as AdminSubscriptionController;
 use App\Http\Controllers\Admin\V01\WorldController;
 use App\Http\Controllers\School\V01\WorldController as SchoolWorldController;
@@ -54,8 +55,10 @@ Route::middleware('auth:api')->group(function () {
        Admin Routes
     --------------------------------*/
     Route::prefix('admin')->name('admin.')->group(function () {
-
-        Route::get('/reports/schools', [\App\Http\Controllers\Admin\V01\DashboardController::class, 'index']);
+        Route::middleware(['permission:menu.reports|reports.view'])->prefix('reports')->group(function () {
+            Route::get('/schools', [ReportController::class, 'index']);
+            Route::get('/schools/{school}', [ReportController::class, 'show']);
+        });
 
         // Schools
         Route::middleware(['permission:menu.manage_clients'])->group(function () {

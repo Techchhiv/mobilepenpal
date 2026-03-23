@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Subscription extends Model
 {
     use HasFactory;
+
     protected $fillable = [
         'school_id',
         'student_id',
@@ -16,6 +17,13 @@ class Subscription extends Model
         'start_date',
         'end_date',
         'active',
+    ];
+
+    protected $casts = [
+        'start_date' => 'date',
+        'end_date' => 'date',
+        'active' => 'boolean',
+        'amount' => 'decimal:2',
     ];
 
     public function school()
