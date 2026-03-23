@@ -3,15 +3,14 @@ import 'package:get/get.dart';
 import 'package:mobilepenpal/core/config/env.dart';
 import 'package:mobilepenpal/core/network/route_builder.dart';
 import 'package:mobilepenpal/core/theme/app_colors.dart';
-import 'package:mobilepenpal/core/utils/number_format_utils.dart';
 import 'package:mobilepenpal/data/controllers/world/level_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_controller.dart';
-import 'package:mobilepenpal/data/controllers/world/stage_animation_controller.dart';
 import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
 import 'package:mobilepenpal/data/controllers/shop/shop_controller.dart';
 import 'package:mobilepenpal/presentation/routes/app_routes.dart';
 import 'package:mobilepenpal/presentation/widgets/app_snackbar.dart';
 import 'package:mobilepenpal/presentation/widgets/loading_overly.dart';
+import 'package:mobilepenpal/presentation/widgets/world/math_fruit_display.dart';
 import 'package:mobilepenpal/presentation/widgets/world/stage_components/stage_drawing_board.dart';
 import 'package:mobilepenpal/presentation/widgets/world/stage_components/stage_illustration.dart';
 import 'package:mobilepenpal/presentation/widgets/world/stage_components/stage_top_bar.dart';
@@ -192,23 +191,7 @@ class StageDetailPage extends GetView<StageController> {
       Widget? mathWidget;
       if (controller.isMathCurrent) {
         final raw = controller.mathPrompt.value;
-        final km = NumberFormatUtils.digitsByLocale(raw, forceKhmer: true);
-        mathWidget = Center(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                km,
-                style: const TextStyle(
-                  fontSize: 64,
-                  fontWeight: FontWeight.w900,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ),
-        );
+        mathWidget = MathFruitDisplay(prompt: raw);
       }
 
       return StageIllustration(
@@ -222,6 +205,7 @@ class StageDetailPage extends GetView<StageController> {
 
   Widget _buildCharacterOptions() {
     return Obx(() {
+      if (controller.isMathCurrent) return const SizedBox.shrink();
       final forms = controller.characterVowelFormsList;
       if (forms.isEmpty) return const SizedBox.shrink();
 

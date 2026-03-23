@@ -7,6 +7,7 @@ import 'package:mobilepenpal/data/controllers/adventure/adventure_stage_controll
 import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
 import 'package:mobilepenpal/data/controllers/shop/shop_controller.dart';
 import 'package:mobilepenpal/presentation/widgets/loading_overly.dart';
+import 'package:mobilepenpal/presentation/widgets/world/math_fruit_display.dart';
 import 'package:mobilepenpal/presentation/widgets/world/stage_components/stage_drawing_board.dart';
 import 'package:mobilepenpal/presentation/widgets/world/stage_components/stage_illustration.dart';
 import 'package:mobilepenpal/presentation/widgets/world/stage_components/stage_top_bar.dart';
@@ -127,15 +128,28 @@ class AdventureStagePage extends GetView<AdventureStageController> {
                               return Column(
                                 key: const ValueKey('illus'),
                                 children: [
-                                  StageIllustration(
-                                    illustrationAssetPath: controller
-                                        .anim
-                                        .illustrationAssetPath
-                                        .value,
-                                    illustrationLabel:
-                                        controller.anim.illustrationLabel.value,
-                                    selectedCharacter:
-                                        controller.selectedCharacter.value,
+                                  Builder(
+                                    builder: (_) {
+                                      Widget? mathWidget;
+                                      if (controller.isMathCurrent) {
+                                        mathWidget = MathFruitDisplay(
+                                          prompt: controller.mathPrompt.value,
+                                        );
+                                      }
+                                      return StageIllustration(
+                                        illustrationAssetPath: controller
+                                            .anim
+                                            .illustrationAssetPath
+                                            .value,
+                                        illustrationLabel: controller
+                                            .anim
+                                            .illustrationLabel
+                                            .value,
+                                        selectedCharacter:
+                                            controller.selectedCharacter.value,
+                                        mathPromptWidget: mathWidget,
+                                      );
+                                    },
                                   ),
                                   const SizedBox(height: 0),
                                 ],
@@ -199,6 +213,7 @@ class AdventureStagePage extends GetView<AdventureStageController> {
 
   Widget _buildCharacterOptions() {
     return Obx(() {
+      if (controller.isMathCurrent) return const SizedBox.shrink();
       final forms = controller.characterVowelFormsList;
       if (forms.isEmpty) return const SizedBox.shrink();
       const sideSlotWidth = 54.0;

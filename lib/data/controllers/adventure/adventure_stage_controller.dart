@@ -11,6 +11,8 @@ import 'package:flutter_drawing_board/flutter_drawing_board.dart';
 import 'package:flutter_drawing_board/paint_contents.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:mobilepenpal/core/utils/adventure_shadow_score_util.dart';
+import 'package:mobilepenpal/core/utils/math_generation.dart';
+import 'package:mobilepenpal/core/utils/number_format_utils.dart';
 import 'package:mobilepenpal/core/utils/stage_session_type.dart';
 import 'package:mobilepenpal/presentation/widgets/world/image_stamp_content.dart';
 import 'package:get/get.dart';
@@ -57,7 +59,21 @@ class AdventureStageController extends GetxController {
     (_) => DrawingController(),
   );
 
-  int get activeBoardCount => 1;
+  int get activeBoardCount {
+    if (isMathCurrent) {
+      final expected = mathExpected.value;
+      if (expected != null) {
+        return expected.toString().length;
+      }
+    }
+    return 1;
+  }
+
+  final MathGenerator _mathGen = MathGenerator();
+  final mathPrompt = ''.obs;
+  final mathExpected = RxnInt();
+  final currentMathOp = RxnString();
+  final Map<String, MathQuestion> _mathCache = {};
 
   final letterSubpathsNorm = <List<Offset>>[].obs;
   final strokeStrokesNorm = <List<Offset>>[].obs;
@@ -123,8 +139,15 @@ class AdventureStageController extends GetxController {
 
   bool get showIllustration {
     final t = (currentExercise?.characterType ?? '').trim().toLowerCase();
-    return t == 'consonants' || t == 'digits';
+    return t == 'consonants' || t == 'digits' || t == 'math';
   }
+
+  bool get isMathCurrent {
+    final t = (currentExercise?.characterType ?? '').trim().toLowerCase();
+    return t == 'math';
+  }
+
+  String _mathKeyFor(StageExercise ex) => '${ex.id}:${ex.repeatSlot}';
 
   bool get isDailyChallenge => StageSessionType.isDailyChallenge(sessionType);
 
@@ -358,6 +381,30 @@ class AdventureStageController extends GetxController {
     clearBoard();
 
     final ex = exercises[index];
+    final t = (ex.characterType ?? '').trim().toLowerCase();
+
+    if (t == 'math') {
+      final key = _mathKeyFor(ex);
+      final diff = parseMathDifficulty(ex.difficulty);
+      final q = _mathCache.putIfAbsent(key, () {
+        return _mathGen.generate(difficulty: diff, opKeyRaw: ex.mathOp);
+      });
+      mathPrompt.value = q.toPrompt(withQuestionMark: true);
+      mathExpected.value = q.expectedAnswer;
+      currentMathOp.value = q.opKey;
+
+      letterSubpathsNorm.clear();
+      strokeStrokesNorm.clear();
+      anim.setGuideFromPx(strokesPx: const []);
+      anim.stopGuide();
+
+      selectedCharacter.value = '';
+      return;
+    }
+
+    mathPrompt.value = '';
+    mathExpected.value = null;
+    currentMathOp.value = null;
 
     selectedCharacter.value = ex.character;
     setGuideForCharacter(selectedCharacter.value);
@@ -499,7 +546,12 @@ class AdventureStageController extends GetxController {
       _applyStampBrush();
     }
 
-    anim.restartGuideFromStart();
+    if (!isMathCurrent) {
+      anim.restartGuideFromStart();
+    } else {
+      anim.stopGuide();
+      anim.setGuideFromPx(strokesPx: const []);
+    }
   }
 
   void onPointerDown() {
@@ -535,7 +587,9 @@ class AdventureStageController extends GetxController {
     }
 
     if (totalDistance < 248.0) {
-      anim.restartGuideFromStart();
+      if (!isMathCurrent) {
+        anim.restartGuideFromStart();
+      }
       return;
     }
 
@@ -635,8 +689,15 @@ class AdventureStageController extends GetxController {
 
       prediction = (data['prediction'] ?? '').toString().trim();
 
-      final expected = exercise.character.trim();
-      isCorrect = prediction == expected;
+      if (isMathCurrent) {
+        final expected = mathExpected.value;
+        final predValue = NumberFormatUtils.parseIntAny(prediction);
+        isCorrect =
+            expected != null && predValue != null && predValue == expected;
+      } else {
+        final expected = exercise.character.trim();
+        isCorrect = prediction == expected;
+      }
     } on DioException catch (e) {
       if (CancelToken.isCancel(e)) return;
     } catch (e) {
@@ -651,7 +712,9 @@ class AdventureStageController extends GetxController {
     if (!isCorrect) {
       unawaited(audio.playWrongSfx());
 
-      if (strokeStrokesNorm.isNotEmpty && letterSubpathsNorm.isNotEmpty) {
+      if (!isMathCurrent &&
+          strokeStrokesNorm.isNotEmpty &&
+          letterSubpathsNorm.isNotEmpty) {
         final hint = StrokeFeedbackUtil.getFeedback(
           userRawStrokes: _rawStrokesList[0],
           templateStrokesPx: strokeStrokesNorm,
@@ -677,7 +740,7 @@ class AdventureStageController extends GetxController {
         customDuration: wrongDisplayDuration,
         onAfterReset: () {
           clearBoard();
-          anim.restartGuideFromStart();
+          if (!isMathCurrent) anim.restartGuideFromStart();
         },
       );
 
