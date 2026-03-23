@@ -67,18 +67,26 @@ class ShopController extends GetxController {
   void _syncWithStudent() {
     if (Get.isRegistered<HomeController>()) {
       final homeController = Get.find<HomeController>();
-      
+
       // Initial sync
       if (homeController.student.value != null) {
         totalPoints.value = homeController.student.value!.coin;
+        _box.write(_pointsKey, totalPoints.value);
         unlockedAvatarIds.assignAll(homeController.student.value!.unlockedAvatars);
+        _ensureFreeAvatarsUnlocked();
+        _saveUnlocked();
+        _sanitizeSelectedAvatar();
       }
 
       // Reactive sync
       ever(homeController.student, (Student? s) {
         if (s != null) {
           totalPoints.value = s.coin;
+          _box.write(_pointsKey, totalPoints.value);
           unlockedAvatarIds.assignAll(s.unlockedAvatars);
+          _ensureFreeAvatarsUnlocked();
+          _saveUnlocked();
+          _sanitizeSelectedAvatar();
         }
       });
     }
@@ -169,15 +177,11 @@ class ShopController extends GetxController {
       unlockedAvatarIds.assignAll(savedUnlocked.cast<String>());
     }
 
-    // Ensure free avatars are always unlocked
-    for (final avatar in allAvatars) {
-      if (avatar.price == 0 && !unlockedAvatarIds.contains(avatar.id)) {
-        unlockedAvatarIds.add(avatar.id);
-      }
-    }
+    _ensureFreeAvatarsUnlocked();
     _saveUnlocked();
 
     selectedAvatarId.value = _box.read<String>(_selectedKey) ?? 'default';
+    _sanitizeSelectedAvatar();
   }
 
   bool isUnlocked(String avatarId) {
@@ -265,10 +269,34 @@ class ShopController extends GetxController {
 
   /// Get the currently selected avatar data
   ShopAvatar get currentAvatar {
+    if (!isUnlocked(selectedAvatarId.value)) {
+      return allAvatars.firstWhereOrNull((a) => a.id == 'default') ??
+          (allAvatars.isNotEmpty ? allAvatars.first : defaultAvatars.first);
+    }
+
     return allAvatars.firstWhereOrNull(
           (a) => a.id == selectedAvatarId.value,
         ) ??
         (allAvatars.isNotEmpty ? allAvatars.first : defaultAvatars.first);
+  }
+
+  void _ensureFreeAvatarsUnlocked() {
+    for (final avatar in allAvatars) {
+      if (avatar.price == 0 && !unlockedAvatarIds.contains(avatar.id)) {
+        unlockedAvatarIds.add(avatar.id);
+      }
+    }
+  }
+
+  void _sanitizeSelectedAvatar() {
+    final savedSelection = selectedAvatarId.value;
+    if (savedSelection.isEmpty || !isUnlocked(savedSelection)) {
+      selectedAvatarId.value = 'default';
+      _box.write(_selectedKey, selectedAvatarId.value);
+      return;
+    }
+
+    _box.write(_selectedKey, savedSelection);
   }
 
   void _saveUnlocked() {

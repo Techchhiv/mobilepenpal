@@ -1,6 +1,10 @@
 import 'package:get/get.dart';
 import 'package:mobilepenpal/core/utils/adventure_stage_navigation_helper.dart';
+import 'package:mobilepenpal/core/utils/stage_session_type.dart';
 import 'package:mobilepenpal/data/controllers/adventure/adventure_controller.dart';
+import 'package:mobilepenpal/data/controllers/home/navigation_controller.dart';
+import 'package:mobilepenpal/data/models/exercise/exercise.dart';
+import 'package:mobilepenpal/presentation/routes/app_routes.dart';
 
 class AdventureSummaryController extends GetxController {
   late final int correctAnswers;
@@ -10,13 +14,19 @@ class AdventureSummaryController extends GetxController {
   late final int stageIndex;
   late final int earnedCoins;
   late final int earnedXp;
+  late final String sessionType;
+  late final String categoryLabel;
+  late final List<Exercise> exercises;
+
   final isRestarting = false.obs;
+
+  bool get isDailyChallenge => StageSessionType.isDailyChallenge(sessionType);
 
   @override
   void onInit() {
     super.onInit();
     final args = Get.arguments as Map<String, dynamic>? ?? {};
-    
+
     correctAnswers = args['correct'] as int? ?? 0;
     totalQuestions = args['total'] as int? ?? 0;
     starsEarned = args['stars'] as int? ?? 0;
@@ -24,13 +34,40 @@ class AdventureSummaryController extends GetxController {
     stageIndex = args['stageIndex'] as int? ?? 0;
     earnedCoins = args['coins'] as int? ?? 0;
     earnedXp = args['xp'] as int? ?? 0;
+    sessionType =
+        args['sessionType'] as String? ?? StageSessionType.adventure;
+    categoryLabel = args['categoryLabel'] as String? ?? 'Daily Challenge';
+    exercises =
+        (args['exercises'] as List? ?? const <dynamic>[])
+            .whereType<Exercise>()
+            .toList();
   }
 
   void goBack() {
+    if (isDailyChallenge) {
+      _returnToDailyChallenge();
+      return;
+    }
+
     _unlockAndBack();
   }
 
   Future<void> retry() async {
+    if (isDailyChallenge) {
+      isRestarting.value = true;
+      final didNavigate = await AdventureStageNavigationHelper.openPreparedStage(
+        categoryLabel: categoryLabel,
+        stageIndex: stageIndex,
+        exerciseList: exercises,
+        sessionType: sessionType,
+        replaceCurrent: true,
+      );
+      if (didNavigate) return;
+      isRestarting.value = false;
+      _returnToDailyChallenge();
+      return;
+    }
+
     if (Get.isRegistered<AdventureController>()) {
       final adventureController = Get.find<AdventureController>();
       await adventureController.completeStage(stageIndex);
@@ -56,11 +93,20 @@ class AdventureSummaryController extends GetxController {
   }
 
   void _unlockAndBack({dynamic result}) {
-    // Determine if the user passed. For adventure, passing is usually any success,
-    // but maybe we require at least 1 star or something. Let's say if they finished it.
-    if (Get.isRegistered<AdventureController>()) {
+    if (!isDailyChallenge && Get.isRegistered<AdventureController>()) {
       Get.find<AdventureController>().completeStage(stageIndex);
     }
     Get.back(result: result);
+  }
+
+  void _returnToDailyChallenge() {
+    if (Get.isRegistered<NavigationController>()) {
+      Get.find<NavigationController>().changePage(2);
+    }
+
+    Get.offAllNamed(
+      AppRoutes.home,
+      arguments: {'initialTabIndex': 2},
+    );
   }
 }

@@ -46,6 +46,14 @@ class HomeController extends GetxController {
 
   String get avatarUrl => student.value?.avatar ?? '';
 
+  bool get isAdventureUnlocked => isConsonantsWorldCompleted;
+
+  bool get isConsonantsWorldCompleted {
+    return studentProgress
+        .where(_isConsonantsWorld)
+        .any((progress) => progress.isCompleted || progress.completed);
+  }
+
   ShopAvatar? get currentShopAvatar {
     if (Get.isRegistered<ShopController>()) {
       final shop = Get.find<ShopController>();
@@ -428,4 +436,13 @@ class HomeController extends GetxController {
       ? '${student.value!.parentFirstName} ${student.value?.parentLastName ?? ""}'
             .trim()
       : 'Parent';
+
+  bool _isConsonantsWorld(StudentProgress progress) {
+    final normalizedName = progress.nameEn.trim().toLowerCase();
+    final normalizedDescription = progress.descriptionEn.trim().toLowerCase();
+
+    return normalizedName == 'consonants' ||
+        normalizedName.contains('consonant') ||
+        normalizedDescription.contains('consonant');
+  }
 }

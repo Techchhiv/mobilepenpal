@@ -1,10 +1,12 @@
 import 'dart:developer' as dev;
 
 import 'package:get/get.dart';
+import 'package:mobilepenpal/core/utils/stage_session_type.dart';
 import 'package:mobilepenpal/data/controllers/adventure/adventure_controller.dart';
 import 'package:mobilepenpal/data/controllers/adventure/adventure_stage_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_animation_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_audio_controller.dart';
+import 'package:mobilepenpal/data/models/exercise/exercise.dart';
 import 'package:mobilepenpal/presentation/screens/adventure/adventure_stage_page.dart';
 
 class AdventureStageNavigationHelper {
@@ -23,9 +25,29 @@ class AdventureStageNavigationHelper {
     required AdventureController adventureController,
     bool replaceCurrent = false,
   }) async {
-    if (adventureController.isTransitioning.value) return false;
+    return openPreparedStage(
+      categoryLabel: stage.label,
+      stageIndex: stage.index,
+      exerciseList: stage.exercises,
+      sessionType: StageSessionType.adventure,
+      replaceCurrent: replaceCurrent,
+      transitionFlag: adventureController.isTransitioning,
+    );
+  }
 
-    adventureController.isTransitioning.value = true;
+  static Future<bool> openPreparedStage({
+    required String categoryLabel,
+    required int stageIndex,
+    required List<Exercise> exerciseList,
+    String sessionType = StageSessionType.adventure,
+    bool replaceCurrent = false,
+    RxBool? transitionFlag,
+  }) async {
+    if (transitionFlag?.value == true) return false;
+
+    if (transitionFlag != null) {
+      transitionFlag.value = true;
+    }
 
     try {
       _disposePreparedStageControllers();
@@ -35,14 +57,17 @@ class AdventureStageNavigationHelper {
       );
 
       await stageController.prepareStage(
-        categoryLabel: stage.label,
-        stageIndex: stage.index,
-        exerciseList: stage.exercises,
+        categoryLabel: categoryLabel,
+        stageIndex: stageIndex,
+        exerciseList: exerciseList,
         deferInitialAudio: true,
+        sessionType: sessionType,
       );
 
-      if (stage.exercises.isNotEmpty && stageController.exercises.isEmpty) {
-        adventureController.isTransitioning.value = false;
+      if (exerciseList.isNotEmpty && stageController.exercises.isEmpty) {
+        if (transitionFlag != null) {
+          transitionFlag.value = false;
+        }
         _disposePreparedStageControllers();
         return false;
       }
@@ -58,7 +83,9 @@ class AdventureStageNavigationHelper {
           ? Get.off(() => const AdventureStagePage())
           : Get.to(() => const AdventureStagePage());
 
-      adventureController.isTransitioning.value = false;
+      if (transitionFlag != null) {
+        transitionFlag.value = false;
+      }
 
       navigation?.whenComplete(() {
         _disposePreparedStageControllers(
@@ -74,7 +101,9 @@ class AdventureStageNavigationHelper {
         'openStage error: $e',
         name: 'AdventureStageNavigationHelper',
       );
-      adventureController.isTransitioning.value = false;
+      if (transitionFlag != null) {
+        transitionFlag.value = false;
+      }
       _disposePreparedStageControllers();
       return false;
     }

@@ -108,6 +108,7 @@ class WorldService {
     int? coinsEarned,
     int? xpEarned,
     bool isAdventure = false,
+    bool isDailyChallenge = false,
   }) async {
     final Map<String, dynamic> payload = {
       'attempts': attempts,
@@ -117,8 +118,12 @@ class WorldService {
       payload['stage_id'] = stageId;
     }
 
-    if (isAdventure) {
+    if (isAdventure || isDailyChallenge) {
       payload['is_adventure'] = true;
+    }
+
+    if (isDailyChallenge) {
+      payload['is_daily_challenge'] = true;
     }
 
     if (durationSeconds != null && durationSeconds > 0) {

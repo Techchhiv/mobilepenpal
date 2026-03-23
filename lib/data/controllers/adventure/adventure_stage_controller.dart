@@ -11,6 +11,7 @@ import 'package:flutter_drawing_board/flutter_drawing_board.dart';
 import 'package:flutter_drawing_board/paint_contents.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:mobilepenpal/core/utils/adventure_shadow_score_util.dart';
+import 'package:mobilepenpal/core/utils/stage_session_type.dart';
 import 'package:mobilepenpal/presentation/widgets/world/image_stamp_content.dart';
 import 'package:get/get.dart';
 import 'package:mobilepenpal/core/utils/character_option_utils.dart';
@@ -42,6 +43,8 @@ class AdventureStageController extends GetxController {
   final exercises = <StageExercise>[].obs;
   final lastError = RxnString();
   int stageIndex = 0;
+  String sessionType = StageSessionType.adventure;
+  final List<Exercise> _sourceExercises = [];
 
   static const int maxAttemptsPerExercise = 3;
   final attemptLeft = maxAttemptsPerExercise.obs;
@@ -123,6 +126,8 @@ class AdventureStageController extends GetxController {
     return t == 'consonants' || t == 'digits';
   }
 
+  bool get isDailyChallenge => StageSessionType.isDailyChallenge(sessionType);
+
   final stageProgress = 0.0.obs;
   final remainingStars = 3.obs;
   final exerciseDotStates = <StarState>[].obs;
@@ -191,6 +196,8 @@ class AdventureStageController extends GetxController {
             stageIndex: args['stageIndex'] as int? ?? 0,
             exerciseList: exerciseList,
             deferInitialAudio: true,
+            sessionType:
+                args['sessionType'] as String? ?? StageSessionType.adventure,
           ),
         );
       }
@@ -202,12 +209,17 @@ class AdventureStageController extends GetxController {
     required int stageIndex,
     required List<Exercise> exerciseList,
     bool deferInitialAudio = true,
+    String sessionType = StageSessionType.adventure,
   }) async {
     isLoading.value = true;
     lastError.value = null;
 
     this.categoryLabel = categoryLabel;
     this.stageIndex = stageIndex;
+    this.sessionType = sessionType;
+    _sourceExercises
+      ..clear()
+      ..addAll(exerciseList);
     _shouldAutoPlayInitialAudio = deferInitialAudio;
     _isPlayingDeferredInitialAudio = false;
 
@@ -258,6 +270,7 @@ class AdventureStageController extends GetxController {
         hint: e.hint,
         orderIndex: entry.key,
         characterType: e.characterType,
+        repeatSlot: e.repeatSlot,
         difficulty: e.difficulty,
         mathOp: e.mathOp,
       );
@@ -685,6 +698,8 @@ class AdventureStageController extends GetxController {
         'is_correct': false,
         'xp_earned': 0,
         'shadow_iou': 0.0,
+        'repeat_slot': exercise.repeatSlot,
+        if (isDailyChallenge) 'is_daily_challenge': true,
       });
 
       _updateProgressUI();
@@ -727,6 +742,8 @@ class AdventureStageController extends GetxController {
       'is_correct': true,
       'xp_earned': shadowScore.xp,
       'shadow_iou': shadowScore.iou,
+      'repeat_slot': exercise.repeatSlot,
+      if (isDailyChallenge) 'is_daily_challenge': true,
     });
     _updateProgressUI();
 
@@ -760,6 +777,8 @@ class AdventureStageController extends GetxController {
         'is_correct': false,
         'xp_earned': 0,
         'shadow_iou': 0.0,
+        'repeat_slot': exercise.repeatSlot,
+        if (isDailyChallenge) 'is_daily_challenge': true,
       });
 
       _updateProgressUI();
@@ -814,6 +833,9 @@ class AdventureStageController extends GetxController {
         'stageIndex': stageIndex,
         'attempts': List<Map<String, dynamic>>.from(attempts),
         'coins': earnedCoins.value,
+        'sessionType': sessionType,
+        'categoryLabel': categoryLabel,
+        'exercises': List<Exercise>.from(_sourceExercises),
       },
     );
   }
@@ -828,7 +850,8 @@ class AdventureStageController extends GetxController {
         durationSeconds: durationSeconds,
         coinsEarned: earnedCoins.value,
         xpEarned: earnedXp.value,
-        isAdventure: true,
+        isAdventure: !isDailyChallenge,
+        isDailyChallenge: isDailyChallenge,
       );
 
       if (response.code != 200) {

@@ -18,7 +18,10 @@ class AdventureStagePage extends GetView<AdventureStageController> {
   @override
   Widget build(BuildContext context) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      controller.playDeferredInitialAudioIfNeeded();
+      if (!Get.isRegistered<AdventureStageController>()) {
+        return;
+      }
+      Get.find<AdventureStageController>().playDeferredInitialAudioIfNeeded();
     });
 
     return PopScope(

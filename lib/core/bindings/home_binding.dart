@@ -10,9 +10,13 @@ import 'package:mobilepenpal/data/controllers/shop/shop_controller.dart';
 class HomeBinding extends Bindings {
   @override
   void dependencies() {
+    final args = Get.arguments;
+    final initialTabIndex =
+        args is Map ? (args['initialTabIndex'] as int? ?? 0) : 0;
+
     Get.lazyPut<AuthController>(() => AuthController(), fenix: true);
     Get.lazyPut<NavigationController>(
-      () => NavigationController(),
+      () => NavigationController(initialIndex: initialTabIndex),
       fenix: true,
     );
     Get.lazyPut<AdventureController>(() => AdventureController(), fenix: true);

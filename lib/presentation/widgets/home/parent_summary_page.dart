@@ -313,16 +313,13 @@ class ParentSummaryCard extends StatelessWidget {
     );
   }
 
-  String _formatDailyInsight(Map<String, dynamic>? insight) {
+  String _formatDailyInsight(DailyCharacterPerformance? insight) {
     if (insight == null) return '—';
 
-    final rawChar = insight['character']?.toString();
-    final c = rawChar.toReportCharacterLabel();
+    final c = insight.character.toReportCharacterLabel();
+    final p = insight.accuracyPercent;
 
-    final a = insight['accuracy'];
-    final p = a == null ? null : ((a as num).toDouble() * 100).round();
-
-    return p == null ? c : '$c  •  ${_d('$p')}%';
+    return '$c  •  ${_d('$p')}%';
   }
 
   Widget _buildWeeklyBody({

@@ -10,6 +10,7 @@ class Exercise {
   final String instruction;
   final String hint;
   final String? characterType;
+  final int repeatSlot;
   final String? difficulty;
   final String? mathOp;
 
@@ -23,6 +24,7 @@ class Exercise {
     required this.instruction,
     required this.hint,
     this.characterType,
+    this.repeatSlot = 1,
     this.difficulty,
     this.mathOp,
   });
@@ -56,6 +58,7 @@ class Exercise {
       instruction: (json['instruction'] ?? '').toString(),
       hint: (json['hint'] ?? '').toString(),
       characterType: json['character_type']?.toString(),
+      repeatSlot: (json['repeat_slot'] as num?)?.toInt() ?? 1,
       difficulty: json['difficulty']?.toString(),
       mathOp: json['math_op']?.toString(),
     );
@@ -72,6 +75,7 @@ class Exercise {
       'instruction': instruction,
       'hint': hint,
       'character_type': characterType,
+      'repeat_slot': repeatSlot,
       'difficulty': difficulty,
       'math_op': mathOp,
     };
@@ -89,15 +93,46 @@ class Exercise {
       instruction: instruction,
       hint: hint,
       characterType: characterType,
+      repeatSlot: repeatSlot,
       difficulty: difficulty,
       mathOp: mathOp,
       orderIndex: orderIndex,
     );
   }
 
+  Exercise copyWith({
+    int? id,
+    String? prompt,
+    String? character,
+    String? example,
+    String? question,
+    List<String>? options,
+    String? instruction,
+    String? hint,
+    String? characterType,
+    int? repeatSlot,
+    String? difficulty,
+    String? mathOp,
+  }) {
+    return Exercise(
+      id: id ?? this.id,
+      prompt: prompt ?? this.prompt,
+      character: character ?? this.character,
+      example: example ?? this.example,
+      question: question ?? this.question,
+      options: options ?? this.options,
+      instruction: instruction ?? this.instruction,
+      hint: hint ?? this.hint,
+      characterType: characterType ?? this.characterType,
+      repeatSlot: repeatSlot ?? this.repeatSlot,
+      difficulty: difficulty ?? this.difficulty,
+      mathOp: mathOp ?? this.mathOp,
+    );
+  }
+
   @override
   String toString() {
-    return 'Exercise(id: $id, character: $character, type: $characterType)';
+    return 'Exercise(id: $id, character: $character, type: $characterType, repeatSlot: $repeatSlot)';
   }
 }
 
@@ -113,6 +148,7 @@ class StageExerciseData {
   final String hint;
   final int orderIndex;
   final String? characterType;
+  final int repeatSlot;
   final String? difficulty;
   final String? mathOp;
 
@@ -127,6 +163,7 @@ class StageExerciseData {
     required this.hint,
     required this.orderIndex,
     this.characterType,
+    this.repeatSlot = 1,
     this.difficulty,
     this.mathOp,
   });
