@@ -31,6 +31,13 @@ class ApiClient {
       InterceptorsWrapper(
         onRequest: (options, handler) async {
           final token = await _secureStorage.read(key: Env.accessToken);
+          final storedLocale = _box.read('locale');
+          
+          final languageCode = storedLocale != null && storedLocale['languageCode'] != null 
+              ? storedLocale['languageCode'] 
+              : 'en';
+              
+          options.headers['Accept-Language'] = languageCode;
 
           if (token != null && token.isNotEmpty) {
             options.headers['Authorization'] = 'Bearer $token';

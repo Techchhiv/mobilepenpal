@@ -13,10 +13,8 @@ class MathFruitDisplay extends StatelessWidget {
     this.fruitSize = 48.0,
   });
 
-  /// The math prompt string, e.g. "2 + 3 = ?" or "? × 4 = 12".
   final String prompt;
 
-  /// Size (width & height) of each fruit image.
   final double fruitSize;
 
   static const List<String> _fruitAssets = [
@@ -58,7 +56,7 @@ class MathFruitDisplay extends StatelessWidget {
       final cleaned = token.replaceAll(RegExp(r'[()]'), '');
       final number = int.tryParse(cleaned);
 
-      if (number != null && number >= 0) {
+      if (number != null && number > 0) {
         // Use a stable but "random" fruit for this specific token position
         // so left and right can be different.
         final seed = prompt.hashCode ^ i;
@@ -93,18 +91,7 @@ class MathFruitDisplay extends StatelessWidget {
     return widgets;
   }
 
-  /// Builds a compact group of [count] fruit images.
   Widget _buildFruitGroup(int count, String fruitPath) {
-    if (count == 0) {
-      // For zero, we still show one "ghostly" fruit to indicate the position,
-      // but the user complained about opacity, so let's keep it visible enough
-      // or just skip. Let's make it 0.5 opacity.
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4.0),
-        child: Opacity(opacity: 0.5, child: _fruitImage(fruitPath)),
-      );
-    }
-
     // For counts <= 5, single row. For > 5, split into two rows.
     if (count <= 5) {
       return Padding(

@@ -150,11 +150,11 @@ class SettingController extends GetxController {
         secondaryTextColor: const Color(0xFF111827),
         secondaryBorderColor: const Color(0xFFE5E7EB),
 
-        onPrimary: () async {
+        onPrimary: () {
           Get.back();
-          await authService.logout();
+          authService.logout();
           box.remove("student");
-          await GetStorage().write('is_logged_in', false);
+          GetStorage().write('is_logged_in', false);
           Get.offAllNamed(AppRoutes.login);
         },
       ),
