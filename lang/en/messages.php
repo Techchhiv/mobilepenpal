@@ -1,0 +1,27 @@
+<?php
+
+return [
+    'world_not_found' => 'World not found',
+    'level_not_found' => 'Level not found',
+    'stage_not_found' => 'Stage not found',
+    'subscription_required' => 'Subscription required to access this content',
+    'no_attempts_provided' => 'No attempts provided',
+    'missing_stage_id' => 'Missing stage_id',
+    'user_not_authenticated' => 'User not authenticated',
+    'unauthenticated' => 'Unauthenticated.',
+    'current_password_incorrect' => 'Current password is incorrect',
+    'incorrect_image_type' => 'Incorrect Image type or wrong format',
+    'not_enough_coins' => 'Not enough coins',
+    'unauthorized' => 'Unauthorized',
+    'invalid_join_code' => 'Invalid join code.',
+    'classroom_inactive' => 'This classroom is inactive.',
+    'account_not_linked' => 'Your account is not linked to a school. Please contact your school admin.',
+    'join_code_expired' => 'This join code has expired. Please ask your teacher for a new one.',
+    'already_enrolled' => 'You are already enrolled in another classroom. Please leave it first.',
+    'valid_cambodian_number' => 'The phone number must be a valid Cambodian number.',
+    'credentials_incorrect' => 'The provided credentials are incorrect.',
+    'student_not_found' => 'Student not found.',
+    'invalid_firebase_token' => 'Invalid Firebase token.',
+    'firebase_user_not_found' => 'Firebase user not found.',
+    'otp_verification_failed' => 'OTP verification failed.',
+];

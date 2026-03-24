@@ -29,6 +29,7 @@ class Kernel extends HttpKernel
             // For Bearer tokens, do NOT include EnsureFrontendRequestsAreStateful
             'throttle:api',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            \App\Http\Middleware\SetLocale::class,
         ],
     ];
 

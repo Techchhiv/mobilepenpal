@@ -34,7 +34,7 @@ class AuthController extends Controller
         $validated = $request->validated();
 
         if (!isKhmerPhone($validated['phone'])) {
-            return $this->returnError("The phone number must be a valid Cambodian number.", 422);
+            return $this->returnError(__('messages.valid_cambodian_number'), 422);
         }
 
         // $userInfo = [
@@ -76,7 +76,7 @@ class AuthController extends Controller
             ->first();
 
         if (!$student || !Hash::check($validated['password'], $student->password)) {
-            return $this->returnError('The provided credentials are incorrect.', 401);
+            return $this->returnError(__('messages.credentials_incorrect'), 401);
         }
 
         $student->tokens()->delete();
@@ -100,7 +100,7 @@ class AuthController extends Controller
             ->first();
 
         if (!$student || !Hash::check($validated['password'], $student->password)) {
-            return $this->returnError('The provided credentials are incorrect.', 401);
+            return $this->returnError(__('messages.credentials_incorrect'), 401);
         }
         $token = $student->createToken('student_token')->plainTextToken;
 
@@ -135,7 +135,7 @@ class AuthController extends Controller
             $student = Student::where('firebase_uid', $firebaseUid)->first();
 
             if (!$student) {
-                return $this->returnError('Student not found.', 404);
+                return $this->returnError(__('messages.student_not_found'), 404);
             }
 
             // $firebaseUser = $this->firebaseAuth->getUser($firebaseUid);
@@ -153,12 +153,12 @@ class AuthController extends Controller
             $this->setResult("student", $student);
             return $this->returnResponse();
         } catch (\Kreait\Firebase\Exception\Auth\FailedToVerifyToken $e) {
-            return $this->returnError('Invalid Firebase token.', 401);
+            return $this->returnError(__('messages.invalid_firebase_token'), 401);
         } catch (\Kreait\Firebase\Exception\Auth\UserNotFound $e) {
-            return $this->returnError('Firebase user not found.', 404);
+            return $this->returnError(__('messages.firebase_user_not_found'), 404);
         } catch (\Exception $e) {
             Log::error('OTP verification failed: ' . $e->getMessage());
-            return $this->returnError('OTP verification failed.', 500);
+            return $this->returnError(__('messages.otp_verification_failed'), 500);
         }
     }
 }

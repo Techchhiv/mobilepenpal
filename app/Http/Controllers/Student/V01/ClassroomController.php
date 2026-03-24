@@ -19,7 +19,7 @@ class ClassroomController extends Controller
         $student = auth('students')->user();
 
         if (!$student) {
-            return $this->returnError('User not authenticated', 401);
+            return $this->returnError(__('messages.user_not_authenticated'), 401);
         }
 
         $enrollments = ClassroomEnrollment::where('student_id', $student->id)
@@ -61,7 +61,7 @@ class ClassroomController extends Controller
         $student = auth('students')->user();
 
         if (!$student) {
-            return $this->returnError('User not authenticated', 401);
+            return $this->returnError(__('messages.user_not_authenticated'), 401);
         }
 
         $enrollment = ClassroomEnrollment::where('classroom_id', $classroom->id)
@@ -70,7 +70,7 @@ class ClassroomController extends Controller
             ->first();
 
         if (!$enrollment) {
-            return $this->returnError('Unauthorized', 403);
+            return $this->returnError(__('messages.unauthorized'), 403);
         }
 
         $classroom->load([
@@ -102,7 +102,7 @@ class ClassroomController extends Controller
     {
         /** @var Student|null $student */
         $student = auth('students')->user();
-        if (!$student) return $this->returnError('Unauthenticated.', 401);
+        if (!$student) return $this->returnError(__('messages.unauthenticated'), 401);
 
         $validated = $request->validate([
             'join_code' => 'required|string|max:50',
@@ -116,7 +116,7 @@ class ClassroomController extends Controller
 
             if (empty($studentLocked->school_id)) {
                 return $this->returnError(
-                    'Your account is not linked to a school. Please contact your school admin.',
+                    __('messages.account_not_linked'),
                     403
                 );
             }
@@ -125,18 +125,18 @@ class ClassroomController extends Controller
                 ->where('school_id', $studentLocked->school_id)
                 ->first();
 
-            if (!$classroom) return $this->returnError('Invalid join code.', 404);
-            if (!$classroom->is_active) return $this->returnError('This classroom is inactive.', 422);
+            if (!$classroom) return $this->returnError(__('messages.invalid_join_code'), 404);
+            if (!$classroom->is_active) return $this->returnError(__('messages.classroom_inactive'), 422);
 
             $check = ClassroomJoinCode::validate($classroom->join_code, (int) $classroom->school_id);
 
             if ($check && !$check['ok']) {
-                return $this->returnError($check['reason'] ?? 'Invalid join code.', 422);
+                return $this->returnError($check['reason'] ?? __('messages.invalid_join_code'), 422);
             }
 
             if ($check && !empty($check['expired'])) {
                 return $this->returnError(
-                    'This join code has expired. Please ask your teacher for a new one.',
+                    __('messages.join_code_expired'),
                     410
                 );
             }
@@ -148,7 +148,7 @@ class ClassroomController extends Controller
 
             if ($activeEnrollment && (int)$activeEnrollment->classroom_id !== (int)$classroom->id) {
                 return $this->returnError(
-                    'You are already enrolled in another classroom. Please leave it first.',
+                    __('messages.already_enrolled'),
                     409
                 );
             }

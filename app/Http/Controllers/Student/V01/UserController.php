@@ -30,7 +30,7 @@ class UserController extends Controller
         $authUser = auth::guard('students')->user();
 
         if (!$authUser) {
-            return $this->returnError('User not authenticated', 401);
+            return $this->returnError(__('messages.user_not_authenticated'), 401);
         }
 
         $studentProgress = new StudentProgress();
@@ -50,7 +50,7 @@ class UserController extends Controller
         $student = Auth::user();
 
         if (!$student) {
-            return $this->returnError('User not authenticated', 401);
+            return $this->returnError(__('messages.user_not_authenticated'), 401);
         }
 
         $validated = $request->validated();
@@ -71,7 +71,7 @@ class UserController extends Controller
         $student = Auth::user();
 
         if (!Hash::check($request->current_password, $student->password)) {
-            return $this->returnError('Current password is incorrect', 422);
+            return $this->returnError(__('messages.current_password_incorrect'), 422);
         }
 
         $student->update([
@@ -134,7 +134,7 @@ class UserController extends Controller
         $student = Auth::user();
 
         if (!$student) {
-            return $this->returnError('User not authenticated', 401);
+            return $this->returnError(__('messages.user_not_authenticated'), 401);
         }
 
         if ($student->avatar) {
@@ -153,7 +153,7 @@ class UserController extends Controller
         $imagePath = uploadImageBase64($request->image);
 
         if (!$imagePath) {
-            return $this->returnError('Incorrect Image type or wrong format', 422);
+            return $this->returnError(__('messages.incorrect_image_type'), 422);
         }
 
         $student->update([
@@ -170,7 +170,7 @@ class UserController extends Controller
         $student = auth::guard('students')->user();
 
         if (!$student) {
-            return $this->returnError('User not authenticated', 401);
+            return $this->returnError(__('messages.user_not_authenticated'), 401);
         }
 
         $date = $request->query('date', Carbon::now()->toDateString());
@@ -187,7 +187,7 @@ class UserController extends Controller
         $student = auth::guard('students')->user();
 
         if (!$student) {
-            return $this->returnError('User not authenticated', 401);
+            return $this->returnError(__('messages.user_not_authenticated'), 401);
         }
 
         $fromDate = $request->query('from_date');
@@ -212,7 +212,7 @@ class UserController extends Controller
         $student = auth::guard('students')->user();
 
         if (!$student) {
-            return $this->returnError('User not authenticated', 401);
+            return $this->returnError(__('messages.user_not_authenticated'), 401);
         }
 
         $month = $request->query('month', Carbon::now()->format('Y-m'));

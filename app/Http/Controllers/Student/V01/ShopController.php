@@ -25,14 +25,14 @@ class ShopController extends Controller
         $student = Auth::user();
 
         if (!$student) {
-            return $this->returnError('User not authenticated', 401);
+            return $this->returnError(__('messages.user_not_authenticated'), 401);
         }
 
         $cost = (int)$request->cost;
         $avatarName = $request->avatar;
 
         if ($student->coin < $cost) {
-            return $this->returnError('Not enough coins', 400);
+            return $this->returnError(__('messages.not_enough_coins'), 400);
         }
 
         $unlockedAvatars = $student->unlocked_avatars ?? [];

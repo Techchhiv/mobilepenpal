@@ -60,7 +60,7 @@ class WorldController extends Controller
             ->first();
 
         if (!$world)
-            return $this->returnError('World not found', 404);
+            return $this->returnError(__('messages.world_not_found'), 404);
 
         $this->setResult('world', new WorldWithLevelResource($world));
         return $this->returnResponse();
@@ -82,7 +82,7 @@ class WorldController extends Controller
             ->find($levelId);
 
         if (!$level)
-            return $this->returnError('Level not found', 404);
+            return $this->returnError(__('messages.level_not_found'), 404);
 
         $this->setResult('level', new LevelWithStageResource($level));
         return $this->returnResponse();
@@ -102,11 +102,11 @@ class WorldController extends Controller
             ->find($stageId);
 
         if (!$stage)
-            return $this->returnError('Stage not found', 404);
+            return $this->returnError(__('messages.stage_not_found'), 404);
 
         $isPremiumContent = ($stage->level?->is_premium || $stage->level?->world?->is_premium);
         if ($isPremiumContent && !auth()->user()->hasActiveSubscription()) {
-            return $this->returnError('Subscription required to access this content', 403);
+            return $this->returnError(__('messages.subscription_required'), 403);
         }
 
         $this->setResult('stage', new StageWithExercisesResource($stage));
@@ -123,12 +123,12 @@ class WorldController extends Controller
         $isStagelessSession = $isAdventure || $isDailyChallenge;
 
         if (empty($attempts)) {
-            return $this->returnError('No attempts provided', 400);
+            return $this->returnError(__('messages.no_attempts_provided'), 400);
         }
 
         $stageId = (int) $request->input('stage_id', 0);
         if (!$isStagelessSession && $stageId <= 0) {
-            return $this->returnError('Missing stage_id', 422);
+            return $this->returnError(__('messages.missing_stage_id'), 422);
         }
 
         if (!$isStagelessSession) {
@@ -142,13 +142,13 @@ class WorldController extends Controller
                 ->exists();
 
             if (!$allowedStage) {
-                return $this->returnError('Stage not found', 404);
+                return $this->returnError(__('messages.stage_not_found'), 404);
             }
 
             $stage = Stage::with('level.world')->find($stageId);
             $isPremiumContent = ($stage->level?->is_premium || $stage->level?->world?->is_premium);
             if ($isPremiumContent && !auth()->user()->hasActiveSubscription()) {
-                return $this->returnError('Subscription required to access this content', 403);
+                return $this->returnError(__('messages.subscription_required'), 403);
             }
         }
 
