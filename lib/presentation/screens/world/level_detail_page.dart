@@ -227,7 +227,7 @@ class LevelDetailPage extends GetView<LevelController> {
               ? stage.nameEn!
               : stage.name);
 
-    return Container(
+    Widget cardContent = Container(
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       child: Card(
         elevation: 8,
@@ -327,6 +327,26 @@ class LevelDetailPage extends GetView<LevelController> {
           ),
         ),
       ),
+    );
+
+    return Builder(
+      builder: (context) {
+        final screenWidth = MediaQuery.of(context).size.width;
+        final isTablet = screenWidth > 500;
+        
+        if (isTablet) {
+          return Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                maxWidth: 420,
+                maxHeight: 480,
+              ),
+              child: cardContent,
+            ),
+          );
+        }
+        return cardContent;
+      },
     );
   }
 
@@ -441,7 +461,7 @@ class _StagesCarouselState extends State<_StagesCarousel> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final bool isTablet = constraints.maxWidth > 500;
-        final double newFraction = isTablet ? 0.5 : 1.0;
+        final double newFraction = isTablet ? 0.45 : 1.0;
 
         if (_fraction != newFraction) {
           _fraction = newFraction;
@@ -467,9 +487,9 @@ class _StagesCarouselState extends State<_StagesCarousel> {
                 if (isTablet) {
                   if (_pc.hasClients && _pc.position.haveDimensions) {
                     value = _pc.page! - index;
-                    value = (1 - (value.abs() * 0.15)).clamp(0.85, 1.0);
+                    value = (1 - (value.abs() * 0.2)).clamp(0.8, 1.0);
                   } else {
-                    value = index == widget.initialIndex ? 1.0 : 0.85;
+                    value = index == widget.initialIndex ? 1.0 : 0.8;
                   }
                 }
                 return Transform.scale(

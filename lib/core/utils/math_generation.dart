@@ -93,7 +93,7 @@ class MathGenerator {
   MathQuestion generate({
     required MathDifficulty difficulty,
     String? opKeyRaw,
-    bool allowZero = true,
+    bool allowZero = false,
     int maxTries = 300,
   }) {
     final forcedOp = (opKeyRaw == null || opKeyRaw.trim().isEmpty)
@@ -139,7 +139,7 @@ class MathGenerator {
         'add' => _genAdd(allowZero: allowZero, difficulty: difficulty),
         'sub' => _genSub(allowZero: allowZero, difficulty: difficulty),
         'mul' => _genMul(allowZero: allowZero, difficulty: difficulty),
-        'div' => _genDiv(difficulty: difficulty),
+        'div' => _genDiv(allowZero: allowZero, difficulty: difficulty),
         _ => null,
       };
 
@@ -161,7 +161,7 @@ class MathGenerator {
       missing = _rand.nextBool() ? 0 : 1;
     }
 
-    final a = _nextIntInclusive(minVal, maxVal);
+    final a = _nextIntInclusive(minVal, maxVal - minVal);
     final b = _nextIntInclusive(minVal, maxVal - a);
 
     return MathQuestion(
@@ -186,8 +186,10 @@ class MathGenerator {
       missing = _rand.nextBool() ? 0 : 1;
     }
 
-    final a = _nextIntInclusive(minVal, maxVal);
-    final b = _nextIntInclusive(minVal, a);
+    final startA = allowZero ? 0 : 2;
+    if (maxVal < startA) return null;
+    final a = _nextIntInclusive(startA, maxVal);
+    final b = _nextIntInclusive(minVal, a - minVal);
 
     return MathQuestion(
       a: a,
@@ -235,7 +237,10 @@ class MathGenerator {
     );
   }
 
-  MathQuestion? _genDiv({required MathDifficulty difficulty}) {
+  MathQuestion? _genDiv({
+    required bool allowZero,
+    required MathDifficulty difficulty,
+  }) {
     final maxVal = (difficulty == MathDifficulty.easy || difficulty == MathDifficulty.hard) ? 4 : 9;
     
     int? missing;
@@ -245,7 +250,7 @@ class MathGenerator {
 
     final b = _nextIntInclusive(1, maxVal);
     final maxQ = maxVal ~/ b;
-    final minQ = (missing == 1) ? 1 : 0;
+    final minQ = allowZero ? ((missing == 1) ? 1 : 0) : 1;
     
     if (maxQ < minQ) return null;
     final q = _nextIntInclusive(minQ, maxQ);

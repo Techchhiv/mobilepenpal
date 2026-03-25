@@ -68,28 +68,7 @@ class StageDrawingBoard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Positioned.fill(child: _buildBoards()),
-          if (topLeadingOverlay != null)
-            Positioned(
-              top: -4,
-              left: 8,
-              child: IgnorePointer(child: topLeadingOverlay!),
-            ),
-          Positioned(
-            top: -2,
-            right: 8,
-            child: IgnorePointer(
-              child: StageAttemptsIndicator(
-                attemptLeft: attemptLeft,
-                maxAttempts: maxAttempts,
-              ),
-            ),
-          ),
-        ],
-      ),
+      child: _buildBoards(),
     );
   }
 
@@ -98,7 +77,7 @@ class StageDrawingBoard extends StatelessWidget {
       builder: (context, constraints) {
         const maxFeedbackScale = 1.06;
         final boardsNum = activeBoardCount;
-        final gap = 0.0;
+        final gap = 6.0;
         final totalGap = (boardsNum > 1) ? gap * (boardsNum - 1) : 0.0;
         final maxBoardWidth = (constraints.maxWidth - totalGap) / boardsNum;
         final width = maxBoardWidth / maxFeedbackScale;
@@ -126,18 +105,27 @@ class StageDrawingBoard extends StatelessWidget {
             scaleVal = 1.0;
         }
 
+        final blockWidth = boardsNum > 1 ? (width * boardsNum + totalGap) : width;
+
         return Center(
-          child: AnimatedScale(
-            scale: scaleVal,
-            duration: const Duration(milliseconds: 150),
-            curve: Curves.easeOut,
-            child: Transform.translate(
-              offset: Offset(dx, 0),
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  boardsNum > 1
-                      ? Row(
+          child: SizedBox(
+            width: blockWidth,
+            height: height,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Positioned.fill(
+                  child: AnimatedScale(
+                    scale: scaleVal,
+                    duration: const Duration(milliseconds: 150),
+                    curve: Curves.easeOut,
+                    child: Transform.translate(
+                      offset: Offset(dx, 0),
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          boardsNum > 1
+                              ? Row(
                           mainAxisSize: MainAxisSize.min,
                           children: List.generate(boardsNum, (index) {
                             return Padding(
@@ -173,6 +161,26 @@ class StageDrawingBoard extends StatelessWidget {
                   ),
                 ],
               ),
+            ),
+          ),
+                ),
+                if (topLeadingOverlay != null)
+                  Positioned(
+                    top: -36,
+                    left: 8,
+                    child: IgnorePointer(child: topLeadingOverlay!),
+                  ),
+                Positioned(
+                  top: -36,
+                  right: 8,
+                  child: IgnorePointer(
+                    child: StageAttemptsIndicator(
+                      attemptLeft: attemptLeft,
+                      maxAttempts: maxAttempts,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         );
