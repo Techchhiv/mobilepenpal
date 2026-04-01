@@ -166,7 +166,7 @@ class StageDrawingBoard extends StatelessWidget {
                 ),
                 if (topLeadingOverlay != null)
                   Positioned(
-                    top: -36,
+                    top: -46,
                     left: 8,
                     child: IgnorePointer(child: topLeadingOverlay!),
                   ),

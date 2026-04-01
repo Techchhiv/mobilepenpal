@@ -221,7 +221,7 @@ class _SummaryWidgetState extends State<SummaryWidget>
                     ),
                   ),
                   value:
-                      '+${NumberFormatUtils.digitsByLocale(widget.earnedXp.toString())} XP',
+                      '+${NumberFormatUtils.digitsByLocale(widget.earnedXp.toString())} ${'xp'.tr}',
                 ),
             ],
           ),

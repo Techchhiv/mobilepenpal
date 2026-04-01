@@ -70,14 +70,15 @@ class AdventureSummaryController extends GetxController {
 
     if (Get.isRegistered<AdventureController>()) {
       final adventureController = Get.find<AdventureController>();
-      await adventureController.completeStage(stageIndex);
-
+      
       final stage = AdventureStageNavigationHelper.findStageByIndex(
         adventureController,
         stageIndex,
       );
 
       if (stage != null) {
+        await adventureController.completeStage(stage, stars: starsEarned);
+
         isRestarting.value = true;
         final didNavigate = await AdventureStageNavigationHelper.openStage(
           stage: stage,
@@ -94,7 +95,14 @@ class AdventureSummaryController extends GetxController {
 
   void _unlockAndBack({dynamic result}) {
     if (!isDailyChallenge && Get.isRegistered<AdventureController>()) {
-      Get.find<AdventureController>().completeStage(stageIndex);
+      final adventureController = Get.find<AdventureController>();
+      final stage = AdventureStageNavigationHelper.findStageByIndex(
+        adventureController,
+        stageIndex,
+      );
+      if (stage != null) {
+        adventureController.completeStage(stage, stars: starsEarned);
+      }
     }
     Get.back(result: result);
   }

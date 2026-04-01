@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:mobilepenpal/core/utils/adventure_stage_navigation_helper.dart';
 import 'package:mobilepenpal/core/utils/daily_challenge_exercise_builder.dart';
 import 'package:mobilepenpal/core/utils/stage_session_type.dart';
@@ -17,6 +18,7 @@ class DailyChallengeController extends GetxController {
 
   final HomeService _homeService = HomeService();
   final WorldService _worldService = WorldService();
+  final GetStorage _box = GetStorage();
 
   final isLoading = false.obs;
   final isStarting = false.obs;
@@ -24,13 +26,11 @@ class DailyChallengeController extends GetxController {
   final summary = Rxn<DailySummary>();
   final plan = Rxn<DailyChallengePlan>();
 
-  HomeController? get homeController => Get.isRegistered<HomeController>()
-      ? Get.find<HomeController>()
-      : null;
+  HomeController? get homeController =>
+      Get.isRegistered<HomeController>() ? Get.find<HomeController>() : null;
 
-  ShopController? get shopController => Get.isRegistered<ShopController>()
-      ? Get.find<ShopController>()
-      : null;
+  ShopController? get shopController =>
+      Get.isRegistered<ShopController>() ? Get.find<ShopController>() : null;
 
   @override
   void onInit() {
@@ -63,6 +63,15 @@ class DailyChallengeController extends GetxController {
       plan.value?.exercises.length ??
       DailyChallengeExerciseBuilder.targetExerciseCount;
 
+  bool get isCompletedToday {
+    final studentId = homeController?.student.value?.id;
+    if (studentId == null) return false;
+    final saved = _box.read<String>('daily_challenge_date_$studentId');
+    if (saved == null) return false;
+    final today = DateTime.now().toIso8601String().split('T').first;
+    return saved == today;
+  }
+
   Future<void> loadChallenge({bool force = false}) async {
     if (isLoading.value) return;
 
@@ -80,10 +89,12 @@ class DailyChallengeController extends GetxController {
       final builtPlan = DailyChallengeExerciseBuilder.build(
         summary: daily,
         allExercises: exerciseBank,
-        recentProgressExercises:
-            _recentProgressExercises(adventureController: adventureController),
-        latestProgressExercises:
-            _latestProgressExercises(adventureController: adventureController),
+        recentProgressExercises: _recentProgressExercises(
+          adventureController: adventureController,
+        ),
+        latestProgressExercises: _latestProgressExercises(
+          adventureController: adventureController,
+        ),
       );
 
       if (builtPlan == null) {
@@ -104,16 +115,18 @@ class DailyChallengeController extends GetxController {
   Future<void> startDailyChallenge() async {
     if (isStarting.value) return;
 
+    if (isCompletedToday) {
+      AppSnackbar.show('daily_challenge_done'.tr, title: '🎉');
+      return;
+    }
+
     if (plan.value == null) {
       await loadChallenge(force: true);
     }
 
     final readyPlan = plan.value;
     if (readyPlan == null) {
-      AppSnackbar.show(
-        'No daily challenge is ready yet.',
-        title: 'Oops',
-      );
+      AppSnackbar.show('No daily challenge is ready yet.', title: 'Oops');
       return;
     }
 
@@ -122,15 +135,12 @@ class DailyChallengeController extends GetxController {
       final didOpen = await AdventureStageNavigationHelper.openPreparedStage(
         categoryLabel: readyPlan.categoryLabel,
         stageIndex: 0,
-        exerciseList: readyPlan.exercises,
+        exerciseList: List<Exercise>.from(readyPlan.exercises)..shuffle(),
         sessionType: StageSessionType.dailyChallenge,
       );
 
       if (!didOpen) {
-        AppSnackbar.show(
-          'Could not open today\'s challenge.',
-          title: 'Oops',
-        );
+        AppSnackbar.show('Could not open today\'s challenge.', title: 'Oops');
       }
     } finally {
       if (Get.isRegistered<DailyChallengeController>()) {
@@ -174,7 +184,9 @@ class DailyChallengeController extends GetxController {
     }
 
     final response = await _worldService.getExercises();
-    if (response.code == 200 && response.data != null && response.data!.isNotEmpty) {
+    if (response.code == 200 &&
+        response.data != null &&
+        response.data!.isNotEmpty) {
       return response.data!;
     }
 
@@ -193,8 +205,8 @@ class DailyChallengeController extends GetxController {
     }
 
     final latestIndex = _currentAdventureStageIndex(adventureController);
-    final startIndex = latestIndex >=
-            DailyChallengeExerciseBuilder.recentProgressWindow
+    final startIndex =
+        latestIndex >= DailyChallengeExerciseBuilder.recentProgressWindow
         ? latestIndex - DailyChallengeExerciseBuilder.recentProgressWindow + 1
         : 0;
 
@@ -218,8 +230,12 @@ class DailyChallengeController extends GetxController {
   int _currentAdventureStageIndex(AdventureController adventureController) {
     if (adventureController.stages.isEmpty) return 0;
 
-    final unlockedIndex = adventureController.unlockedStageIndex.value;
-    if (unlockedIndex < 0) return 0;
+    int maxUnlocked = -1;
+    for (final val in adventureController.categoryUnlockedIndex.values) {
+      if (val > maxUnlocked) maxUnlocked = val;
+    }
+
+    final unlockedIndex = maxUnlocked > -1 ? maxUnlocked : 0;
     if (unlockedIndex >= adventureController.stages.length) {
       return adventureController.stages.length - 1;
     }

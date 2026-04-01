@@ -5,6 +5,7 @@ import 'package:mobilepenpal/core/utils/adventure_stage_navigation_helper.dart';
 import 'package:mobilepenpal/core/theme/app_colors.dart';
 import 'package:mobilepenpal/presentation/widgets/loading_overly.dart';
 import 'package:mobilepenpal/data/controllers/adventure/adventure_controller.dart';
+import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
 
 class AdventurePage extends StatefulWidget {
   AdventurePage({super.key});
@@ -101,6 +102,54 @@ class _AdventurePageState extends State<AdventurePage>
     });
   }
 
+  void _scrollToCurrentStage() {
+    if (!mounted || !_scrollController.hasClients) return;
+    final stages = controller.stages;
+    if (stages.isEmpty) return;
+
+    int? currentListIndex;
+    for (int i = 0; i < stages.length; i++) {
+      final stage = stages[i];
+      final isCourseUnlocked = _isCategoryUnlocked(stage.categoryType);
+      final categoryUnlocked = controller.getUnlockedStageIndexForCategory(
+        stage.categoryType,
+      );
+      if (isCourseUnlocked && stage.index == categoryUnlocked) {
+        currentListIndex = i;
+        break;
+      }
+    }
+    if (currentListIndex == null) return;
+
+    final screenW = MediaQuery.of(context).size.width;
+    final viewportH = MediaQuery.of(context).size.height;
+    final neededH = _requiredContentHeight(
+      stageCount: stages.length,
+      screenWidth: screenW,
+    );
+    final contentH = max(neededH, viewportH);
+    final spacing = _scaled(_stageSpacing, screenW);
+    final bottomInset = _scaled(_bottomInset, screenW);
+
+    final stageY = _stageCenterY(
+      stageIndex: currentListIndex,
+      contentHeight: contentH,
+      bottomInset: bottomInset,
+      spacing: spacing,
+    );
+
+    final targetScroll = (stageY - viewportH / 2).clamp(
+      0.0,
+      _scrollController.position.maxScrollExtent,
+    );
+
+    _scrollController.animateTo(
+      targetScroll,
+      duration: const Duration(milliseconds: 500),
+      curve: Curves.easeInOutCubic,
+    );
+  }
+
   Future<void> _onStageTap(AdventureStage stage) async {
     await AdventureStageNavigationHelper.openStage(
       stage: stage,
@@ -162,6 +211,17 @@ class _AdventurePageState extends State<AdventurePage>
         body: LoadingOverlay(
           isLoading: controller.isTransitioning.value,
           child: _buildMap(context),
+        ),
+        floatingActionButton: Padding(
+          padding: const EdgeInsets.only(bottom: 80),
+          child: FloatingActionButton.small(
+            onPressed: _scrollToCurrentStage,
+            backgroundColor: AppColors.primary,
+            foregroundColor: Colors.white,
+            elevation: 4,
+            shape: const CircleBorder(),
+            child: const Icon(Icons.my_location_rounded, size: 22),
+          ),
         ),
       );
     });
@@ -249,6 +309,23 @@ class _AdventurePageState extends State<AdventurePage>
     );
   }
 
+  bool _isCategoryUnlocked(String categoryType) {
+    if (Get.isRegistered<HomeController>()) {
+      final homeController = Get.find<HomeController>();
+      switch (categoryType) {
+        case 'consonants':
+          return true;
+        case 'dependent_vowels':
+          return homeController.isDependentVowelsWorldCompleted;
+        case 'independent_vowels':
+          return homeController.isIndependentVowelsWorldCompleted;
+        case 'digits':
+          return homeController.isDigitsWorldCompleted;
+      }
+    }
+    return true; // Default to unlocked if unknown
+  }
+
   Widget _buildStageNodes({
     required List<AdventureStage> stages,
     required double width,
@@ -263,35 +340,42 @@ class _AdventurePageState extends State<AdventurePage>
     final centerX = width * 0.5;
     final left = centerX - (_bubbleSize / 2);
 
-    return Stack(
-      children: List.generate(stages.length, (i) {
-        final y = _stageCenterY(
-          stageIndex: i,
-          contentHeight: contentHeight,
-          bottomInset: bottomInset,
-          spacing: spacing,
-        );
+    final List<Widget> children = List.generate(stages.length, (i) {
+      final stage = stages[i];
+      final y = _stageCenterY(
+        stageIndex: i,
+        contentHeight: contentHeight,
+        bottomInset: bottomInset,
+        spacing: spacing,
+      );
 
-        final unlockedIdx = controller.unlockedStageIndex.value;
-        final isLocked = i > unlockedIdx;
-        final isFinished = i < unlockedIdx;
-        final isCurrent = i == unlockedIdx;
+      final isCourseUnlocked = _isCategoryUnlocked(stage.categoryType);
+      final categoryUnlocked = controller.getUnlockedStageIndexForCategory(
+        stage.categoryType,
+      );
 
-        return Positioned(
-          left: left,
-          top: y - (_bubbleSize / 2),
-          child: _AdventureStageCircle(
-            stage: stages[i],
-            bounce: _bounceCtrl,
-            bounceHeight: 8.0,
-            isCurrent: isCurrent,
-            isLocked: isLocked,
-            isFinished: isFinished,
-            onTap: _onStageTap,
-          ),
-        );
-      }),
-    );
+      final isLocked = !isCourseUnlocked || stage.index > categoryUnlocked;
+      final isFinished = isCourseUnlocked && stage.index < categoryUnlocked;
+      final isCurrent = isCourseUnlocked && stage.index == categoryUnlocked;
+      final stars = controller.stageStars[stage.index] ?? 0;
+
+      return Positioned(
+        left: left,
+        top: y - (_bubbleSize / 2),
+        child: _AdventureStageCircle(
+          stage: stage,
+          bounce: _bounceCtrl,
+          bounceHeight: 8.0,
+          isCurrent: isCurrent,
+          isLocked: isLocked,
+          isFinished: isFinished,
+          stars: stars,
+          onTap: _onStageTap,
+        ),
+      );
+    });
+
+    return Stack(children: children);
   }
 }
 
@@ -302,6 +386,7 @@ class _AdventureStageCircle extends StatelessWidget {
   final bool isCurrent;
   final bool isLocked;
   final bool isFinished;
+  final int stars;
   final Function(AdventureStage) onTap;
 
   const _AdventureStageCircle({
@@ -311,6 +396,7 @@ class _AdventureStageCircle extends StatelessWidget {
     required this.isCurrent,
     required this.isLocked,
     required this.isFinished,
+    required this.stars,
     required this.onTap,
   });
 
@@ -326,10 +412,10 @@ class _AdventureStageCircle extends StatelessWidget {
 
     Widget body = SizedBox(
       width: ring,
-      height: ring,
+      height: ring + 22,
       child: Stack(
         clipBehavior: Clip.none,
-        alignment: Alignment.center,
+        alignment: Alignment.topCenter,
         children: [
           Positioned(
             top: -52,
@@ -341,7 +427,8 @@ class _AdventureStageCircle extends StatelessWidget {
             ),
           ),
 
-          if (isCurrent) _GlowHalo(size: 90, color: _stageColor),
+          if (isCurrent)
+            Positioned(top: -9, child: _GlowHalo(size: 90, color: _stageColor)),
 
           Material(
             color: Colors.transparent,
@@ -389,30 +476,13 @@ class _AdventureStageCircle extends StatelessWidget {
             ),
           ),
 
-          // Checkmark badge for finished stages
-          if (isFinished)
+          // Star rating below the stage bubble
+          if (isFinished || isCurrent)
             Positioned(
-              right: -4,
-              bottom: -4,
-              child: Container(
-                padding: const EdgeInsets.all(4),
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 4,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Icon(
-                  Icons.check_circle_rounded,
-                  color: _stageColor,
-                  size: 24,
-                ),
-              ),
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: _StageStars(stars: stars, color: _stageColor),
             ),
         ],
       ),
@@ -427,6 +497,42 @@ class _AdventureStageCircle extends StatelessWidget {
         return Transform.translate(offset: Offset(0, dy), child: child);
       },
       child: body,
+    );
+  }
+}
+
+class _StageStars extends StatelessWidget {
+  final int stars;
+  final Color color;
+  const _StageStars({required this.stars, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(3, (i) {
+        final isFilled = i < stars;
+        // Middle star (index 1) is slightly larger and raised
+        final isCenter = i == 1;
+        final size = isCenter ? 22.0 : 18.0;
+        return Transform.translate(
+          offset: Offset(0, isCenter ? -2 : 0),
+          child: Icon(
+            isFilled ? Icons.star_rounded : Icons.star_border_rounded,
+            size: size,
+            color: isFilled ? const Color(0xFFFFD700) : Colors.grey.shade400,
+            shadows: isFilled
+                ? [
+                    Shadow(
+                      color: const Color(0xFFFFD700).withValues(alpha: 0.5),
+                      blurRadius: 4,
+                    ),
+                  ]
+                : null,
+          ),
+        );
+      }),
     );
   }
 }

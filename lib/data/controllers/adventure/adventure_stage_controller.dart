@@ -41,6 +41,7 @@ class AdventureStageController extends GetxController {
   final isLoading = false.obs;
   final isSubmitting = false.obs;
   final isSkipLocked = false.obs;
+  final isAlreadyCompleted = false.obs;
 
   final exercises = <StageExercise>[].obs;
   final lastError = RxnString();
@@ -213,6 +214,9 @@ class AdventureStageController extends GetxController {
             (args['exercises'] as List? ?? const <dynamic>[])
                 .whereType<Exercise>()
                 .toList();
+        
+        isAlreadyCompleted.value = args['isAlreadyCompleted'] as bool? ?? false;
+
         unawaited(
           prepareStage(
             categoryLabel: args['categoryLabel'] as String? ?? '',
@@ -791,11 +795,19 @@ class AdventureStageController extends GetxController {
       boardHeight: boardHeight.value,
     );
 
-    // Earn coin!
-    earnedCoins.value++;
-    triggerCoinAnim.value++;
-    earnedXp.value += shadowScore.xp;
-    triggerXpAnim.value++;
+    final multiplier = isDailyChallenge ? 2 : 1;
+    final earnedCoinThisAttempt = isAlreadyCompleted.value ? 0 : multiplier;
+    final earnedXpThisAttempt = isAlreadyCompleted.value ? 0 : (shadowScore.xp * multiplier);
+
+    if (earnedCoinThisAttempt > 0) {
+      earnedCoins.value += earnedCoinThisAttempt;
+      triggerCoinAnim.value++;
+    }
+    
+    if (earnedXpThisAttempt > 0) {
+      earnedXp.value += earnedXpThisAttempt;
+      triggerXpAnim.value++;
+    }
 
     attempts.add({
       'exercise_id': exercise.id,
@@ -803,7 +815,7 @@ class AdventureStageController extends GetxController {
       'label': exercise.character,
       'stroke': getXYStrokes(),
       'is_correct': true,
-      'xp_earned': shadowScore.xp,
+      'xp_earned': earnedXpThisAttempt,
       'shadow_iou': shadowScore.iou,
       'repeat_slot': exercise.repeatSlot,
       if (isDailyChallenge) 'is_daily_challenge': true,
@@ -883,6 +895,14 @@ class AdventureStageController extends GetxController {
         : 0;
 
     await _submitAdventureResults(durationSeconds: duration);
+
+    if (isDailyChallenge) {
+      final studentId = Get.find<HomeController>().student.value?.id;
+      if (studentId != null) {
+        final today = DateTime.now().toIso8601String().split('T').first;
+        _box.write('daily_challenge_date_$studentId', today);
+      }
+    }
 
     // Navigate to Adventure Summary
     Get.offNamed(

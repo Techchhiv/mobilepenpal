@@ -92,7 +92,7 @@ class DailyChallengePage extends GetView<DailyChallengeController> {
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
-              children: const [
+              children: [
                 Icon(
                   Icons.auto_awesome_rounded,
                   size: 16,
@@ -100,11 +100,36 @@ class DailyChallengePage extends GetView<DailyChallengeController> {
                 ),
                 SizedBox(width: 6),
                 Text(
-                  'Daily Star',
-                  style: TextStyle(
+                  'daily_star'.tr,
+                  style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w800,
                     color: Color(0xFF9A6A16),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFFFF8C6B), Color(0xFFFF6B8A)],
+              ),
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.bolt_rounded, size: 14, color: Colors.white),
+                SizedBox(width: 4),
+                Text(
+                  'daily_bonus_2x'.tr,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
                   ),
                 ),
               ],
@@ -142,7 +167,7 @@ class DailyChallengePage extends GetView<DailyChallengeController> {
                   color: const Color(0xFFFF8C6B),
                   icon: Icons.local_fire_department_rounded,
                   value: '${controller.dailyStreak}',
-                  label: 'Streak',
+                  label: 'streak'.tr,
                 ),
               ),
               const SizedBox(width: 12),
@@ -151,7 +176,7 @@ class DailyChallengePage extends GetView<DailyChallengeController> {
                   color: const Color(0xFF28A69A),
                   icon: Icons.auto_awesome_rounded,
                   value: '+${controller.earnedXp}',
-                  label: 'XP',
+                  label: 'xp'.tr,
                 ),
               ),
             ],
@@ -165,12 +190,17 @@ class DailyChallengePage extends GetView<DailyChallengeController> {
 
   String _subtitleText() {
     if (controller.isLoading.value) {
-      return 'Getting today\'s game ready';
+      return 'daily_game_getting_ready'.tr;
+    }
+    if (controller.isCompletedToday) {
+      return 'daily_challenge_completed_msg'.tr;
     }
     if (controller.hasChallenge) {
-      return '${controller.challengeExerciseCount} fun tries ready';
+      return 'daily_challenge_ready_msg'.trParams({
+        'count': '${controller.challengeExerciseCount}',
+      });
     }
-    return 'More fun soon';
+    return 'daily_challenge_more_soon'.tr;
   }
 
   Widget _buildAvatar() {
@@ -296,7 +326,8 @@ class DailyChallengePage extends GetView<DailyChallengeController> {
 
   Widget _buildStartButton() {
     final busy = controller.isLoading.value || controller.isStarting.value;
-    final enabled = controller.hasChallenge && !busy;
+    final completed = controller.isCompletedToday;
+    final enabled = controller.hasChallenge && !busy && !completed;
 
     return SizedBox(
       width: double.infinity,
@@ -304,11 +335,16 @@ class DailyChallengePage extends GetView<DailyChallengeController> {
         onPressed: enabled ? controller.startDailyChallenge : null,
         style: ElevatedButton.styleFrom(
           elevation: 0,
-          backgroundColor: enabled
-              ? AppColors.primary
-              : AppColors.primary.withValues(alpha: 0.45),
+          backgroundColor: completed
+              ? const Color(0xFF4CAF50)
+              : enabled
+                  ? AppColors.primary
+                  : AppColors.primary.withValues(alpha: 0.45),
           foregroundColor: Colors.white,
-          disabledBackgroundColor: AppColors.primary.withValues(alpha: 0.45),
+          disabledBackgroundColor: completed
+              ? const Color(0xFF4CAF50).withValues(alpha: 0.85)
+              : AppColors.primary.withValues(alpha: 0.45),
+          disabledForegroundColor: Colors.white.withValues(alpha: 0.9),
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24),
@@ -326,16 +362,20 @@ class DailyChallengePage extends GetView<DailyChallengeController> {
                   color: Colors.white,
                 ),
               ),
+            ] else if (completed) ...[
+              const Icon(Icons.check_circle_rounded, size: 22),
             ] else ...[
               const Icon(Icons.play_arrow_rounded, size: 22),
             ],
             const SizedBox(width: 10),
             Text(
               busy
-                  ? 'Getting Ready'
-                  : enabled
-                  ? 'Start Daily Challenge'
-                  : 'Come Back Soon',
+                  ? 'getting_ready'.tr
+                  : completed
+                      ? 'completed_today'.tr
+                      : enabled
+                          ? 'start_daily_challenge'.tr
+                          : 'come_back_soon'.tr,
               style: const TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w800,

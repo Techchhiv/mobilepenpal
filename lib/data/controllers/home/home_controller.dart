@@ -47,12 +47,15 @@ class HomeController extends GetxController {
   String get avatarUrl => student.value?.avatar ?? '';
 
   bool get isAdventureUnlocked => isConsonantsWorldCompleted;
-
-  bool get isConsonantsWorldCompleted {
-    return studentProgress
-        .where(_isConsonantsWorld)
-        .any((progress) => progress.isCompleted || progress.completed);
+  
+  bool _isWorldCompleted(bool Function(StudentProgress) testFunc) {
+    return studentProgress.where(testFunc).any((progress) => progress.isCompleted || progress.completed);
   }
+
+  bool get isConsonantsWorldCompleted => _isWorldCompleted(_isConsonantsWorld);
+  bool get isDependentVowelsWorldCompleted => _isWorldCompleted(_isDependentVowelsWorld);
+  bool get isIndependentVowelsWorldCompleted => _isWorldCompleted(_isIndependentVowelsWorld);
+  bool get isDigitsWorldCompleted => _isWorldCompleted(_isDigitsWorld);
 
   ShopAvatar? get currentShopAvatar {
     if (Get.isRegistered<ShopController>()) {
@@ -67,6 +70,8 @@ class HomeController extends GetxController {
     if (id == null) return false;
     return int.tryParse(id.toString()) != null && int.parse(id.toString()) > 0;
   }
+
+  bool get hasSubscription => student.value?.hasSubscription ?? false;
 
   @override
   void onInit() {
@@ -438,11 +443,26 @@ class HomeController extends GetxController {
       : 'Parent';
 
   bool _isConsonantsWorld(StudentProgress progress) {
-    final normalizedName = progress.nameEn.trim().toLowerCase();
-    final normalizedDescription = progress.descriptionEn.trim().toLowerCase();
+    final name = progress.nameEn.trim().toLowerCase();
+    final desc = progress.descriptionEn.trim().toLowerCase();
+    return name == 'consonants' || name.contains('consonant') || desc.contains('consonant');
+  }
 
-    return normalizedName == 'consonants' ||
-        normalizedName.contains('consonant') ||
-        normalizedDescription.contains('consonant');
+  bool _isDependentVowelsWorld(StudentProgress progress) {
+    final name = progress.nameEn.trim().toLowerCase();
+    final desc = progress.descriptionEn.trim().toLowerCase();
+    return name.contains('dependent vowel') || desc.contains('dependent vowel');
+  }
+
+  bool _isIndependentVowelsWorld(StudentProgress progress) {
+    final name = progress.nameEn.trim().toLowerCase();
+    final desc = progress.descriptionEn.trim().toLowerCase();
+    return name.contains('independent vowel') || desc.contains('independent vowel');
+  }
+
+  bool _isDigitsWorld(StudentProgress progress) {
+    final name = progress.nameEn.trim().toLowerCase();
+    final desc = progress.descriptionEn.trim().toLowerCase();
+    return name.contains('digit') || name.contains('number') || desc.contains('digit');
   }
 }

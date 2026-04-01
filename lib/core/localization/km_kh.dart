@@ -463,4 +463,18 @@ final Map<String, String> kmKH = {
   'need_more_points': 'អ្នកត្រូវការ @amount បន្ថែមទៀត',
   'your_balance': 'តុល្យភាពរបស់អ្នក៖ @amount ពិន្ទុ',
   'points_count': '@count ពិន្ទុ',
+
+  // ===== Daily Challenge =====
+  'daily_challenge_done': 'អ្នកបានបញ្ចប់បញ្ហាប្រចាំថ្ងៃហើយ! សូមត្រឡប់មកវិញថ្ងៃស្អែក។',
+  'daily_star': 'តារាប្រចាំថ្ងៃ',
+  'daily_bonus_2x': 'ទទួលបានកាក់ និង XP ២ដង',
+  'daily_game_getting_ready': 'កំពុងរៀបចំការលេងសម្រាប់ថ្ងៃនេះ',
+  'daily_challenge_completed_msg': 'ធ្វើបានល្អណាស់! សូមត្រឡប់មកវិញថ្ងៃស្អែក 🌟',
+  'daily_challenge_ready_msg': 'មាន @count លំហាត់រួចរាល់ • រង្វាន់ ២ដង!',
+  'daily_challenge_more_soon': 'នឹងមានលំហាត់បន្ថែមទៀតឆាប់ៗ',
+  'getting_ready': 'កំពុងរៀបចំ',
+  'completed_today': 'បានបញ្ចប់សម្រាប់ថ្ងៃនេះ',
+  'start_daily_challenge': 'ចាប់ផ្តើមការប្រកួតប្រចាំថ្ងៃ',
+  'come_back_soon': 'សូមត្រឡប់មកវិញឆាប់ៗ',
+  'xp': 'XP',
 };

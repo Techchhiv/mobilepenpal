@@ -27,13 +27,19 @@ class AdventureController extends GetxController {
 
   static const String _storageKey = 'adventure_exercises';
   static const int maxExercisesPerStage = 6;
-  static const String _unlockedKey = 'adventure_unlocked_index';
+  static const String _unlockedKey = 'adventure_unlocked_categories';
+  static const String _starsKey = 'adventure_stage_stars';
   
   final isLoading = false.obs;
   final isTransitioning = false.obs;
   final stages = <AdventureStage>[].obs;
   final allExercises = <Exercise>[].obs;
-  final unlockedStageIndex = 0.obs;
+  
+  // Track unlocked stage index per category
+  final categoryUnlockedIndex = <String, int>{}.obs;
+
+  // Track max stars earned per stage index
+  final stageStars = <int, int>{}.obs;
 
   /// Display labels for each character_type
   static const Map<String, String> categoryLabels = {
@@ -52,18 +58,62 @@ class AdventureController extends GetxController {
   }
 
   void _loadUnlockedIndex() {
-    final val = _box.read<int>(_unlockedKey);
-    if (val != null) {
-      unlockedStageIndex.value = val;
+    final val = _box.read(_unlockedKey);
+    if (val != null && val is Map) {
+      final map = Map<String, dynamic>.from(val);
+      categoryUnlockedIndex.assignAll(map.map((k, v) => MapEntry(k, v as int)));
+    } else {
+      categoryUnlockedIndex.assignAll({
+        'consonants': 0,
+        'dependent_vowels': 25,
+        'independent_vowels': 50,
+        'digits': 75,
+      });
+    }
+
+    final starsVal = _box.read(_starsKey);
+    if (starsVal != null && starsVal is Map) {
+      final starsMap = Map<String, dynamic>.from(starsVal);
+      stageStars.assignAll(starsMap.map((k, v) => MapEntry(int.parse(k), v as int)));
     }
   }
 
-  Future<void> completeStage(int index) async {
-    // Only unlock next if we completed the current highest unlocked stage
-    if (index == unlockedStageIndex.value) {
-      unlockedStageIndex.value++;
-      await _box.write(_unlockedKey, unlockedStageIndex.value);
-      dev.log('Unlocked stage ${unlockedStageIndex.value}', name: 'AdventureController');
+  int getUnlockedStageIndexForCategory(String category) {
+    switch (category) {
+      case 'dependent_vowels': return categoryUnlockedIndex[category] ?? 25;
+      case 'independent_vowels': return categoryUnlockedIndex[category] ?? 50;
+      case 'digits': return categoryUnlockedIndex[category] ?? 75;
+      default: return categoryUnlockedIndex[category] ?? 0;
+    }
+  }
+
+  int _getMaxIndexForCategory(String category) {
+    switch (category) {
+      case 'consonants': return 24;
+      case 'dependent_vowels': return 49;
+      case 'independent_vowels': return 74;
+      case 'digits': return 99;
+      default: return 99;
+    }
+  }
+
+  Future<void> completeStage(AdventureStage stage, {int stars = 0}) async {
+    final currentUnlocked = getUnlockedStageIndexForCategory(stage.categoryType);
+    final maxIndex = _getMaxIndexForCategory(stage.categoryType);
+    
+    final currentStars = stageStars[stage.index] ?? 0;
+    if (stars > currentStars) {
+      stageStars[stage.index] = stars;
+      // Convert map to string keys for JSON serialization in GetStorage
+      final mapToSave = stageStars.map((k, v) => MapEntry(k.toString(), v));
+      await _box.write(_starsKey, mapToSave);
+    }
+
+    // Only unlock next if we completed the current highest unlocked stage in this category
+    if (stage.index == currentUnlocked && stage.index < maxIndex) {
+      categoryUnlockedIndex[stage.categoryType] = currentUnlocked + 1;
+      await _box.write(_unlockedKey, categoryUnlockedIndex);
+      dev.log('Unlocked stage ${currentUnlocked + 1} for ${stage.categoryType}', name: 'AdventureController');
     }
   }
 
@@ -132,66 +182,69 @@ class AdventureController extends GetxController {
       grouped.putIfAbsent(type, () => []).add(exercise);
     }
 
-    // Order categories consistently
+    // Fixed categories and exactly 25 stages each
     const order = [
       'consonants',
       'dependent_vowels',
       'independent_vowels',
       'digits',
-      'math',
     ];
+    
+    // Reset category map if it's empty
+    if (categoryUnlockedIndex.isEmpty) {
+      categoryUnlockedIndex.assignAll({
+        'consonants': 0,
+        'dependent_vowels': 25,
+        'independent_vowels': 50,
+        'digits': 75,
+      });
+    }
 
     final allStages = <AdventureStage>[];
-    int stageIndex = 0;
+    int globalIndex = 0;
 
     for (final type in order) {
       final exercises = grouped[type];
-      if (exercises == null || exercises.isEmpty) continue;
+      if (exercises == null || exercises.isEmpty) {
+        // Skip entirely and assign empty stages just to keep the indices aligned
+        // Wait, if we don't increment globalIndex by 25, the indices will shift!
+        // We must increment globalIndex by 25 anyway.
+        for (int i = 0; i < 25; i++) {
+          allStages.add(
+            AdventureStage(
+              index: globalIndex,
+              label: '${categoryLabels[type] ?? type} ${i + 1}',
+              categoryType: type,
+              exercises: const [],
+            ),
+          );
+          globalIndex++;
+        }
+        continue;
+      }
 
-      // Shuffle exercises within the category
+      // Shuffle exercises
       final shuffled = List<Exercise>.from(exercises)..shuffle(rng);
+      final categoryLabel = categoryLabels[type] ?? type;
 
-      // Split into chunks of maxExercisesPerStage
-      for (int i = 0; i < shuffled.length; i += maxExercisesPerStage) {
-        final chunk = shuffled.sublist(
-          i,
-          min(i + maxExercisesPerStage, shuffled.length),
-        );
-        final categoryLabel = categoryLabels[type] ?? type;
-        final chunkNum = (i ~/ maxExercisesPerStage) + 1;
-        final totalChunks = (shuffled.length / maxExercisesPerStage).ceil();
+      // Ensure we generate EXACTLY 25 stages for this category
+      for (int i = 0; i < 25; i++) {
+        // Collect exercises safely wrapping around the available exercises
+        final chunk = <Exercise>[];
+        for (int j = 0; j < maxExercisesPerStage; j++) {
+          final exerciseIndex = (i * maxExercisesPerStage + j) % shuffled.length;
+          chunk.add(shuffled[exerciseIndex]);
+        }
 
         allStages.add(
           AdventureStage(
-            index: stageIndex,
-            label: totalChunks > 1 ? '$categoryLabel $chunkNum' : categoryLabel,
+            index: globalIndex,
+            label: '$categoryLabel ${i + 1}',
             categoryType: type,
             exercises: chunk,
           ),
         );
-        stageIndex++;
-      }
-    }
-
-    // Add any unexpected types at the end
-    for (final entry in grouped.entries) {
-      if (!order.contains(entry.key)) {
-        final shuffled = List<Exercise>.from(entry.value)..shuffle(rng);
-        for (int i = 0; i < shuffled.length; i += maxExercisesPerStage) {
-          final chunk = shuffled.sublist(
-            i,
-            min(i + maxExercisesPerStage, shuffled.length),
-          );
-          allStages.add(
-            AdventureStage(
-              index: stageIndex,
-              label: entry.key,
-              categoryType: entry.key,
-              exercises: chunk,
-            ),
-          );
-          stageIndex++;
-        }
+        globalIndex++;
       }
     }
 

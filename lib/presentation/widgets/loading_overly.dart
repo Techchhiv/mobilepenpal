@@ -22,7 +22,9 @@ class LoadingOverlay extends StatelessWidget {
 
         if (isLoading)
           Positioned.fill(
-            child: Container(
+            child: Material(
+              type: MaterialType.transparency,
+              child: Container(
               color: Colors.black.withValues(alpha: 0.55),
               child: Center(
                 child: Column(
@@ -46,7 +48,7 @@ class LoadingOverlay extends StatelessWidget {
                         style: const TextStyle(
                           fontSize: 18,
                           color: Colors.white,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w900,
                           decoration: TextDecoration.none,
                           height: 1.0,
                         ),
@@ -57,6 +59,7 @@ class LoadingOverlay extends StatelessWidget {
               ),
             ),
           ),
+        ),
       ],
     );
   }

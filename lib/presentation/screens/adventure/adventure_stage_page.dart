@@ -34,7 +34,11 @@ class AdventureStagePage extends GetView<AdventureStageController> {
       },
       child: Scaffold(
         body: Obx(
-          () => LoadingOverlay(
+          () {
+            if (!Get.isRegistered<AdventureStageController>()) {
+              return const SizedBox.shrink();
+            }
+            return LoadingOverlay(
             isLoading:
                 controller.isLoading.value || controller.isSubmitting.value,
             child: Stack(
@@ -205,7 +209,8 @@ class AdventureStagePage extends GetView<AdventureStageController> {
                 ),
               ],
             ),
-          ),
+          );
+          },
         ),
       ),
     );
@@ -227,43 +232,45 @@ class AdventureStagePage extends GetView<AdventureStageController> {
               const SizedBox(width: sideSlotWidth),
               const SizedBox(width: 12),
               Expanded(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 8,
-                    horizontal: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(18),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.07),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      physics: const BouncingScrollPhysics(),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: forms.map((char) {
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 10),
-                            child: Text(
-                              char,
-                              softWrap: false,
-                              style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.grey.shade700,
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 8,
+                      horizontal: 16,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(18),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.07),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        physics: const BouncingScrollPhysics(),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: forms.map((char) {
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 10),
+                              child: Text(
+                                char,
+                                softWrap: false,
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.grey.shade700,
+                                ),
                               ),
-                            ),
-                          );
-                        }).toList(),
+                            );
+                          }).toList(),
+                        ),
                       ),
                     ),
                   ),
@@ -285,7 +292,11 @@ class AdventureStagePage extends GetView<AdventureStageController> {
   }
 
   Widget _buildBoardRewardOverlay() {
-    return Container(
+    return Obx(() {
+      if (controller.isAlreadyCompleted.value) {
+        return const SizedBox.shrink();
+      }
+      return Container(
       padding: EdgeInsets.symmetric(horizontal: 7, vertical: 4),
       decoration: BoxDecoration(
         color:  Color(0xFFF9F3E7).withValues(alpha: 0.98),
@@ -316,6 +327,7 @@ class AdventureStagePage extends GetView<AdventureStageController> {
         ],
       ),
     );
+    });
   }
 
   Widget _buildAudioButton() {

@@ -468,4 +468,18 @@ final Map<String, String> enUS = {
   'need_more_points': 'You need @amount more.',
   'your_balance': 'Your balance: @amount points',
   'points_count': '@count points',
+
+  // ===== Daily Challenge =====
+  'daily_challenge_done': 'You already completed today\'s challenge! Come back tomorrow.',
+  'daily_star': 'Daily Star',
+  'daily_bonus_2x': '2x Coins & XP',
+  'daily_game_getting_ready': "Getting today's game ready",
+  'daily_challenge_completed_msg': 'Great job! Come back tomorrow 🌟',
+  'daily_challenge_ready_msg': '@count fun tries ready • 2x rewards!',
+  'daily_challenge_more_soon': 'More fun soon',
+  'getting_ready': 'Getting Ready',
+  'completed_today': 'Completed Today',
+  'start_daily_challenge': 'Start Daily Challenge',
+  'come_back_soon': 'Come Back Soon',
+  'xp': 'XP',
 };
