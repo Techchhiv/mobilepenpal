@@ -24,4 +24,7 @@ return [
     'invalid_firebase_token' => 'ថូខឹន Firebase មិនត្រឹមត្រូវ។',
     'firebase_user_not_found' => 'រកមិនឃើញអ្នកប្រើប្រាស់ Firebase ទេ។',
     'otp_verification_failed' => 'ការផ្ទៀងផ្ទាត់ OTP បានបរាជ័យ។',
+    'validation_error' => 'កំហុសសុពលភាព',
+    'not_found' => 'រកមិនឃើញទេ',
+    'an_error_occurred' => 'មានកំហុសមួយបានកើតឡើង',
 ];

@@ -16,21 +16,22 @@ class DatabaseSeeder extends Seeder
     public function run()
     {
         $this->call([
-            RbacSeeder::class ,
-            SchoolSeeder::class ,
-            ExerciseSeeder::class ,
-            WorldLevelStageSeeder::class ,
-            StudentSeeder::class ,
-            SubscriptionSeeder::class ,
+            RbacSeeder::class,
+            SchoolSeeder::class,
+            ExerciseSeeder::class,
+                // WorldLevelStageSeeder::class ,
+            ProductionWorldSeeder::class,
+            StudentSeeder::class,
+            // SubscriptionSeeder::class,
             // TeacherRolesSeeder::class
-            StudentExerciseAttemptSeeder::class ,
+            // StudentExerciseAttemptSeeder::class ,
         ]);
 
-    // \App\Models\User::factory(10)->create();
+        // \App\Models\User::factory(10)->create();
 
-    // \App\Models\User::factory()->create([
-    //     'name' => 'Test User',
-    //     'email' => 'test@example.com',
-    // ]);
+        // \App\Models\User::factory()->create([
+        //     'name' => 'Test User',
+        //     'email' => 'test@example.com',
+        // ]);
     }
 }

@@ -24,4 +24,7 @@ return [
     'invalid_firebase_token' => 'Invalid Firebase token.',
     'firebase_user_not_found' => 'Firebase user not found.',
     'otp_verification_failed' => 'OTP verification failed.',
+    'validation_error' => 'Validation Error',
+    'not_found' => 'Not Found',
+    'an_error_occurred' => 'An Error Occurred',
 ];

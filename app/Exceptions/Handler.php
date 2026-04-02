@@ -56,7 +56,7 @@ class Handler extends ExceptionHandler
             if ($request->is(['api/mobile/*', 'api/teacher/*', 'api/*'])) {
                 return response()->json([
                     'code' => 400,
-                    'message' => 'Validation Error',
+                    'message' => __('messages.validation_error'),
                     'data' => null,
                     'error' => $e->errors()
                 ], 400);
@@ -68,7 +68,7 @@ class Handler extends ExceptionHandler
             if ($request->is(['api/mobile/*', 'api/teacher/*', 'api/*'])) {
                 return response()->json([
                     'code' => 404,
-                    'message' => 'Not Found',
+                    'message' => __('messages.not_found'),
                     'data' => null,
                     'error' => []
                 ], 404);
@@ -80,7 +80,7 @@ class Handler extends ExceptionHandler
             if ($request->is(['api/mobile/*', 'api/teacher/*', 'api/*'])) {
                 return response()->json([
                     'code' => 404,
-                    'message' => 'Not Found',
+                    'message' => __('messages.not_found'),
                     'data' => null,
                     'error' => []
                 ], 404);
@@ -92,7 +92,7 @@ class Handler extends ExceptionHandler
             if ($request->is(['api/mobile/*', 'api/teacher/*', 'api/*'])) {
                 return response()->json([
                     'code' => 403,
-                    'message' => 'Unauthorized',
+                    'message' => __('messages.unauthorized'),
                     'data' => null,
                     'error' => null
                 ], 403);
@@ -104,7 +104,7 @@ class Handler extends ExceptionHandler
             if ($request->is(['api/mobile/*', 'api/teacher/*', 'api/*'])) {
                 return response()->json([
                     'code' => 401,
-                    'message' => 'Unauthenticated',
+                    'message' => __('messages.unauthenticated'),
                     'data' => null,
                     'error' => null
                 ], 401);
@@ -118,7 +118,7 @@ class Handler extends ExceptionHandler
                 $message = Response::$statusTexts[$code] ?? 'Error';
                 return response()->json([
                     'code' => $code,
-                    'message' => 'An Error Occurred',
+                    'message' => __('messages.an_error_occurred'),
                     'data' => null,
                     'error' => $message
                 ], $code);
@@ -130,7 +130,7 @@ class Handler extends ExceptionHandler
             if ($request->is(['api/mobile/*', 'api/teacher/*', 'api/*'])) {
                 return response()->json([
                     'code' => 500,
-                    'message' => 'An Error Occurred',
+                    'message' => __('messages.an_error_occurred'),
                     'data' => null,
                     'error' => $e->getMessage()
                 ], 500);
