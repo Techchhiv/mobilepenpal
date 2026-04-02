@@ -65,7 +65,9 @@ class _AdventurePageState extends State<AdventurePage>
     super.dispose();
   }
 
-  double _scaleFactor(double screenWidth) => screenWidth / _tileOriginalWidth;
+  double _effectiveScreenWidth(double screenWidth) => min(screenWidth, 600.0);
+
+  double _scaleFactor(double screenWidth) => _effectiveScreenWidth(screenWidth) / _tileOriginalWidth;
   double _tileHeight(double screenWidth) =>
       _tileOriginalHeight * _scaleFactor(screenWidth);
 
@@ -278,10 +280,15 @@ class _AdventurePageState extends State<AdventurePage>
       return Positioned.fill(
         child: _bgTiles.isEmpty
             ? Container(color: Colors.grey.shade200)
-            : Image.asset(
-                _bgTiles.first,
-                fit: BoxFit.cover,
-                alignment: Alignment.bottomCenter,
+            : Container(
+                decoration: BoxDecoration(
+                  image: DecorationImage(
+                    image: AssetImage(_bgTiles.first),
+                    fit: BoxFit.fitHeight,
+                    repeat: ImageRepeat.repeatX,
+                    alignment: Alignment.bottomCenter,
+                  ),
+                ),
               ),
       );
     }
@@ -295,14 +302,17 @@ class _AdventurePageState extends State<AdventurePage>
           right: 0,
           bottom: i * tileHeight,
           height: tileHeight,
-          child: Image.asset(
-            a,
+          child: Container(
             width: width,
             height: tileHeight,
-            fit: BoxFit.cover,
-            alignment: Alignment.bottomCenter,
-            errorBuilder: (_, __, ___) =>
-                Container(color: Colors.grey.shade200),
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage(a),
+                fit: BoxFit.fitHeight,
+                repeat: ImageRepeat.repeatX,
+                alignment: Alignment.bottomCenter,
+              ),
+            ),
           ),
         );
       }),

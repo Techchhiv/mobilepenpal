@@ -14,7 +14,7 @@ class ShopPage extends StatelessWidget {
       children: [
         _buildPointsHeader(),
         Expanded(
-          child: _buildAvatarGrid(),
+          child: _buildAvatarGrid(context),
         ),
       ],
     );
@@ -89,7 +89,9 @@ class ShopPage extends StatelessWidget {
     );
   }
 
-  Widget _buildAvatarGrid() {
+  Widget _buildAvatarGrid(BuildContext context) {
+    final isTablet = MediaQuery.of(context).size.width >= 600;
+    
     return Obx(() {
       // Force reactive rebuild when unlocked list or selected changes
       controller.unlockedAvatarIds.length;
@@ -97,8 +99,8 @@ class ShopPage extends StatelessWidget {
 
       return GridView.builder(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 3,
+        gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+          maxCrossAxisExtent: isTablet ? 180 : 130,
           crossAxisSpacing: 12,
           mainAxisSpacing: 12,
           childAspectRatio: 0.78,
@@ -126,6 +128,8 @@ class ShopPage extends StatelessWidget {
     required bool unlocked,
     required bool selected,
   }) {
+    final isTablet = MediaQuery.of(context).size.width >= 600;
+    
     return GestureDetector(
       onTap: () => _onAvatarTap(context, avatar, unlocked),
       child: AnimatedContainer(
@@ -154,21 +158,21 @@ class ShopPage extends StatelessWidget {
               alignment: Alignment.center,
               children: [
                 _buildAvatarCircle(avatar,
-                    size: 64, showBorder: selected),
+                    size: isTablet ? 84 : 64, showBorder: selected),
 
                 // Lock overlay
                 if (!unlocked)
                   Container(
-                    width: 64,
-                    height: 64,
+                    width: isTablet ? 84 : 64,
+                    height: isTablet ? 84 : 64,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: Colors.black.withValues(alpha: 0.45),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.lock_rounded,
                       color: Colors.white,
-                      size: 26,
+                      size: isTablet ? 34 : 26,
                     ),
                   ),
 
@@ -178,8 +182,8 @@ class ShopPage extends StatelessWidget {
                     right: 0,
                     bottom: 0,
                     child: Container(
-                      width: 22,
-                      height: 22,
+                      width: isTablet ? 28 : 22,
+                      height: isTablet ? 28 : 22,
                       decoration: BoxDecoration(
                         color: Colors.white,
                         shape: BoxShape.circle,
@@ -193,17 +197,17 @@ class ShopPage extends StatelessWidget {
                       child: Icon(
                         Icons.check,
                         color: avatar.color,
-                        size: 14,
+                        size: isTablet ? 18 : 14,
                       ),
                     ),
                   ),
               ],
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: isTablet ? 12 : 8),
             Text(
               avatar.name,
               style: TextStyle(
-                fontSize: 12,
+                fontSize: isTablet ? 15 : 12,
                 fontWeight: FontWeight.w700,
                 color: selected
                     ? Colors.white
@@ -219,14 +223,14 @@ class ShopPage extends StatelessWidget {
                 children: [
                   Icon(
                     Icons.stars_rounded,
-                    size: 14,
+                    size: isTablet ? 18 : 14,
                     color: Colors.amber.shade600,
                   ),
                   const SizedBox(width: 3),
                   Text(
                     '${avatar.price}',
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: isTablet ? 15 : 12,
                       fontWeight: FontWeight.w800,
                       color: Colors.amber.shade700,
                     ),
@@ -237,7 +241,7 @@ class ShopPage extends StatelessWidget {
               Text(
                 'in_use'.tr,
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: isTablet ? 14 : 11,
                   fontWeight: FontWeight.w600,
                   color: Colors.white.withValues(alpha: 0.9),
                 ),
@@ -245,8 +249,8 @@ class ShopPage extends StatelessWidget {
             else
               Text(
                 'owned'.tr,
-                style: const TextStyle(
-                  fontSize: 11,
+                style: TextStyle(
+                  fontSize: isTablet ? 14 : 11,
                   fontWeight: FontWeight.w500,
                   color: AppColors.textGray40,
                 ),
@@ -326,7 +330,8 @@ class ShopPage extends StatelessWidget {
 
     Get.dialog(
       Center(
-        child: SizedBox(
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 400),
           width: MediaQuery.of(context).size.width * 0.85,
           child: Material(
             borderRadius: BorderRadius.circular(24),
@@ -429,7 +434,8 @@ class ShopPage extends StatelessWidget {
 
     Get.dialog(
       Center(
-        child: SizedBox(
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 400),
           width: MediaQuery.of(context).size.width * 0.85,
           child: Material(
             borderRadius: BorderRadius.circular(24),
