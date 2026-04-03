@@ -88,7 +88,7 @@ class StudentController extends Controller
 
         if (!isKhmerPhone($validated['phone'])) {
             return response()->json([
-                'message' => 'The phone number must be a valid Cambodian number.'
+                'message' => __('messages.valid_cambodian_number')
             ], 422);
         }
 
@@ -121,7 +121,7 @@ class StudentController extends Controller
         $validated = $request->validated();
 
         if (array_key_exists('phone', $validated) && !empty($validated['phone']) && !isKhmerPhone($validated['phone'])) {
-            return $this->returnError("The phone number must be a valid Cambodian number.", 422);
+            return $this->returnError(__('messages.valid_cambodian_number'), 422);
         }
 
         if (!empty($validated['password'])) {
