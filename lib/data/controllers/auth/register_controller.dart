@@ -22,6 +22,7 @@ class RegisterController extends GetxController {
   final isLoading = false.obs;
   final isPasswordVisible = false.obs;
   final isConfirmPasswordVisible = false.obs;
+  final isSubmitted = false.obs;
 
   final studentFirstNameError = ''.obs;
   final studentLastNameError = ''.obs;
@@ -43,56 +44,90 @@ class RegisterController extends GetxController {
   }
 
   void validateStudentFirstName(String v) {
-    studentFirstNameError.value = '';
+    if (!isSubmitted.value) {
+      studentFirstNameError.value = '';
+      return;
+    }
     studentFirstNameError.value = v.trim().isEmpty ? 'field_required'.tr : '';
   }
 
   void validateStudentLastName(String v) {
+    if (!isSubmitted.value) {
+      studentLastNameError.value = '';
+      return;
+    }
     studentLastNameError.value = '';
   }
 
   void validateParentFirstName(String v) {
-    parentFirstNameError.value = '';
+    if (!isSubmitted.value) {
+      parentFirstNameError.value = '';
+      return;
+    }
     parentFirstNameError.value = v.trim().isEmpty ? 'field_required'.tr : '';
   }
 
   void validateParentLastName(String v) {
-    parentLastNameError.value = '';
+    if (!isSubmitted.value) {
+      parentLastNameError.value = '';
+      return;
+    }
     parentLastNameError.value = v.trim().isEmpty ? 'field_required'.tr : '';
   }
 
   void validatePhone(String v) {
-    phoneError.value = '';
+    if (!isSubmitted.value) {
+      phoneError.value = '';
+      return;
+    }
     final value = v.trim().replaceAll(' ', '');
     if (value.isEmpty) {
       phoneError.value = 'phone_required'.tr;
     } else if (!GetUtils.isPhoneNumber(value)) {
       phoneError.value = 'invalid_phone'.tr;
+    } else {
+      phoneError.value = '';
     }
   }
 
   void validateEmail(String v) {
-    emailError.value = '';
+    if (!isSubmitted.value) {
+      emailError.value = '';
+      return;
+    }
     final value = v.trim();
-    if (value.isEmpty) return;
+    if (value.isEmpty) {
+      emailError.value = '';
+      return;
+    }
     emailError.value = GetUtils.isEmail(value) ? '' : 'invalid_email'.tr;
   }
 
   void validatePassword(String v) {
-    passwordError.value = '';
+    if (!isSubmitted.value) {
+      passwordError.value = '';
+      return;
+    }
     if (v.isEmpty) {
       passwordError.value = 'password_required'.tr;
     } else if (v.length < 6) {
       passwordError.value = 'password_min_6_cha'.tr;
+    } else {
+      passwordError.value = '';
     }
   }
 
   void validateConfirmPassword(String v) {
-    confirmPasswordError.value = '';
+    if (!isSubmitted.value) {
+      confirmPasswordError.value = '';
+      return;
+    }
     if (v.isEmpty) {
       confirmPasswordError.value = 'confirm_password_required'.tr;
     } else if (v != passwordController.text) {
       confirmPasswordError.value = 'passwords_do_not_match'.tr;
+    } else {
+      confirmPasswordError.value = '';
     }
   }
 
@@ -150,6 +185,8 @@ class RegisterController extends GetxController {
 
   Future<void> registerParent() async {
     if (isLoading.value) return;
+
+    isSubmitted.value = true;
 
     validateStudentFirstName(studentFirstNameController.text);
     validateStudentLastName(studentLastNameController.text);
@@ -241,6 +278,7 @@ class RegisterController extends GetxController {
     passwordController.clear();
     confirmPasswordController.clear();
 
+    isSubmitted.value = false;
     _clearFieldErrors();
   }
 

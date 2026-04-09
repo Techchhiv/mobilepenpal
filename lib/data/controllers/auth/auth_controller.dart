@@ -21,6 +21,7 @@ class AuthController extends GetxController {
   var phoneError = ''.obs;
   var schoolIdError = ''.obs;
   var passwordError = ''.obs;
+  var isSubmitted = false.obs;
 
   @override
   void onInit() {
@@ -34,6 +35,11 @@ class AuthController extends GetxController {
   }
 
   void validatePhone(String value) {
+    if (!isSubmitted.value) {
+      phoneError.value = '';
+      return;
+    }
+
     if (value.isEmpty) {
       phoneError.value = "phone_required".tr;
     } else if (!GetUtils.isPhoneNumber(value.replaceAll(' ', ''))) {
@@ -54,6 +60,11 @@ class AuthController extends GetxController {
   // }
 
   void validatePassword(String value) {
+    if (!isSubmitted.value) {
+      passwordError.value = '';
+      return;
+    }
+
     if (value.isEmpty) {
       passwordError.value = 'password_required'.tr;
     } else if (value.length < 6) {
@@ -70,6 +81,7 @@ class AuthController extends GetxController {
   Future<void> login() async {
     if (isLoading.value) return;
 
+    isSubmitted.value = true;
     validatePhone(phoneController.text);
     validatePassword(passwordController.text);
 

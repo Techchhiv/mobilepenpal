@@ -43,7 +43,8 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final isLoading = worldController.isLoading.value || homeController.isLoading.value;
+      final isLoading =
+          worldController.isLoading.value || homeController.isLoading.value;
 
       return LoadingOverlay(
         isLoading: isLoading,
@@ -57,32 +58,30 @@ class HomePage extends StatelessWidget {
               ShopPage(),
             ],
           ),
-          bottomNavigationBar: !homeController.hasSubscription 
-              ? null
-              : Container(
-                  height: 52 + MediaQuery.of(context).padding.bottom,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, -5),
-                      ),
-                    ],
-                  ),
-                  child: SafeArea(
-                    top: false,
-                    child: Row(
-                      children: [
-                        _buildNavItem(0, Icons.menu_book_rounded),
-                        _buildNavItem(1, Icons.explore_rounded),
-                        _buildNavItem(2, Icons.bolt_rounded),
-                        _buildNavItem(3, Icons.storefront_rounded),
-                      ],
-                    ),
-                  ),
+          bottomNavigationBar: Container(
+            height: 52 + MediaQuery.of(context).padding.bottom,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, -5),
                 ),
+              ],
+            ),
+            child: SafeArea(
+              top: false,
+              child: Row(
+                children: [
+                  _buildNavItem(0, Icons.menu_book_rounded),
+                  _buildNavItem(1, Icons.explore_rounded),
+                  _buildNavItem(2, Icons.bolt_rounded),
+                  _buildNavItem(3, Icons.storefront_rounded),
+                ],
+              ),
+            ),
+          ),
         ),
       );
     });
@@ -198,7 +197,6 @@ class HomePage extends StatelessWidget {
             ],
           ),
         ),
-
       ],
     );
   }
