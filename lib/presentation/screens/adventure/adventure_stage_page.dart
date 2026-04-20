@@ -1,726 +1,1259 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobilepenpal/core/config/env.dart';
 import 'package:mobilepenpal/core/theme/app_colors.dart';
-import 'package:mobilepenpal/core/utils/number_format_utils.dart';
 import 'package:mobilepenpal/data/controllers/adventure/adventure_stage_controller.dart';
 import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
-import 'package:mobilepenpal/data/controllers/shop/shop_controller.dart';
-import 'package:mobilepenpal/presentation/widgets/loading_overly.dart';
-import 'package:mobilepenpal/presentation/widgets/world/math_fruit_display.dart';
 import 'package:mobilepenpal/presentation/widgets/world/stage_components/stage_drawing_board.dart';
-import 'package:mobilepenpal/presentation/widgets/world/stage_components/stage_illustration.dart';
-import 'package:mobilepenpal/presentation/widgets/world/stage_components/stage_top_bar.dart';
-import 'package:mobilepenpal/presentation/widgets/world/stage_components/stage_pause_dialog.dart';
 
 class AdventureStagePage extends GetView<AdventureStageController> {
   const AdventureStagePage({super.key});
 
+  void _showPauseDialog(BuildContext context) {
+    controller.pauseGame();
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      barrierColor: Colors.black.withValues(alpha: 0.6),
+      builder: (ctx) => _PauseDialog(
+        onResume: () {
+          Navigator.of(ctx).pop();
+          controller.resumeGame();
+        },
+        onQuit: () {
+          Navigator.of(ctx).pop();
+          controller.endGame();
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!Get.isRegistered<AdventureStageController>()) {
-        return;
-      }
-      Get.find<AdventureStageController>().playDeferredInitialAudioIfNeeded();
-    });
-
     return PopScope(
       canPop: false,
-      onPopInvokedWithResult: (didPop, result) {
-        if (didPop) return;
-        if (Get.isDialogOpen == true) return;
-        _showPauseDialog(context);
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) {
+          if (controller.isGameActive.value && !controller.isGameOver.value) {
+            _showPauseDialog(context);
+          } else {
+            Get.back();
+          }
+        }
       },
       child: Scaffold(
-        body: Obx(
-          () {
-            if (!Get.isRegistered<AdventureStageController>()) {
-              return const SizedBox.shrink();
-            }
-            return LoadingOverlay(
-            isLoading:
-                controller.isLoading.value || controller.isSubmitting.value,
-            child: Stack(
-              children: [
-                Positioned.fill(
-                  child: Image.asset(
-                    "assets/images/backgrounds/stage_background.png",
-                    fit: BoxFit.cover,
-                  ),
+        body: Obx(() {
+          if (controller.isLoading.value) {
+            return Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Color(0xFF2C5364), AppColors.textGray80],
                 ),
-                Positioned.fill(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          const Color(0xFF2B7A78).withValues(alpha: 1),
-                          const Color(0xFF6B9F8E).withValues(alpha: 0.0),
-                        ],
-                        stops: const [0.15, 0.45],
-                      ),
-                    ),
-                  ),
-                ),
-                SafeArea(
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(
-                        maxWidth: Env.globalMaxWidth,
-                      ),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 16,
-                        ),
-                        child: Column(
-                          children: [
-                            Obx(() {
-                              Widget? avatarWidget;
-                              if (Get.isRegistered<HomeController>()) {
-                                final homeController = Get.find<HomeController>();
-                                final ShopAvatar? shopAvatar =
-                                    homeController.currentShopAvatar;
+              ),
+              child: const Center(
+                child: CircularProgressIndicator(color: Color(0xFF4ECDC4)),
+              ),
+            );
+          }
 
-                                if (shopAvatar != null &&
-                                    shopAvatar.id != 'default') {
-                                  if (shopAvatar.assetPath != null) {
-                                    avatarWidget = Padding(
-                                      padding: const EdgeInsets.all(6),
-                                      child: Image.asset(
-                                        shopAvatar.assetPath!,
-                                        fit: BoxFit.contain,
-                                      ),
-                                    );
-                                  } else {
-                                    avatarWidget = Icon(
-                                      shopAvatar.icon ?? Icons.person,
-                                      size: 28,
-                                      color: Colors.white,
-                                    );
-                                  }
-                                } else {
-                                  avatarWidget = const Icon(
-                                    Icons.person,
-                                    size: 28,
-                                    color: Colors.white,
-                                  );
-                                }
-                              }
+          // Show game over overlay
+          if (controller.isGameOver.value) {
+            return _buildGameOverScreen();
+          }
 
-                              return StageTopBar(
-                                totalExercises: controller.totalExercises,
-                                completedExercises:
-                                    controller.completedExercises,
-                                exerciseDotStates: controller.exerciseDotStates
-                                    .toList(),
-                                onActionTap: () => _showPauseDialog(context),
-                                actionIcon: Icons.pause,
-                                avatarWidget: avatarWidget,
-                              );
-                            }),
-                            const SizedBox(height: 24),
-                            Obx(() {
-                              if (!controller.showIllustration) {
-                                return const SizedBox(
-                                  key: ValueKey('no_illus'),
-                                  height: 20,
-                                );
-                              }
-                              return Column(
-                                key: const ValueKey('illus'),
-                                children: [
-                                  Builder(
-                                    builder: (_) {
-                                      Widget? mathWidget;
-                                      if (controller.isMathCurrent) {
-                                        mathWidget = MathFruitDisplay(
-                                          prompt: controller.mathPrompt.value,
-                                        );
-                                      }
-                                      return StageIllustration(
-                                        illustrationAssetPath: controller
-                                            .anim
-                                            .illustrationAssetPath
-                                            .value,
-                                        illustrationLabel: controller
-                                            .anim
-                                            .illustrationLabel
-                                            .value,
-                                        selectedCharacter:
-                                            controller.selectedCharacter.value,
-                                        mathPromptWidget: mathWidget,
-                                      );
-                                    },
-                                  ),
-                                  const SizedBox(height: 0),
-                                ],
-                              );
-                            }),
-                            Obx(
-                              () => StageDrawingBoard(
-                                boardWidth: controller.boardWidth.value,
-                                boardHeight: controller.boardHeight.value,
-                                onUpdateBoardSize: controller.updateBoardSize,
-                                drawingControllers:
-                                    controller.drawingControllers,
-                                letterSubpathsNorm:
-                                    controller.letterSubpathsNorm,
-                                scale: controller.scale,
-                                onPointerDown: controller.onRawPointerDown,
-                                onPointerMove: controller.onRawPointerMove,
-                                onPointerUp: controller.onRawPointerUp,
-                                attemptLeft: controller.attemptLeft.value,
-                                maxAttempts:
-                                    AdventureStageController
-                                        .maxAttemptsPerExercise,
-                                feedbackState:
-                                    controller.anim.feedback.value,
-                                praiseFeedbackState:
-                                    controller.anim.praiseFeedback.value,
-                                shakeOffset:
-                                    controller.anim.shakeOffset.value,
-                                praiseText: controller.anim.praiseText.value,
-                                confettiController:
-                                    controller.anim.confettiController,
-                                guideCirclePx:
-                                    controller.anim.guideCirclePx.value,
-                                isGuiding:
-                                    controller.anim.isGuiding.value,
-                                showGuiding: true,
-                                activeBoardCount:
-                                    controller.activeBoardCount,
-                                topLeadingOverlay:
-                                    _buildBoardRewardOverlay(),
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            _buildCharacterOptions(),
-                            const SizedBox(height: 24),
-                            _buildBottomButtons(),
-                            const SizedBox(height: 4),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+          // Main game UI (with countdown overlay if counting down)
+          return Stack(
+            children: [
+              _buildGameUI(context),
+              // Countdown overlay
+              Obx(
+                () => controller.isCountingDown.value
+                    ? _buildCountdownOverlay()
+                    : const SizedBox.shrink(),
+              ),
+            ],
           );
-          },
+        }),
+      ),
+    );
+  }
+
+  Widget _buildCountdownOverlay() {
+    return Positioned.fill(
+      child: Container(
+        color: Colors.black.withValues(alpha: 0.6),
+        child: Center(
+          child: AnimatedBuilder(
+            animation: controller.countdownAnimCtrl,
+            builder: (_, __) {
+              final scale =
+                  1.0 +
+                  (1.0 - controller.countdownAnimCtrl.value) *
+                      0.5; // starts big, shrinks
+              final opacity = (1.0 - controller.countdownAnimCtrl.value * 0.3)
+                  .clamp(0.0, 1.0);
+
+              return Opacity(
+                opacity: opacity,
+                child: Transform.scale(
+                  scale: scale,
+                  child: Obx(() {
+                    final val = controller.countdownValue.value;
+                    final text = val > 0 ? '$val' : 'GO!';
+                    final color = val > 0
+                        ? Colors.white
+                        : const Color(0xFF4ECDC4);
+
+                    return Text(
+                      text,
+                      style: TextStyle(
+                        color: color,
+                        fontSize: val > 0 ? 120 : 80,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 4,
+                        shadows: [
+                          Shadow(
+                            color: color.withValues(alpha: 0.5),
+                            blurRadius: 30,
+                          ),
+                          Shadow(
+                            color: color.withValues(alpha: 0.3),
+                            blurRadius: 60,
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                ),
+              );
+            },
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildCharacterOptions() {
-    return Obx(() {
-      if (controller.isMathCurrent) return const SizedBox.shrink();
-      final forms = controller.characterVowelFormsList;
-      if (forms.isEmpty) return const SizedBox.shrink();
-      const sideSlotWidth = 54.0;
+  Widget _buildGameUI(BuildContext context) {
+    return Stack(
+      children: [
+        // Background
+        Positioned.fill(
+          child: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Color(0xFF2C5364), AppColors.textGray80],
+              ),
+            ),
+          ),
+        ),
 
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        child: SizedBox(
-          height: 56,
-          child: Row(
-            children: [
-              const SizedBox(width: sideSlotWidth),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Center(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 8,
-                      horizontal: 16,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(18),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.07),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        physics: const BouncingScrollPhysics(),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: forms.map((char) {
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 10),
-                              child: Text(
-                                char,
-                                softWrap: false,
-                                style: TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.w800,
-                                  color: Colors.grey.shade700,
-                                ),
-                              ),
-                            );
-                          }).toList(),
+        // Game content
+        SafeArea(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: Env.globalMaxWidth),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                child: Column(
+                  children: [
+                    _buildGameTopBar(context),
+                    const SizedBox(height: 6),
+                    Obx(() => _buildTimerBar()),
+                    const SizedBox(height: 4),
+                    Obx(() => _buildComboIndicator()),
+                    const SizedBox(height: 8),
+                    Obx(() => _buildPromptArea()),
+                    const SizedBox(height: 24),
+                    Expanded(
+                      flex: 18,
+                      child: Obx(
+                        () => StageDrawingBoard(
+                          boardWidth: controller.boardWidth.value,
+                          boardHeight: controller.boardHeight.value,
+                          onUpdateBoardSize: controller.updateBoardSize,
+                          drawingControllers: controller.drawingControllers,
+                          letterSubpathsNorm: controller.showShadowGuide
+                              ? controller.letterSubpathsNorm.toList()
+                              : const [],
+                          scale: controller.scale,
+                          onPointerDown: controller.onRawPointerDown,
+                          onPointerMove: controller.onRawPointerMove,
+                          onPointerUp: controller.onRawPointerUp,
+                          attemptLeft: 0,
+                          maxAttempts: 0,
+                          feedbackState: controller.anim.feedback.value,
+                          praiseFeedbackState:
+                              controller.anim.praiseFeedback.value,
+                          shakeOffset: controller.anim.shakeOffset.value,
+                          praiseText: '',
+                          confettiController:
+                              controller.anim.confettiController,
+                          guideCirclePx: controller.anim.guideCirclePx.value,
+                          isGuiding: controller.anim.isGuiding.value,
+                          showGuiding: controller.showShadowGuide,
+                          activeBoardCount: controller.activeBoardCount,
+                          useExpanded: false,
                         ),
                       ),
                     ),
-                  ),
+                    const Spacer(),
+                    _buildActiveBuffsRow(),
+                    const Spacer(),
+                    _buildBottomButtons(),
+                    const SizedBox(height: 8),
+                  ],
                 ),
               ),
-              const SizedBox(width: 12),
-              SizedBox(
-                width: sideSlotWidth,
-                child: Align(
-                  alignment: Alignment.centerRight,
-                  child: _buildAudioButton(),
+            ),
+          ),
+        ),
+
+        // Spawned power-up
+        _buildSpawnedPowerUp(),
+
+        // Floating feedback text
+        _buildFeedbackOverlay(),
+      ],
+    );
+  }
+
+  Widget _buildGameTopBar(BuildContext context) {
+    return Row(
+      children: [
+        // Pause
+        _buildCircleButton(
+          icon: Icons.pause_rounded,
+          onTap: () => _showPauseDialog(context),
+        ),
+        const SizedBox(width: 12),
+
+        // Score
+        Expanded(
+          child: Obx(
+            () => Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.07),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.auto_awesome,
+                    color: Color(0xFFFFD700),
+                    size: 18,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '${controller.score.value}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+
+        // Avatar
+        _buildAvatarCircle(),
+      ],
+    );
+  }
+
+  Widget _buildBottomButtons() {
+    return Row(
+      children: [
+        Expanded(
+          child: _buildActionButton(
+            label: 'Clear',
+            icon: Icons.delete_outline_rounded,
+            color: const Color(0xFFFF6B6B),
+            onTap: () => controller.clearBoard(),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _buildActionButton(
+            label: 'Submit',
+            icon: Icons.check_rounded,
+            color: const Color(0xFF4ECDC4),
+            onTap: () => controller.forceSubmit(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActionButton({
+    required String label,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Ink(
+          height: 52,
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: color.withValues(alpha: 0.3), width: 1.5),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: color, size: 22),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildCircleButton({
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      shape: const CircleBorder(),
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: onTap,
+        child: Ink(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.white.withValues(alpha: 0.08),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+          ),
+          child: Icon(icon, color: Colors.white70, size: 22),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAvatarCircle() {
+    Widget avatarContent = const Icon(
+      Icons.person,
+      size: 22,
+      color: Colors.white70,
+    );
+    if (Get.isRegistered<HomeController>()) {
+      final home = Get.find<HomeController>();
+      final shopAvatar = home.currentShopAvatar;
+      if (shopAvatar != null && shopAvatar.id != 'default') {
+        if (shopAvatar.assetPath != null) {
+          avatarContent = Padding(
+            padding: const EdgeInsets.all(5),
+            child: Image.asset(shopAvatar.assetPath!, fit: BoxFit.contain),
+          );
+        }
+      }
+    }
+
+    return Container(
+      width: 40,
+      height: 40,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: Colors.white.withValues(alpha: 0.10),
+        border: Border.all(
+          color: const Color(0xFF4ECDC4).withValues(alpha: 0.4),
+          width: 2,
+        ),
+      ),
+      child: ClipOval(child: avatarContent),
+    );
+  }
+
+  Widget _buildTimerBar() {
+    final fraction = controller.timerFraction;
+    final Color barColor;
+    if (controller.isFreezeActive.value) {
+      barColor = const Color(0xFF64B5F6);
+    } else if (fraction > 0.5) {
+      barColor = const Color(0xFF4ECDC4);
+    } else if (fraction > 0.25) {
+      barColor = const Color(0xFFFFD700);
+    } else {
+      barColor = const Color(0xFFFF6B6B);
+    }
+
+    return Container(
+      height: 10,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(5),
+        color: Colors.white.withValues(alpha: 0.08),
+      ),
+      child: FractionallySizedBox(
+        alignment: Alignment.centerLeft,
+        widthFactor: fraction.clamp(0.0, 1.0),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(5),
+            gradient: LinearGradient(
+              colors: [barColor, barColor.withValues(alpha: 0.7)],
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: barColor.withValues(alpha: 0.5),
+                blurRadius: 8,
+                spreadRadius: 1,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActiveBuffsRow() {
+    return SizedBox(
+      height: 80,
+      child: Obx(() {
+        final buffs = <Widget>[];
+
+        if (controller.isScore2xActive.value) {
+          buffs.add(
+            _buildCircularBuff(
+              icon: Icons.star_rounded,
+              color: const Color(0xFFFFD700),
+              progress:
+                  controller.score2xTimeLeft.value /
+                  controller.score2xMaxDuration.value,
+            ),
+          );
+        }
+
+        if (controller.isFreezeActive.value) {
+          buffs.add(
+            _buildCircularBuff(
+              icon: Icons.ac_unit_rounded,
+              color: const Color(0xFF4ECDC4),
+              progress:
+                  controller.freezeTimeLeft.value /
+                  controller.freezeMaxDuration.value,
+            ),
+          );
+        }
+
+        if (controller.hasShield.value) {
+          buffs.add(
+            _buildCircularBuff(
+              icon: Icons.shield_rounded,
+              color: const Color(0xFF6C63FF),
+              progress: 1.0,
+            ),
+          );
+        }
+
+        if (buffs.isEmpty) return const SizedBox(height: 80);
+
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: buffs
+              .map(
+                (b) => Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: b,
+                ),
+              )
+              .toList(),
+        );
+      }),
+    );
+  }
+
+  Widget _buildCircularBuff({
+    required IconData icon,
+    required Color color,
+    required double progress,
+  }) {
+    const double outerSize = 64;
+    const double innerSize = 48;
+    const double iconSize = 48;
+    const double strokeWidth = 5;
+
+    return SizedBox(
+      width: outerSize,
+      height: outerSize,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          SizedBox(
+            width: outerSize,
+            height: outerSize,
+            child: CircularProgressIndicator(
+              value: 1.0,
+              strokeWidth: strokeWidth,
+              color: color.withValues(alpha: 0.1),
+            ),
+          ),
+          SizedBox(
+            width: outerSize,
+            height: outerSize,
+            child: CircularProgressIndicator(
+              value: progress.clamp(0.0, 1.0),
+              strokeWidth: strokeWidth,
+              color: color,
+              strokeCap: StrokeCap.round,
+            ),
+          ),
+          Container(
+            width: innerSize,
+            height: innerSize,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              // color: color.withValues(alpha: 0.1),
+            ),
+            child: Icon(icon, color: color, size: iconSize),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildComboIndicator() {
+    final comboVal = controller.combo.value;
+    if (comboVal < 2) return const SizedBox(height: 20);
+
+    return Container(
+      height: 20,
+      alignment: Alignment.center,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.local_fire_department_rounded,
+            color: comboVal >= 5
+                ? const Color(0xFFFF6B6B)
+                : const Color(0xFFFFD700),
+            size: 16,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            '${comboVal}x COMBO',
+            style: TextStyle(
+              color: comboVal >= 5
+                  ? const Color(0xFFFF6B6B)
+                  : const Color(0xFFFFD700),
+              fontSize: 13,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 1.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPromptArea() {
+    final char = controller.selectedCharacter.value;
+    if (char.isEmpty) return const SizedBox(height: 60);
+
+    final showLetter = controller.showLetterPrompt;
+
+    return AnimatedBuilder(
+      animation: controller.promptBounceCtrl,
+      builder: (_, child) {
+        final dy = -3 * controller.promptBounceCtrl.value;
+        return Transform.translate(offset: Offset(0, dy), child: child);
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.06),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
+        ),
+        child: Column(
+          children: [
+            Text(
+              showLetter ? 'Draw this character' : 'Listen & Draw',
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.45),
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            if (showLetter)
+              Text(
+                char,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 48,
+                  fontWeight: FontWeight.w900,
+                  height: 1.3,
+                ),
+              )
+            else
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: GestureDetector(
+                  onTap: () {
+                    // Replay audio on tap
+                    controller.audio.playCharacterGuarded(
+                      type: controller.currentCharacterType.value,
+                      ch: controller.selectedCharacter.value,
+                    );
+                  },
+                  child: Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: const Color(0xFF6C63FF).withValues(alpha: 0.2),
+                      border: Border.all(
+                        color: const Color(0xFF6C63FF).withValues(alpha: 0.4),
+                        width: 2,
+                      ),
+                    ),
+                    child: const Icon(
+                      Icons.volume_up_rounded,
+                      color: Color(0xFF6C63FF),
+                      size: 28,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSpawnedPowerUp() {
+    return Obx(() {
+      final type = controller.spawnedPowerUp.value;
+      if (type == null) return const SizedBox.shrink();
+
+      IconData icon;
+      Color color;
+
+      switch (type) {
+        case PowerUpType.timePlus:
+          icon = Icons.favorite_rounded;
+          color = const Color(0xFFFF6B6B);
+          break;
+        case PowerUpType.score2x:
+          icon = Icons.star_rounded;
+          color = const Color(0xFFFFD700);
+          break;
+        case PowerUpType.freeze:
+          icon = Icons.ac_unit_rounded;
+          color = const Color(0xFF4ECDC4);
+          break;
+        case PowerUpType.shield:
+          icon = Icons.shield_rounded;
+          color = const Color(0xFF6C63FF);
+          break;
+      }
+
+      return Align(
+        alignment: controller.powerUpAlignment.value,
+        child: GestureDetector(
+          onTap: () => controller.collectPowerUp(),
+          child: AnimatedBuilder(
+            animation:
+                controller.promptBounceCtrl, // Reusing bounce for pulsing
+            builder: (_, child) {
+              final scale = 1.0 + (controller.promptBounceCtrl.value * 0.15);
+              return Transform.scale(scale: scale, child: child);
+            },
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: color.withValues(alpha: 0.2),
+                border: Border.all(
+                  color: color.withValues(alpha: 0.8),
+                  width: 2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: color.withValues(alpha: 0.4),
+                    blurRadius: 15,
+                    spreadRadius: 2,
+                  ),
+                ],
+              ),
+              child: Icon(icon, color: color, size: 32),
+            ),
+          ),
+        ),
       );
     });
   }
 
-  Widget _buildBoardRewardOverlay() {
-    return Obx(() {
-      if (controller.isAlreadyCompleted.value) {
-        return const SizedBox.shrink();
-      }
-      return Container(
-      padding: EdgeInsets.symmetric(horizontal: 7, vertical: 4),
-      decoration: BoxDecoration(
-        color:  Color(0xFFF9F3E7).withValues(alpha: 0.98),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.85),
-          width: 1.4,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.10),
-            blurRadius: 12,
-            offset: const Offset(0, 5),
-          ),
-          BoxShadow(
-            color: const Color(0xFFFFD79A).withValues(alpha: 0.45),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _buildXpCounter(),
-          const SizedBox(width: 6),
-          _buildCoinCounter(),
-        ],
-      ),
-    );
-    });
-  }
+  Widget _buildFeedbackOverlay() {
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: AnimatedBuilder(
+          animation: controller.feedbackAnimCtrl,
+          builder: (_, __) {
+            if (controller.feedbackAnimCtrl.value == 0)
+              return const SizedBox.shrink();
 
-  Widget _buildAudioButton() {
-    return Obx(() {
-      final isPlaying = controller.audio.isPlaying.value;
+            return Obx(() {
+              final text = controller.lastRatingText.value;
+              final rating = controller.lastRating.value;
+              if (text.isEmpty || rating == null)
+                return const SizedBox.shrink();
 
-      return TweenAnimationBuilder<double>(
-        tween: Tween(begin: 1.0, end: isPlaying ? 1.15 : 1.0),
-        duration: const Duration(milliseconds: 700),
-        curve: Curves.easeInOut,
-        builder: (context, scale, child) {
-          return AnimatedScale(
-            scale: scale,
-            duration: const Duration(milliseconds: 90),
-            curve: Curves.easeOut,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                if (isPlaying)
-                  TweenAnimationBuilder<double>(
-                    tween: Tween(begin: 0.9, end: 1.2),
-                    duration: const Duration(milliseconds: 500),
-                    curve: Curves.easeOut,
-                    builder: (_, ringScale, __) {
-                      return Opacity(
-                        opacity: 0.35,
-                        child: Transform.scale(
-                          scale: ringScale,
-                          child: Container(
-                            width: 54,
-                            height: 54,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white, width: 2),
-                            ),
-                          ),
+              final color = _ratingColor(rating);
+              final opacity = (1.0 - controller.feedbackAnimCtrl.value).clamp(
+                0.0,
+                1.0,
+              );
+
+              // More dynamic transform: pops up and then drifts
+              final t = controller.feedbackAnimCtrl.value;
+              final scaleVal =
+                  0.5 + (math.sin(t * math.pi * 0.5) * 0.7); // Scale pop
+              final yOffset = -40 * t; // Upward drift
+
+              return Align(
+                alignment: controller.lastRatingAlignment.value,
+                child: Opacity(
+                  opacity: opacity,
+                  child: Transform.translate(
+                    offset: Offset(0, yOffset),
+                    child: Transform.scale(
+                      scale: scaleVal,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
                         ),
-                      );
-                    },
-                  ),
-                Material(
-                  color: Colors.transparent,
-                  shape: const CircleBorder(),
-                  child: Ink(
-                    width: 48,
-                    height: 48,
-                    decoration: const BoxDecoration(
-                      color: AppColors.buttonSecondary,
-                      shape: BoxShape.circle,
-                    ),
-                    child: InkWell(
-                      customBorder: const CircleBorder(),
-                      onTap: controller.playCurrentCharacterAudio,
-                      child: Center(
-                        child: AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 200),
-                          transitionBuilder: (c, anim) =>
-                              ScaleTransition(scale: anim, child: c),
-                          child: Icon(
-                            isPlaying ? Icons.graphic_eq : Icons.volume_up,
-                            key: ValueKey(isPlaying),
-                            color: Colors.white,
-                            size: 26,
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.7),
+                          borderRadius: BorderRadius.circular(40),
+                          border: Border.all(
+                            color: color.withValues(alpha: 0.5),
+                            width: 2,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: color.withValues(alpha: 0.4),
+                              blurRadius: 20,
+                              spreadRadius: 2,
+                            ),
+                          ],
+                        ),
+                        child: Text(
+                          text,
+                          style: TextStyle(
+                            color: color,
+                            fontSize: 32,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 2,
+                            fontStyle: FontStyle.italic,
                           ),
                         ),
                       ),
                     ),
                   ),
                 ),
-              ],
-            ),
-          );
-        },
-      );
-    });
+              );
+            });
+          },
+        ),
+      ),
+    );
   }
 
-  Widget _buildBottomButtons() {
-    Widget buildActionButton({
-      required VoidCallback? onTap,
-      required Color bg,
-      required Color fg,
-      required IconData icon,
-      required String label,
-      Color? borderColor,
-    }) {
-      return Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(28),
-          onTap: onTap,
-          child: Ink(
-            height: 56,
-            decoration: BoxDecoration(
-              color: bg,
-              borderRadius: BorderRadius.circular(28),
-              border: borderColor != null
-                  ? Border.all(color: borderColor, width: 2)
-                  : null,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.10),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
+  Color _ratingColor(DrawRating rating) {
+    switch (rating) {
+      case DrawRating.perfect:
+        return const Color(0xFFFFD700);
+      case DrawRating.good:
+        return const Color(0xFF4ECDC4);
+      case DrawRating.okay:
+        return Colors.white70;
+      case DrawRating.miss:
+        return const Color(0xFFFF6B6B);
+    }
+  }
+
+  // ── Game Over Screen ──
+
+  Widget _buildGameOverScreen() {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFF2C5364), AppColors.textGray80],
+        ),
+      ),
+      child: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 28),
+            child: Obx(
+              () => Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SizedBox(height: 20),
+                  const Text(
+                    'GAME OVER',
+                    style: TextStyle(
+                      color: Color(0xFFFF6B6B),
+                      fontSize: 32,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 4,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Final Score
+                  Text(
+                    'SCORE',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.45),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 2,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  ShaderMask(
+                    shaderCallback: (bounds) => const LinearGradient(
+                      colors: [Color(0xFF6C63FF), Color(0xFF4ECDC4)],
+                    ).createShader(bounds),
+                    child: Text(
+                      '${controller.score.value}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 56,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+
+                  // High score indicator
+                  if (controller.score.value >= controller.highScore.value &&
+                      controller.score.value > 0)
+                    Container(
+                      margin: const EdgeInsets.only(top: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFD700).withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: const Color(0xFFFFD700).withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.emoji_events_rounded,
+                            color: Color(0xFFFFD700),
+                            size: 16,
+                          ),
+                          SizedBox(width: 6),
+                          Text(
+                            'NEW HIGH SCORE!',
+                            style: TextStyle(
+                              color: Color(0xFFFFD700),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 1,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                  const SizedBox(height: 24),
+
+                  // Stats grid
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.05),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.08),
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _resultStat(
+                                '🏆',
+                                'Best Score',
+                                '${controller.highScore.value}',
+                              ),
+                            ),
+                            Expanded(
+                              child: _resultStat(
+                                '🪙',
+                                'Coins Earned',
+                                '${controller.earnedCoins.value}',
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _resultStat(
+                                '🔥',
+                                'Best Combo',
+                                '${controller.bestCombo.value}',
+                              ),
+                            ),
+                            Expanded(
+                              child: _resultStat(
+                                '🎯',
+                                'Accuracy',
+                                '${controller.accuracy.toStringAsFixed(0)}%',
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        // Rating breakdown
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            _ratingChip(
+                              'Perfect',
+                              '${controller.perfectCount.value}',
+                              const Color(0xFFFFD700),
+                            ),
+                            _ratingChip(
+                              'Good',
+                              '${controller.goodCount.value}',
+                              const Color(0xFF4ECDC4),
+                            ),
+                            _ratingChip(
+                              'Okay',
+                              '${controller.okayCount.value}',
+                              Colors.white54,
+                            ),
+                            _ratingChip(
+                              'Miss',
+                              '${controller.missCount.value}',
+                              const Color(0xFFFF6B6B),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Characters practiced
+                  if (controller.charactersPracticed.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.08),
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            'Characters Practiced',
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.45),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 1,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 6,
+                            alignment: WrapAlignment.center,
+                            children: controller.charactersPracticed.map((ch) {
+                              return Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(
+                                    0xFF6C63FF,
+                                  ).withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color: const Color(
+                                      0xFF6C63FF,
+                                    ).withValues(alpha: 0.25),
+                                  ),
+                                ),
+                                child: Text(
+                                  ch,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+
+                  const SizedBox(height: 28),
+
+                  // Action buttons
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _gameOverButton(
+                          label: 'Home',
+                          icon: Icons.home_rounded,
+                          color: Colors.white.withValues(alpha: 0.08),
+                          textColor: Colors.white70,
+                          onTap: () => Get.back(),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _gameOverButton(
+                          label: 'Play Again',
+                          icon: Icons.replay_rounded,
+                          color: const Color(0xFF6C63FF),
+                          textColor: Colors.white,
+                          onTap: () => controller.startGame(),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                ],
+              ),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(icon, color: fg),
-                const SizedBox(width: 8),
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: fg,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _resultStat(String emoji, String label, String value) {
+    return Column(
+      children: [
+        Text(emoji, style: const TextStyle(fontSize: 20)),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.4),
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _ratingChip(String label, String value, Color color) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: TextStyle(
+            color: color,
+            fontSize: 18,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: TextStyle(
+            color: color.withValues(alpha: 0.7),
+            fontSize: 10,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _gameOverButton({
+    required String label,
+    required IconData icon,
+    required Color color,
+    required Color textColor,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Ink(
+          height: 52,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: textColor, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: TextStyle(
+                  color: textColor,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Pause Dialog ──
+class _PauseDialog extends StatelessWidget {
+  final VoidCallback onResume;
+  final VoidCallback onQuit;
+
+  const _PauseDialog({required this.onResume, required this.onQuit});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 40),
+        padding: const EdgeInsets.all(28),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1B2838),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF6C63FF).withValues(alpha: 0.15),
+              blurRadius: 30,
+              spreadRadius: 5,
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.pause_circle_filled_rounded,
+              color: Color(0xFF4ECDC4),
+              size: 56,
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'PAUSED',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 24,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 3,
+                decoration: TextDecoration.none,
+              ),
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton.icon(
+                onPressed: onResume,
+                icon: const Icon(Icons.play_arrow_rounded),
+                label: const Text(
+                  'Resume',
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF4ECDC4),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
                   ),
                 ),
-              ],
+              ),
             ),
-          ),
-        ),
-      );
-    }
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        children: [
-          Expanded(
-            child: buildActionButton(
-              onTap: controller.clearBoard,
-              bg: Colors.white,
-              fg: Colors.red.shade400,
-              icon: Icons.delete,
-              label: "delete".tr,
-              borderColor: Colors.pink.shade200,
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: OutlinedButton.icon(
+                onPressed: onQuit,
+                icon: const Icon(Icons.home_rounded, size: 20),
+                label: const Text(
+                  'Quit',
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white70,
+                  side: BorderSide(color: Colors.white.withValues(alpha: 0.15)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+              ),
             ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Obx(() {
-              final enabled = controller.canSkip;
-              return buildActionButton(
-                onTap: enabled ? controller.skipCurrentExercise : null,
-                bg: enabled
-                    ? AppColors.buttonPrimary
-                    : AppColors.buttonPrimary.withValues(alpha: 0.55),
-                fg: Colors.white.withValues(alpha: enabled ? 1.0 : 0.65),
-                icon: Icons.skip_next,
-                label: "skip".tr,
-              );
-            }),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCoinCounter() {
-    return _buildRewardStatChip(
-      accentColor: Color(0xFFF4B400),
-      value: Obx(
-        () => Text(
-          NumberFormatUtils.intText(controller.earnedCoins.value),
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w900,
-            color: Colors.grey.shade900,
-          ),
+          ],
         ),
-      ),
-      icon: Obx(() {
-        final trigger = controller.triggerCoinAnim.value;
-        return _FloatingCoinAnimation(trigger: trigger);
-      }),
-    );
-  }
-
-  Widget _buildXpCounter() {
-    return _buildRewardStatChip(
-      accentColor: Color(0xFFFF8A3D),
-      value: Obx(
-        () => Text(
-          NumberFormatUtils.intText(controller.earnedXp.value),
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w900,
-            color: Colors.grey.shade900,
-          ),
-        ),
-      ),
-      icon: Obx(() {
-        final trigger = controller.triggerXpAnim.value;
-        return _PulseXpAnimation(trigger: trigger);
-      }),
-    );
-  }
-
-  Widget _buildRewardStatChip({
-    required Color accentColor,
-    required Widget value,
-    required Widget icon,
-  }) {
-    return Container(
-      constraints: const BoxConstraints(minHeight: 25),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          icon,
-          const SizedBox(width: 5),
-          value,
-        ],
-      ),
-    );
-  }
-
-  void _showPauseDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      barrierDismissible: true,
-      barrierColor: Colors.black.withValues(alpha: 0.35),
-      builder: (ctx) {
-        return StagePauseDialog(
-          onHome: () {
-            Get.back();
-            Get.back();
-          },
-          onResume: () => Get.back(),
-        );
-      },
-    );
-  }
-}
-
-class _FloatingCoinAnimation extends StatefulWidget {
-  final int trigger;
-  const _FloatingCoinAnimation({super.key, required this.trigger});
-
-  @override
-  State<_FloatingCoinAnimation> createState() => _FloatingCoinAnimationState();
-}
-
-class _FloatingCoinAnimationState extends State<_FloatingCoinAnimation>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _ctrl;
-  late Animation<double> _yAnim;
-  late Animation<double> _scaleAnim;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 600),
-    );
-
-    _yAnim = TweenSequence<double>([
-      TweenSequenceItem(
-        tween: Tween<double>(
-          begin: 0,
-          end: -14,
-        ).chain(CurveTween(curve: Curves.easeOutCubic)),
-        weight: 50,
-      ),
-      TweenSequenceItem(
-        tween: Tween<double>(
-          begin: -14,
-          end: 0,
-        ).chain(CurveTween(curve: Curves.bounceOut)),
-        weight: 50,
-      ),
-    ]).animate(_ctrl);
-
-    _scaleAnim = TweenSequence<double>([
-      TweenSequenceItem(
-        tween: Tween<double>(begin: 1.0, end: 1.25),
-        weight: 50,
-      ),
-      TweenSequenceItem(
-        tween: Tween<double>(begin: 1.25, end: 1.0),
-        weight: 50,
-      ),
-    ]).animate(_ctrl);
-  }
-
-  @override
-  void didUpdateWidget(_FloatingCoinAnimation oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.trigger != oldWidget.trigger && widget.trigger > 0) {
-      _ctrl.forward(from: 0);
-    }
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _ctrl,
-      builder: (context, child) {
-        return Transform.translate(
-          offset: Offset(0, _yAnim.value),
-          child: Transform.scale(scale: _scaleAnim.value, child: child),
-        );
-      },
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Icon(Icons.circle, color: Colors.yellow.shade700, size: 20),
-          const Icon(Icons.attach_money, color: Colors.white, size: 13),
-        ],
-      ),
-    );
-  }
-}
-
-class _PulseXpAnimation extends StatefulWidget {
-  final int trigger;
-
-  const _PulseXpAnimation({super.key, required this.trigger});
-
-  @override
-  State<_PulseXpAnimation> createState() => _PulseXpAnimationState();
-}
-
-class _PulseXpAnimationState extends State<_PulseXpAnimation>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _ctrl;
-  late final Animation<double> _scaleAnim;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 420),
-    );
-
-    _scaleAnim = TweenSequence<double>([
-      TweenSequenceItem(
-        tween: Tween<double>(
-          begin: 1.0,
-          end: 1.24,
-        ).chain(CurveTween(curve: Curves.easeOutBack)),
-        weight: 55,
-      ),
-      TweenSequenceItem(
-        tween: Tween<double>(
-          begin: 1.24,
-          end: 1.0,
-        ).chain(CurveTween(curve: Curves.easeInOut)),
-        weight: 45,
-      ),
-    ]).animate(_ctrl);
-  }
-
-  @override
-  void didUpdateWidget(_PulseXpAnimation oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.trigger != oldWidget.trigger && widget.trigger > 0) {
-      _ctrl.forward(from: 0);
-    }
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return ScaleTransition(
-      scale: _scaleAnim,
-      child: Container(
-        width: 20,
-        height: 20,
-        decoration: const BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFFFFC46B), Color(0xFFFF8A3D)],
-          ),
-        ),
-        child: const Icon(Icons.auto_awesome, color: Colors.white, size: 13),
       ),
     );
   }

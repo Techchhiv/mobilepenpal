@@ -38,6 +38,7 @@ class StageDrawingBoard extends StatelessWidget {
     this.showGuiding = true,
     this.activeBoardCount = 1,
     this.topLeadingOverlay,
+    this.useExpanded = true,
   });
 
   final double boardWidth;
@@ -64,12 +65,12 @@ class StageDrawingBoard extends StatelessWidget {
 
   final int activeBoardCount;
   final Widget? topLeadingOverlay;
+  final bool useExpanded;
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: _buildBoards(),
-    );
+    if (useExpanded) return Expanded(child: _buildBoards());
+    return _buildBoards();
   }
 
   Widget _buildBoards() {
@@ -105,9 +106,12 @@ class StageDrawingBoard extends StatelessWidget {
             scaleVal = 1.0;
         }
 
-        final blockWidth = boardsNum > 1 ? (width * boardsNum + totalGap) : width;
+        final blockWidth = boardsNum > 1
+            ? (width * boardsNum + totalGap)
+            : width;
 
-        return Center(
+        return Align(
+          alignment: Alignment.center,
           child: SizedBox(
             width: blockWidth,
             height: height,
@@ -126,43 +130,48 @@ class StageDrawingBoard extends StatelessWidget {
                         children: [
                           boardsNum > 1
                               ? Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: List.generate(boardsNum, (index) {
-                            return Padding(
-                              padding: EdgeInsets.only(
-                                right: index < boardsNum - 1 ? 6.0 : 0,
-                              ),
-                              child: _buildSingleBoard(width, height, index),
-                            );
-                          }),
-                        )
-                      : _buildSingleBoard(width, height, 0),
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: List.generate(boardsNum, (index) {
+                                    return Padding(
+                                      padding: EdgeInsets.only(
+                                        right: index < boardsNum - 1 ? 6.0 : 0,
+                                      ),
+                                      child: _buildSingleBoard(
+                                        width,
+                                        height,
+                                        index,
+                                      ),
+                                    );
+                                  }),
+                                )
+                              : _buildSingleBoard(width, height, 0),
 
-                  // Confetti
-                  Align(
-                    alignment: Alignment.center,
-                    child: ConfettiWidget(
-                      confettiController: confettiController,
-                      blastDirectionality: BlastDirectionality.explosive,
-                      emissionFrequency: 0.01,
-                      numberOfParticles: 25,
-                      maxBlastForce: 30,
-                      minBlastForce: 10,
-                      gravity: 0.25,
-                      shouldLoop: false,
+                          // Confetti
+                          Align(
+                            alignment: Alignment.center,
+                            child: ConfettiWidget(
+                              confettiController: confettiController,
+                              blastDirectionality:
+                                  BlastDirectionality.explosive,
+                              emissionFrequency: 0.01,
+                              numberOfParticles: 25,
+                              maxBlastForce: 30,
+                              minBlastForce: 10,
+                              gravity: 0.25,
+                              shouldLoop: false,
+                            ),
+                          ),
+
+                          // Praise text overlay
+                          _buildPraiseText(
+                            feedbackState,
+                            praiseFeedbackState,
+                            praiseText,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-
-                  // Praise text overlay
-                  _buildPraiseText(
-                    feedbackState,
-                    praiseFeedbackState,
-                    praiseText,
-                  ),
-                ],
-              ),
-            ),
-          ),
                 ),
                 if (topLeadingOverlay != null)
                   Positioned(
