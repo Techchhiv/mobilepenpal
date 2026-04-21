@@ -1,6 +1,6 @@
 import 'package:get/get.dart';
 import 'package:mobilepenpal/core/bindings/adventure_stage_binding.dart';
-import 'package:mobilepenpal/presentation/screens/adventure/adventure_stage_page.dart';
+import 'package:mobilepenpal/presentation/screens/mini_game/adventure/adventure_stage_page.dart';
 import 'package:mobilepenpal/core/bindings/auth_binding.dart';
 import 'package:mobilepenpal/core/bindings/classroom_binding.dart';
 import 'package:mobilepenpal/core/bindings/home_binding.dart';
@@ -27,7 +27,9 @@ import 'package:mobilepenpal/presentation/screens/world/stage_summary_page.dart'
 import 'app_routes.dart';
 
 import 'package:mobilepenpal/core/bindings/adventure_summary_binding.dart';
-import 'package:mobilepenpal/presentation/screens/adventure/adventure_summary_page.dart';
+import 'package:mobilepenpal/presentation/screens/mini_game/adventure/adventure_page.dart';
+import 'package:mobilepenpal/presentation/screens/mini_game/adventure/adventure_summary_page.dart';
+import 'package:mobilepenpal/presentation/screens/mini_game/mini_game_page.dart';
 
 class AppPages {
   static final routes = [
@@ -116,6 +118,16 @@ class AppPages {
       name: AppRoutes.adventureSummary,
       page: () => const AdventureSummaryPage(),
       binding: AdventureSummaryBinding(),
+      middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      name: AppRoutes.miniGame,
+      page: () => const MiniGamePage(),
+      middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      name: AppRoutes.adventure,
+      page: () => const AdventurePage(),
       middlewares: [AuthMiddleware()],
     ),
   ];

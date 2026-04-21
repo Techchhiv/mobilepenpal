@@ -37,43 +37,45 @@ class _AdventurePageState extends State<AdventurePage>
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Color(0xFF2C5364), AppColors.textGray80],
+    return Scaffold(
+      body: DecoratedBox(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF2C5364), AppColors.textGray80],
+          ),
         ),
-      ),
-      child: Stack(
-        children: [
-          // Main content
-          SafeArea(
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: Env.globalMaxWidth),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 20),
-                      _buildTopBar(),
-                      const Spacer(flex: 2),
-                      _buildTitle(),
-                      const SizedBox(height: 32),
-                      _buildHighScoreCard(),
-                      const SizedBox(height: 40),
-                      _buildPlayButton(),
-                      const Spacer(flex: 3),
-                      _buildStatsRow(),
-                      const SizedBox(height: 20),
-                    ],
+        child: Stack(
+          children: [
+            // Main content
+            SafeArea(
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: Env.globalMaxWidth),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 20),
+                        _buildTopBar(),
+                        const Spacer(flex: 2),
+                        _buildTitle(),
+                        const SizedBox(height: 32),
+                        _buildHighScoreCard(),
+                        const SizedBox(height: 40),
+                        _buildPlayButton(),
+                        const Spacer(flex: 3),
+                        _buildStatsRow(),
+                        const SizedBox(height: 20),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -81,6 +83,27 @@ class _AdventurePageState extends State<AdventurePage>
   Widget _buildTopBar() {
     return Row(
       children: [
+        // Back Button
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () => Get.back(),
+            borderRadius: BorderRadius.circular(20),
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withValues(alpha: 0.1),
+              ),
+              child: const Icon(
+                Icons.arrow_back_ios_new_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 16),
         // Avatar
         _buildAvatarCircle(),
         const SizedBox(width: 12),

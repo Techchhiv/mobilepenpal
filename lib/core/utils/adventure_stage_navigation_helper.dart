@@ -2,8 +2,8 @@ import 'dart:developer' as dev;
 
 import 'package:get/get.dart';
 import 'package:mobilepenpal/core/utils/stage_session_type.dart';
-import 'package:mobilepenpal/data/controllers/adventure/adventure_controller.dart';
-import 'package:mobilepenpal/data/controllers/adventure/adventure_stage_controller.dart';
+import 'package:mobilepenpal/data/controllers/mini_game/adventure/adventure_controller.dart';
+import 'package:mobilepenpal/data/controllers/mini_game/adventure/adventure_stage_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_animation_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_audio_controller.dart';
 import 'package:mobilepenpal/data/models/exercise/exercise.dart';

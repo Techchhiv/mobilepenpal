@@ -16,7 +16,7 @@ import 'package:mobilepenpal/presentation/widgets/loading_overly.dart';
 import 'package:mobilepenpal/presentation/widgets/home/mode_switcher.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:mobilepenpal/data/controllers/home/navigation_controller.dart';
-import 'package:mobilepenpal/presentation/screens/adventure/adventure_page.dart';
+import 'package:mobilepenpal/presentation/screens/mini_game/mini_game_page.dart';
 import 'package:mobilepenpal/presentation/screens/daily_challenge/daily_challenge_page.dart';
 import 'package:mobilepenpal/presentation/screens/shop/shop_page.dart';
 import 'package:mobilepenpal/data/controllers/shop/shop_controller.dart';
@@ -53,7 +53,7 @@ class HomePage extends StatelessWidget {
             index: navController.currentIndex.value,
             children: [
               _buildCourseTab(context, homeController, worldController, anim),
-              AdventurePage(),
+              MiniGamePage(),
               DailyChallengePage(),
               ShopPage(),
             ],
@@ -75,7 +75,7 @@ class HomePage extends StatelessWidget {
               child: Row(
                 children: [
                   _buildNavItem(0, Icons.menu_book_rounded),
-                  _buildNavItem(1, Icons.explore_rounded),
+                  _buildNavItem(1, Icons.sports_esports_rounded),
                   _buildNavItem(2, Icons.bolt_rounded),
                   _buildNavItem(3, Icons.storefront_rounded),
                 ],

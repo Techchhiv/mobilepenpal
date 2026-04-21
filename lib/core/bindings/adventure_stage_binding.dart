@@ -1,5 +1,5 @@
 import 'package:get/get.dart';
-import 'package:mobilepenpal/data/controllers/adventure/adventure_stage_controller.dart';
+import 'package:mobilepenpal/data/controllers/mini_game/adventure/adventure_stage_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_animation_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_audio_controller.dart';
 

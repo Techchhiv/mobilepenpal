@@ -13,7 +13,7 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:mobilepenpal/core/utils/adventure_shadow_score_util.dart';
 import 'package:mobilepenpal/core/utils/stroke_preprocessor.dart';
-import 'package:mobilepenpal/data/controllers/adventure/adventure_controller.dart';
+import 'package:mobilepenpal/data/controllers/mini_game/adventure/adventure_controller.dart';
 import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
 import 'package:mobilepenpal/data/controllers/shop/shop_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_animation_controller.dart';
