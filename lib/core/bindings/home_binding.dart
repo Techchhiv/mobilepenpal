@@ -4,7 +4,7 @@ import 'package:mobilepenpal/data/controllers/home/home_animation_controller.dar
 import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
 import 'package:mobilepenpal/data/controllers/home/navigation_controller.dart';
 import 'package:mobilepenpal/data/controllers/mini_game/adventure/adventure_controller.dart';
-import 'package:mobilepenpal/data/controllers/daily_challenge/daily_challenge_controller.dart';
+import 'package:mobilepenpal/data/controllers/quest/quest_controller.dart';
 import 'package:mobilepenpal/data/controllers/shop/shop_controller.dart';
 
 class HomeBinding extends Bindings {
@@ -20,10 +20,7 @@ class HomeBinding extends Bindings {
       fenix: true,
     );
     Get.lazyPut<AdventureController>(() => AdventureController(), fenix: true);
-    Get.lazyPut<DailyChallengeController>(
-      () => DailyChallengeController(),
-      fenix: true,
-    );
+    Get.lazyPut<QuestController>(() => QuestController(), fenix: true);
     Get.lazyPut<HomeController>(() => HomeController(), fenix: true);
     Get.lazyPut<HomeAnimationController>(
       () => HomeAnimationController(),
