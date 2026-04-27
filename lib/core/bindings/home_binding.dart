@@ -4,6 +4,7 @@ import 'package:mobilepenpal/data/controllers/home/home_animation_controller.dar
 import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
 import 'package:mobilepenpal/data/controllers/home/navigation_controller.dart';
 import 'package:mobilepenpal/data/controllers/mini_game/adventure/adventure_controller.dart';
+import 'package:mobilepenpal/data/controllers/mini_game/mini_game_hub_controller.dart';
 import 'package:mobilepenpal/data/controllers/quest/quest_controller.dart';
 import 'package:mobilepenpal/data/controllers/shop/shop_controller.dart';
 
@@ -27,5 +28,9 @@ class HomeBinding extends Bindings {
       fenix: true,
     );
     Get.lazyPut<ShopController>(() => ShopController(), fenix: true);
+    Get.lazyPut<MiniGameHubController>(
+      () => MiniGameHubController(),
+      fenix: true,
+    );
   }
 }

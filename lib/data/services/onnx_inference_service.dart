@@ -9,6 +9,7 @@ class OnnxInferenceService {
   static final OnnxInferenceService instance = OnnxInferenceService._();
 
   bool _envInitialized = false;
+  bool get isReady => _envInitialized;
 
   /// Model type → asset path mapping.
   static const Map<String, String> _modelAssets = {

@@ -12,6 +12,7 @@ import 'package:mobilepenpal/data/controllers/world/world_controller.dart';
 import 'package:mobilepenpal/data/models/student/student.dart';
 import 'package:mobilepenpal/presentation/screens/home/parent_home.dart';
 import 'package:mobilepenpal/presentation/screens/home/student_home.dart';
+import 'package:mobilepenpal/presentation/screens/mini_game/dynamic_mini_game_page.dart';
 import 'package:mobilepenpal/presentation/widgets/loading_overly.dart';
 import 'package:mobilepenpal/presentation/widgets/home/mode_switcher.dart';
 import 'package:shimmer/shimmer.dart';
