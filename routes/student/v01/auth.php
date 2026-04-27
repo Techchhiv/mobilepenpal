@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Student\V01\AuthController;
 use App\Http\Controllers\Student\V01\ClassroomController;
+use App\Http\Controllers\Student\V01\MiniGameController;
 use App\Http\Controllers\Student\V01\UserController;
 use App\Http\Controllers\Student\V01\WorldController;
 use App\Http\Controllers\Student\V01\ShopController;
@@ -43,4 +44,8 @@ Route::prefix('classrooms')->group(function (){
     Route::get('', [ClassroomController::class, 'index']);
     Route::get('{classroom}', [ClassroomController::class, 'show']);
     Route::post('/join', [ClassroomController::class, 'joinByCode']);
+});
+
+Route::prefix('minigames')->group(function () {
+    Route::get('', [MiniGameController::class, 'index']);
 });
