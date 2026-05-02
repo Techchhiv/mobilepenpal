@@ -5,6 +5,7 @@ import 'package:mobilepenpal/core/config/env.dart';
 import 'package:mobilepenpal/core/theme/app_colors.dart';
 import 'package:mobilepenpal/data/controllers/mini_game/dynamic_mini_game_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_animation_controller.dart';
+import 'package:mobilepenpal/data/models/mini_game/mini_game_model.dart';
 import 'package:mobilepenpal/presentation/widgets/world/stage_components/stage_drawing_board.dart';
 
 class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
@@ -87,11 +88,10 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
           child: AnimatedBuilder(
             animation: controller.countdownAnimCtrl,
             builder: (_, __) {
-              final scale = 1.0 +
-                  (1.0 - controller.countdownAnimCtrl.value) * 0.5;
-              final opacity =
-                  (1.0 - controller.countdownAnimCtrl.value * 0.3)
-                      .clamp(0.0, 1.0);
+              final scale =
+                  1.0 + (1.0 - controller.countdownAnimCtrl.value) * 0.5;
+              final opacity = (1.0 - controller.countdownAnimCtrl.value * 0.3)
+                  .clamp(0.0, 1.0);
 
               return Opacity(
                 opacity: opacity,
@@ -100,8 +100,9 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
                   child: Obx(() {
                     final val = controller.countdownValue.value;
                     final text = val > 0 ? '$val' : 'GO!';
-                    final color =
-                        val > 0 ? Colors.white : const Color(0xFF4ECDC4);
+                    final color = val > 0
+                        ? Colors.white
+                        : const Color(0xFF4ECDC4);
 
                     return Text(
                       text,
@@ -155,8 +156,10 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: Env.globalMaxWidth),
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 child: Column(
                   children: [
                     _buildGameTopBar(context),
@@ -171,10 +174,7 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
                     const SizedBox(height: 12),
 
                     // ── INPUT MODULE (bottom half) ──
-                    Expanded(
-                      flex: 18,
-                      child: _buildInputModule(),
-                    ),
+                    Expanded(flex: 18, child: _buildInputModule()),
                     const Spacer(),
                     _buildBottomButtons(),
                     const SizedBox(height: 8),
@@ -195,6 +195,8 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
   Widget _buildDisplayModule() {
     final challenge = controller.currentChallenge.value;
     if (challenge == null) return const SizedBox(height: 60);
+
+    final displayType = controller.currentMiniGame.value?.displayType;
 
     return AnimatedBuilder(
       animation: controller.promptBounceCtrl,
@@ -219,15 +221,92 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
                 fontWeight: FontWeight.w600,
               ),
             ),
-            Text(
-              challenge.display,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 48,
-                fontWeight: FontWeight.w900,
-                height: 1.3,
-              ),
-            ),
+            Obx(() {
+              final alwaysShow = displayType == 'math_equation' || displayType == 'image';
+              final diff = controller.difficulty.value;
+              final isVis = controller.isPromptVisible.value;
+
+              final bool promptVisible;
+              if (alwaysShow) {
+                promptVisible = true;
+              } else if (diff == MiniGameDifficulty.easy) {
+                promptVisible = true;
+              } else if (diff == MiniGameDifficulty.hard) {
+                promptVisible = false;
+              } else {
+                promptVisible = isVis;
+              }
+
+              return Column(
+                children: [
+                  if (diff == MiniGameDifficulty.medium && promptVisible)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8, bottom: 8),
+                      child: AnimatedBuilder(
+                        animation: controller.mediumTimerCtrl,
+                        builder: (context, child) {
+                          return LinearProgressIndicator(
+                            value: controller.mediumTimerCtrl.value,
+                            backgroundColor: Colors.white.withValues(alpha: 0.1),
+                            valueColor: const AlwaysStoppedAnimation<Color>(Colors.orangeAccent),
+                            minHeight: 4,
+                            borderRadius: BorderRadius.circular(2),
+                          );
+                        },
+                      ),
+                    ),
+                  AnimatedCrossFade(
+                    duration: const Duration(milliseconds: 400),
+                    crossFadeState: promptVisible
+                        ? CrossFadeState.showFirst
+                        : CrossFadeState.showSecond,
+                    firstChild: Text(
+                      challenge.display,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 48,
+                        fontWeight: FontWeight.w900,
+                        height: 1.3,
+                      ),
+                    ),
+                    secondChild: diff == MiniGameDifficulty.medium
+                        ? const Text(
+                            '?',
+                            style: TextStyle(
+                              color: Colors.white54,
+                              fontSize: 48,
+                              fontWeight: FontWeight.w900,
+                              height: 1.3,
+                            ),
+                          )
+                        : GestureDetector(
+                            onTap: controller.replayPromptAudio,
+                            behavior: HitTestBehavior.opaque,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.volume_up_rounded,
+                                  color: Colors.white.withValues(alpha: 0.6),
+                                  size: 36,
+                                ),
+                                const SizedBox(width: 12),
+                                Text(
+                                  'Tap to listen again',
+                                  style: TextStyle(
+                                    color: Colors.white.withValues(alpha: 0.6),
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w700,
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                  ),
+                ],
+              );
+            }),
           ],
         ),
       ),
@@ -237,7 +316,7 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
   String _getDisplayLabel() {
     final isDrawing = controller.currentInputType.value == 'drawing_board';
     final action = isDrawing ? 'Draw' : 'Select';
-    
+
     switch (controller.currentMiniGame.value?.displayType) {
       case 'math_equation':
         return 'Solve & $action the answer';
@@ -271,16 +350,21 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
   }
 
   Widget _buildDrawingBoardInput() {
-    return Obx(
-      () => StageDrawingBoard(
+    return Obx(() {
+      final showGuide = controller.showShadowGuide;
+      final displayType = controller.currentMiniGame.value?.displayType;
+      // Accessing the RxList directly or via .value to ensure GetX tracks it correctly
+      // We map over it to create a hard copy so StageDrawingBoard sees a new list
+      final subpaths = controller.letterSubpathsNorm
+          .map((e) => e.toList())
+          .toList();
+
+      return StageDrawingBoard(
         boardWidth: controller.boardWidth.value,
         boardHeight: controller.boardHeight.value,
         onUpdateBoardSize: controller.updateBoardSize,
         drawingControllers: [controller.drawingController],
-        letterSubpathsNorm:
-            controller.currentMiniGame.value?.displayType != 'math_equation'
-                ? controller.letterSubpathsNorm.toList()
-                : const [],
+        letterSubpathsNorm: subpaths,
         scale: controller.boardWidth.value / 340.0,
         onPointerDown: (e, _) => controller.onRawPointerDown(e),
         onPointerMove: (e, _) => controller.onRawPointerMove(e),
@@ -293,12 +377,12 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
         praiseText: '',
         confettiController: controller.anim.confettiController,
         guideCirclePx: controller.anim.guideCirclePx.value,
-        isGuiding: controller.anim.isGuiding.value,
-        showGuiding: controller.currentMiniGame.value?.displayType != 'math_equation',
+        isGuiding: controller.anim.isGuiding.value && showGuide,
+        showGuiding: displayType != 'math_equation' && showGuide,
         activeBoardCount: 1,
         useExpanded: false,
-      ),
-    );
+      );
+    });
   }
 
   Widget _buildMultipleChoiceInput() {
@@ -306,19 +390,24 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
       final options = controller.currentOptions;
       if (options.isEmpty) return const SizedBox();
 
+      // Adapt grid layout based on option count
+      final crossAxisCount = options.length <= 4
+          ? 2
+          : (options.length <= 6 ? 3 : 4);
+      final aspectRatio = options.length <= 4 ? 1.5 : 1.2;
+
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: LayoutBuilder(
           builder: (context, constraints) {
-            // Determine grid constraints based on number of options (usually 4)
             return GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                childAspectRatio: 1.5,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: crossAxisCount,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                childAspectRatio: aspectRatio,
               ),
               itemCount: options.length,
               itemBuilder: (context, index) {
@@ -341,9 +430,9 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
                         child: Text(
                           option,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: Colors.white,
-                            fontSize: 32,
+                            fontSize: options.length <= 4 ? 32 : 24,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
@@ -371,13 +460,11 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
         Expanded(
           child: Obx(
             () => Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.07),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.08)),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -403,11 +490,12 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
           ),
         ),
         const SizedBox(width: 12),
+        _buildDifficultyToggle(),
+        const SizedBox(width: 12),
         _buildCircleButton(
           icon: Icons.close_rounded,
           onTap: () {
-            if (controller.isGameActive.value &&
-                !controller.isGameOver.value) {
+            if (controller.isGameActive.value && !controller.isGameOver.value) {
               _showPauseDialog(context);
             } else {
               Get.back();
@@ -416,6 +504,52 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
         ),
       ],
     );
+  }
+
+  Widget _buildDifficultyToggle() {
+    return Obx(() {
+      final current = controller.difficulty.value;
+      String label = 'E';
+      Color color = Colors.greenAccent;
+      if (current == MiniGameDifficulty.medium) {
+        label = 'M';
+        color = Colors.orangeAccent;
+      } else if (current == MiniGameDifficulty.hard) {
+        label = 'H';
+        color = Colors.redAccent;
+      }
+
+      return GestureDetector(
+        onTap: () {
+          // Cycle difficulty: E -> M -> H -> E
+          if (current == MiniGameDifficulty.easy) {
+            controller.forceDifficultyForShowcase(MiniGameDifficulty.medium);
+          } else if (current == MiniGameDifficulty.medium) {
+            controller.forceDifficultyForShowcase(MiniGameDifficulty.hard);
+          } else {
+            controller.forceDifficultyForShowcase(MiniGameDifficulty.easy);
+          }
+        },
+        child: Container(
+          width: 44,
+          height: 44,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.15),
+            border: Border.all(color: color.withValues(alpha: 0.5), width: 1.5),
+            shape: BoxShape.circle,
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.w900,
+              fontSize: 20,
+            ),
+          ),
+        ),
+      );
+    });
   }
 
   Widget _buildTimerBar() {
@@ -498,26 +632,26 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
       }
 
       return Row(
-      children: [
-        Expanded(
-          child: _buildActionButton(
-            label: 'Clear',
-            icon: Icons.delete_outline_rounded,
-            color: const Color(0xFFFF6B6B),
-            onTap: () => controller.clearBoard(),
+        children: [
+          Expanded(
+            child: _buildActionButton(
+              label: 'Clear',
+              icon: Icons.delete_outline_rounded,
+              color: const Color(0xFFFF6B6B),
+              onTap: () => controller.clearBoard(),
+            ),
           ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _buildActionButton(
-            label: 'Submit',
-            icon: Icons.check_rounded,
-            color: const Color(0xFF4ECDC4),
-            onTap: () => controller.forceSubmit(),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _buildActionButton(
+              label: 'Submit',
+              icon: Icons.check_rounded,
+              color: const Color(0xFF4ECDC4),
+              onTap: () => controller.forceSubmit(),
+            ),
           ),
-        ),
-      ],
-    );
+        ],
+      );
     });
   }
 
@@ -537,8 +671,7 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
           decoration: BoxDecoration(
             color: color.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(16),
-            border:
-                Border.all(color: color.withValues(alpha: 0.3), width: 1.5),
+            border: Border.all(color: color.withValues(alpha: 0.3), width: 1.5),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -576,8 +709,7 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: Colors.white.withValues(alpha: 0.08),
-            border:
-                Border.all(color: Colors.white.withValues(alpha: 0.12)),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
           ),
           child: Icon(icon, color: Colors.white70, size: 22),
         ),
@@ -604,8 +736,10 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
               final color = isCorrect
                   ? const Color(0xFF4ECDC4)
                   : const Color(0xFFFF6B6B);
-              final opacity =
-                  (1.0 - controller.feedbackAnimCtrl.value).clamp(0.0, 1.0);
+              final opacity = (1.0 - controller.feedbackAnimCtrl.value).clamp(
+                0.0,
+                1.0,
+              );
 
               final t = controller.feedbackAnimCtrl.value;
               final scaleVal = 0.5 + (math.sin(t * math.pi * 0.5) * 0.7);
@@ -716,33 +850,44 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
                       const SizedBox(height: 32),
 
                       // Stats
-                      _buildStatCard('Score', '${controller.score.value}',
-                          const Color(0xFFFFD700)),
-                      const SizedBox(height: 12),
-                      _buildStatCard('Best Combo', '${controller.bestCombo.value}x',
-                          const Color(0xFFFF6B6B)),
+                      _buildStatCard(
+                        'Score',
+                        '${controller.score.value}',
+                        const Color(0xFFFFD700),
+                      ),
                       const SizedBox(height: 12),
                       _buildStatCard(
-                          'Accuracy',
-                          '${controller.accuracy.toStringAsFixed(1)}%',
-                          const Color(0xFF4ECDC4)),
+                        'Best Combo',
+                        '${controller.bestCombo.value}x',
+                        const Color(0xFFFF6B6B),
+                      ),
                       const SizedBox(height: 12),
                       _buildStatCard(
-                          'Answered',
-                          '${controller.correctCount.value}/${controller.totalAnswered.value}',
-                          const Color(0xFF6C63FF)),
+                        'Accuracy',
+                        '${controller.accuracy.toStringAsFixed(1)}%',
+                        const Color(0xFF4ECDC4),
+                      ),
+                      const SizedBox(height: 12),
+                      _buildStatCard(
+                        'Answered',
+                        '${controller.correctCount.value}/${controller.totalAnswered.value}',
+                        const Color(0xFF6C63FF),
+                      ),
 
                       const SizedBox(height: 32),
 
                       // High score
                       Obx(() {
                         final isNewHigh =
-                            controller.score.value >= controller.highScore.value &&
-                                controller.score.value > 0;
+                            controller.score.value >=
+                                controller.highScore.value &&
+                            controller.score.value > 0;
                         if (!isNewHigh) return const SizedBox.shrink();
                         return Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 20, vertical: 10),
+                            horizontal: 20,
+                            vertical: 10,
+                          ),
                           margin: const EdgeInsets.only(bottom: 24),
                           decoration: BoxDecoration(
                             gradient: const LinearGradient(
@@ -753,8 +898,11 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
                           child: const Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.emoji_events_rounded,
-                                  color: Colors.white, size: 20),
+                              Icon(
+                                Icons.emoji_events_rounded,
+                                color: Colors.white,
+                                size: 20,
+                              ),
                               SizedBox(width: 8),
                               Text(
                                 'NEW HIGH SCORE!',
@@ -872,8 +1020,11 @@ class _PauseDialog extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.pause_circle_filled_rounded,
-                color: Color(0xFF4ECDC4), size: 48),
+            const Icon(
+              Icons.pause_circle_filled_rounded,
+              color: Color(0xFF4ECDC4),
+              size: 48,
+            ),
             const SizedBox(height: 16),
             const Text(
               'PAUSED',

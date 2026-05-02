@@ -22,7 +22,6 @@ class _MiniGamePageState extends State<MiniGamePage>
   final GetStorage _box = GetStorage();
   late final AnimationController _glowCtrl;
   final RxSet<int> _selectedGames = <int>{}.obs;
-  /// null means "auto" (randomly pick from compatible types per challenge).
   final RxnString _selectedInputType = RxnString(null);
 
   @override
@@ -70,7 +69,9 @@ class _MiniGamePageState extends State<MiniGamePage>
             SafeArea(
               child: Center(
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: Env.globalMaxWidth),
+                  constraints: const BoxConstraints(
+                    maxWidth: Env.globalMaxWidth,
+                  ),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24),
                     child: Column(
@@ -231,7 +232,11 @@ class _MiniGamePageState extends State<MiniGamePage>
               colors: [Color(0xFFE94560), Color(0xFFFF6B6B)],
             ),
           ),
-          child: const Icon(Icons.sports_esports_rounded, color: Colors.white, size: 40),
+          child: const Icon(
+            Icons.sports_esports_rounded,
+            color: Colors.white,
+            size: 40,
+          ),
         ),
         const SizedBox(height: 20),
         ShaderMask(
@@ -258,7 +263,8 @@ class _MiniGamePageState extends State<MiniGamePage>
     if (Get.isRegistered<MiniGameHubController>()) {
       final games = Get.find<MiniGameHubController>().miniGames;
       for (var g in games) {
-        final score = _box.read<int>('dynamic_minigame_${g.id}_high_score') ?? 0;
+        final score =
+            _box.read<int>('dynamic_minigame_${g.id}_high_score') ?? 0;
         if (score > maxHighScore) maxHighScore = score;
       }
     }
@@ -438,8 +444,12 @@ class _MiniGamePageState extends State<MiniGamePage>
   void _showGameSelectionModal() {
     final hubCtrl = Get.find<MiniGameHubController>();
     if (hubCtrl.miniGames.isEmpty) {
-      Get.snackbar('Oops!', 'No mini-games available right now.',
-          backgroundColor: Colors.redAccent, colorText: Colors.white);
+      Get.snackbar(
+        'Oops!',
+        'No mini-games available right now.',
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+      );
       return;
     }
 
@@ -464,7 +474,11 @@ class _MiniGamePageState extends State<MiniGamePage>
               // ── Header ──
               Row(
                 children: [
-                  const Icon(Icons.tune_rounded, color: Color(0xFF4ECDC4), size: 24),
+                  const Icon(
+                    Icons.tune_rounded,
+                    color: Color(0xFF4ECDC4),
+                    size: 24,
+                  ),
                   const SizedBox(width: 10),
                   const Expanded(
                     child: Text(
@@ -485,7 +499,11 @@ class _MiniGamePageState extends State<MiniGamePage>
                         shape: BoxShape.circle,
                         color: Colors.white.withValues(alpha: 0.08),
                       ),
-                      child: const Icon(Icons.close_rounded, color: Colors.white54, size: 18),
+                      child: const Icon(
+                        Icons.close_rounded,
+                        color: Colors.white54,
+                        size: 18,
+                      ),
                     ),
                   ),
                 ],
@@ -575,7 +593,9 @@ class _MiniGamePageState extends State<MiniGamePage>
                 // Collect the union of compatible input types across all selected games
                 final availableInputTypes = <String>{};
                 for (final game in selectedGamesList) {
-                  availableInputTypes.addAll(game.compatibleInputTypes(game.displayType));
+                  availableInputTypes.addAll(
+                    game.compatibleInputTypes(game.displayType),
+                  );
                 }
 
                 final inputOptions = availableInputTypes.toList();
@@ -622,7 +642,10 @@ class _MiniGamePageState extends State<MiniGamePage>
                       onTap: () => _selectedInputType.value = option,
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 200),
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 10,
+                        ),
                         decoration: BoxDecoration(
                           color: isActive
                               ? const Color(0xFF4ECDC4).withValues(alpha: 0.2)
@@ -653,7 +676,9 @@ class _MiniGamePageState extends State<MiniGamePage>
                                     ? const Color(0xFF4ECDC4)
                                     : Colors.white70,
                                 fontSize: 13,
-                                fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+                                fontWeight: isActive
+                                    ? FontWeight.w700
+                                    : FontWeight.w500,
                               ),
                             ),
                           ],
@@ -685,7 +710,11 @@ class _MiniGamePageState extends State<MiniGamePage>
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 22),
+                      const Icon(
+                        Icons.play_arrow_rounded,
+                        color: Colors.white,
+                        size: 22,
+                      ),
                       const SizedBox(width: 8),
                       const Text(
                         'START RUN',

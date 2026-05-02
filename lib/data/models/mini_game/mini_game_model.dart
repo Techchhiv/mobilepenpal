@@ -1,3 +1,5 @@
+enum MiniGameDifficulty { easy, medium, hard }
+
 class MiniGameModel {
   final int id;
   final String title;

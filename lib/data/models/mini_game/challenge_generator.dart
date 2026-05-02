@@ -18,10 +18,14 @@ class ChallengeGenerator {
   static final Random _rng = Random();
 
   /// Generate a random challenge from the given mini-game config.
-  static Challenge generate(MiniGameModel game) {
+  /// [difficulty] controls the complexity of the generated challenge.
+  static Challenge generate(
+    MiniGameModel game, {
+    MiniGameDifficulty difficulty = MiniGameDifficulty.easy,
+  }) {
     switch (game.displayType) {
       case 'math_equation':
-        return _generateMathChallenge(game.config);
+        return _generateMathChallenge(game.config, difficulty);
       case 'character':
       case 'letter':
       case 'number':
@@ -42,94 +46,253 @@ class ChallengeGenerator {
     return Challenge(display: item, target: item);
   }
 
-  /// Generates a random math equation where the answer fits
-  /// within the configured digit constraints.
-  static Challenge _generateMathChallenge(Map<String, dynamic>? config) {
-    final maxDigits = (config?['max_answer_digits'] as int?) ?? 1;
-    final allowDecimals = (config?['allow_decimals'] as bool?) ?? false;
-    final ops = (config?['ops'] as List<dynamic>?)
-            ?.map((e) => e.toString())
-            .toList() ??
-        ['+'];
+  // ── Math Challenge (Kindergarten Friendly, 1-digit answers) ──────
 
-    final maxAnswer = _maxForDigits(maxDigits);
-    final op = ops[_rng.nextInt(ops.length)];
-
-    if (allowDecimals) {
-      return _generateDecimalMath(op, maxAnswer);
-    } else {
-      return _generateIntMath(op, maxAnswer);
+  /// Generates a kindergarten-friendly math challenge.
+  ///
+  /// - **Easy**: Addition only, sum ≤ 5.
+  /// - **Medium**: Addition or subtraction, result 0–9.
+  /// - **Hard**: "Missing number" problems, result 0–9.
+  static Challenge _generateMathChallenge(
+    Map<String, dynamic>? config,
+    MiniGameDifficulty difficulty,
+  ) {
+    switch (difficulty) {
+      case MiniGameDifficulty.easy:
+        return _mathEasy();
+      case MiniGameDifficulty.medium:
+        return _mathMedium();
+      case MiniGameDifficulty.hard:
+        return _mathHard();
     }
   }
 
-  static int _maxForDigits(int digits) {
-    // 1 digit -> 9, 2 digits -> 99, etc.
-    int result = 0;
-    for (int i = 0; i < digits; i++) {
-      result = result * 10 + 9;
-    }
-    return result == 0 ? 9 : result;
-  }
-
-  static Challenge _generateIntMath(String op, int maxAnswer) {
-    int a, b, answer;
-
-    switch (op) {
-      case '-':
-        // Ensure a >= b so result >= 0
-        a = _rng.nextInt(maxAnswer + 1);
-        b = _rng.nextInt(a + 1);
-        answer = a - b;
-        break;
-      case '*':
-        // Keep factors small so answer fits within maxAnswer
-        final maxFactor = (maxAnswer > 9) ? 9 : maxAnswer;
-        a = _rng.nextInt(maxFactor + 1);
-        b = a == 0 ? 0 : _rng.nextInt((maxAnswer ~/ a).clamp(0, maxFactor) + 1);
-        answer = a * b;
-        break;
-      case '+':
-      default:
-        a = _rng.nextInt(maxAnswer + 1);
-        b = _rng.nextInt(maxAnswer + 1 - a);
-        answer = a + b;
-        break;
-    }
-
+  /// Easy: addition only, sum ≤ 5.
+  static Challenge _mathEasy() {
+    final a = _rng.nextInt(6); // 0..5
+    final b = _rng.nextInt(6 - a); // ensures a+b ≤ 5
+    final answer = a + b;
     return Challenge(
-      display: '$a $op $b = ?',
+      display: '$a + $b = ?',
       target: answer.toString(),
     );
   }
 
-  static Challenge _generateDecimalMath(String op, int maxAnswer) {
-    // Generate with one decimal place
-    double a = (_rng.nextInt(maxAnswer * 10) / 10.0);
-    double b;
-    double answer;
+  /// Medium: addition or subtraction, result 0–9.
+  static Challenge _mathMedium() {
+    final isAdd = _rng.nextBool();
+    if (isAdd) {
+      final a = _rng.nextInt(10); // 0..9
+      final b = _rng.nextInt(10 - a); // ensures a+b ≤ 9
+      final answer = a + b;
+      return Challenge(
+        display: '$a + $b = ?',
+        target: answer.toString(),
+      );
+    } else {
+      final a = _rng.nextInt(10); // 0..9
+      final b = _rng.nextInt(a + 1); // ensures a-b ≥ 0
+      final answer = a - b;
+      return Challenge(
+        display: '$a - $b = ?',
+        target: answer.toString(),
+      );
+    }
+  }
 
-    switch (op) {
-      case '-':
-        b = (_rng.nextInt((a * 10).toInt() + 1)) / 10.0;
-        answer = double.parse((a - b).toStringAsFixed(1));
-        break;
-      case '+':
-      default:
-        final remaining = maxAnswer - a;
-        b = (_rng.nextInt((remaining * 10).toInt().clamp(0, maxAnswer * 10) + 1)) /
-            10.0;
-        answer = double.parse((a + b).toStringAsFixed(1));
-        break;
+  /// Hard: "Missing number" problems, result 0–9.
+  /// e.g. "2 + ? = 5" or "? - 1 = 4"
+  static Challenge _mathHard() {
+    final isAdd = _rng.nextBool();
+    final missingFirst = _rng.nextBool(); // which operand is missing
+
+    if (isAdd) {
+      // a + b = sum, where sum ≤ 9
+      final sum = _rng.nextInt(10); // 0..9
+      final a = _rng.nextInt(sum + 1);
+      final b = sum - a;
+
+      if (missingFirst) {
+        // ? + b = sum  →  answer = a
+        return Challenge(
+          display: '? + $b = $sum',
+          target: a.toString(),
+        );
+      } else {
+        // a + ? = sum  →  answer = b
+        return Challenge(
+          display: '$a + ? = $sum',
+          target: b.toString(),
+        );
+      }
+    } else {
+      // a - b = diff, where a ≤ 9 and diff ≥ 0
+      final a = _rng.nextInt(10); // 0..9
+      final b = _rng.nextInt(a + 1);
+      final diff = a - b;
+
+      if (missingFirst) {
+        // ? - b = diff  →  answer = a
+        return Challenge(
+          display: '? - $b = $diff',
+          target: a.toString(),
+        );
+      } else {
+        // a - ? = diff  →  answer = b
+        return Challenge(
+          display: '$a - ? = $diff',
+          target: b.toString(),
+        );
+      }
+    }
+  }
+
+  // ── Multiple-choice distractor generation ────────────────────────
+
+  /// Number of options to show based on difficulty.
+  static int optionCount(MiniGameDifficulty difficulty) {
+    switch (difficulty) {
+      case MiniGameDifficulty.easy:
+        return 4;
+      case MiniGameDifficulty.medium:
+        return 6;
+      case MiniGameDifficulty.hard:
+        return 8;
+    }
+  }
+
+  /// Visually similar Khmer characters grouped by shape resemblance.
+  /// Used to generate confusing distractors on Medium & Hard.
+  static const Map<String, List<String>> _khmerSimilarMap = {
+    // Consonants
+    'ក': ['ខ', 'គ', 'ឃ'],
+    'ខ': ['ក', 'គ', 'ឃ'],
+    'គ': ['ក', 'ខ', 'ឃ'],
+    'ឃ': ['ក', 'ខ', 'គ'],
+    'ង': ['ឯ', 'ញ'],
+    'ច': ['ជ', 'ឆ'],
+    'ឆ': ['ច', 'ជ'],
+    'ជ': ['ច', 'ឆ'],
+    'ញ': ['ង', 'ឯ'],
+    'ដ': ['ឋ', 'ឌ'],
+    'ឋ': ['ដ', 'ឌ'],
+    'ឌ': ['ដ', 'ឋ'],
+    'ណ': ['ន'],
+    'ត': ['រ', 'ថ'],
+    'ថ': ['ត', 'ផ', 'រ'],
+    'ទ': ['ធ'],
+    'ធ': ['ទ'],
+    'ន': ['ណ'],
+    'ប': ['ព', 'ហ'],
+    'ផ': ['ថ', 'ព'],
+    'ព': ['ប', 'ផ'],
+    'ម': ['org'],
+    'យ': ['រ'],
+    'រ': ['ត', 'យ'],
+    'ល': ['ឡ'],
+    'វ': ['org'],
+    'ស': ['org'],
+    'ហ': ['ប'],
+    'ឡ': ['ល'],
+    'អ': ['org'],
+    // Independent vowels
+    'ឥ': ['ឦ'],
+    'ឦ': ['ឥ'],
+    'ឧ': ['ឩ', 'ឪ'],
+    'ឩ': ['ឧ', 'ឪ'],
+    'ឪ': ['ឧ', 'ឩ'],
+    'ឫ': ['ឬ'],
+    'ឬ': ['ឫ'],
+    'ឭ': ['ឮ'],
+    'ឮ': ['ឭ'],
+    'ឯ': ['ង', 'ញ'],
+    'ឱ': ['ឲ'],
+    'ឲ': ['ឱ'],
+    // Digits
+    '០': ['៩'],
+    '១': ['org'],
+    '២': ['org'],
+    '៣': ['org'],
+    '៤': ['org'],
+    '៥': ['org'],
+    '៦': ['org'],
+    '៧': ['org'],
+    '៨': ['org'],
+    '៩': ['០'],
+  };
+
+  /// Generate a list of options that includes the correct [target]
+  /// plus distractors drawn from [pool].
+  ///
+  /// - **Easy**: random distractors from pool.
+  /// - **Medium**: visually similar distractors + near numerics.
+  /// - **Hard**: more visually similar distractors + near numerics.
+  static List<String> generateOptions({
+    required String target,
+    required List<String> pool,
+    required MiniGameDifficulty difficulty,
+    Map<String, List<String>>? similarMap,
+  }) {
+    final count = optionCount(difficulty);
+    final options = <String>{target};
+
+    // Merge caller-provided map with built-in map
+    final effectiveMap = <String, List<String>>{
+      ..._khmerSimilarMap,
+      if (similarMap != null) ...similarMap,
+    };
+
+    // 1. For medium/hard add "near" distractors when target is numeric
+    if (difficulty != MiniGameDifficulty.easy) {
+      final numTarget = int.tryParse(target);
+      if (numTarget != null) {
+        for (final delta in [1, -1, 2, -2]) {
+          final near = numTarget + delta;
+          if (near >= 0 && near <= 9) {
+            options.add(near.toString());
+          }
+          if (options.length >= count) break;
+        }
+      }
     }
 
-    final aStr = a == a.roundToDouble() ? a.toInt().toString() : a.toStringAsFixed(1);
-    final bStr = b == b.roundToDouble() ? b.toInt().toString() : b.toStringAsFixed(1);
-    final ansStr =
-        answer == answer.roundToDouble() ? answer.toInt().toString() : answer.toStringAsFixed(1);
+    // 2. For medium AND hard, add visually similar characters
+    if (difficulty != MiniGameDifficulty.easy) {
+      final similars = effectiveMap[target]
+          ?.where((s) => s != 'org' && pool.contains(s))
+          .toList();
+      if (similars != null && similars.isNotEmpty) {
+        similars.shuffle(_rng);
+        // Medium: add up to 2 similar, Hard: add up to 4 similar
+        final maxSimilar = difficulty == MiniGameDifficulty.hard ? 4 : 2;
+        for (final s in similars) {
+          if (options.length >= count) break;
+          if (options.length - 1 >= maxSimilar) break;
+          options.add(s);
+        }
+      }
+    }
 
-    return Challenge(
-      display: '$aStr $op $bStr = ?',
-      target: ansStr,
-    );
+    // 3. Fill remaining from pool (shuffled)
+    final shuffledPool = List<String>.from(pool)..shuffle(_rng);
+    for (final item in shuffledPool) {
+      if (options.length >= count) break;
+      options.add(item);
+    }
+
+    // 4. Fallback: if pool was too small to reach count, pull from all known characters
+    if (options.length < count) {
+      final fallbackPool = effectiveMap.keys.toList()..shuffle(_rng);
+      for (final item in fallbackPool) {
+        if (options.length >= count) break;
+        if (item != 'org') {
+          options.add(item);
+        }
+      }
+    }
+
+    // Shuffle the final list so the correct answer isn't always first
+    final result = options.toList()..shuffle(_rng);
+    return result;
   }
 }

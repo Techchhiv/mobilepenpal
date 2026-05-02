@@ -69,6 +69,26 @@ class DynamicMiniGameController extends GetxController
   final bestCombo = 0.obs;
   final highScore = 0.obs;
 
+  // ── Difficulty ──
+  final difficulty = MiniGameDifficulty.easy.obs;
+  int _correctStreakForDifficulty = 0;
+
+  /// Consecutive correct answers needed to advance to the next difficulty tier
+  static const int _mediumThreshold = 4;
+  static const int _hardThreshold = 8;
+
+  /// Whether to show the shadow guide on the drawing board
+  bool get showShadowGuide => difficulty.value == MiniGameDifficulty.easy;
+
+  /// Whether to show the letter/character prompt above the drawing board.
+  /// On Easy: always visible. On Medium: visible then fades. On Hard: hidden.
+  bool get showLetterPrompt {
+    if (difficulty.value == MiniGameDifficulty.easy) return true;
+    if (difficulty.value == MiniGameDifficulty.hard) return false;
+    // Medium: controlled by timer
+    return isPromptVisible.value;
+  }
+
   // Stats
   final totalAnswered = 0.obs;
   final correctCount = 0.obs;
@@ -98,8 +118,12 @@ class DynamicMiniGameController extends GetxController
   List<Map<String, dynamic>>? _currentStroke;
   bool hasDrawnStroke = false;
   Timer? _idleTimer;
+  late final AnimationController mediumTimerCtrl;
   CancelToken? _cancelToken;
   int _reqId = 0;
+
+  /// Controls whether the prompt is currently visible (used for Medium fade).
+  final isPromptVisible = true.obs;
 
   // Stroke database
   static Map<String, dynamic>? _strokesDbCache;
@@ -178,6 +202,16 @@ class DynamicMiniGameController extends GetxController
       vsync: this,
       duration: const Duration(milliseconds: 600),
     );
+
+    mediumTimerCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 3),
+    );
+    mediumTimerCtrl.addStatusListener((status) {
+      if (status == AnimationStatus.dismissed) {
+        isPromptVisible.value = false;
+      }
+    });
 
     // Listen to feedback trigger
     ever(feedbackTrigger, (_) {
@@ -258,6 +292,10 @@ class DynamicMiniGameController extends GetxController
     isPaused.value = false;
     isGameActive.value = true;
 
+    // Reset difficulty
+    difficulty.value = MiniGameDifficulty.easy;
+    _correctStreakForDifficulty = 0;
+
     anim.feedback.value = DrawFeedback.none;
     anim.clearPraise();
 
@@ -280,6 +318,7 @@ class DynamicMiniGameController extends GetxController
   void endGame() {
     _gameTimer?.cancel();
     _idleTimer?.cancel();
+    mediumTimerCtrl.stop();
     _cancelPredictIfAny();
     isGameActive.value = false;
     isGameOver.value = true;
@@ -311,7 +350,38 @@ class DynamicMiniGameController extends GetxController
 
   // ── Challenge selection ──
 
+  /// Determine the difficulty for the next challenge based on the
+  /// current correct streak, using a probabilistic roll like the adventure stage.
+  void _rollDifficulty() {
+    final rng = Random();
+    if (_correctStreakForDifficulty >= _hardThreshold) {
+      // 8+ streak: 20% Hard, 40% Medium, 40% Easy
+      final roll = rng.nextDouble();
+      if (roll < 0.20) {
+        difficulty.value = MiniGameDifficulty.hard;
+      } else if (roll < 0.60) {
+        difficulty.value = MiniGameDifficulty.medium;
+      } else {
+        difficulty.value = MiniGameDifficulty.easy;
+      }
+    } else if (_correctStreakForDifficulty >= _mediumThreshold) {
+      // 4-7 streak: 40% Medium, 60% Easy
+      final roll = rng.nextDouble();
+      if (roll < 0.40) {
+        difficulty.value = MiniGameDifficulty.medium;
+      } else {
+        difficulty.value = MiniGameDifficulty.easy;
+      }
+    } else {
+      // <4 streak: 100% Easy
+      difficulty.value = MiniGameDifficulty.easy;
+    }
+  }
+
   void _pickNextChallenge() {
+    // Roll difficulty before generating
+    _rollDifficulty();
+
     // Pick a random game from the selected ones
     final game = miniGames[Random().nextInt(miniGames.length)];
     currentMiniGame.value = game;
@@ -329,20 +399,21 @@ class DynamicMiniGameController extends GetxController
       currentInputType.value = 'drawing_board';
     }
 
-    final challenge = ChallengeGenerator.generate(game);
+    final challenge = ChallengeGenerator.generate(
+      game,
+      difficulty: difficulty.value,
+    );
     currentChallenge.value = challenge;
     
     // Generate options if multiple choice
     if (currentInputType.value == 'multiple_choice') {
       final pool = (game.config?['pool'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [];
-      final options = <String>{challenge.target};
-      pool.shuffle();
-      for (final option in pool) {
-        if (options.length >= 4) break;
-        options.add(option);
-      }
-      final optionsList = options.toList()..shuffle();
-      currentOptions.assignAll(optionsList);
+      final options = ChallengeGenerator.generateOptions(
+        target: challenge.target,
+        pool: pool,
+        difficulty: difficulty.value,
+      );
+      currentOptions.assignAll(options);
     } else {
       currentOptions.clear();
     }
@@ -350,13 +421,114 @@ class DynamicMiniGameController extends GetxController
     clearBoard();
 
     // If drawing board and we have stroke data, set guide
+    // Only show the shadow guide on Easy difficulty
     if (currentInputType.value == 'drawing_board' &&
         game.displayType != 'math_equation') {
-      setGuideForCharacter(challenge.target);
+      if (showShadowGuide) {
+        setGuideForCharacter(challenge.target);
+      } else {
+        // No shadow guide for medium/hard
+        letterSubpathsNorm.clear();
+        strokeStrokesNorm.clear();
+        anim.setGuideFromPx(strokesPx: const []);
+      }
     } else {
       letterSubpathsNorm.clear();
       strokeStrokesNorm.clear();
       anim.setGuideFromPx(strokesPx: const []);
+    }
+
+    // ── Prompt visibility & audio per difficulty ──
+    mediumTimerCtrl.stop();
+    if (difficulty.value == MiniGameDifficulty.easy) {
+      isPromptVisible.value = true;
+    } else if (difficulty.value == MiniGameDifficulty.medium) {
+      isPromptVisible.value = true;
+      mediumTimerCtrl.reverse(from: 1.0);
+    } else {
+      // Hard: hidden from the start, play audio immediately
+      isPromptVisible.value = false;
+      replayPromptAudio();
+    }
+
+    _startIdleTimer();
+  }
+
+  /// Forces a specific difficulty and re-evaluates the current challenge state.
+  /// Used primarily for showcasing/debugging via the UI toggle button.
+  void forceDifficultyForShowcase(MiniGameDifficulty newDiff) {
+    difficulty.value = newDiff;
+
+    final game = currentMiniGame.value;
+    final challenge = currentChallenge.value;
+    if (game == null || challenge == null) return;
+
+    // 1. Re-generate options if multiple choice
+    if (currentInputType.value == 'multiple_choice') {
+      final pool = (game.config?['pool'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [];
+      final options = ChallengeGenerator.generateOptions(
+        target: challenge.target,
+        pool: pool,
+        difficulty: difficulty.value,
+      );
+      currentOptions.assignAll(options);
+    }
+
+    // 2. Restart prompt visibility logic
+    mediumTimerCtrl.stop();
+    if (difficulty.value == MiniGameDifficulty.easy) {
+      isPromptVisible.value = true;
+    } else if (difficulty.value == MiniGameDifficulty.medium) {
+      isPromptVisible.value = true;
+      mediumTimerCtrl.reverse(from: 1.0);
+    } else {
+      isPromptVisible.value = false;
+      replayPromptAudio();
+    }
+
+    // 3. Update drawing board guide
+    if (currentInputType.value == 'drawing_board' && game.displayType != 'math_equation') {
+      if (showShadowGuide) {
+        setGuideForCharacter(challenge.target);
+      } else {
+        letterSubpathsNorm.clear();
+        strokeStrokesNorm.clear();
+        anim.setGuideFromPx(strokesPx: const []);
+      }
+    }
+  }
+
+  void replayPromptAudio() {
+    final game = currentMiniGame.value;
+    final challenge = currentChallenge.value;
+    if (game == null || challenge == null) return;
+    
+    final dt = game.displayType;
+    if (dt == 'character' || dt == 'letter' || dt == 'number' || dt == 'text' || dt == 'image') {
+      // If the game config explicitly provides a character_type, use it.
+      // Otherwise, we infer it from the target character itself.
+      String? audioType = (game.config?['character_type'] as String?) ?? 
+                         (game.config?['type'] as String?);
+      
+      if (audioType == null) {
+        audioType = _getAudioFolderForCharacter(challenge.target);
+      } else {
+        // Normalize common types to folder names
+        audioType = audioType.trim().toLowerCase();
+        if (audioType == 'letter') audioType = 'consonants';
+        if (audioType == 'number') audioType = 'digits';
+        if (!audioType.endsWith('s')) {
+          // Attempt to pluralize if missing (consonant -> consonants, etc)
+          if (audioType == 'independent_vowel') audioType = 'independent_vowels';
+          if (audioType == 'dependent_vowel') audioType = 'dependent_vowels';
+          if (audioType == 'digit') audioType = 'digits';
+        }
+      }
+      
+      audio.autoPlayCharacter(
+        type: audioType,
+        ch: challenge.target,
+      );
     }
   }
 
@@ -384,8 +556,19 @@ class DynamicMiniGameController extends GetxController
   Future<void> onPointerUp() async {
     if (!hasDrawnStroke) return;
     if (!isGameActive.value || isGameOver.value || isPaused.value) return;
-    _idleTimer?.cancel();
+    _startIdleTimer();
     if (_rawStrokes.isEmpty) return;
+  }
+
+  void _startIdleTimer() {
+    _idleTimer?.cancel();
+    _idleTimer = Timer(const Duration(seconds: 3), () {
+      if (!isGameActive.value || isGameOver.value || isPaused.value) return;
+      if (showShadowGuide &&
+          currentMiniGame.value?.displayType != 'math_equation') {
+        anim.restartGuideFromStart();
+      }
+    });
   }
 
   void onRawPointerDown(PointerDownEvent e) {
@@ -532,12 +715,105 @@ class DynamicMiniGameController extends GetxController
               ?.map((e) => e.toString())
               .toList() ??
           [];
-      if (pool.isNotEmpty && pool.every((c) => _khmerDigits.contains(c))) {
-        return 'digit';
+      
+      if (pool.isNotEmpty) {
+        // Check if all digits
+        if (pool.every((c) => _khmerDigits.contains(c))) return 'digit';
+        
+        // Check for independent vowels
+        final independentVowels = ['ឥ', 'ឦ', 'ឧ', 'ឩ', 'ឪ', 'ឫ', 'ឬ', 'ឭ', 'ឮ', 'ឯ', 'ឰ', 'ឱ', 'ឲ', 'ឳ'];
+        if (pool.any((c) => independentVowels.contains(c))) return 'independent_vowel';
+        
+        // Check for dependent vowels
+        final dependentVowels = ['ា', 'ិ', 'ី', 'ឹ', 'ឺ', 'ុ', 'ូ', 'ួ', 'ើ', 'ឿ', 'ៀ', 'េ', 'ែ', 'ៃ', 'ោ', 'ៅ', 'ុំ', 'ំ', 'ាំ', 'ះ', 'ិះ', 'ុះ', 'េះ', 'ោះ'];
+        if (pool.any((c) => dependentVowels.contains(c))) return 'dependent_vowel';
       }
     }
 
     return 'consonant';
+  }
+
+  String _getAudioFolderForCharacter(String ch) {
+    final c = ch.trim();
+    if (_khmerDigits.contains(c)) return 'digits';
+    
+    const independentVowels = ['ឥ', 'ឦ', 'ឧ', 'ឩ', 'ឪ', 'ឫ', 'ឬ', 'ឭ', 'ឮ', 'ឯ', 'ឰ', 'ឱ', 'ឲ', 'ឳ'];
+    if (independentVowels.contains(c)) return 'independent_vowels';
+    
+    const dependentVowels = ['ា', 'ិ', 'ី', 'ឹ', 'ឺ', 'ុ', 'ូ', 'ួ', 'ើ', 'ឿ', 'ៀ', 'េ', 'ែ', 'ៃ', 'ោ', 'ៅ', 'ុំ', 'ំ', 'ាំ', 'ះ', 'ិះ', 'ុះ', 'េះ', 'ោះ'];
+    if (dependentVowels.contains(c)) return 'dependent_vowels';
+    
+    return 'consonants';
+  }
+
+  List<List<Offset>> _readSubpathsPx(List<dynamic> raw) {
+    final out = <List<Offset>>[];
+    for (final sub in raw) {
+      final pts = <Offset>[];
+      if (sub is List) {
+        for (final p in sub) {
+          if (p is List && p.length >= 2) {
+            pts.add(Offset((p[0] as num).toDouble(), (p[1] as num).toDouble()));
+          } else if (p is Map) {
+            final x = ((p['x'] as num?) ?? 0).toDouble();
+            final y = ((p['y'] as num?) ?? 0).toDouble();
+            pts.add(Offset(x, y));
+          }
+        }
+      }
+      if (pts.isNotEmpty) out.add(pts);
+    }
+    return out;
+  }
+
+  List<List<Offset>> _autoFitGlyphPx(
+    List<List<Offset>> paths, {
+    required double boardW,
+    required double boardH,
+    double pad = 18,
+    double minWidthFill = 0.72,
+    double minHeightFill = 0.78,
+  }) {
+    if (paths.isEmpty) return paths;
+
+    double minX = double.infinity, minY = double.infinity;
+    double maxX = -double.infinity, maxY = -double.infinity;
+
+    for (final sub in paths) {
+      for (final p in sub) {
+        if (p.dx < minX) minX = p.dx;
+        if (p.dy < minY) minY = p.dy;
+        if (p.dx > maxX) maxX = p.dx;
+        if (p.dy > maxY) maxY = p.dy;
+      }
+    }
+
+    final w = maxX - minX;
+    final h = maxY - minY;
+    if (w <= 0 || h <= 0) return paths;
+
+    final innerW = boardW - 2 * pad;
+    final innerH = boardH - 2 * pad;
+
+    final sMax = min(innerW / w, innerH / h);
+    final sWantW = (innerW * minWidthFill) / w;
+    final sWantH = (innerH * minHeightFill) / h;
+
+    final s = min(max(1.0, max(sWantW, sWantH)), sMax);
+
+    final cx = (minX + maxX) / 2;
+    final cy = (minY + maxY) / 2;
+    final boardCx = boardW / 2;
+    final boardCy = boardH / 2;
+
+    return paths
+        .map((sub) => sub
+            .map((p) => Offset(
+                  (p.dx - cx) * s + boardCx,
+                  (p.dy - cy) * s + boardCy,
+                ))
+            .toList())
+        .toList();
   }
 
   void _applyCorrectResult() {
@@ -548,6 +824,9 @@ class DynamicMiniGameController extends GetxController
     if (combo.value > bestCombo.value) {
       bestCombo.value = combo.value;
     }
+
+    // Track streak for difficulty scaling
+    _correctStreakForDifficulty++;
 
     // Calculate score with combo multiplier
     final comboMultiplier = 1.0 + (combo.value - 1) * 0.1;
@@ -578,8 +857,9 @@ class DynamicMiniGameController extends GetxController
   void _applyWrongResult() {
     wrongCount.value++;
 
-    // Break combo
+    // Break combo and reset difficulty streak
     combo.value = 0;
+    _correctStreakForDifficulty = 0;
 
     // Time penalty
     timeLeft.value =
@@ -633,8 +913,7 @@ class DynamicMiniGameController extends GetxController
       return;
     }
 
-    final db = _strokesDbCache;
-    final items = db?['items'] as Map<String, dynamic>?;
+    final items = _strokesDbCache!['items'] as Map<String, dynamic>?;
     final entry = items?[ch.trim()] as Map<String, dynamic>?;
 
     if (entry == null) {
@@ -644,45 +923,38 @@ class DynamicMiniGameController extends GetxController
       return;
     }
 
-    // Parse strokes
-    final rawStrokes = entry['strokes'] as List<dynamic>? ?? [];
-    final parsedStrokesPx = <List<Offset>>[];
+    final boardW = boardWidth.value;
+    final boardH = boardHeight.value;
 
-    for (final s in rawStrokes) {
-      final pts = <Offset>[];
-      if (s is List) {
-        for (final p in s) {
-          if (p is Map<String, dynamic>) {
-            final x = ((p['x'] as num?) ?? 0).toDouble();
-            final y = ((p['y'] as num?) ?? 0).toDouble();
-            pts.add(Offset(x * boardWidth.value, y * boardHeight.value));
-          }
-        }
-      }
-      if (pts.isNotEmpty) parsedStrokesPx.add(pts);
+    final letter = entry['text_px'] as List<dynamic>? ?? [];
+    final strokes = entry['paths_px'] as List<dynamic>? ?? [];
+
+    final letterOut = _readSubpathsPx(letter);
+    final strokesOut = _readSubpathsPx(strokes);
+
+    if (letterOut.isEmpty && strokesOut.isEmpty) {
+      letterSubpathsNorm.clear();
+      strokeStrokesNorm.clear();
+      anim.setGuideFromPx(strokesPx: const []);
+      return;
     }
 
-    strokeStrokesNorm.value = parsedStrokesPx;
+    final combined = <List<Offset>>[...letterOut, ...strokesOut];
+    final fitted = _autoFitGlyphPx(
+      combined,
+      boardW: boardW,
+      boardH: boardH,
+      pad: 24,
+      minWidthFill: 0.72,
+      minHeightFill: 0.78,
+    );
 
-    // Parse subpaths for the letter fill
-    final rawSub = entry['subpaths'] as List<dynamic>? ?? [];
-    final parsedSubpaths = <List<Offset>>[];
-    for (final s in rawSub) {
-      final pts = <Offset>[];
-      if (s is List) {
-        for (final p in s) {
-          if (p is Map<String, dynamic>) {
-            final x = ((p['x'] as num?) ?? 0).toDouble();
-            final y = ((p['y'] as num?) ?? 0).toDouble();
-            pts.add(Offset(x * boardWidth.value, y * boardHeight.value));
-          }
-        }
-      }
-      if (pts.isNotEmpty) parsedSubpaths.add(pts);
-    }
+    final fittedLetter = fitted.take(letterOut.length).toList();
+    final fittedStrokes = fitted.skip(letterOut.length).toList();
 
-    letterSubpathsNorm.value = parsedSubpaths;
-    anim.setGuideFromPx(strokesPx: parsedStrokesPx);
+    letterSubpathsNorm.assignAll(fittedLetter);
+    strokeStrokesNorm.assignAll(fittedStrokes);
+    anim.setGuideFromPx(strokesPx: fittedStrokes);
   }
 
   // ── Local ONNX prediction ──
@@ -740,6 +1012,7 @@ class DynamicMiniGameController extends GetxController
     isCountingDown.value = false;
     _gameTimer?.cancel();
     _idleTimer?.cancel();
+    mediumTimerCtrl.dispose();
     _cancelPredictIfAny();
     feedbackAnimCtrl.dispose();
     promptBounceCtrl.dispose();
