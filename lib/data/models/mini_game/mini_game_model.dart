@@ -40,13 +40,19 @@ class MiniGameModel {
     final all = inputTypes;
     switch (chosenDisplayType) {
       case 'character':
-        // User wants to experiment with multiple choice for characters
-        return all.where((t) => t == 'drawing_board' || t == 'multiple_choice').toList();
+        // Drawing, multiple choice, or drag-and-drop matching
+        return all.where((t) => t == 'drawing_board' || t == 'multiple_choice' || t == 'drag_and_drop').toList();
       case 'audio':
       case 'image':
         return all; // all input types are valid
       case 'math_equation':
         return all.where((t) => t != 'typing').toList();
+      case 'object_count':
+        // Count objects → draw or select the number
+        return all.where((t) => t == 'drawing_board' || t == 'multiple_choice' || t == 'drag_and_drop').toList();
+      case 'missing_character':
+        // Fill the blank → draw or select the missing character
+        return all.where((t) => t == 'drawing_board' || t == 'multiple_choice' || t == 'drag_and_drop').toList();
       default:
         return all;
     }

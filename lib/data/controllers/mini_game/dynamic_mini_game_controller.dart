@@ -19,6 +19,20 @@ import 'package:mobilepenpal/data/models/mini_game/mini_game_model.dart';
 import 'package:mobilepenpal/data/services/onnx_inference_service.dart';
 import 'package:mobilepenpal/data/services/world_service.dart';
 
+/// A floating "+N" popup that animates from a spawn position up to the score bar.
+class FloatingScoreEvent {
+  final int id;
+  final int points;
+  final double startX; // 0.0–1.0 fraction of screen width
+  final double startY; // 0.0–1.0 fraction of screen height
+  FloatingScoreEvent({
+    required this.id,
+    required this.points,
+    required this.startX,
+    required this.startY,
+  });
+}
+
 /// Controller for the dynamic endless mini-game mode.
 class DynamicMiniGameController extends GetxController
     with GetTickerProviderStateMixin {
@@ -106,6 +120,31 @@ class DynamicMiniGameController extends GetxController
   final feedbackText = ''.obs;
   final feedbackTrigger = 0.obs;
   final isCorrectFeedback = true.obs;
+
+  // One-retry state for Choices and Drag-and-Drop
+  final hasRetried = false.obs;
+  final lastWrongAnswer = ''.obs;
+
+  // ── Floating score popup state ──
+  final floatingScores = <FloatingScoreEvent>[].obs;
+  int _floatingScoreIdCounter = 0;
+  bool _spawnOnLeft = true; // alternates sides
+
+  // ── Drag-and-drop state ──
+  final currentDragPairs = <DragMatchPair>[].obs;
+  final shuffledDragTargets = <DragMatchPair>[].obs;
+  final selectedDragSource = Rxn<String>();
+
+  // ── Object count display state ──
+  final objectCountEmojis = <String>[].obs;
+  final objectCountLayout = ''.obs; // 'neat', 'scattered', 'memory'
+  final objectCountMemoryVisible = true.obs;
+  Timer? _memoryFadeTimer;
+
+  // ── Missing character display state ──
+  final missingCharWordBlank = ''.obs;
+  final missingCharFullWord = ''.obs;
+  final missingCharDisplayHint = ''.obs; // 'with_image', 'word_only', 'audio'
 
   // Drawing board (only used when input_type == 'drawing_board')
   final boardWidth = 340.0.obs;
@@ -285,6 +324,8 @@ class DynamicMiniGameController extends GetxController
     wrongCount.value = 0;
     earnedCoins.value = 0;
     feedbackText.value = '';
+    hasRetried.value = false;
+    lastWrongAnswer.value = '';
 
     timeLeft.value = initialTimerDuration;
     maxTime.value = initialTimerDuration;
@@ -404,20 +445,49 @@ class DynamicMiniGameController extends GetxController
       difficulty: difficulty.value,
     );
     currentChallenge.value = challenge;
+
+    // ── Populate display-specific state ──
+    _populateDisplayState(game, challenge);
     
     // Generate options if multiple choice
     if (currentInputType.value == 'multiple_choice') {
       final pool = (game.config?['pool'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [];
+      // For object_count, the pool is Khmer digits
+      final effectivePool = game.displayType == 'object_count'
+          ? ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩']
+          : pool;
       final options = ChallengeGenerator.generateOptions(
         target: challenge.target,
-        pool: pool,
+        pool: effectivePool,
         difficulty: difficulty.value,
       );
       currentOptions.assignAll(options);
     } else {
       currentOptions.clear();
     }
+
+    // Generate drag pairs if drag_and_drop
+    if (currentInputType.value == 'drag_and_drop') {
+      final pool = (game.config?['pool'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [];
+      final pairs = ChallengeGenerator.generateDragMatchPairs(
+        pool: pool,
+        difficulty: difficulty.value,
+        displayType: game.displayType,
+      );
+      currentDragPairs.assignAll(pairs);
+      // Shuffle the target side separately so they don't line up
+      final shuffled = List<DragMatchPair>.from(pairs)..shuffle(Random());
+      shuffledDragTargets.assignAll(shuffled);
+      selectedDragSource.value = null;
+    } else {
+      currentDragPairs.clear();
+      shuffledDragTargets.clear();
+      selectedDragSource.value = null;
+    }
     
+    
+    hasRetried.value = false;
+    lastWrongAnswer.value = '';
     clearBoard();
 
     // If drawing board and we have stroke data, set guide
@@ -452,6 +522,37 @@ class DynamicMiniGameController extends GetxController
     }
 
     _startIdleTimer();
+  }
+
+  /// Populate display-type-specific state from a generated challenge.
+  void _populateDisplayState(MiniGameModel game, Challenge challenge) {
+    _memoryFadeTimer?.cancel();
+
+    if (game.displayType == 'object_count') {
+      objectCountEmojis.assignAll(challenge.objectEmojis ?? []);
+      objectCountLayout.value = challenge.display; // 'neat' / 'scattered' / 'memory'
+      objectCountMemoryVisible.value = true;
+
+      // For Hard (memory mode): show objects briefly, then fade
+      if (challenge.display == 'memory') {
+        _memoryFadeTimer = Timer(const Duration(seconds: 2), () {
+          objectCountMemoryVisible.value = false;
+        });
+      }
+    } else {
+      objectCountEmojis.clear();
+      objectCountLayout.value = '';
+    }
+
+    if (game.displayType == 'missing_character') {
+      missingCharWordBlank.value = challenge.wordWithBlank ?? '';
+      missingCharFullWord.value = challenge.fullWord ?? '';
+      missingCharDisplayHint.value = challenge.display; // 'with_image' / 'word_only' / 'audio'
+    } else {
+      missingCharWordBlank.value = '';
+      missingCharFullWord.value = '';
+      missingCharDisplayHint.value = '';
+    }
   }
 
   /// Forces a specific difficulty and re-evaluates the current challenge state.
@@ -634,12 +735,73 @@ class DynamicMiniGameController extends GetxController
     final challenge = currentChallenge.value;
     if (challenge == null) return;
 
-    totalAnswered.value++;
-
     if (selectedAnswer == challenge.target) {
+      totalAnswered.value++;
       _applyCorrectResult();
+    } else if (!hasRetried.value) {
+      // First mistake — gentle retry, no penalty
+      hasRetried.value = true;
+      lastWrongAnswer.value = selectedAnswer;
+      audio.playWrongSfx();
+      isCorrectFeedback.value = false;
+      feedbackText.value = 'Try again!';
+      feedbackTrigger.value++;
     } else {
+      // Second mistake — apply full wrong result
+      totalAnswered.value++;
       _applyWrongResult();
+    }
+  }
+
+  /// Handle tap on a source (left side) in drag-and-drop.
+  void selectDragSource(String sourceId) {
+    if (!isGameActive.value || isGameOver.value || isPaused.value) return;
+    selectedDragSource.value = sourceId;
+  }
+
+  /// Handle tap on a target (right side) in drag-and-drop.
+  void selectDragTarget(DragMatchPair tappedTarget) {
+    if (!isGameActive.value || isGameOver.value || isPaused.value) return;
+    final srcId = selectedDragSource.value;
+    if (srcId == null) return;
+
+    // Find the source pair
+    final srcPair = currentDragPairs.firstWhereOrNull((p) => p.source == srcId);
+    if (srcPair == null) return;
+
+    // Check if this is the correct match
+    if (srcPair.source == tappedTarget.source) {
+      // Correct match!
+      srcPair.matched = true;
+      tappedTarget.matched = true;
+      currentDragPairs.refresh();
+      shuffledDragTargets.refresh();
+      selectedDragSource.value = null;
+
+      audio.playCorrectSfx();
+
+      // Check if all valid pairs are matched
+      if (currentDragPairs.where((p) => p.source.isNotEmpty).every((p) => p.matched)) {
+        // All pairs matched — count as a correct answer
+        totalAnswered.value++;
+        _applyCorrectResult();
+      }
+    } else {
+      // Wrong match
+      selectedDragSource.value = null;
+      if (!hasRetried.value) {
+        // First mistake — gentle retry
+        hasRetried.value = true;
+        lastWrongAnswer.value = tappedTarget.target;
+        audio.playWrongSfx();
+        isCorrectFeedback.value = false;
+        feedbackText.value = 'Try again!';
+        feedbackTrigger.value++;
+      } else {
+        // Second mistake — apply full wrong result
+        totalAnswered.value++;
+        _applyWrongResult();
+      }
     }
   }
 
@@ -831,7 +993,6 @@ class DynamicMiniGameController extends GetxController
     // Calculate score with combo multiplier
     final comboMultiplier = 1.0 + (combo.value - 1) * 0.1;
     final earnedScore = (10 * comboMultiplier).round();
-    score.value += earnedScore;
 
     // Add time
     timeLeft.value =
@@ -844,6 +1005,30 @@ class DynamicMiniGameController extends GetxController
 
     audio.playCorrectSfx();
     anim.showCorrect(starIndex: 0);
+
+    // ── Spawn a floating score popup on alternating sides ──
+    final rng = Random();
+    // X: left side (0.05–0.20) or right side (0.80–0.95)
+    final xFrac = _spawnOnLeft
+        ? 0.05 + rng.nextDouble() * 0.15
+        : 0.80 + rng.nextDouble() * 0.15;
+    _spawnOnLeft = !_spawnOnLeft;
+    // Y: somewhere between 25%–45% of screen height (below timer, above input)
+    final yFrac = 0.25 + rng.nextDouble() * 0.20;
+
+    final event = FloatingScoreEvent(
+      id: _floatingScoreIdCounter++,
+      points: earnedScore,
+      startX: xFrac,
+      startY: yFrac,
+    );
+    floatingScores.add(event);
+
+    // After the fly animation finishes, add points and remove the popup
+    Future.delayed(const Duration(milliseconds: 1200), () {
+      score.value += earnedScore;
+      floatingScores.removeWhere((e) => e.id == event.id);
+    });
 
     // Next challenge after a brief delay
     Future.delayed(const Duration(milliseconds: 600), () {
@@ -1012,6 +1197,7 @@ class DynamicMiniGameController extends GetxController
     isCountingDown.value = false;
     _gameTimer?.cancel();
     _idleTimer?.cancel();
+    _memoryFadeTimer?.cancel();
     mediumTimerCtrl.dispose();
     _cancelPredictIfAny();
     feedbackAnimCtrl.dispose();

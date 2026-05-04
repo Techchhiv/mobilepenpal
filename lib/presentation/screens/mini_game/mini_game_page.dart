@@ -1,8 +1,8 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:mobilepenpal/core/config/env.dart';
-import 'package:mobilepenpal/core/theme/app_colors.dart';
 import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
 import 'package:mobilepenpal/data/controllers/mini_game/mini_game_hub_controller.dart';
 import 'package:mobilepenpal/data/controllers/shop/shop_controller.dart';
@@ -20,16 +20,22 @@ class MiniGamePage extends StatefulWidget {
 class _MiniGamePageState extends State<MiniGamePage>
     with TickerProviderStateMixin {
   final GetStorage _box = GetStorage();
-  late final AnimationController _glowCtrl;
+  late final AnimationController _pulseCtrl;
+  late final AnimationController _floatCtrl;
   final RxSet<int> _selectedGames = <int>{}.obs;
   final RxnString _selectedInputType = RxnString(null);
 
   @override
   void initState() {
     super.initState();
-    _glowCtrl = AnimationController(
+    _pulseCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2000),
+      duration: const Duration(milliseconds: 1200),
+    )..repeat(reverse: true);
+
+    _floatCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 3000),
     )..repeat(reverse: true);
 
     // Initialize selected games
@@ -48,91 +54,117 @@ class _MiniGamePageState extends State<MiniGamePage>
 
   @override
   void dispose() {
-    _glowCtrl.dispose();
+    _pulseCtrl.dispose();
+    _floatCtrl.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: DecoratedBox(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF1A1A2E), Color(0xFF16213E), Color(0xFF0F3460)],
+      body: Stack(
+        children: [
+          // Background Image
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/backgrounds/hub_cartoon_background.png',
+              fit: BoxFit.cover,
+            ),
           ),
-        ),
-        child: Stack(
-          children: [
-            // Main content
-            SafeArea(
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(
-                    maxWidth: Env.globalMaxWidth,
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 20),
-                        _buildTopBar(),
-                        const Spacer(flex: 2),
-                        _buildTitle(),
-                        const SizedBox(height: 32),
-                        _buildHighScoreCard(),
-                        const SizedBox(height: 40),
-                        _buildPlayButton(),
-                        const Spacer(flex: 3),
-                        _buildStatsRow(),
-                        const SizedBox(height: 20),
-                      ],
-                    ),
+
+          // Decorative Elements
+          _buildDecorations(),
+
+          // Main Content
+          SafeArea(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxWidth: Env.globalMaxWidth,
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 16),
+                      _buildTopBar(),
+                      const Spacer(flex: 1),
+                      _buildLevelSign(),
+                      const Spacer(flex: 2),
+                      _buildCentralPlayArea(),
+                      const Spacer(flex: 3),
+                    ],
                   ),
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
+    );
+  }
+
+  Widget _buildDecorations() {
+    return Stack(
+      children: const [
+        _FloatingStar(initialTop: 200, initialLeft: 30, initialRight: 0, size: 70),
+        _FloatingStar(initialTop: 450, initialLeft: 0, initialRight: 40, size: 90),
+        _FloatingStar(initialTop: 100, initialLeft: 0, initialRight: 80, size: 50),
+      ],
     );
   }
 
   Widget _buildTopBar() {
     return Row(
       children: [
-        // Avatar
-        _buildAvatarCircle(),
-        const SizedBox(width: 12),
-        // Player name
+        // Avatar and Player Name Chip
         Expanded(
-          child: Builder(
-            builder: (_) {
-              if (!Get.isRegistered<HomeController>()) {
-                return const SizedBox.shrink();
-              }
-              final home = Get.find<HomeController>();
-              return Obx(
-                () => Text(
-                  home.fullName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
+          child: Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(40),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.1),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                _buildAvatarCircle(),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Builder(
+                    builder: (_) {
+                      if (!Get.isRegistered<HomeController>()) {
+                        return const SizedBox.shrink();
+                      }
+                      final home = Get.find<HomeController>();
+                      return Obx(
+                        () => Text(
+                          home.fullName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Color(0xFF4A4A4A),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ),
-              );
-            },
+              ],
+            ),
           ),
         ),
+        const SizedBox(width: 16),
         // Coin balance
         _buildCoinChip(),
-        const SizedBox(width: 8),
-        // Settings icon
-        _buildSettingsButton(),
       ],
     );
   }
@@ -165,13 +197,9 @@ class _MiniGamePageState extends State<MiniGamePage>
     return Container(
       width: 44,
       height: 44,
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         shape: BoxShape.circle,
-        color: Colors.white.withValues(alpha: 0.12),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.25),
-          width: 2,
-        ),
+        color: Color(0xFF4ECDC4),
       ),
       child: ClipOval(child: avatarContent),
     );
@@ -181,84 +209,40 @@ class _MiniGamePageState extends State<MiniGamePage>
     if (!Get.isRegistered<ShopController>()) return const SizedBox.shrink();
     final shop = Get.find<ShopController>();
 
-    return Obx(
-      () => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.10),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: const Color(0xFFFFD700).withValues(alpha: 0.3),
-            width: 1.2,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(40),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Stack(
-              alignment: Alignment.center,
-              children: [
-                Icon(Icons.circle, color: Colors.yellow.shade700, size: 18),
-                const Icon(Icons.attach_money, color: Colors.white, size: 12),
-              ],
-            ),
-            const SizedBox(width: 6),
-            Text(
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.stars_rounded, color: Colors.orange.shade400, size: 24),
+          const SizedBox(width: 6),
+          Obx(
+            () => Text(
               NumberFormatUtils.intText(shop.totalPoints.value),
               style: const TextStyle(
-                color: Color(0xFFFFD700),
-                fontSize: 14,
-                fontWeight: FontWeight.w800,
+                color: Color(0xFFE67E22),
+                fontSize: 18,
+                fontWeight: FontWeight.w900,
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildTitle() {
-    return Column(
-      children: [
-        // Icon
-        Container(
-          width: 80,
-          height: 80,
-          decoration: const BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xFFE94560), Color(0xFFFF6B6B)],
-            ),
-          ),
-          child: const Icon(
-            Icons.sports_esports_rounded,
-            color: Colors.white,
-            size: 40,
-          ),
-        ),
-        const SizedBox(height: 20),
-        ShaderMask(
-          shaderCallback: (bounds) => const LinearGradient(
-            colors: [Color(0xFFE94560), Color(0xFFFF6B6B), Color(0xFFFFD700)],
-          ).createShader(bounds),
-          child: const Text(
-            'MINI GAMES',
-            style: TextStyle(
-              fontSize: 32,
-              fontWeight: FontWeight.w900,
-              color: Colors.white,
-              letterSpacing: 4,
-              height: 1.1,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildHighScoreCard() {
+  Widget _buildLevelSign() {
     int maxHighScore = 0;
     if (Get.isRegistered<MiniGameHubController>()) {
       final games = Get.find<MiniGameHubController>().miniGames;
@@ -270,171 +254,90 @@ class _MiniGamePageState extends State<MiniGamePage>
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.10),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          AnimatedBuilder(
-            animation: _glowCtrl,
-            builder: (_, __) {
-              final glow = 0.5 + _glowCtrl.value * 0.5;
-              return Icon(
-                Icons.emoji_events_rounded,
-                color: const Color(0xFFFFD700).withValues(alpha: glow),
-                size: 28,
-              );
-            },
+        color: const Color(0xFFFF9F43),
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: Colors.white, width: 4),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFFF9F43).withValues(alpha: 0.5),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
           ),
-          const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'BEST SCORE',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white.withValues(alpha: 0.45),
-                  letterSpacing: 2,
+        ],
+      ),
+      child: Column(
+        children: [
+          const Text(
+            'HIGHEST SCORE',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w900,
+              color: Colors.white,
+              letterSpacing: 2,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '$maxHighScore',
+            style: const TextStyle(
+              fontSize: 36,
+              fontWeight: FontWeight.w900,
+              color: Colors.white,
+              height: 1.1,
+              shadows: [
+                Shadow(
+                  color: Colors.black26,
+                  offset: Offset(2, 2),
+                  blurRadius: 4,
                 ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                '$maxHighScore',
-                style: const TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w900,
-                  color: Color(0xFFFFD700),
-                  height: 1.1,
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildPlayButton() {
-    return Container(
-      decoration: const BoxDecoration(shape: BoxShape.circle),
-      child: Material(
-        color: Colors.transparent,
-        shape: const CircleBorder(),
-        child: InkWell(
-          customBorder: const CircleBorder(),
-          onTap: _showGameSelectionModal,
-          splashColor: Colors.white.withValues(alpha: 0.15),
-          child: Ink(
-            width: 120,
-            height: 120,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFFE94560), Color(0xFFFF6B6B)],
-              ),
-            ),
-            child: const Center(
-              child: Icon(
-                Icons.play_arrow_rounded,
-                color: Colors.white,
-                size: 64,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatsRow() {
-    final gamesPlayed = _box.read<int>('dynamic_minigame_played_count') ?? 0;
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        _buildStatItem(
-          icon: Icons.timer_rounded,
-          color: const Color(0xFF4ECDC4),
-          label: 'Games Played',
-          value: '$gamesPlayed',
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSettingsButton() {
-    return Material(
-      color: Colors.transparent,
-      shape: const CircleBorder(),
-      child: InkWell(
-        customBorder: const CircleBorder(),
-        onTap: _showGameSelectionModal,
-        child: Ink(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: Colors.white.withValues(alpha: 0.10),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.20),
-              width: 1.2,
-            ),
-          ),
-          child: const Icon(
-            Icons.settings_rounded,
-            color: Colors.white70,
-            size: 22,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatItem({
-    required IconData icon,
-    required Color color,
-    required String label,
-    required String value,
-  }) {
+  Widget _buildCentralPlayArea() {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: color.withValues(alpha: 0.12),
-          ),
-          child: Icon(icon, color: color, size: 24),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          value,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 18,
-            fontWeight: FontWeight.w900,
-          ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          label,
-          style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.4),
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
+        // The big play button
+        GestureDetector(
+          onTap: _showGameSelectionModal,
+          child: AnimatedBuilder(
+            animation: _pulseCtrl,
+            builder: (context, child) {
+              final scale = 1.0 + (_pulseCtrl.value * 0.08);
+              return Transform.scale(
+                scale: scale,
+                child: Container(
+                  width: 180,
+                  height: 180,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: const Color(0xFF4ECDC4),
+                    border: Border.all(color: Colors.white, width: 6),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF4ECDC4).withValues(alpha: 0.6),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  child: const Center(
+                    child: Icon(
+                      Icons.play_arrow_rounded,
+                      color: Colors.white,
+                      size: 100,
+                    ),
+                  ),
+                ),
+              );
+            },
           ),
         ),
       ],
@@ -463,8 +366,8 @@ class _MiniGamePageState extends State<MiniGamePage>
             maxHeight: MediaQuery.of(context).size.height * 0.85,
           ),
           decoration: const BoxDecoration(
-            color: Color(0xFF16213E),
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
           ),
           padding: const EdgeInsets.all(24),
           child: Column(
@@ -474,123 +377,125 @@ class _MiniGamePageState extends State<MiniGamePage>
               // ── Header ──
               Row(
                 children: [
-                  const Icon(
-                    Icons.tune_rounded,
-                    color: Color(0xFF4ECDC4),
-                    size: 24,
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFF9F43).withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.tune_rounded,
+                      color: Color(0xFFFF9F43),
+                      size: 28,
+                    ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 16),
                   const Expanded(
                     child: Text(
-                      'Game Settings',
+                      'Ready to Play?',
                       style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF4A4A4A),
+                        fontSize: 26,
+                        fontWeight: FontWeight.w900,
                       ),
                     ),
                   ),
                   GestureDetector(
                     onTap: () => Navigator.pop(context),
                     child: Container(
-                      width: 32,
-                      height: 32,
+                      width: 40,
+                      height: 40,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: Colors.white.withValues(alpha: 0.08),
+                        color: Colors.grey.shade200,
                       ),
                       child: const Icon(
                         Icons.close_rounded,
-                        color: Colors.white54,
-                        size: 18,
+                        color: Colors.black54,
+                        size: 20,
                       ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 6),
-              Text(
-                'Choose which games and input mode to play.',
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.5),
-                  fontSize: 13,
-                ),
-              ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 30),
 
               // ── Section: Mini Games ──
-              _buildSectionLabel('MINI GAMES', Icons.sports_esports_rounded),
-              const SizedBox(height: 10),
+              _buildSectionLabel('CHOOSE YOUR GAMES', Icons.sports_esports_rounded),
+              const SizedBox(height: 16),
               Flexible(
-                child: ListView.builder(
-                  shrinkWrap: true,
+                child: SingleChildScrollView(
                   physics: const BouncingScrollPhysics(),
-                  itemCount: hubCtrl.miniGames.length,
-                  itemBuilder: (context, index) {
-                    final game = hubCtrl.miniGames[index];
-                    return Obx(() {
-                      final isSelected = _selectedGames.contains(game.id);
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 10),
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? const Color(0xFF4ECDC4).withValues(alpha: 0.15)
-                              : Colors.white.withValues(alpha: 0.04),
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(
-                            color: isSelected
-                                ? const Color(0xFF4ECDC4).withValues(alpha: 0.6)
-                                : Colors.white.withValues(alpha: 0.08),
-                            width: 1.5,
-                          ),
-                        ),
-                        child: CheckboxListTile(
-                          value: isSelected,
-                          activeColor: const Color(0xFF4ECDC4),
-                          checkColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          title: Text(
-                            game.title,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15,
+                  child: Center(
+                    child: Wrap(
+                      spacing: 24,
+                      runSpacing: 24,
+                      alignment: WrapAlignment.center,
+                      children: hubCtrl.miniGames.map((game) {
+                        return Obx(() {
+                          final isSelected = _selectedGames.contains(game.id);
+                          return GestureDetector(
+                            onTap: () {
+                              if (isSelected) {
+                                _selectedGames.remove(game.id);
+                              } else {
+                                _selectedGames.add(game.id);
+                              }
+                            },
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              curve: Curves.easeInOut,
+                              transform: Matrix4.identity()..scale(isSelected ? 1.15 : 1.0),
+                              transformAlignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: isSelected ? const Color(0xFF4ECDC4) : Colors.transparent,
+                                  width: 4,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: isSelected
+                                        ? const Color(0xFF4ECDC4).withValues(alpha: 0.4)
+                                        : Colors.transparent,
+                                    blurRadius: isSelected ? 12 : 0.0,
+                                    offset: isSelected ? const Offset(0, 6) : Offset.zero,
+                                  ),
+                                ],
+                              ),
+                              child: CircleAvatar(
+                                radius: 40,
+                                backgroundColor: Colors.grey.shade100,
+                                child: game.coverImageUrl != null && game.coverImageUrl!.isNotEmpty
+                                    ? ClipOval(
+                                        child: Image.network(
+                                          game.coverImageUrl!,
+                                          width: 80,
+                                          height: 80,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (_, __, ___) => _buildFallbackIcon(),
+                                        ),
+                                      )
+                                    : _buildFallbackIcon(),
+                              ),
                             ),
-                          ),
-                          subtitle: Text(
-                            game.description ?? '',
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.45),
-                              fontSize: 12,
-                            ),
-                          ),
-                          onChanged: (val) {
-                            if (val == true) {
-                              _selectedGames.add(game.id);
-                            } else {
-                              _selectedGames.remove(game.id);
-                            }
-                          },
-                        ),
-                      );
-                    });
-                  },
+                          );
+                        });
+                      }).toList(),
+                    ),
+                  ),
                 ),
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 24),
 
               // ── Section: Input Type ──
-              _buildSectionLabel('INPUT TYPE', Icons.gamepad_rounded),
-              const SizedBox(height: 10),
+              _buildSectionLabel('HOW TO PLAY', Icons.gamepad_rounded),
+              const SizedBox(height: 16),
               Obx(() {
-                // Compute available input types across all selected games
                 final selectedGamesList = hubCtrl.miniGames
                     .where((g) => _selectedGames.contains(g.id))
                     .toList();
 
-                // Collect the union of compatible input types across all selected games
                 final availableInputTypes = <String>{};
                 for (final game in selectedGamesList) {
                   availableInputTypes.addAll(
@@ -600,7 +505,6 @@ class _MiniGamePageState extends State<MiniGamePage>
 
                 final inputOptions = availableInputTypes.toList();
 
-                // If current selection is no longer available, reset to auto
                 if (_selectedInputType.value != null &&
                     !inputOptions.contains(_selectedInputType.value)) {
                   _selectedInputType.value = null;
@@ -610,29 +514,29 @@ class _MiniGamePageState extends State<MiniGamePage>
                   return Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.04),
-                      borderRadius: BorderRadius.circular(14),
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      'Select at least one game to see input options.',
+                      'Select a game first!',
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.4),
-                        fontSize: 13,
+                        color: Colors.grey.shade500,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
                       ),
                       textAlign: TextAlign.center,
                     ),
                   );
                 }
 
-                // Build option chips: [Auto] + each available type
                 final allOptions = <String?>[
                   null, // "Auto" option
                   ...inputOptions,
                 ];
 
                 return Wrap(
-                  spacing: 10,
-                  runSpacing: 8,
+                  spacing: 12,
+                  runSpacing: 12,
                   children: allOptions.map((option) {
                     final isActive = _selectedInputType.value == option;
                     final label = _inputTypeLabel(option);
@@ -642,90 +546,87 @@ class _MiniGamePageState extends State<MiniGamePage>
                       onTap: () => _selectedInputType.value = option,
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 200),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 10,
-                        ),
+                        curve: Curves.easeInOut,
+                        transform: Matrix4.identity()..scale(isActive ? 1.15 : 1.0),
+                        transformAlignment: Alignment.center,
+                        width: 70,
+                        height: 70,
                         decoration: BoxDecoration(
-                          color: isActive
-                              ? const Color(0xFF4ECDC4).withValues(alpha: 0.2)
-                              : Colors.white.withValues(alpha: 0.05),
-                          borderRadius: BorderRadius.circular(12),
+                          color: isActive ? const Color(0xFFFF9F43) : Colors.grey.shade100,
+                          shape: BoxShape.circle,
                           border: Border.all(
-                            color: isActive
-                                ? const Color(0xFF4ECDC4)
-                                : Colors.white.withValues(alpha: 0.12),
-                            width: 1.5,
+                            color: isActive ? Colors.white : Colors.transparent,
+                            width: isActive ? 4 : 0,
                           ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              icon,
-                              size: 18,
+                          boxShadow: [
+                            BoxShadow(
                               color: isActive
-                                  ? const Color(0xFF4ECDC4)
-                                  : Colors.white54,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              label,
-                              style: TextStyle(
-                                color: isActive
-                                    ? const Color(0xFF4ECDC4)
-                                    : Colors.white70,
-                                fontSize: 13,
-                                fontWeight: isActive
-                                    ? FontWeight.w700
-                                    : FontWeight.w500,
-                              ),
-                            ),
+                                  ? const Color(0xFFFF9F43).withValues(alpha: 0.4)
+                                  : Colors.transparent,
+                              blurRadius: isActive ? 10 : 0.0,
+                              offset: isActive ? const Offset(0, 4) : Offset.zero,
+                            )
                           ],
+                        ),
+                        child: Icon(
+                          icon,
+                          size: 32,
+                          color: isActive ? Colors.white : Colors.grey.shade500,
                         ),
                       ),
                     );
                   }).toList(),
                 );
               }),
-              const SizedBox(height: 24),
+              const SizedBox(height: 32),
 
               // ── Start button ──
               Obx(
-                () => ElevatedButton(
-                  onPressed: _selectedGames.isEmpty
+                () => GestureDetector(
+                  onTap: _selectedGames.isEmpty
                       ? null
                       : () {
                           Navigator.pop(context);
                           _startCustomRun();
                         },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFE94560),
-                    disabledBackgroundColor: Colors.grey.shade800,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        Icons.play_arrow_rounded,
-                        color: Colors.white,
-                        size: 22,
-                      ),
-                      const SizedBox(width: 8),
-                      const Text(
-                        'START RUN',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 1.5,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    decoration: BoxDecoration(
+                      color: _selectedGames.isEmpty
+                          ? Colors.grey.shade300
+                          : const Color(0xFF4ECDC4),
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: _selectedGames.isEmpty
+                              ? Colors.transparent
+                              : const Color(0xFF4ECDC4).withValues(alpha: 0.4),
+                          blurRadius: _selectedGames.isEmpty ? 0.0 : 12,
+                          offset: _selectedGames.isEmpty ? Offset.zero : const Offset(0, 6),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.play_arrow_rounded,
+                          color: _selectedGames.isEmpty ? Colors.grey.shade500 : Colors.white,
+                          size: 28,
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          'START PLAYING',
+                          style: TextStyle(
+                            color: _selectedGames.isEmpty ? Colors.grey.shade500 : Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1.5,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -739,32 +640,42 @@ class _MiniGamePageState extends State<MiniGamePage>
   Widget _buildSectionLabel(String text, IconData icon) {
     return Row(
       children: [
-        Icon(icon, color: Colors.white.withValues(alpha: 0.3), size: 16),
+        Icon(icon, color: Colors.grey.shade400, size: 20),
         const SizedBox(width: 8),
         Text(
           text,
           style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.4),
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 2,
+            color: Colors.grey.shade500,
+            fontSize: 13,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 1.5,
           ),
         ),
       ],
     );
   }
 
+  Widget _buildFallbackIcon() {
+    return Icon(
+      Icons.sports_esports_rounded,
+      color: Colors.grey.shade400,
+      size: 40,
+    );
+  }
+
   String _inputTypeLabel(String? type) {
     switch (type) {
       case 'drawing_board':
-        return 'Drawing Board';
+        return 'Drawing';
       case 'multiple_choice':
-        return 'Multiple Choice';
+        return 'Choices';
+      case 'drag_and_drop':
+        return 'Drag';
       case 'typing':
         return 'Typing';
       case null:
       default:
-        return 'Auto (Random)';
+        return 'Surprise Me!';
     }
   }
 
@@ -774,11 +685,13 @@ class _MiniGamePageState extends State<MiniGamePage>
         return Icons.draw_rounded;
       case 'multiple_choice':
         return Icons.grid_view_rounded;
+      case 'drag_and_drop':
+        return Icons.touch_app_rounded;
       case 'typing':
         return Icons.keyboard_rounded;
       case null:
       default:
-        return Icons.shuffle_rounded;
+        return Icons.card_giftcard_rounded;
     }
   }
 
@@ -799,6 +712,118 @@ class _MiniGamePageState extends State<MiniGamePage>
       arguments: {
         'miniGames': selectedGamesList,
         'inputType': _selectedInputType.value, // null = auto/random
+      },
+    );
+  }
+}
+
+class _FloatingStar extends StatefulWidget {
+  final double initialTop;
+  final double initialLeft;
+  final double initialRight;
+  final double size;
+
+  const _FloatingStar({
+    required this.initialTop,
+    required this.initialLeft,
+    required this.initialRight,
+    required this.size,
+  });
+
+  @override
+  State<_FloatingStar> createState() => _FloatingStarState();
+}
+
+class _FloatingStarState extends State<_FloatingStar> with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _opacity;
+  late double _top;
+  late double _left;
+  late double _right;
+  final Random _rand = Random();
+
+  @override
+  void initState() {
+    super.initState();
+    _top = widget.initialTop;
+    _left = widget.initialLeft;
+    _right = widget.initialRight;
+
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: 4000 + _rand.nextInt(3000)),
+    );
+
+    _setupAnimation();
+
+    // Randomize initial delay before starting
+    Future.delayed(Duration(milliseconds: _rand.nextInt(1500)), () {
+      if (mounted) _ctrl.forward();
+    });
+  }
+
+  void _setupAnimation() {
+    _opacity = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 0.0, end: 1.0), weight: 15),
+      TweenSequenceItem(tween: ConstantTween(1.0), weight: 70),
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.0), weight: 15),
+    ]).animate(_ctrl);
+
+    _ctrl.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        if (!mounted) return;
+        setState(() {
+          _top = 80 + _rand.nextDouble() * 500;
+          if (widget.initialLeft != 0) {
+            _left = 10 + _rand.nextDouble() * 100;
+          } else {
+            _right = 10 + _rand.nextDouble() * 100;
+          }
+        });
+        
+        Future.delayed(Duration(milliseconds: 500 + _rand.nextInt(1500)), () {
+          if (mounted) {
+            _ctrl.duration = Duration(milliseconds: 4000 + _rand.nextInt(3000));
+            _ctrl.forward(from: 0);
+          }
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      // Fallback in case ctrl is not initialized yet
+      animation: _ctrl,
+      builder: (context, child) {
+        // Gentle floating
+        final floatOffset = sin(_ctrl.value * pi * 2) * 15;
+        // Gentle rotation
+        final rotation = sin(_ctrl.value * pi * 2) * 0.1;
+
+        return Positioned(
+          top: _top + floatOffset,
+          left: _left != 0 ? _left : null,
+          right: _right != 0 ? _right : null,
+          child: Opacity(
+            opacity: _opacity.value,
+            child: Transform.rotate(
+              angle: rotation,
+              child: Image.asset(
+                'assets/images/decorations/cute_star_decor.png',
+                width: widget.size,
+                height: widget.size,
+              ),
+            ),
+          ),
+        );
       },
     );
   }
