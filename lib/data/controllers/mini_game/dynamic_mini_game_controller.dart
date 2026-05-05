@@ -567,12 +567,29 @@ class DynamicMiniGameController extends GetxController
     // 1. Re-generate options if multiple choice
     if (currentInputType.value == 'multiple_choice') {
       final pool = (game.config?['pool'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [];
+      final effectivePool = game.displayType == 'object_count'
+          ? ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩']
+          : pool;
       final options = ChallengeGenerator.generateOptions(
         target: challenge.target,
-        pool: pool,
+        pool: effectivePool,
         difficulty: difficulty.value,
       );
       currentOptions.assignAll(options);
+    }
+
+    // 1b. Re-generate pairs if drag and drop
+    if (currentInputType.value == 'drag_and_drop') {
+      final pool = (game.config?['pool'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [];
+      final pairs = ChallengeGenerator.generateDragMatchPairs(
+        pool: pool,
+        difficulty: difficulty.value,
+        displayType: game.displayType,
+      );
+      currentDragPairs.assignAll(pairs);
+      final shuffled = List<DragMatchPair>.from(pairs)..shuffle(Random());
+      shuffledDragTargets.assignAll(shuffled);
+      selectedDragSource.value = null;
     }
 
     // 2. Restart prompt visibility logic
@@ -757,6 +774,13 @@ class DynamicMiniGameController extends GetxController
   void selectDragSource(String sourceId) {
     if (!isGameActive.value || isGameOver.value || isPaused.value) return;
     selectedDragSource.value = sourceId;
+  }
+
+  /// Handle a direct drag-and-drop from source to target.
+  void submitDragDrop(String sourceId, DragMatchPair tappedTarget) {
+    if (!isGameActive.value || isGameOver.value || isPaused.value) return;
+    selectedDragSource.value = sourceId;
+    selectDragTarget(tappedTarget);
   }
 
   /// Handle tap on a target (right side) in drag-and-drop.

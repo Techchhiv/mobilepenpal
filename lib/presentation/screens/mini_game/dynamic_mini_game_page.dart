@@ -115,7 +115,7 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
                     const SizedBox(height: 12),
 
                     // ── INPUT MODULE (bottom half) ──
-                    Expanded(flex: 18, child: _buildInputModule()),
+                    Expanded(flex: 18, child: _buildInputModule(context)),
                     const Spacer(),
                     _buildBottomButtons(),
                     const SizedBox(height: 8),
@@ -509,7 +509,7 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
   }
 
   // ── Input Module ──────────────────────────────────────────────────
-  Widget _buildInputModule() {
+  Widget _buildInputModule(BuildContext context) {
     return Obx(() {
       switch (controller.currentInputType.value) {
         case 'drawing_board':
@@ -517,7 +517,7 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
         case 'multiple_choice':
           return _buildMultipleChoiceInput();
         case 'drag_and_drop':
-          return _buildDragAndDropInput();
+          return _buildDragAndDropInput(context);
         default:
           return _buildDrawingBoardInput();
       }
@@ -569,41 +569,39 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
       final crossAxisCount = options.length <= 4 ? 2 : (options.length <= 6 ? 3 : 4);
       final aspectRatio = options.length <= 4 ? 1.5 : 1.2;
 
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: crossAxisCount,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                childAspectRatio: aspectRatio,
-              ),
-              itemCount: options.length,
-              itemBuilder: (context, index) {
-                final option = options[index];
-                return Obx(() {
-                  final isWrong = controller.hasRetried.value && option == controller.lastWrongAnswer.value;
-                  return ChoiceCard(
-                    option: option,
-                    colorIndex: index,
-                    onTap: () => controller.submitMultipleChoice(option),
-                    isWrong: isWrong,
-                  );
-                });
-              },
-            );
-          },
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: crossAxisCount,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              childAspectRatio: aspectRatio,
+            ),
+            itemCount: options.length,
+            itemBuilder: (context, index) {
+              final option = options[index];
+              return Obx(() {
+                final isWrong = controller.hasRetried.value && option == controller.lastWrongAnswer.value;
+                return ChoiceCard(
+                  option: option,
+                  colorIndex: index,
+                  onTap: () => controller.submitMultipleChoice(option),
+                  isWrong: isWrong,
+                );
+              });
+            },
+          ),
         ),
       );
     });
   }
 
   // ── Drag-and-Drop Input ────────────────────────────────────────────
-  Widget _buildDragAndDropInput() {
+  Widget _buildDragAndDropInput(BuildContext context) {
     return Obx(() {
       final sources = controller.currentDragPairs;
       final targets = controller.shuffledDragTargets;
@@ -612,87 +610,163 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
 
       if (sources.isEmpty) return const SizedBox();
 
-      // Dynamic column headers based on display type
+      // Dynamic labels based on display type
       final displayType = controller.currentMiniGame.value?.displayType ?? 'character';
-      String leftLabel;
-      String rightLabel;
+      String topLabel;
+      String bottomLabel;
       switch (displayType) {
         case 'object_count':
-          leftLabel = 'Digits';
-          rightLabel = 'Objects';
+          topLabel = 'Digits';
+          bottomLabel = 'Objects';
           break;
         case 'missing_character':
-          leftLabel = 'Pictures';
-          rightLabel = 'Letters';
+          topLabel = 'Pictures';
+          bottomLabel = 'Letters';
           break;
         default:
-          leftLabel = 'Pictures';
-          rightLabel = 'Letters';
+          topLabel = 'Pictures';
+          bottomLabel = 'Letters';
           break;
       }
 
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ── Left column: sources ──
-            Expanded(
-              child: Column(
-                children: [
-                  Text(
-                    leftLabel,
-                    style: TextStyle(color: GameColors.textDark.withValues(alpha: 0.6), fontSize: 13, fontWeight: FontWeight.w800),
-                  ),
-                  const SizedBox(height: 12),
-                  ...sources.where((p) => p.source.isNotEmpty).map((pair) {
+      final validSources = sources.where((p) => p.source.isNotEmpty).toList();
+
+      return Center(
+        child: SingleChildScrollView(
+          physics: const NeverScrollableScrollPhysics(),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                // Exact calculation: available width minus the Wrap spacing (12), divided by 2.
+                final cardWidth = (constraints.maxWidth - 12) / 2;
+                
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+              children: [
+                // ── Top section label ──
+                Text(
+                  topLabel,
+                  style: TextStyle(color: GameColors.textDark.withValues(alpha: 0.6), fontSize: 13, fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(height: 8),
+                // ── Top: sources stacked vertically (Draggable) ──
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  alignment: WrapAlignment.center,
+                  children: validSources.map((pair) {
                     final isMatched = pair.matched;
                     final isSelected = selectedSrc == pair.source;
                     final state = isMatched ? 'matched' : (isSelected ? 'selected' : 'normal');
-                    
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: MatchCard(
-                        content: pair.source,
-                        state: state,
-                        onTap: () => controller.selectDragSource(pair.source),
-                      ),
+
+                    final card = MatchCard(
+                      content: pair.source,
+                      state: state,
+                      onTap: () => controller.selectDragSource(pair.source),
                     );
-                  }),
-                ],
-              ),
-            ),
-            const SizedBox(width: 16),
-            // ── Right column: shuffled targets ──
-            Expanded(
-              child: Column(
-                children: [
-                  Text(
-                    rightLabel,
-                    style: TextStyle(color: GameColors.textDark.withValues(alpha: 0.6), fontSize: 13, fontWeight: FontWeight.w800),
-                  ),
-                  const SizedBox(height: 12),
-                  ...targets.map((pair) {
+
+                    if (isMatched) {
+                      return SizedBox(width: cardWidth, child: card);
+                    }
+
+                    return LongPressDraggable<String>(
+                      data: pair.source,
+                      delay: const Duration(milliseconds: 100),
+                      feedback: Material(
+                        color: Colors.transparent,
+                        child: Opacity(
+                          opacity: 0.85,
+                          child: SizedBox(
+                            width: cardWidth,
+                            child: MatchCard(
+                              content: pair.source,
+                              state: 'selected',
+                              onTap: () {},
+                            ),
+                          ),
+                        ),
+                      ),
+                      childWhenDragging: SizedBox(
+                        width: cardWidth,
+                        child: Opacity(
+                          opacity: 0.3,
+                          child: card,
+                        ),
+                      ),
+                      onDragStarted: () => controller.selectDragSource(pair.source),
+                      child: SizedBox(width: cardWidth, child: card),
+                    );
+                  }).toList(),
+                ),
+
+                const SizedBox(height: 16),
+                // ── Divider ──
+                Row(
+                  children: [
+                    const Expanded(child: Divider(color: GameColors.cardBorder, thickness: 1.5)),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Text('Match to', style: TextStyle(color: GameColors.textDark.withValues(alpha: 0.5), fontSize: 12, fontWeight: FontWeight.w700)),
+                    ),
+                    const Expanded(child: Divider(color: GameColors.cardBorder, thickness: 1.5)),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                // ── Bottom section label ──
+                Text(
+                  bottomLabel,
+                  style: TextStyle(color: GameColors.textDark.withValues(alpha: 0.6), fontSize: 13, fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(height: 8),
+                // ── Bottom: targets stacked vertically (DragTarget) ──
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  alignment: WrapAlignment.center,
+                  children: targets.map((pair) {
                     final isMatched = pair.matched;
                     final isWrong = wrongTarget == pair.target;
                     final state = isMatched ? 'matched' : (isWrong ? 'wrong' : 'normal');
-                    
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: MatchCard(
-                        content: pair.target,
-                        state: state,
-                        onTap: () => controller.selectDragTarget(pair),
+
+                    return SizedBox(
+                      width: cardWidth,
+                      child: DragTarget<String>(
+                        onWillAcceptWithDetails: (details) => !isMatched,
+                        onAcceptWithDetails: (details) {
+                          controller.submitDragDrop(details.data, pair);
+                        },
+                        builder: (context, candidateData, rejectedData) {
+                          final isHovering = candidateData.isNotEmpty;
+                          return AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            decoration: isHovering && !isMatched
+                                ? BoxDecoration(
+                                    borderRadius: BorderRadius.circular(20),
+                                    boxShadow: [
+                                      BoxShadow(color: GameColors.teal.withValues(alpha: 0.4), blurRadius: 12, spreadRadius: 2),
+                                    ],
+                                  )
+                                : null,
+                            child: MatchCard(
+                              content: pair.target,
+                              state: isHovering && !isMatched ? 'selected' : state,
+                              onTap: () => controller.selectDragTarget(pair),
+                            ),
+                          );
+                        },
                       ),
                     );
-                  }),
-                ],
-              ),
-            ),
-          ],
+                  }).toList(),
+                ),
+              ],
+            );
+          },
         ),
-      );
-    });
+      ),
+    ),
+  );
+});
   }
 
   // ── Top Bar ────────────────────────────────────────────────────────
