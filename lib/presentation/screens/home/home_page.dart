@@ -18,7 +18,7 @@ import 'package:mobilepenpal/presentation/widgets/home/mode_switcher.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:mobilepenpal/data/controllers/home/navigation_controller.dart';
 import 'package:mobilepenpal/presentation/screens/mini_game/mini_game_page.dart';
-import 'package:mobilepenpal/presentation/screens/quest/quest_screen.dart';
+import 'package:mobilepenpal/presentation/screens/quest/quest_page.dart';
 import 'package:mobilepenpal/presentation/screens/shop/shop_page.dart';
 import 'package:mobilepenpal/data/controllers/shop/shop_controller.dart';
 
@@ -55,7 +55,7 @@ class HomePage extends StatelessWidget {
             children: [
               _buildCourseTab(context, homeController, worldController, anim),
               MiniGamePage(),
-              QuestScreen(),
+              QuestPage(),
               ShopPage(),
             ],
           ),

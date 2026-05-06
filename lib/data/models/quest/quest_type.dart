@@ -12,6 +12,9 @@ enum QuestType {
   /// A randomized set of characters from all previously learned content.
   randomReview,
 
-  /// An optional bonus quest with extra rewards.
-  bonus,
+  /// Fallback: showcase mastery of best character (when no weakest exists).
+  masteryShowcase,
+
+  /// Fallback: review a character not practiced in a long time.
+  deepMemory,
 }

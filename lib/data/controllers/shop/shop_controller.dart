@@ -94,7 +94,6 @@ class ShopController extends GetxController {
 
   Future<void> _loadAvatarsFromAssets() async {
     final List<ShopAvatar> avatars = List.from(defaultAvatars);
-    debugPrint('ShopController: Starting avatar asset discovery...');
 
     try {
       // Modern Flutter (3.10+) way
@@ -104,20 +103,16 @@ class ShopController extends GetxController {
         assetPaths.addAll(manifest.listAssets()
             .where((path) => path.contains('assets/images/avatars/'))
             .where((path) => path.endsWith('.png') || path.endsWith('.jpg') || path.endsWith('.jpeg')));
-        debugPrint('ShopController: Found ${assetPaths.length} assets via AssetManifest class');
       } catch (e) {
-        debugPrint('ShopController: AssetManifest class failed, falling back to JSON string: $e');
         // Legacy fallback
         final manifestContent = await rootBundle.loadString('AssetManifest.json');
         final Map<String, dynamic> manifestMap = json.decode(manifestContent);
         assetPaths.addAll(manifestMap.keys
             .where((key) => key.contains('assets/images/avatars/'))
             .where((key) => key.endsWith('.png') || key.endsWith('.jpg') || key.endsWith('.jpeg')));
-        debugPrint('ShopController: Found ${assetPaths.length} assets via legacy manifest string');
       }
 
       for (final path in assetPaths) {
-        debugPrint('ShopController: Processing avatar asset: $path');
         final fileName = path.split('/').last;
         final nameWithoutExt = fileName.split('.').first;
 
@@ -152,7 +147,6 @@ class ShopController extends GetxController {
     }
 
     allAvatars.assignAll(avatars);
-    debugPrint('ShopController: Discovery finished. Total avatars: ${allAvatars.length}');
   }
 
   Color _getRandomAvatarColor(String id) {

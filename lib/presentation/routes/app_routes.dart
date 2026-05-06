@@ -17,6 +17,9 @@ class AppRoutes {
 
   static const classroom = '/classroom/:classroomId';
 
+  static const questBoard = '/quest/board';
+  static const questSummary = '/quest/summary';
+
   static const setting = '/setting';
 
   static const miniGame = '/mini-game';

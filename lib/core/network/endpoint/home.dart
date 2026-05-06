@@ -11,6 +11,7 @@ class HomeEndpoints {
   static const String dailySummary = '$_base/profile/summary/daily';
   static const String weeklySummary = '$_base/profile/summary/weekly';
   static const String monthlySummary = '$_base/profile/summary/monthly';
+  static const String questSummary = '$_base/profile/summary/quests';
 
   // Check Student
   static const String switchMode = '$_base/switch-mode';

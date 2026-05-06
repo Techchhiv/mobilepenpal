@@ -3,6 +3,7 @@ import 'package:mobilepenpal/data/models/classroom/classroom.dart';
 import 'package:mobilepenpal/data/models/report/daily_summary.dart';
 import 'package:mobilepenpal/data/models/report/monthly_summary.dart';
 import 'package:mobilepenpal/data/models/report/weekly_summary.dart';
+import 'package:mobilepenpal/data/models/quest/quest_summary.dart';
 import 'package:mobilepenpal/data/models/student/student.dart';
 import 'package:mobilepenpal/data/models/api_response.dart';
 import 'package:mobilepenpal/core/network/api_client.dart';
@@ -142,6 +143,20 @@ class HomeService {
       path: HomeEndpoints.monthlySummary,
       queryParameters: month == null ? null : {'month': month},
       fromData: (data) => MonthlySummary.fromJson(data['summary']),
+    );
+
+    return result;
+  }
+
+  Future<ApiResponse<QuestSummary>> getQuestSummary() async {
+    final result = await _apiClient.request<QuestSummary>(
+      method: 'GET',
+      path: HomeEndpoints.questSummary,
+      fromData: (data) {
+        final summaryJson =
+            (data['quest_summary'] as Map<String, dynamic>?) ?? {};
+        return QuestSummary.fromJson(summaryJson);
+      },
     );
 
     return result;

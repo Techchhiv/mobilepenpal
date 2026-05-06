@@ -28,6 +28,10 @@ import 'app_routes.dart';
 
 import 'package:mobilepenpal/core/bindings/adventure_summary_binding.dart';
 import 'package:mobilepenpal/core/bindings/dynamic_mini_game_binding.dart';
+import 'package:mobilepenpal/core/bindings/quest_board_binding.dart';
+import 'package:mobilepenpal/core/bindings/quest_summary_binding.dart';
+import 'package:mobilepenpal/presentation/screens/quest/quest_board_page.dart';
+import 'package:mobilepenpal/presentation/screens/quest/quest_summary_page.dart';
 import 'package:mobilepenpal/presentation/screens/mini_game/adventure/adventure_page.dart';
 import 'package:mobilepenpal/presentation/screens/mini_game/adventure/adventure_summary_page.dart';
 import 'package:mobilepenpal/presentation/screens/mini_game/dynamic_mini_game_page.dart';
@@ -136,6 +140,18 @@ class AppPages {
       name: AppRoutes.dynamicMiniGame,
       page: () => const DynamicMiniGamePage(),
       binding: DynamicMiniGameBinding(),
+      middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      name: AppRoutes.questBoard,
+      page: () => const QuestBoardPage(),
+      binding: QuestBoardBinding(),
+      middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      name: AppRoutes.questSummary,
+      page: () => const QuestSummaryPage(),
+      binding: QuestSummaryBinding(),
       middlewares: [AuthMiddleware()],
     ),
   ];

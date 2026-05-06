@@ -12,7 +12,7 @@ class Quest {
   final List<String> previewCharacters;
   final int progress;      // e.g. 2 out of 5 completed
   final int total;         // total steps/characters to practice
-  final int rewardXp;
+  final int rewardCoins;
   final bool isCompleted;
 
   const Quest({
@@ -23,7 +23,7 @@ class Quest {
     required this.previewCharacters,
     required this.progress,
     required this.total,
-    required this.rewardXp,
+    required this.rewardCoins,
     this.isCompleted = false,
   });
 
@@ -40,7 +40,7 @@ class Quest {
     List<String>? previewCharacters,
     int? progress,
     int? total,
-    int? rewardXp,
+    int? rewardCoins,
     bool? isCompleted,
   }) {
     return Quest(
@@ -51,7 +51,7 @@ class Quest {
       previewCharacters: previewCharacters ?? this.previewCharacters,
       progress: progress ?? this.progress,
       total: total ?? this.total,
-      rewardXp: rewardXp ?? this.rewardXp,
+      rewardCoins: rewardCoins ?? this.rewardCoins,
       isCompleted: isCompleted ?? this.isCompleted,
     );
   }

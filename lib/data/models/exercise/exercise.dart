@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:mobilepenpal/data/models/stage/stage_exercise.dart';
+
 class Exercise {
   final int id;
   final String prompt;
@@ -97,6 +99,24 @@ class Exercise {
       difficulty: difficulty,
       mathOp: mathOp,
       orderIndex: orderIndex,
+    );
+  }
+
+  StageExercise toStageExercise({int orderIndex = 0}) {
+    return StageExercise(
+      id: id,
+      prompt: prompt,
+      character: character,
+      example: example,
+      question: question,
+      options: options,
+      instruction: instruction,
+      hint: hint,
+      orderIndex: orderIndex,
+      characterType: characterType,
+      repeatSlot: repeatSlot,
+      difficulty: difficulty,
+      mathOp: mathOp,
     );
   }
 

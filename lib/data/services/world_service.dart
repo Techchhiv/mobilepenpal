@@ -34,10 +34,12 @@ class WorldService {
     return result;
   }
 
-  Future<ApiResponse<List<Exercise>>> getExercises() async {
+  Future<ApiResponse<List<Exercise>>> getExercises({bool learnedOnly = false}) async {
+    final queryParameters = learnedOnly ? {'learned_only': 'true'} : null;
     final result = await _apiClient.request<List<Exercise>>(
       method: 'GET',
       path: WorldEndpoints.exercises,
+      queryParameters: queryParameters,
       fromData: (data) {
         // Backend returns {"exercises": [...]} via setResult('exercises', ...)
         List? list;

@@ -18,14 +18,16 @@ class QuestCard extends StatelessWidget {
     QuestType.weakestCharacters: [Color(0xFFFF6B6B), Color(0xFFFF8E8E)],
     QuestType.recentReview: [Color(0xFF4ECDC4), Color(0xFF6EE7DE)],
     QuestType.randomReview: [Color(0xFF845EF7), Color(0xFFA78BFA)],
-    QuestType.bonus: [Color(0xFFFFB347), Color(0xFFFFD080)],
+    QuestType.masteryShowcase: [Color(0xFFFFB347), Color(0xFFFFD080)],
+    QuestType.deepMemory: [Color(0xFF5C6BC0), Color(0xFF7986CB)],
   };
 
   static const Map<QuestType, IconData> _icons = {
     QuestType.weakestCharacters: Icons.whatshot_rounded,
     QuestType.recentReview: Icons.history_rounded,
     QuestType.randomReview: Icons.shuffle_rounded,
-    QuestType.bonus: Icons.auto_awesome_rounded,
+    QuestType.masteryShowcase: Icons.star_rounded,
+    QuestType.deepMemory: Icons.psychology_rounded,
   };
 
   List<Color> get _gradient =>
@@ -147,7 +149,7 @@ class QuestCard extends StatelessWidget {
     );
   }
 
-  // ── Colorful XP reward badge ────────────────────────────────────
+  // ── Coin reward badge ───────────────────────────────────────────
   Widget _buildRewardBadge() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -162,10 +164,10 @@ class QuestCard extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.bolt_rounded, size: 14, color: Colors.white),
+          const Icon(Icons.monetization_on_rounded, size: 14, color: Colors.white),
           const SizedBox(width: 3),
           Text(
-            '+${quest.rewardXp} XP',
+            '+${quest.rewardCoins}',
             style: const TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w800,

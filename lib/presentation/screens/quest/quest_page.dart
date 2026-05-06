@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobilepenpal/core/config/env.dart';
 import 'package:mobilepenpal/data/controllers/quest/quest_controller.dart';
-import 'package:mobilepenpal/data/models/quest/quest_type.dart';
 import 'package:mobilepenpal/presentation/widgets/quest/quest_card.dart';
+import 'package:mobilepenpal/presentation/widgets/loading_overly.dart';
 
 /// The main Quest screen that replaces the old Daily Challenge page.
 ///
@@ -12,63 +12,77 @@ import 'package:mobilepenpal/presentation/widgets/quest/quest_card.dart';
 ///   2. Scrollable list of [QuestCard] widgets
 ///   3. Bonus section (separated visually)
 ///   4. Empty state when no quests are available
-class QuestScreen extends GetView<QuestController> {
-  const QuestScreen({super.key});
+class QuestPage extends GetView<QuestController> {
+  const QuestPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Color(0xFFF0F4FF), // soft blue-white
-            Color(0xFFFFF8F0), // warm peach-white
-          ],
-        ),
-      ),
-      child: Stack(
-        children: [
-          // Decorative background bubbles
-          _bubble(top: -40, right: -30, size: 130, color: const Color(0x22845EF7)),
-          _bubble(top: 240, left: -20, size: 90, color: const Color(0x224ECDC4)),
-          _bubble(bottom: 60, right: -20, size: 110, color: const Color(0x22FF6B6B)),
-
-          SafeArea(
-            bottom: false,
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: Env.globalMaxWidth),
-                child: Obx(() {
-                  if (controller.isLoading.value) {
-                    return const Center(
-                      child: CircularProgressIndicator(),
-                    );
-                  }
-
-                  if (controller.quests.isEmpty) {
-                    return _buildEmptyState();
-                  }
-
-                  return _buildQuestList();
-                }),
-              ),
+    return Obx(
+      () => LoadingOverlay(
+        isLoading: controller.isStartingQuest.value,
+        child: DecoratedBox(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Color(0xFFF0F4FF), // soft blue-white
+                Color(0xFFFFF8F0), // warm peach-white
+              ],
             ),
           ),
-        ],
+          child: Stack(
+            children: [
+              // Decorative background bubbles
+              _bubble(
+                top: -40,
+                right: -30,
+                size: 130,
+                color: const Color(0x22845EF7),
+              ),
+              _bubble(
+                top: 240,
+                left: -20,
+                size: 90,
+                color: const Color(0x224ECDC4),
+              ),
+              _bubble(
+                bottom: 60,
+                right: -20,
+                size: 110,
+                color: const Color(0x22FF6B6B),
+              ),
+
+              SafeArea(
+                bottom: false,
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      maxWidth: Env.globalMaxWidth,
+                    ),
+                    child: Obx(() {
+                      if (controller.isLoading.value) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+
+                      if (controller.quests.isEmpty) {
+                        return _buildEmptyState();
+                      }
+
+                      return _buildQuestList();
+                    }),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
 
   // ── Quest list with header ──────────────────────────────────────
   Widget _buildQuestList() {
-    // Separate bonus quests from regular quests
-    final regularQuests =
-        controller.quests.where((q) => q.type != QuestType.bonus).toList();
-    final bonusQuests =
-        controller.quests.where((q) => q.type == QuestType.bonus).toList();
-
     return RefreshIndicator(
       onRefresh: controller.refreshQuests,
       color: const Color(0xFF845EF7),
@@ -81,27 +95,13 @@ class QuestScreen extends GetView<QuestController> {
           _buildHeader(),
           const SizedBox(height: 22),
 
-          // ── Regular quest cards ─────────────────────────────
-          ...regularQuests.map(
+          // ── Quest cards ─────────────────────────────────────
+          ...controller.quests.map(
             (q) => QuestCard(
               quest: q,
               onStart: q.isCompleted ? null : () => controller.startQuest(q.id),
             ),
           ),
-
-          // ── Bonus section ───────────────────────────────────
-          if (bonusQuests.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            _buildSectionLabel('🎁  Bonus Quests'),
-            const SizedBox(height: 12),
-            ...bonusQuests.map(
-              (q) => QuestCard(
-                quest: q,
-                onStart:
-                    q.isCompleted ? null : () => controller.startQuest(q.id),
-              ),
-            ),
-          ],
 
           // bottom breathing room
           const SizedBox(height: 24),
@@ -146,16 +146,18 @@ class QuestScreen extends GetView<QuestController> {
                   ),
                 ),
                 const SizedBox(height: 6),
-                Obx(() => Text(
-                      controller.allCompleted
-                          ? 'All quests completed! 🎉'
-                          : '${controller.completedCount}/${controller.totalQuests} quests done today',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white.withValues(alpha: 0.85),
-                      ),
-                    )),
+                Obx(
+                  () => Text(
+                    controller.allCompleted
+                        ? 'All quests completed! 🎉'
+                        : '${controller.completedCount}/${controller.totalQuests} quests done today',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white.withValues(alpha: 0.85),
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 14),
                 // Streak + XP pills
                 Row(
@@ -167,8 +169,8 @@ class QuestScreen extends GetView<QuestController> {
                     ),
                     const SizedBox(width: 8),
                     _miniPill(
-                      icon: Icons.bolt_rounded,
-                      label: '${controller.totalXp} XP',
+                      icon: Icons.monetization_on_rounded,
+                      label: '${controller.totalCoins} coins',
                       color: const Color(0xFFFFB347),
                     ),
                   ],
@@ -282,18 +284,6 @@ class QuestScreen extends GetView<QuestController> {
     );
   }
 
-  // ── Section label ───────────────────────────────────────────────
-  Widget _buildSectionLabel(String text) {
-    return Text(
-      text,
-      style: const TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.w800,
-        color: Color(0xFF3A3A5C),
-      ),
-    );
-  }
-
   // ── Empty state ─────────────────────────────────────────────────
   Widget _buildEmptyState() {
     return Center(
@@ -343,8 +333,10 @@ class QuestScreen extends GetView<QuestController> {
               style: OutlinedButton.styleFrom(
                 foregroundColor: const Color(0xFF845EF7),
                 side: const BorderSide(color: Color(0xFF845EF7)),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
