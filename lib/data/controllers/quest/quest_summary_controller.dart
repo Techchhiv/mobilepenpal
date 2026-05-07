@@ -32,7 +32,8 @@ class QuestSummaryController extends GetxController {
     isContinuing.value = true;
 
     try {
-      Get.until((route) => route.settings.name == AppRoutes.home);
+      // Pop until we find the home route, or we reach the bottom of the stack
+      Get.until((route) => route.settings.name == AppRoutes.home || route.isFirst);
     } catch (_) {
       Get.offAllNamed(AppRoutes.home);
     } finally {

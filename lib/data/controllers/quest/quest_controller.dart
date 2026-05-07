@@ -62,11 +62,7 @@ class QuestController extends GetxController {
 
     isStartingQuest.value = true;
     try {
-      Get.delete<QuestBoardController>();
-      final boardController = Get.put(QuestBoardController());
-      await boardController.prepareQuest(quest);
-
-      Get.toNamed('/quest/board');
+      Get.toNamed('/quest/board', arguments: {'quest': quest});
     } finally {
       isStartingQuest.value = false;
     }
@@ -97,9 +93,25 @@ class QuestController extends GetxController {
 
       if (response.code == 200 && response.data != null) {
         final summary = response.data!;
-        quests.value = _generateQuests(summary);
+        final newQuests = _generateQuests(summary);
+        
+        // Merge with existing quests to preserve progress
+        for (int i = 0; i < newQuests.length; i++) {
+          final existingIdx = quests.indexWhere((q) => q.id == newQuests[i].id);
+          if (existingIdx != -1) {
+            // Preserve progress and characters if it's the same quest ID
+            final eq = quests[existingIdx];
+            newQuests[i] = newQuests[i].copyWith(
+              progress: eq.progress,
+              isCompleted: eq.isCompleted,
+              previewCharacters: eq.previewCharacters,
+              total: eq.total,
+            );
+          }
+        }
+        
+        quests.value = newQuests;
       } else {
-        // Network error or bad response — show empty state
         quests.value = [];
       }
     } catch (e) {

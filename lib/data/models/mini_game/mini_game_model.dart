@@ -46,6 +46,7 @@ class MiniGameModel {
       case 'image':
         return all; // all input types are valid
       case 'math_equation':
+      case 'question':
         return all.where((t) => t != 'typing').toList();
       case 'object_count':
         // Count objects → draw or select the number

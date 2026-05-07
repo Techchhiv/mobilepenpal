@@ -754,7 +754,7 @@ class InstructionBadge extends StatelessWidget {
     IconData icon;
     switch (inputType) {
       case 'drawing_board':
-        text = 'Trace the letter';
+        text = 'Trace the answer';
         icon = Icons.edit_rounded;
       case 'multiple_choice':
         text = 'Pick the answer';
@@ -917,6 +917,24 @@ class MatchCard extends StatelessWidget {
           ]
         ],
       );
+    } else if (content.startsWith('assets/') && content.contains('*')) {
+      // Format: "assets/images/fruits/apple.png*3" — show 3 fruit images
+      // Layout: 3 per row (like the math equation display)
+      final starIndex = content.lastIndexOf('*');
+      final imgPath = content.substring(0, starIndex);
+      final count = int.tryParse(content.substring(starIndex + 1)) ?? 1;
+      innerContent = Container(
+        constraints: const BoxConstraints(maxWidth: 130),
+        child: Wrap(
+          spacing: 4,
+          runSpacing: 4,
+          alignment: WrapAlignment.center,
+          children: List.generate(
+            count,
+            (_) => Image.asset(imgPath, width: 38, height: 38, fit: BoxFit.contain),
+          ),
+        ),
+      );
     } else if (content.startsWith('assets/')) {
       innerContent = Image.asset(content, height: 44, fit: BoxFit.contain);
     } else {
@@ -931,7 +949,7 @@ class MatchCard extends StatelessWidget {
       onTap: (state == 'matched' || state == 'wrong') ? null : onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
         decoration: BoxDecoration(
           color: bgColor,
           borderRadius: BorderRadius.circular(18),

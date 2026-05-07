@@ -79,9 +79,7 @@ class _MiniGamePageState extends State<MiniGamePage>
           SafeArea(
             child: Center(
               child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  maxWidth: Env.globalMaxWidth,
-                ),
+                constraints: const BoxConstraints(maxWidth: Env.globalMaxWidth),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Column(
@@ -107,9 +105,24 @@ class _MiniGamePageState extends State<MiniGamePage>
   Widget _buildDecorations() {
     return Stack(
       children: const [
-        _FloatingStar(initialTop: 200, initialLeft: 30, initialRight: 0, size: 70),
-        _FloatingStar(initialTop: 450, initialLeft: 0, initialRight: 40, size: 90),
-        _FloatingStar(initialTop: 100, initialLeft: 0, initialRight: 80, size: 50),
+        _FloatingStar(
+          initialTop: 200,
+          initialLeft: 30,
+          initialRight: 0,
+          size: 70,
+        ),
+        _FloatingStar(
+          initialTop: 450,
+          initialLeft: 0,
+          initialRight: 40,
+          size: 90,
+        ),
+        _FloatingStar(
+          initialTop: 100,
+          initialLeft: 0,
+          initialRight: 80,
+          size: 50,
+        ),
       ],
     );
   }
@@ -421,67 +434,167 @@ class _MiniGamePageState extends State<MiniGamePage>
               const SizedBox(height: 30),
 
               // ── Section: Mini Games ──
-              _buildSectionLabel('CHOOSE YOUR GAMES', Icons.sports_esports_rounded),
-              const SizedBox(height: 16),
+              _buildSectionLabel(
+                'CHOOSE YOUR GAMES',
+                Icons.sports_esports_rounded,
+                trailing: Obx(() {
+                  final allSelected =
+                      _selectedGames.length == hubCtrl.miniGames.length;
+                  return GestureDetector(
+                    onTap: () {
+                      if (allSelected) {
+                        _selectedGames.clear();
+                      } else {
+                        _selectedGames.addAll(
+                          hubCtrl.miniGames.map((g) => g.id),
+                        );
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: allSelected
+                            ? const Color(0xFFFF9F43).withValues(alpha: 0.1)
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: allSelected
+                              ? const Color(0xFFFF9F43)
+                              : Colors.grey.shade300,
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            allSelected
+                                ? Icons.deselect_rounded
+                                : Icons.select_all_rounded,
+                            size: 16,
+                            color: allSelected
+                                ? const Color(0xFFFF9F43)
+                                : Colors.grey.shade500,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            allSelected ? 'DESELECT ALL' : 'SELECT ALL',
+                            style: TextStyle(
+                              color: allSelected
+                                  ? const Color(0xFFFF9F43)
+                                  : Colors.grey.shade500,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }),
+              ),
               Flexible(
                 child: SingleChildScrollView(
                   physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
                   child: Center(
                     child: Wrap(
                       spacing: 24,
                       runSpacing: 24,
                       alignment: WrapAlignment.center,
-                      children: hubCtrl.miniGames.map((game) {
-                        return Obx(() {
-                          final isSelected = _selectedGames.contains(game.id);
-                          return GestureDetector(
-                            onTap: () {
-                              if (isSelected) {
-                                _selectedGames.remove(game.id);
-                              } else {
-                                _selectedGames.add(game.id);
-                              }
-                            },
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              curve: Curves.easeInOut,
-                              transform: Matrix4.identity()..scale(isSelected ? 1.15 : 1.0),
-                              transformAlignment: Alignment.center,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: isSelected ? const Color(0xFF4ECDC4) : Colors.transparent,
-                                  width: 4,
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: isSelected
-                                        ? const Color(0xFF4ECDC4).withValues(alpha: 0.4)
-                                        : Colors.transparent,
-                                    blurRadius: isSelected ? 12 : 0.0,
-                                    offset: isSelected ? const Offset(0, 6) : Offset.zero,
-                                  ),
-                                ],
-                              ),
-                              child: CircleAvatar(
-                                radius: 40,
-                                backgroundColor: Colors.grey.shade100,
-                                child: game.coverImageUrl != null && game.coverImageUrl!.isNotEmpty
-                                    ? ClipOval(
-                                        child: Image.network(
-                                          game.coverImageUrl!,
-                                          width: 80,
-                                          height: 80,
-                                          fit: BoxFit.cover,
-                                          errorBuilder: (_, __, ___) => _buildFallbackIcon(),
+                      children: [
+                        ...hubCtrl.miniGames.map((game) {
+                          return Obx(() {
+                            final isSelected = _selectedGames.contains(game.id);
+                            return GestureDetector(
+                              onTap: () {
+                                if (isSelected) {
+                                  _selectedGames.remove(game.id);
+                                } else {
+                                  _selectedGames.add(game.id);
+                                }
+                              },
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                curve: Curves.easeInOut,
+                                transform: Matrix4.identity()
+                                  ..scale(isSelected ? 1.15 : 1.0),
+                                transformAlignment: Alignment.center,
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: isSelected
+                                              ? const Color(0xFF4ECDC4)
+                                              : Colors.transparent,
+                                          width: 4,
                                         ),
-                                      )
-                                    : _buildFallbackIcon(),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: isSelected
+                                                ? const Color(
+                                                    0xFF4ECDC4,
+                                                  ).withValues(alpha: 0.4)
+                                                : Colors.transparent,
+                                            blurRadius: isSelected ? 12 : 0.0,
+                                            offset: isSelected
+                                                ? const Offset(0, 6)
+                                                : Offset.zero,
+                                          ),
+                                        ],
+                                      ),
+                                      child: CircleAvatar(
+                                        radius: 40,
+                                        backgroundColor: Colors.white,
+                                        child: game.coverImageUrl != null &&
+                                                game.coverImageUrl!.isNotEmpty
+                                            ? Padding(
+                                                padding: const EdgeInsets.all(8),
+                                                child: Image.network(
+                                                  Env.backendUrl +
+                                                      game.coverImageUrl!,
+                                                  fit: BoxFit.contain,
+                                                  errorBuilder: (_, __, ___) =>
+                                                      _buildFallbackIcon(),
+                                                ),
+                                              )
+                                            : _buildFallbackIcon(),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    SizedBox(
+                                      width: 88,
+                                      child: Text(
+                                        game.title,
+                                        textAlign: TextAlign.center,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          color: isSelected
+                                              ? const Color(0xFF4ECDC4)
+                                              : Colors.grey.shade600,
+                                          fontSize: 12,
+                                          fontWeight: isSelected
+                                              ? FontWeight.w900
+                                              : FontWeight.bold,
+                                          height: 1.2,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
-                          );
-                        });
-                      }).toList(),
+                            );
+                          });
+                        }),
+                      ],
                     ),
                   ),
                 ),
@@ -547,12 +660,15 @@ class _MiniGamePageState extends State<MiniGamePage>
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 200),
                         curve: Curves.easeInOut,
-                        transform: Matrix4.identity()..scale(isActive ? 1.15 : 1.0),
+                        transform: Matrix4.identity()
+                          ..scale(isActive ? 1.15 : 1.0),
                         transformAlignment: Alignment.center,
                         width: 70,
                         height: 70,
                         decoration: BoxDecoration(
-                          color: isActive ? const Color(0xFFFF9F43) : Colors.grey.shade100,
+                          color: isActive
+                              ? const Color(0xFFFF9F43)
+                              : Colors.grey.shade100,
                           shape: BoxShape.circle,
                           border: Border.all(
                             color: isActive ? Colors.white : Colors.transparent,
@@ -561,11 +677,15 @@ class _MiniGamePageState extends State<MiniGamePage>
                           boxShadow: [
                             BoxShadow(
                               color: isActive
-                                  ? const Color(0xFFFF9F43).withValues(alpha: 0.4)
+                                  ? const Color(
+                                      0xFFFF9F43,
+                                    ).withValues(alpha: 0.4)
                                   : Colors.transparent,
                               blurRadius: isActive ? 10 : 0.0,
-                              offset: isActive ? const Offset(0, 4) : Offset.zero,
-                            )
+                              offset: isActive
+                                  ? const Offset(0, 4)
+                                  : Offset.zero,
+                            ),
                           ],
                         ),
                         child: Icon(
@@ -603,7 +723,9 @@ class _MiniGamePageState extends State<MiniGamePage>
                               ? Colors.transparent
                               : const Color(0xFF4ECDC4).withValues(alpha: 0.4),
                           blurRadius: _selectedGames.isEmpty ? 0.0 : 12,
-                          offset: _selectedGames.isEmpty ? Offset.zero : const Offset(0, 6),
+                          offset: _selectedGames.isEmpty
+                              ? Offset.zero
+                              : const Offset(0, 6),
                         ),
                       ],
                     ),
@@ -612,14 +734,18 @@ class _MiniGamePageState extends State<MiniGamePage>
                       children: [
                         Icon(
                           Icons.play_arrow_rounded,
-                          color: _selectedGames.isEmpty ? Colors.grey.shade500 : Colors.white,
+                          color: _selectedGames.isEmpty
+                              ? Colors.grey.shade500
+                              : Colors.white,
                           size: 28,
                         ),
                         const SizedBox(width: 12),
                         Text(
                           'START PLAYING',
                           style: TextStyle(
-                            color: _selectedGames.isEmpty ? Colors.grey.shade500 : Colors.white,
+                            color: _selectedGames.isEmpty
+                                ? Colors.grey.shade500
+                                : Colors.white,
                             fontSize: 20,
                             fontWeight: FontWeight.w900,
                             letterSpacing: 1.5,
@@ -637,7 +763,7 @@ class _MiniGamePageState extends State<MiniGamePage>
     );
   }
 
-  Widget _buildSectionLabel(String text, IconData icon) {
+  Widget _buildSectionLabel(String text, IconData icon, {Widget? trailing}) {
     return Row(
       children: [
         Icon(icon, color: Colors.grey.shade400, size: 20),
@@ -651,6 +777,7 @@ class _MiniGamePageState extends State<MiniGamePage>
             letterSpacing: 1.5,
           ),
         ),
+        if (trailing != null) ...[const Spacer(), trailing],
       ],
     );
   }
@@ -734,7 +861,8 @@ class _FloatingStar extends StatefulWidget {
   State<_FloatingStar> createState() => _FloatingStarState();
 }
 
-class _FloatingStarState extends State<_FloatingStar> with SingleTickerProviderStateMixin {
+class _FloatingStarState extends State<_FloatingStar>
+    with SingleTickerProviderStateMixin {
   late AnimationController _ctrl;
   late Animation<double> _opacity;
   late double _top;
@@ -780,7 +908,7 @@ class _FloatingStarState extends State<_FloatingStar> with SingleTickerProviderS
             _right = 10 + _rand.nextDouble() * 100;
           }
         });
-        
+
         Future.delayed(Duration(milliseconds: 500 + _rand.nextInt(1500)), () {
           if (mounted) {
             _ctrl.duration = Duration(milliseconds: 4000 + _rand.nextInt(3000));

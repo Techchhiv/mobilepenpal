@@ -146,6 +146,8 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
     // Route to specialised display builders
     if (displayType == 'object_count') return _buildObjectCountDisplay();
     if (displayType == 'missing_character') return _buildMissingCharacterDisplay();
+    if (displayType == 'math_equation') return _buildMathEquationDisplay();
+    if (displayType == 'question') return _buildQuestionDisplay();
 
     return _buildDefaultDisplay(challenge, displayType);
   }
@@ -508,6 +510,218 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
     return spans;
   }
 
+  // ── Math Equation Display (with fruit images) ────────────────────
+  Widget _buildMathEquationDisplay() {
+    return Obx(() {
+      final challenge = controller.currentChallenge.value;
+      if (challenge == null) return const SizedBox(height: 60);
+
+      final fruitImage = controller.mathFruitImage.value;
+
+      return AnimatedBuilder(
+        animation: controller.promptBounceCtrl,
+        builder: (_, child) {
+          final dy = -3 * controller.promptBounceCtrl.value;
+          return Transform.translate(offset: Offset(0, dy), child: child);
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          decoration: BoxDecoration(
+            color: GameColors.card,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: GameColors.cardBorder, width: 3),
+            boxShadow: [
+              BoxShadow(color: GameColors.textDark.withValues(alpha: 0.05), blurRadius: 12, spreadRadius: 2, offset: const Offset(0, 4)),
+            ],
+          ),
+          child: Column(
+            children: [
+              InstructionBadge(inputType: controller.currentInputType.value),
+              const SizedBox(height: 10),
+              // Visual Equation
+              if (fruitImage.isNotEmpty)
+                _buildVisualEquation(challenge.display, fruitImage)
+              else
+                Text(
+                  challenge.display,
+                  style: const TextStyle(
+                    color: GameColors.textDark,
+                    fontSize: 36,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 2,
+                  ),
+                ),
+            ],
+          ),
+        ),
+      );
+    });
+  }
+
+  /// Parses the equation string (e.g., "3 + ? = 5") and builds a visual row.
+  /// Numbers are replaced by a cluster of fruit images.
+  Widget _buildVisualEquation(String display, String fruitImage) {
+    final tokens = display.split(' ');
+    
+    // Use FittedBox to ensure the entire equation stays on one single row,
+    // scaling down gracefully if it's too wide for the screen.
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: tokens.asMap().entries.map((entry) {
+          final index = entry.key;
+          final token = entry.value;
+          
+          Widget childWidget;
+          
+          if (['+', '-', '×', '÷', '='].contains(token)) {
+            childWidget = Text(
+              token,
+              style: TextStyle(
+                color: GameColors.textDark.withValues(alpha: 0.6),
+                fontSize: 40, // Slightly larger operator for better visibility
+                fontWeight: FontWeight.w900,
+              ),
+            );
+          } else if (token == '?') {
+            childWidget = Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: GameColors.teal.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: GameColors.teal, width: 3),
+              ),
+              child: const Text(
+                '?',
+                style: TextStyle(
+                  color: GameColors.teal,
+                  fontSize: 36, // Larger question mark
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            );
+          } else {
+            // It's a number
+            final count = int.tryParse(token);
+            if (count == 0) {
+              childWidget = Image.asset(
+                'assets/images/fruits/empty_basket.png',
+                width: 56,
+                height: 56,
+                fit: BoxFit.contain,
+              );
+            } else if (count != null) {
+              // Fruits in a grid-like Wrap (max 3 per row)
+              childWidget = Container(
+                constraints: const BoxConstraints(maxWidth: 120), // 3 fruits (36px) + spacing (4px) = 116px width
+                child: Wrap(
+                  spacing: 4,
+                  runSpacing: 4,
+                  alignment: WrapAlignment.center,
+                  children: List.generate(
+                    count,
+                    (_) => Image.asset(fruitImage, width: 36, height: 36), // Big fruits
+                  ),
+                ),
+              );
+            } else {
+              childWidget = const SizedBox.shrink(); // Fallback for unparseable tokens
+            }
+          }
+          
+          // Add spacing between tokens, but not after the last one
+          return Padding(
+            padding: EdgeInsets.only(right: index < tokens.length - 1 ? 16.0 : 0.0),
+            child: childWidget,
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+
+  // ── Question Display ─────────────────────────────────────────
+  Widget _buildQuestionDisplay() {
+    return Obx(() {
+      final text = controller.questionText.value;
+      final fruitImage = controller.questionFruitImage.value;
+      if (text.isEmpty) return const SizedBox(height: 60);
+
+      return AnimatedBuilder(
+        animation: controller.promptBounceCtrl,
+        builder: (_, child) {
+          final dy = -3 * controller.promptBounceCtrl.value;
+          return Transform.translate(offset: Offset(0, dy), child: child);
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          decoration: BoxDecoration(
+            color: GameColors.card,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: GameColors.cardBorder, width: 3),
+            boxShadow: [
+              BoxShadow(color: GameColors.textDark.withValues(alpha: 0.05), blurRadius: 12, spreadRadius: 2, offset: const Offset(0, 4)),
+            ],
+          ),
+          child: Column(
+            children: [
+              InstructionBadge(inputType: controller.currentInputType.value),
+              const SizedBox(height: 10),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Fruit illustration on the left
+                  if (fruitImage.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 12, top: 4),
+                      child: Image.asset(
+                        fruitImage,
+                        width: 48,
+                        height: 48,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  // Problem text
+                  Expanded(
+                    child: Text(
+                      text,
+                      style: const TextStyle(
+                        color: GameColors.textDark,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        height: 1.5,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              // Question mark badge
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                decoration: BoxDecoration(
+                  color: GameColors.gold.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: GameColors.gold.withValues(alpha: 0.4)),
+                ),
+                child: const Text(
+                  '? = ',
+                  style: TextStyle(
+                    color: GameColors.textDark,
+                    fontSize: 28,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    });
+  }
+
   // ── Input Module ──────────────────────────────────────────────────
   Widget _buildInputModule(BuildContext context) {
     return Obx(() {
@@ -553,7 +767,7 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
         confettiController: controller.anim.confettiController,
         guideCirclePx: controller.anim.guideCirclePx.value,
         isGuiding: controller.anim.isGuiding.value && showGuide,
-        showGuiding: displayType != 'math_equation' && showGuide,
+        showGuiding: displayType != 'math_equation' && displayType != 'question' && showGuide,
         activeBoardCount: 1,
         useExpanded: false,
       );
@@ -612,50 +826,41 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
 
       // Dynamic labels based on display type
       final displayType = controller.currentMiniGame.value?.displayType ?? 'character';
-      String topLabel;
-      String bottomLabel;
+      String leftLabel;
+      String rightLabel;
       switch (displayType) {
         case 'object_count':
-          topLabel = 'Digits';
-          bottomLabel = 'Objects';
+          leftLabel = 'Digits';
+          rightLabel = 'Objects';
           break;
         case 'missing_character':
-          topLabel = 'Pictures';
-          bottomLabel = 'Letters';
+          leftLabel = 'Pictures';
+          rightLabel = 'Letters';
           break;
         default:
-          topLabel = 'Pictures';
-          bottomLabel = 'Letters';
+          leftLabel = 'Pictures';
+          rightLabel = 'Letters';
           break;
       }
 
       final validSources = sources.where((p) => p.source.isNotEmpty).toList();
 
-      return Center(
-        child: SingleChildScrollView(
-          physics: const NeverScrollableScrollPhysics(),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                // Exact calculation: available width minus the Wrap spacing (12), divided by 2.
-                final cardWidth = (constraints.maxWidth - 12) / 2;
-                
-                return Column(
-                  mainAxisSize: MainAxisSize.min,
-              children: [
-                // ── Top section label ──
-                Text(
-                  topLabel,
-                  style: TextStyle(color: GameColors.textDark.withValues(alpha: 0.6), fontSize: 13, fontWeight: FontWeight.w800),
-                ),
-                const SizedBox(height: 8),
-                // ── Top: sources stacked vertically (Draggable) ──
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  alignment: WrapAlignment.center,
-                  children: validSources.map((pair) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── LEFT COLUMN: Source pictures (in order) ──
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    leftLabel,
+                    style: TextStyle(color: GameColors.textDark.withValues(alpha: 0.6), fontSize: 12, fontWeight: FontWeight.w800),
+                  ),
+                  const SizedBox(height: 4),
+                  ...validSources.map((pair) {
                     final isMatched = pair.matched;
                     final isSelected = selectedSrc == pair.source;
                     final state = isMatched ? 'matched' : (isSelected ? 'selected' : 'normal');
@@ -667,70 +872,63 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
                     );
 
                     if (isMatched) {
-                      return SizedBox(width: cardWidth, child: card);
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 6),
+                        child: card,
+                      );
                     }
 
-                    return LongPressDraggable<String>(
-                      data: pair.source,
-                      delay: const Duration(milliseconds: 100),
-                      feedback: Material(
-                        color: Colors.transparent,
-                        child: Opacity(
-                          opacity: 0.85,
-                          child: SizedBox(
-                            width: cardWidth,
-                            child: MatchCard(
-                              content: pair.source,
-                              state: 'selected',
-                              onTap: () {},
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: LongPressDraggable<String>(
+                        data: pair.source,
+                        delay: const Duration(milliseconds: 100),
+                        feedback: Material(
+                          color: Colors.transparent,
+                          child: Opacity(
+                            opacity: 0.85,
+                            child: SizedBox(
+                              width: MediaQuery.of(context).size.width * 0.4,
+                              child: MatchCard(
+                                content: pair.source,
+                                state: 'selected',
+                                onTap: () {},
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                      childWhenDragging: SizedBox(
-                        width: cardWidth,
-                        child: Opacity(
+                        childWhenDragging: Opacity(
                           opacity: 0.3,
                           child: card,
                         ),
+                        onDragStarted: () => controller.selectDragSource(pair.source),
+                        child: card,
                       ),
-                      onDragStarted: () => controller.selectDragSource(pair.source),
-                      child: SizedBox(width: cardWidth, child: card),
                     );
-                  }).toList(),
-                ),
+                  }),
+                ],
+              ),
+            ),
 
-                const SizedBox(height: 16),
-                // ── Divider ──
-                Row(
-                  children: [
-                    const Expanded(child: Divider(color: GameColors.cardBorder, thickness: 1.5)),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: Text('Match to', style: TextStyle(color: GameColors.textDark.withValues(alpha: 0.5), fontSize: 12, fontWeight: FontWeight.w700)),
-                    ),
-                    const Expanded(child: Divider(color: GameColors.cardBorder, thickness: 1.5)),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                // ── Bottom section label ──
-                Text(
-                  bottomLabel,
-                  style: TextStyle(color: GameColors.textDark.withValues(alpha: 0.6), fontSize: 13, fontWeight: FontWeight.w800),
-                ),
-                const SizedBox(height: 8),
-                // ── Bottom: targets stacked vertically (DragTarget) ──
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  alignment: WrapAlignment.center,
-                  children: targets.map((pair) {
+            const SizedBox(width: 12),
+
+            // ── RIGHT COLUMN: Target answers (randomized) ──
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    rightLabel,
+                    style: TextStyle(color: GameColors.textDark.withValues(alpha: 0.6), fontSize: 12, fontWeight: FontWeight.w800),
+                  ),
+                  const SizedBox(height: 4),
+                  ...targets.map((pair) {
                     final isMatched = pair.matched;
                     final isWrong = wrongTarget == pair.target;
                     final state = isMatched ? 'matched' : (isWrong ? 'wrong' : 'normal');
 
-                    return SizedBox(
-                      width: cardWidth,
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
                       child: DragTarget<String>(
                         onWillAcceptWithDetails: (details) => !isMatched,
                         onAcceptWithDetails: (details) {
@@ -757,17 +955,16 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
                         },
                       ),
                     );
-                  }).toList(),
-                ),
-              ],
-            );
-          },
+                  }),
+                ],
+              ),
+            ),
+          ],
         ),
-      ),
-    ),
-  );
-});
+      );
+    });
   }
+
 
   // ── Top Bar ────────────────────────────────────────────────────────
   Widget _buildGameTopBar(BuildContext context) {

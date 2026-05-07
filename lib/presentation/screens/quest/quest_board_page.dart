@@ -27,7 +27,8 @@ class QuestBoardPage extends GetView<QuestBoardController> {
       child: Scaffold(
         body: Obx(
           () => LoadingOverlay(
-            isLoading: controller.isLoading.value || controller.isSubmitting.value,
+            isLoading:
+                controller.isLoading.value || controller.isSubmitting.value,
             child: Stack(
               children: [
                 Positioned.fill(
@@ -66,41 +67,52 @@ class QuestBoardPage extends GetView<QuestBoardController> {
                         ),
                         child: Column(
                           children: [
-                            Obx(
-                              () {
-                                Widget? avatarWidget;
-                                if (Get.isRegistered<HomeController>()) {
-                                  final homeController = Get.find<HomeController>();
-                                  final ShopAvatar? shopAvatar = homeController.currentShopAvatar;
-                                  
-                                  if (shopAvatar != null && shopAvatar.id != 'default') {
-                                    if (shopAvatar.assetPath != null) {
-                                      avatarWidget = Padding(
-                                        padding: const EdgeInsets.all(6),
-                                        child: Image.asset(shopAvatar.assetPath!, fit: BoxFit.contain),
-                                      );
-                                    } else {
-                                      avatarWidget = Icon(
-                                        shopAvatar.icon ?? Icons.person,
-                                        size: 28,
-                                        color: Colors.white,
-                                      );
-                                    }
-                                  } else {
-                                    avatarWidget = const Icon(Icons.person, size: 28, color: Colors.white);
-                                  }
-                                }
+                            Obx(() {
+                              Widget? avatarWidget;
+                              if (Get.isRegistered<HomeController>()) {
+                                final homeController =
+                                    Get.find<HomeController>();
+                                final ShopAvatar? shopAvatar =
+                                    homeController.currentShopAvatar;
 
-                                return StageTopBar(
-                                  totalExercises: controller.totalExercises,
-                                  completedExercises: controller.completedExercises,
-                                  exerciseDotStates: controller.exerciseDotStates.toList(),
-                                  onActionTap: () => _showPauseDialog(Get.context!),
-                                  actionIcon: Icons.pause,
-                                  avatarWidget: avatarWidget,
-                                );
+                                if (shopAvatar != null &&
+                                    shopAvatar.id != 'default') {
+                                  if (shopAvatar.assetPath != null) {
+                                    avatarWidget = Padding(
+                                      padding: const EdgeInsets.all(6),
+                                      child: Image.asset(
+                                        shopAvatar.assetPath!,
+                                        fit: BoxFit.contain,
+                                      ),
+                                    );
+                                  } else {
+                                    avatarWidget = Icon(
+                                      shopAvatar.icon ?? Icons.person,
+                                      size: 28,
+                                      color: Colors.white,
+                                    );
+                                  }
+                                } else {
+                                  avatarWidget = const Icon(
+                                    Icons.person,
+                                    size: 28,
+                                    color: Colors.white,
+                                  );
+                                }
                               }
-                            ),
+
+                              return StageTopBar(
+                                totalExercises: controller.totalExercises,
+                                completedExercises:
+                                    controller.completedExercises,
+                                exerciseDotStates: controller.exerciseDotStates
+                                    .toList(),
+                                onActionTap: () =>
+                                    _showPauseDialog(Get.context!),
+                                actionIcon: Icons.pause,
+                                avatarWidget: avatarWidget,
+                              );
+                            }),
                             const SizedBox(height: 16),
                             Obx(() {
                               final show = controller.showIllustration;
@@ -128,28 +140,36 @@ class QuestBoardPage extends GetView<QuestBoardController> {
                                       ),
                               );
                             }),
-                            
+
                             // Prevent trying to build the board when no exercises are loaded yet
-                            if (!controller.isLoading.value && controller.exercises.isNotEmpty)
+                            if (!controller.isLoading.value &&
+                                controller.exercises.isNotEmpty)
                               Obx(
                                 () => StageDrawingBoard(
                                   boardWidth: controller.boardWidth.value,
                                   boardHeight: controller.boardHeight.value,
                                   onUpdateBoardSize: controller.updateBoardSize,
-                                  drawingControllers: controller.drawingControllers,
-                                  letterSubpathsNorm: controller.letterSubpathsNorm,
+                                  drawingControllers:
+                                      controller.drawingControllers,
+                                  letterSubpathsNorm:
+                                      controller.letterSubpathsNorm,
                                   scale: controller.scale,
                                   onPointerDown: controller.onRawPointerDown,
                                   onPointerMove: controller.onRawPointerMove,
                                   onPointerUp: controller.onRawPointerUp,
                                   attemptLeft: controller.attemptLeft.value,
-                                  maxAttempts: QuestBoardController.maxAttemptsPerExercise,
+                                  maxAttempts: QuestBoardController
+                                      .maxAttemptsPerExercise,
                                   feedbackState: controller.anim.feedback.value,
-                                  praiseFeedbackState: controller.anim.praiseFeedback.value,
-                                  shakeOffset: controller.anim.shakeOffset.value,
+                                  praiseFeedbackState:
+                                      controller.anim.praiseFeedback.value,
+                                  shakeOffset:
+                                      controller.anim.shakeOffset.value,
                                   praiseText: controller.anim.praiseText.value,
-                                  confettiController: controller.anim.confettiController,
-                                  guideCirclePx: controller.anim.guideCirclePx.value,
+                                  confettiController:
+                                      controller.anim.confettiController,
+                                  guideCirclePx:
+                                      controller.anim.guideCirclePx.value,
                                   isGuiding: controller.anim.isGuiding.value,
                                   showGuiding: true,
                                   activeBoardCount: controller.activeBoardCount,
@@ -439,7 +459,9 @@ class QuestBoardPage extends GetView<QuestBoardController> {
         return StagePauseDialog(
           onHome: () async {
             Navigator.of(ctx).pop();
-            Get.offAllNamed(AppRoutes.home);
+            Get.until(
+              (route) => route.settings.name == AppRoutes.home || route.isFirst,
+            );
           },
           onRestart: () async {
             Navigator.of(ctx).pop();

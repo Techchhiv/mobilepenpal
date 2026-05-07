@@ -98,9 +98,9 @@ class QuestBoardController extends GetxController {
 
   StageExercise? get currentExercise =>
       (currentExerciseIndex.value >= 0 &&
-              currentExerciseIndex.value < exercises.length)
-          ? exercises[currentExerciseIndex.value]
-          : null;
+          currentExerciseIndex.value < exercises.length)
+      ? exercises[currentExerciseIndex.value]
+      : null;
 
   bool get _isLastExercise =>
       currentExerciseIndex.value >= exercises.length - 1;
@@ -114,6 +114,7 @@ class QuestBoardController extends GetxController {
     final _ = currentExerciseIndex.value;
     return true;
   }
+
   bool get isMathCurrent => false;
 
   final stageProgress = 0.0.obs;
@@ -147,13 +148,19 @@ class QuestBoardController extends GetxController {
     for (var c in drawingControllers) {
       c.setStyle(color: Colors.black, strokeWidth: 6);
     }
+
+    final args = Get.arguments as Map<String, dynamic>?;
+    if (args != null && args['quest'] is Quest) {
+      final quest = args['quest'] as Quest;
+      prepareQuest(quest);
+    }
   }
 
   Future<void> prepareQuest(Quest quest) async {
     currentQuest = quest;
 
-    anim = Get.put(StageAnimationController());
-    audio = Get.put(StageAudioController());
+    anim = Get.find<StageAnimationController>();
+    audio = Get.find<StageAudioController>();
 
     anim.setBoardSize(width: boardWidth.value, height: boardHeight.value);
 
@@ -168,9 +175,6 @@ class QuestBoardController extends GetxController {
     }
     _cancelPredictIfAny();
     audio.stopAll();
-
-    Get.delete<StageAnimationController>();
-    Get.delete<StageAudioController>();
 
     super.onClose();
   }
@@ -194,7 +198,7 @@ class QuestBoardController extends GetxController {
       // 2. Filter exercises matching quest preview characters
       final questChars = currentQuest.previewCharacters;
       final currentProgress = currentQuest.progress;
-      
+
       // Expand to exactly 6 exercises of the current target character
       final expandedChars = <String>[];
       if (questChars.isNotEmpty) {
@@ -208,8 +212,15 @@ class QuestBoardController extends GetxController {
 
       for (int i = 0; i < expandedChars.length; i++) {
         final char = expandedChars[i];
+
+        // Smarter type detection
+        String detectedType = 'consonants';
+        if (RegExp(r'[\u17E0-\u17E9]').hasMatch(char)) {
+          detectedType = 'digits';
+        }
+
         final match = allExercises.firstWhere(
-          (e) => e.character == char && e.characterType != 'math',
+          (e) => e.character.trim() == char.trim() && e.characterType != 'math',
           orElse: () => Exercise(
             id: 0,
             prompt: '',
@@ -218,7 +229,7 @@ class QuestBoardController extends GetxController {
             options: [],
             instruction: '',
             hint: '',
-            characterType: 'consonants',
+            characterType: detectedType,
           ),
         );
         matchedExercises.add(match.toStageExercise(orderIndex: i));
@@ -340,8 +351,9 @@ class QuestBoardController extends GetxController {
     final completed = completedExercises;
     final wrong = completed - correctExercises;
 
-    stageProgress.value =
-        (total <= 0) ? 0.0 : (completed / total).clamp(0.0, 1.0);
+    stageProgress.value = (total <= 0)
+        ? 0.0
+        : (completed / total).clamp(0.0, 1.0);
 
     final dots = List<StarState>.generate(total, (i) {
       if (i < attempts.length) {
@@ -531,8 +543,8 @@ class QuestBoardController extends GetxController {
           modelType: modelType,
           boardIndex: 0,
         );
-        final strokes =
-            (payload['strokes'] as List).cast<Map<String, dynamic>>();
+        final strokes = (payload['strokes'] as List)
+            .cast<Map<String, dynamic>>();
         data = await _worldService.predictDrawingVector(
           strokes: strokes,
           modelType: payload['model_type'] as String,
@@ -543,18 +555,43 @@ class QuestBoardController extends GetxController {
 
       prediction = (data['prediction'] ?? '').toString().trim();
       final expected = exercise.character.trim();
-      isCorrect = prediction == expected;
+
+      if (isMathCurrent) {
+        isCorrect = prediction == expected;
+      } else {
+        isCorrect = (prediction == expected);
+        if (!isCorrect && expected.length == 1 && prediction.length == 1) {
+          final khmerDigits = [
+            '០',
+            '១',
+            '២',
+            '៣',
+            '៤',
+            '៥',
+            '៦',
+            '៧',
+            '៨',
+            '៩',
+          ];
+          final engDigits = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+          final kIdx = khmerDigits.indexOf(expected);
+          final eIdx = engDigits.indexOf(prediction);
+          if (kIdx != -1 && eIdx != -1 && kIdx == eIdx) {
+            isCorrect = true;
+          }
+        }
+      }
     } on DioException catch (e) {
       if (CancelToken.isCancel(e)) return;
+      isCorrect = isMathCurrent ? false : (Random().nextDouble() <= 0.9);
     } catch (e) {
       lastError.value = 'Predict failed: $e';
-      isCorrect = (Random().nextDouble() <= 0.9);
+      isCorrect = isMathCurrent ? false : (Random().nextDouble() <= 0.9);
     } finally {
       if (myReqId == _reqId) {
         _cancelToken = null;
       }
     }
-
     if (!isCorrect) {
       unawaited(audio.playWrongSfx());
 
@@ -698,18 +735,18 @@ class QuestBoardController extends GetxController {
         coinsEarned: currentQuest.rewardCoins,
       );
 
-      final summary = summaryRes.data?['summary'] as Map<String, dynamic>? ?? {};
-      
+      final summary =
+          summaryRes.data?['summary'] as Map<String, dynamic>? ?? {};
+
       if (Get.isRegistered<QuestController>()) {
         final qController = Get.find<QuestController>();
         qController.incrementQuestProgress(currentQuest.id);
       }
-      
-      Get.offNamed(AppRoutes.questSummary, arguments: {
-        'summary': summary,
-        'quest': currentQuest,
-      });
 
+      Get.offNamed(
+        AppRoutes.questSummary,
+        arguments: {'summary': summary, 'quest': currentQuest},
+      );
     } catch (e) {
       Get.snackbar('Error', 'Failed to submit quest: $e');
     } finally {

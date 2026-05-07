@@ -146,6 +146,16 @@ class DynamicMiniGameController extends GetxController
   final missingCharFullWord = ''.obs;
   final missingCharDisplayHint = ''.obs; // 'with_image', 'word_only', 'audio'
 
+  // ── Question display state ──
+  final questionText = ''.obs;
+  final questionFruitImage = ''.obs;
+
+  // ── Math equation display state ──
+  final mathFruitImage = ''.obs;
+  final mathOperandA = 0.obs;
+  final mathOperandB = 0.obs;
+  final mathOperator = ''.obs;
+
   // Drawing board (only used when input_type == 'drawing_board')
   final boardWidth = 340.0.obs;
   final boardHeight = 340.0.obs;
@@ -453,9 +463,15 @@ class DynamicMiniGameController extends GetxController
     if (currentInputType.value == 'multiple_choice') {
       final pool = (game.config?['pool'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [];
       // For object_count, the pool is Khmer digits
-      final effectivePool = game.displayType == 'object_count'
-          ? ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩']
-          : pool;
+      // For math_equation / question, the pool is Arabic digits
+      List<String> effectivePool;
+      if (game.displayType == 'object_count') {
+        effectivePool = ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'];
+      } else if (game.displayType == 'math_equation' || game.displayType == 'question') {
+        effectivePool = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+      } else {
+        effectivePool = pool;
+      }
       final options = ChallengeGenerator.generateOptions(
         target: challenge.target,
         pool: effectivePool,
@@ -492,8 +508,9 @@ class DynamicMiniGameController extends GetxController
 
     // If drawing board and we have stroke data, set guide
     // Only show the shadow guide on Easy difficulty
-    if (currentInputType.value == 'drawing_board' &&
-        game.displayType != 'math_equation') {
+    // No shadow guide for math/question since the answer is a digit, not a character
+    final isNumericDisplay = game.displayType == 'math_equation' || game.displayType == 'question';
+    if (currentInputType.value == 'drawing_board' && !isNumericDisplay) {
       if (showShadowGuide) {
         setGuideForCharacter(challenge.target);
       } else {
@@ -553,6 +570,28 @@ class DynamicMiniGameController extends GetxController
       missingCharFullWord.value = '';
       missingCharDisplayHint.value = '';
     }
+
+    // Math equation display state
+    if (game.displayType == 'math_equation') {
+      mathFruitImage.value = challenge.fruitImage ?? '';
+      mathOperandA.value = challenge.operandA ?? 0;
+      mathOperandB.value = challenge.operandB ?? 0;
+      mathOperator.value = challenge.operator ?? '+';
+    } else {
+      mathFruitImage.value = '';
+      mathOperandA.value = 0;
+      mathOperandB.value = 0;
+      mathOperator.value = '';
+    }
+
+    // Question display state
+    if (game.displayType == 'question') {
+      questionText.value = challenge.wordProblemText ?? '';
+      questionFruitImage.value = challenge.wordProblemFruitImage ?? '';
+    } else {
+      questionText.value = '';
+      questionFruitImage.value = '';
+    }
   }
 
   /// Forces a specific difficulty and re-evaluates the current challenge state.
@@ -567,9 +606,14 @@ class DynamicMiniGameController extends GetxController
     // 1. Re-generate options if multiple choice
     if (currentInputType.value == 'multiple_choice') {
       final pool = (game.config?['pool'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [];
-      final effectivePool = game.displayType == 'object_count'
-          ? ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩']
-          : pool;
+      List<String> effectivePool;
+      if (game.displayType == 'object_count') {
+        effectivePool = ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'];
+      } else if (game.displayType == 'math_equation' || game.displayType == 'question') {
+        effectivePool = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+      } else {
+        effectivePool = pool;
+      }
       final options = ChallengeGenerator.generateOptions(
         target: challenge.target,
         pool: effectivePool,
@@ -605,7 +649,8 @@ class DynamicMiniGameController extends GetxController
     }
 
     // 3. Update drawing board guide
-    if (currentInputType.value == 'drawing_board' && game.displayType != 'math_equation') {
+    final isNumericDisplay = game.displayType == 'math_equation' || game.displayType == 'question';
+    if (currentInputType.value == 'drawing_board' && !isNumericDisplay) {
       if (showShadowGuide) {
         setGuideForCharacter(challenge.target);
       } else {
@@ -659,8 +704,9 @@ class DynamicMiniGameController extends GetxController
     boardWidth.value = size;
     boardHeight.value = height ?? size;
     anim.setBoardSize(width: boardWidth.value, height: boardHeight.value);
+    final dt = currentMiniGame.value?.displayType;
     if (currentChallenge.value != null &&
-        currentMiniGame.value?.displayType != 'math_equation') {
+        dt != 'math_equation' && dt != 'question') {
       setGuideForCharacter(currentChallenge.value!.target);
     }
   }
@@ -682,8 +728,9 @@ class DynamicMiniGameController extends GetxController
     _idleTimer?.cancel();
     _idleTimer = Timer(const Duration(seconds: 3), () {
       if (!isGameActive.value || isGameOver.value || isPaused.value) return;
+      final dt = currentMiniGame.value?.displayType;
       if (showShadowGuide &&
-          currentMiniGame.value?.displayType != 'math_equation') {
+          dt != 'math_equation' && dt != 'question') {
         anim.restartGuideFromStart();
       }
     });
@@ -726,7 +773,8 @@ class DynamicMiniGameController extends GetxController
     _rawStrokes.clear();
     _currentStroke = null;
 
-    if (currentMiniGame.value?.displayType != 'math_equation') {
+    final dt = currentMiniGame.value?.displayType;
+    if (dt != 'math_equation' && dt != 'question') {
       anim.restartGuideFromStart();
     }
   }
@@ -790,7 +838,8 @@ class DynamicMiniGameController extends GetxController
     if (srcId == null) return;
 
     // Find the source pair
-    final srcPair = currentDragPairs.firstWhereOrNull((p) => p.source == srcId);
+    final matches = currentDragPairs.where((p) => p.source == srcId);
+    final srcPair = matches.isEmpty ? null : matches.first;
     if (srcPair == null) return;
 
     // Check if this is the correct match
@@ -893,7 +942,7 @@ class DynamicMiniGameController extends GetxController
     final dt = currentMiniGame.value?.displayType;
 
     // Legacy explicit types
-    if (dt == 'number' || dt == 'math_equation') return 'digit';
+    if (dt == 'number' || dt == 'math_equation' || dt == 'question') return 'digit';
 
     // For generic 'character' display type, inspect the pool to decide
     if (dt == 'character') {
@@ -1085,7 +1134,8 @@ class DynamicMiniGameController extends GetxController
       customDuration: const Duration(milliseconds: 500),
       onAfterReset: () {
         clearBoard();
-        if (currentMiniGame.value?.displayType != 'math_equation') {
+        final dt = currentMiniGame.value?.displayType;
+        if (dt != 'math_equation' && dt != 'question') {
           anim.restartGuideFromStart();
         }
       },
