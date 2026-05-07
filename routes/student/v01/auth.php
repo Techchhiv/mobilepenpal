@@ -25,6 +25,7 @@ Route::prefix('profile')->group(function () {
     Route::get('/summary/daily', [UserController::class, 'dailySummary']);
     Route::get('/summary/weekly', [UserController::class, 'weeklySummary']);
     Route::get('/summary/monthly', [UserController::class, 'monthlySummary']);
+    Route::get('/summary/quests', [UserController::class, 'questSummary']);
 });
 
 Route::prefix('shop')->group(function () {
@@ -40,7 +41,7 @@ Route::prefix('worlds')->group(function () {
     Route::post('/exercise/submit', [WorldController::class, 'submitExerciseBatch']);
 });
 
-Route::prefix('classrooms')->group(function (){
+Route::prefix('classrooms')->group(function () {
     Route::get('', [ClassroomController::class, 'index']);
     Route::get('{classroom}', [ClassroomController::class, 'show']);
     Route::post('/join', [ClassroomController::class, 'joinByCode']);
@@ -48,4 +49,9 @@ Route::prefix('classrooms')->group(function (){
 
 Route::prefix('minigames')->group(function () {
     Route::get('', [MiniGameController::class, 'index']);
+    Route::post('', [MiniGameController::class, 'store']);
+    Route::get('{miniGame}', [MiniGameController::class, 'show']);
+    Route::put('{miniGame}', [MiniGameController::class, 'update']);
+    Route::patch('{miniGame}', [MiniGameController::class, 'update']);
+    Route::delete('{miniGame}', [MiniGameController::class, 'destroy']);
 });

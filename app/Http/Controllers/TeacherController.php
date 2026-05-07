@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\UploadMedia;
 use App\Models\Teacher;
 use App\Models\User;
 use App\Models\School;
@@ -11,7 +12,6 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
-use function App\Helpers\uploadImageBase64;
 
 class TeacherController extends Controller
 {
@@ -46,16 +46,17 @@ class TeacherController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'name'     => 'required|string|max:255',
-            'email'    => 'required|email|unique:users,email',
-            'phone'    => 'nullable|string|max:20',
-            'subject'  => 'nullable|string|max:100',
-            'photo'    => 'nullable|string',
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'phone' => 'nullable|string|max:20',
+            'subject' => 'nullable|string|max:100',
+            'photo' => 'nullable|string',
             'password' => 'required|string|min:6',
         ]);
 
         $validator->after(function ($validator) use ($request) {
-            if ($request->hasFile('photo')) return;
+            if ($request->hasFile('photo'))
+                return;
 
             if ($request->filled('photo')) {
                 if (!is_string($request->photo) || !preg_match('/^data:image\/(png|jpe?g|webp);base64,/i', $request->photo)) {
@@ -70,7 +71,7 @@ class TeacherController extends Controller
 
         return DB::transaction(function () use ($request, $authUser, $school) {
             $teacherData = $request->only(['name', 'email', 'phone', 'subject']);
-            $teacherData['school_id']  = $authUser->school_id;
+            $teacherData['school_id'] = $authUser->school_id;
             $teacherData['school_key'] = $school->school_key;
 
             do {
@@ -81,7 +82,7 @@ class TeacherController extends Controller
             if ($request->hasFile('photo')) {
                 $teacherData['photo'] = $request->file('photo')->store('teachers', 'public');
             } elseif ($request->filled('photo')) {
-                $path = uploadImageBase64($request->photo);
+                $path = UploadMedia::uploadImageBase64($request->photo);
                 if (!$path) {
                     return response()->json(['message' => 'Incorrect Image type or wrong format'], 422);
                 }
@@ -92,15 +93,15 @@ class TeacherController extends Controller
             $teacher = Teacher::create($teacherData);
 
             $userAccount = User::create([
-                'name'      => $teacher->name,
-                'email'     => $teacher->email,
-                'password'  => Hash::make($request->password),
+                'name' => $teacher->name,
+                'email' => $teacher->email,
+                'password' => Hash::make($request->password),
                 'school_id' => $authUser->school_id,
             ]);
 
             return response()->json([
                 'teacher' => $teacher,
-                'user'    => $userAccount,
+                'user' => $userAccount,
             ], 201);
         });
     }
@@ -116,16 +117,17 @@ class TeacherController extends Controller
     public function update(Request $request, $id)
     {
         $teacher = Teacher::find($id);
-        if (!$teacher) return response()->json(['message' => 'Teacher not found'], 404);
+        if (!$teacher)
+            return response()->json(['message' => 'Teacher not found'], 404);
 
         $linkedUser = User::where('email', $teacher->email)->first();
 
         $validator = Validator::make($request->all(), [
-            'name'     => 'sometimes|required|string|max:255',
-            'email'    => 'sometimes|required|email|unique:users,email,' . optional($linkedUser)->id,
-            'phone'    => 'nullable|string|max:20',
-            'subject'  => 'nullable|string|max:100',
-            'photo'    => 'nullable|string',
+            'name' => 'sometimes|required|string|max:255',
+            'email' => 'sometimes|required|email|unique:users,email,' . optional($linkedUser)->id,
+            'phone' => 'nullable|string|max:20',
+            'subject' => 'nullable|string|max:100',
+            'photo' => 'nullable|string',
 
             'password' => 'nullable|string|min:6',
         ]);
@@ -149,7 +151,7 @@ class TeacherController extends Controller
                     }
                 }
 
-                $path = uploadImageBase64($request->photo);
+                $path = UploadMedia::uploadImageBase64($request->photo);
                 if (!$path) {
                     return response()->json(['message' => 'Incorrect Image type or wrong format'], 422);
                 }
@@ -161,11 +163,15 @@ class TeacherController extends Controller
 
             if ($linkedUser) {
                 $userData = [];
-                if ($request->filled('name'))  $userData['name']  = $request->name;
-                if ($request->filled('email')) $userData['email'] = $request->email;
-                if ($request->filled('password')) $userData['password'] = Hash::make($request->password);
+                if ($request->filled('name'))
+                    $userData['name'] = $request->name;
+                if ($request->filled('email'))
+                    $userData['email'] = $request->email;
+                if ($request->filled('password'))
+                    $userData['password'] = Hash::make($request->password);
 
-                if (!empty($userData)) $linkedUser->update($userData);
+                if (!empty($userData))
+                    $linkedUser->update($userData);
             }
 
             return response()->json($teacher);
@@ -175,7 +181,8 @@ class TeacherController extends Controller
     public function destroy($id)
     {
         $teacher = Teacher::find($id);
-        if (!$teacher) return response()->json(['message' => 'Teacher not found'], 404);
+        if (!$teacher)
+            return response()->json(['message' => 'Teacher not found'], 404);
 
         return DB::transaction(function () use ($teacher) {
             if ($teacher->photo && Storage::disk('public')->exists($teacher->photo)) {
@@ -185,7 +192,8 @@ class TeacherController extends Controller
             // delete matching user (by email)
             if ($teacher->email) {
                 $userAccount = User::where('email', $teacher->email)->first();
-                if ($userAccount) $userAccount->delete();
+                if ($userAccount)
+                    $userAccount->delete();
             }
 
             $teacher->delete();

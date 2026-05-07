@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Student\V01;
 
+use App\Helpers\UploadMedia;
 use App\Http\Requests\Student\V01\Auth\LoginRequest;
 use App\Http\Requests\Student\V01\Auth\RegisterRequest;
 use App\Http\Requests\Student\V01\Auth\VerifyOtpRequest;
@@ -13,7 +14,6 @@ use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
 use function App\Helpers\isKhmerPhone;
-use function App\Helpers\uploadImageBase64;
 
 class AuthController extends Controller
 {
@@ -23,7 +23,6 @@ class AuthController extends Controller
     public function __construct()
     {
         require_once app_path('Helpers/PhoneNumberValidation.php');
-        require_once app_path('Helpers/UploadMedia.php');
         // $this->firebaseAuth = (new Factory)
         //     ->withServiceAccount(config('firebase.credentials'))
         //     ->createAuth();
@@ -51,7 +50,7 @@ class AuthController extends Controller
         $validated['password'] = Hash::make($validated['password']);
 
         if (!empty($validated['avatar'])) {
-            $validated['avatar'] = uploadImageBase64($validated['avatar']);
+            $validated['avatar'] = UploadMedia::uploadImageBase64($validated['avatar']);
         } else {
             $validated['avatar'] = null;
         }

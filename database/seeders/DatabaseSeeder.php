@@ -22,9 +22,10 @@ class DatabaseSeeder extends Seeder
                 // WorldLevelStageSeeder::class ,
             ProductionWorldSeeder::class,
             StudentSeeder::class,
-            // SubscriptionSeeder::class,
-            // TeacherRolesSeeder::class
-            // StudentExerciseAttemptSeeder::class ,
+            MiniGameSeeder::class,
+                // SubscriptionSeeder::class,
+                // TeacherRolesSeeder::class
+            StudentExerciseAttemptSeeder::class,
         ]);
 
         // \App\Models\User::factory(10)->create();

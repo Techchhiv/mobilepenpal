@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\UploadMedia;
 use App\Http\Requests\Student\V01\Auth\RegisterRequest;
 use App\Http\Requests\Student\V01\User\UpdateUserRequest;
 use App\Models\School;
@@ -12,14 +13,12 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 
 use function App\Helpers\isKhmerPhone;
-use function App\Helpers\uploadImageBase64;
 
 class StudentController extends Controller
 {
     public function __construct()
     {
         require_once app_path('Helpers/PhoneNumberValidation.php');
-        require_once app_path('Helpers/UploadMedia.php');
     }
     public function index(Request $request)
     {
@@ -94,7 +93,7 @@ class StudentController extends Controller
 
         $validated['password'] = Hash::make($validated['password']);
         if ($request->filled('avatar')) {
-            $validated['avatar'] = uploadImageBase64($request->input('avatar'));
+            $validated['avatar'] = UploadMedia::uploadImageBase64($request->input('avatar'));
         }
 
         $student = Student::create($validated);
@@ -150,7 +149,7 @@ class StudentController extends Controller
                         }
                     }
                 }
-                $path = uploadImageBase64($validated['avatar']);
+                $path = UploadMedia::uploadImageBase64($validated['avatar']);
                 if (!$path) {
                     return $this->returnError('Incorrect Image type or wrong format', 422);
                 }

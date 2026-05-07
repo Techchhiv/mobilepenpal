@@ -316,13 +316,25 @@ class WorldController extends Controller
         return $this->returnResponse();
     }
 
-    public function exercises(): JsonResponse
+    public function exercises(Request $request): JsonResponse
     {
-        $exercises = Exercise::query()
+        $query = Exercise::query()
             ->orderBy('character_type')
             ->orderBy('difficulty')
-            ->orderBy('id')
-            ->get();
+            ->orderBy('id');
+
+        if ($request->boolean('learned_only')) {
+            $studentId = auth()->id();
+            // Get exercises the student has attempted at least once.
+            $attemptedExerciseIds = DB::table('student_exercise_attempts')
+                ->where('student_id', $studentId)
+                ->pluck('exercise_id')
+                ->unique();
+
+            $query->whereIn('id', $attemptedExerciseIds);
+        }
+
+        $exercises = $query->get();
 
         $this->setResult('exercises', AdventureExerciseResource::collection($exercises));
         return $this->returnResponse();
