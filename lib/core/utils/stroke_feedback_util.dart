@@ -13,24 +13,24 @@ import 'package:flutter/material.dart';
 class StrokeFeedbackUtil {
   StrokeFeedbackUtil._();
 
-  /// Compare the user's raw strokes against the fitted template strokes.
-  ///
-  /// [userRawStrokes] – the per-stroke list of `{x, y, time}` maps collected
-  /// by the pointer handlers (in board-pixel coordinates).
-  ///
-  /// [templateStrokesPx] – the `strokeStrokesNorm` list from the controller,
-  /// already scaled to board-pixel space via `_autoFitGlyphPx`.
-  ///
-  /// [boardWidth] / [boardHeight] – current board dimensions, used for
-  /// relative thresholds.
-  ///
-  /// Returns a feedback string if an issue is detected, or `null` when
-  /// no specific feedback can be given.
+  /// How much of the drawing must be inside the shadow (0.0 to 1.0).
+  /// means 80% of the user's drawing points must be within the shadow area.
+  static const double minOverlapRatio = 0.80;
+
+  /// How much of the SHADOW must be covered by the user's drawing (0.0 to 1.0).
+  /// means they must draw over at least 70% of the template's length.
+  static const double minCoverageRatio = 0.95;
+
+  /// The thickness of the shadow area relative to the board size.
+  /// We relax this slightly so wobbly drawings don't trigger "out of bounds".
+  static const double allowedDistanceRatio = 0.10;
+
   static String? getFeedback({
     required List<List<Map<String, dynamic>>> userRawStrokes,
     required List<List<Offset>> templateStrokesPx,
     required double boardWidth,
     required double boardHeight,
+    bool ignoreBounds = false,
   }) {
     if (templateStrokesPx.isEmpty) return null;
 
@@ -60,13 +60,16 @@ class StrokeFeedbackUtil {
     // Fails if a large portion of the drawing is outside the template shadow.
     // We check this first because if they are completely off in space,
     // the stroke count doesn't matter yet.
-    final overlapHint = _checkOverlap(
-      userRawStrokes: filteredStrokes,
-      templateStrokesPx: templateStrokesPx,
-      boardWidth: boardWidth,
-      boardHeight: boardHeight,
-    );
-    if (overlapHint != null) return overlapHint;
+    // Skipped when ignoreBounds is true (blank canvas with no guide).
+    if (!ignoreBounds) {
+      final overlapHint = _checkOverlap(
+        userRawStrokes: filteredStrokes,
+        templateStrokesPx: templateStrokesPx,
+        boardWidth: boardWidth,
+        boardHeight: boardHeight,
+      );
+      if (overlapHint != null) return overlapHint;
+    }
 
     // ── 2. Stroke count ──────────────────────────────────────────────
     final userCount = filteredStrokes.length;
@@ -94,8 +97,8 @@ class StrokeFeedbackUtil {
       return directionHint;
     }
 
-    // ── 5. Default fallback ──────────────────────────────────────────
-    return 'feedback_draw_slowly';
+    // ── 5. All structural checks passed ──────────────────────────────
+    return null;
   }
 
   /// Check if the user's drawing sufficiently overlaps the template.
@@ -120,7 +123,8 @@ class StrokeFeedbackUtil {
     // Define the "shadow thickness" threshold.
     // 0.12 * boardSize allows them to be within ~12% of the board's edge
     // from the template center line.
-    final double allowedDist = min(boardWidth, boardHeight) * 0.12;
+    final double allowedDist =
+        min(boardWidth, boardHeight) * allowedDistanceRatio;
     final double allowedDistSq = allowedDist * allowedDist;
 
     for (final stroke in userRawStrokes) {
@@ -148,10 +152,41 @@ class StrokeFeedbackUtil {
 
     if (totalUserPoints == 0) return null;
 
-    // If more than 40% of the user's drawing points are outside the shadow,
-    // they are not following the guide well enough.
-    if ((outsidePoints / totalUserPoints) > 0.40) {
+    // 1. Check Out of Bounds: Are the user's points staying inside the shadow?
+    final double overlapRatio =
+        (totalUserPoints - outsidePoints) / totalUserPoints;
+    if (overlapRatio < minOverlapRatio) {
       return 'feedback_out_of_bounds';
+    }
+
+    // 2. Check Coverage: Did the user draw over enough of the template?
+    int uncoveredTemplatePoints = 0;
+    // We can use a slightly larger buffer for coverage check so we don't require
+    // them to hit every single pixel.
+    final double coverageDistSq = allowedDistSq * 1.5;
+
+    for (final tp in tPoints) {
+      double minDistSq = double.infinity;
+      for (final stroke in userRawStrokes) {
+        for (final p in stroke) {
+          final ux = (p['x'] as num).toDouble();
+          final uy = (p['y'] as num).toDouble();
+          final distSq =
+              (tp.dx - ux) * (tp.dx - ux) + (tp.dy - uy) * (tp.dy - uy);
+          if (distSq < minDistSq) {
+            minDistSq = distSq;
+          }
+        }
+      }
+      if (minDistSq > coverageDistSq) {
+        uncoveredTemplatePoints++;
+      }
+    }
+
+    final double coverageRatio =
+        (tPoints.length - uncoveredTemplatePoints) / tPoints.length;
+    if (coverageRatio < minCoverageRatio) {
+      return 'feedback_incomplete'; // You may need to ensure this translation key exists, or fallback to something else like 'feedback_wrong_count'
     }
 
     return null;
@@ -171,8 +206,14 @@ class StrokeFeedbackUtil {
 
       if (uStroke.length < 5 || tStroke.length < 3) continue;
 
-      final uStart = Offset((uStroke.first['x'] as num).toDouble(), (uStroke.first['y'] as num).toDouble());
-      final uEnd = Offset((uStroke.last['x'] as num).toDouble(), (uStroke.last['y'] as num).toDouble());
+      final uStart = Offset(
+        (uStroke.first['x'] as num).toDouble(),
+        (uStroke.first['y'] as num).toDouble(),
+      );
+      final uEnd = Offset(
+        (uStroke.last['x'] as num).toDouble(),
+        (uStroke.last['y'] as num).toDouble(),
+      );
       final tStart = tStroke.first;
       final tEnd = tStroke.last;
 
@@ -186,13 +227,16 @@ class StrokeFeedbackUtil {
       } else {
         // Closed loop (start and end are near each other)
         // Check structural progression at 25% and 75% marks
-        final u25 = Offset((uStroke[uStroke.length ~/ 4]['x'] as num).toDouble(), (uStroke[uStroke.length ~/ 4]['y'] as num).toDouble());
+        final u25 = Offset(
+          (uStroke[uStroke.length ~/ 4]['x'] as num).toDouble(),
+          (uStroke[uStroke.length ~/ 4]['y'] as num).toDouble(),
+        );
         final t25 = tStroke[tStroke.length ~/ 4];
         final t75 = tStroke[tStroke.length * 3 ~/ 4];
 
         final dForward = (u25 - t25).distance;
         final dReverse = (u25 - t75).distance;
-        
+
         if (dReverse < dForward - 10) {
           return 'feedback_wrong_direction';
         }
@@ -202,11 +246,6 @@ class StrokeFeedbackUtil {
     return null;
   }
 
-  /// Check whether the user drew the strokes in the wrong order.
-  ///
-  /// Strategy: for each user stroke, find which template stroke has the
-  /// closest starting point. If the resulting mapping is not monotonically
-  /// increasing, the user likely drew the strokes out of order.
   static String? _checkStrokeOrder({
     required List<List<Map<String, dynamic>>> userRawStrokes,
     required List<List<Offset>> templateStrokesPx,

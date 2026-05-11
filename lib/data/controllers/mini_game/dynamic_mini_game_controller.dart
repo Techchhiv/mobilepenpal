@@ -11,12 +11,13 @@ import 'package:flutter_drawing_board/flutter_drawing_board.dart';
 import 'package:flutter_drawing_board/paint_contents.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
-import 'package:mobilepenpal/core/utils/stroke_preprocessor.dart';
+import 'package:mobilepenpal/core/utils/stroke_feedback_util.dart';
+import 'package:mobilepenpal/core/utils/stroke_transform_util.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_animation_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_audio_controller.dart';
 import 'package:mobilepenpal/data/models/mini_game/challenge_generator.dart';
 import 'package:mobilepenpal/data/models/mini_game/mini_game_model.dart';
-import 'package:mobilepenpal/data/services/onnx_inference_service.dart';
+import 'package:mobilepenpal/data/services/drawing_evaluation_service.dart';
 import 'package:mobilepenpal/data/services/world_service.dart';
 
 /// A floating "+N" popup that animates from a spawn position up to the score bar.
@@ -37,6 +38,8 @@ class FloatingScoreEvent {
 class DynamicMiniGameController extends GetxController
     with GetTickerProviderStateMixin {
   final WorldService _worldService = WorldService();
+  late final DrawingEvaluationService _evalService =
+      DrawingEvaluationService(worldService: _worldService);
   final GetStorage _box = GetStorage();
 
   // ── The mini-games being played ──
@@ -878,6 +881,28 @@ class DynamicMiniGameController extends GetxController
     }
   }
 
+  /// Fetch the template strokes for a character from the stroke database,
+  /// fitted to the current board size. Used for structural validation.
+  List<List<Offset>> _getTemplateForChar(String ch) {
+    final db = _strokesDbCache;
+    final items = db?['items'] as Map<String, dynamic>?;
+    final entry = items?[ch.trim()] as Map<String, dynamic>?;
+    if (entry == null) return [];
+
+    final strokes = entry['paths_px'] as List<dynamic>? ?? [];
+    final strokesOut = StrokeTransformUtil.readSubpathsPx(strokes);
+    if (strokesOut.isEmpty) return [];
+
+    return StrokeTransformUtil.autoFitGlyphPx(
+      strokesOut,
+      boardW: boardWidth.value,
+      boardH: boardHeight.value,
+      pad: 24,
+      minWidthFill: 0.72,
+      minHeightFill: 0.78,
+    );
+  }
+
   Future<void> _checkDrawing() async {
     if (!isGameActive.value || isGameOver.value) return;
 
@@ -889,32 +914,57 @@ class DynamicMiniGameController extends GetxController
     final challenge = currentChallenge.value;
     if (challenge == null) return;
 
-    // Determine model type based on display type
-    final modelType = _getModelTypeForDisplay();
     final expectedChar = challenge.target;
+    final bool hasGuide = showShadowGuide && strokeStrokesNorm.isNotEmpty;
 
     bool isCorrect = false;
 
     try {
-      // Try local ONNX first
-      Map<String, dynamic>? data = await _predictLocal(modelType);
+      if (hasGuide) {
+        // ── WITH GUIDE (Easy): pure stroke-based evaluation ────────────
+        final hint = StrokeFeedbackUtil.getFeedback(
+          userRawStrokes: _rawStrokes,
+          templateStrokesPx: strokeStrokesNorm,
+          boardWidth: boardWidth.value,
+          boardHeight: boardHeight.value,
+          ignoreBounds: false,
+        );
+        isCorrect = (hint == null);
+      } else {
+        // ── WITHOUT GUIDE (Medium/Hard): AI + structural checks ────────
+        final modelType = _getModelTypeForDisplay();
 
-      if (data == null) {
-        // Fall back to server
-        final payload = _getXYStrokeWithTime(modelType: modelType);
-        final strokes =
-            (payload['strokes'] as List).cast<Map<String, dynamic>>();
-        data = await _worldService.predictDrawingVector(
-          strokes: strokes,
-          modelType: payload['model_type'] as String,
+        final data = await _evalService.predictBoard(
+          modelType: modelType,
+          rawStrokes: _rawStrokes,
+          getPayload: () => _getXYStrokeWithTime(modelType: modelType),
           cancelToken: cancelToken,
         );
+
+        if (myReqId != _reqId) return;
+
+        final prediction = (data?['prediction'] ?? '').toString().trim();
+        isCorrect = prediction == expectedChar.trim();
+
+        // If AI says correct, also validate stroke structure (ignoring bounds).
+        if (isCorrect) {
+          final template = _getTemplateForChar(expectedChar);
+          if (template.isNotEmpty) {
+            final centered =
+                StrokeTransformUtil.autoCenterStrokes(_rawStrokes, template);
+            final hint = StrokeFeedbackUtil.getFeedback(
+              userRawStrokes: centered,
+              templateStrokesPx: template,
+              boardWidth: boardWidth.value,
+              boardHeight: boardHeight.value,
+              ignoreBounds: true,
+            );
+            if (hint != null) {
+              isCorrect = false;
+            }
+          }
+        }
       }
-
-      if (myReqId != _reqId) return;
-
-      final prediction = (data['prediction'] ?? '').toString().trim();
-      isCorrect = prediction == expectedChar.trim();
     } on DioException catch (e) {
       if (CancelToken.isCancel(e)) return;
     } catch (e) {
@@ -981,75 +1031,7 @@ class DynamicMiniGameController extends GetxController
     return 'consonants';
   }
 
-  List<List<Offset>> _readSubpathsPx(List<dynamic> raw) {
-    final out = <List<Offset>>[];
-    for (final sub in raw) {
-      final pts = <Offset>[];
-      if (sub is List) {
-        for (final p in sub) {
-          if (p is List && p.length >= 2) {
-            pts.add(Offset((p[0] as num).toDouble(), (p[1] as num).toDouble()));
-          } else if (p is Map) {
-            final x = ((p['x'] as num?) ?? 0).toDouble();
-            final y = ((p['y'] as num?) ?? 0).toDouble();
-            pts.add(Offset(x, y));
-          }
-        }
-      }
-      if (pts.isNotEmpty) out.add(pts);
-    }
-    return out;
-  }
 
-  List<List<Offset>> _autoFitGlyphPx(
-    List<List<Offset>> paths, {
-    required double boardW,
-    required double boardH,
-    double pad = 18,
-    double minWidthFill = 0.72,
-    double minHeightFill = 0.78,
-  }) {
-    if (paths.isEmpty) return paths;
-
-    double minX = double.infinity, minY = double.infinity;
-    double maxX = -double.infinity, maxY = -double.infinity;
-
-    for (final sub in paths) {
-      for (final p in sub) {
-        if (p.dx < minX) minX = p.dx;
-        if (p.dy < minY) minY = p.dy;
-        if (p.dx > maxX) maxX = p.dx;
-        if (p.dy > maxY) maxY = p.dy;
-      }
-    }
-
-    final w = maxX - minX;
-    final h = maxY - minY;
-    if (w <= 0 || h <= 0) return paths;
-
-    final innerW = boardW - 2 * pad;
-    final innerH = boardH - 2 * pad;
-
-    final sMax = min(innerW / w, innerH / h);
-    final sWantW = (innerW * minWidthFill) / w;
-    final sWantH = (innerH * minHeightFill) / h;
-
-    final s = min(max(1.0, max(sWantW, sWantH)), sMax);
-
-    final cx = (minX + maxX) / 2;
-    final cy = (minY + maxY) / 2;
-    final boardCx = boardW / 2;
-    final boardCy = boardH / 2;
-
-    return paths
-        .map((sub) => sub
-            .map((p) => Offset(
-                  (p.dx - cx) * s + boardCx,
-                  (p.dy - cy) * s + boardCy,
-                ))
-            .toList())
-        .toList();
-  }
 
   void _applyCorrectResult() {
     correctCount.value++;
@@ -1188,8 +1170,8 @@ class DynamicMiniGameController extends GetxController
     final letter = entry['text_px'] as List<dynamic>? ?? [];
     final strokes = entry['paths_px'] as List<dynamic>? ?? [];
 
-    final letterOut = _readSubpathsPx(letter);
-    final strokesOut = _readSubpathsPx(strokes);
+    final letterOut = StrokeTransformUtil.readSubpathsPx(letter);
+    final strokesOut = StrokeTransformUtil.readSubpathsPx(strokes);
 
     if (letterOut.isEmpty && strokesOut.isEmpty) {
       letterSubpathsNorm.clear();
@@ -1199,7 +1181,7 @@ class DynamicMiniGameController extends GetxController
     }
 
     final combined = <List<Offset>>[...letterOut, ...strokesOut];
-    final fitted = _autoFitGlyphPx(
+    final fitted = StrokeTransformUtil.autoFitGlyphPx(
       combined,
       boardW: boardW,
       boardH: boardH,
@@ -1216,31 +1198,7 @@ class DynamicMiniGameController extends GetxController
     anim.setGuideFromPx(strokesPx: fittedStrokes);
   }
 
-  // ── Local ONNX prediction ──
 
-  Future<Map<String, dynamic>?> _predictLocal(String modelType) async {
-    try {
-      if (!OnnxInferenceService.instance.isReady) {
-        return null;
-      }
-
-      final preprocessed = StrokePreprocessor.preprocessForModel(
-        modelType,
-        _rawStrokes,
-      );
-
-      final result = await OnnxInferenceService.instance.predict(
-        modelType,
-        preprocessed.segments[0],
-        preprocessed.shapes[0],
-      );
-
-      return result;
-    } catch (e) {
-      dev.log('Local predict failed: $e', name: 'DynamicMiniGameController');
-      return null;
-    }
-  }
 
   Map<String, dynamic> _getXYStrokeWithTime({required String modelType}) {
     final allStrokes = <Map<String, dynamic>>[];

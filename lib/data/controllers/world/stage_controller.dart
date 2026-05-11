@@ -14,14 +14,14 @@ import 'package:get/get.dart';
 import 'package:mobilepenpal/core/network/route_builder.dart';
 import 'package:mobilepenpal/core/utils/math_generation.dart';
 import 'package:mobilepenpal/core/utils/number_format_utils.dart';
-import 'package:mobilepenpal/core/utils/character_option_utils.dart';
+import 'package:mobilepenpal/core/utils/khmer_char_utils.dart';
 import 'package:mobilepenpal/core/utils/stroke_feedback_util.dart';
-import 'package:mobilepenpal/core/utils/stroke_preprocessor.dart';
+import 'package:mobilepenpal/core/utils/stroke_transform_util.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_animation_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_audio_controller.dart';
 import 'package:mobilepenpal/data/models/stage/stage.dart';
 import 'package:mobilepenpal/data/models/stage/stage_exercise.dart';
-import 'package:mobilepenpal/data/services/onnx_inference_service.dart';
+import 'package:mobilepenpal/data/services/drawing_evaluation_service.dart';
 import 'package:mobilepenpal/data/services/world_service.dart';
 import 'package:mobilepenpal/presentation/routes/app_routes.dart';
 import 'package:mobilepenpal/presentation/widgets/app_snackbar.dart';
@@ -31,6 +31,8 @@ class StageController extends GetxController {
     : _worldService = worldService ?? WorldService();
 
   final WorldService _worldService;
+  late final DrawingEvaluationService _evalService =
+      DrawingEvaluationService(worldService: _worldService);
 
   final isLoading = false.obs;
   final isSubmitting = false.obs;
@@ -593,41 +595,28 @@ class StageController extends GetxController {
     onPointerUp();
   }
 
-  Future<Map<String, dynamic>?> _predictLocal(
-    String modelType,
-    int boardIndex,
-  ) async {
-    try {
-      final result = StrokePreprocessor.preprocessForModel(
-        modelType,
-        _rawStrokesList[boardIndex],
-      );
 
-      if (modelType == 'math' && !result.isSingleSegment) {
-        String combined = '';
-        for (int i = 0; i < result.segments.length; i++) {
-          final data = await OnnxInferenceService.instance.predict(
-            modelType,
-            result.segments[i],
-            result.shapes[i],
-          );
-          combined += (data['prediction'] ?? '').toString().trim();
-        }
-        return {'prediction': combined, 'segments': result.segments.length};
-      } else {
-        return await OnnxInferenceService.instance.predict(
-          modelType,
-          result.segments[0],
-          result.shapes[0],
-        );
-      }
-    } catch (e) {
-      dev.log(
-        'Local ONNX inference failed for $modelType: $e',
-        name: 'StageController',
-      );
-      return null;
-    }
+  /// Build template strokes for a given character from the strokes DB,
+  /// fitted to the current board size.  Used for behind-the-scenes
+  /// structural validation when there is no visible guide.
+  List<List<Offset>> _getTemplateForChar(String ch) {
+    final db = _strokesDbCache;
+    final items = db?['items'] as Map<String, dynamic>?;
+    final entry = items?[ch.trim()] as Map<String, dynamic>?;
+    if (entry == null) return [];
+
+    final strokes = entry['paths_px'] as List<dynamic>? ?? [];
+    final strokesOut = StrokeTransformUtil.readSubpathsPx(strokes);
+    if (strokesOut.isEmpty) return [];
+
+    return StrokeTransformUtil.autoFitGlyphPx(
+      strokesOut,
+      boardW: boardWidth.value,
+      boardH: boardHeight.value,
+      pad: 24,
+      minWidthFill: 0.72,
+      minHeightFill: 0.78,
+    );
   }
 
   Future<void> checkDrawing() async {
@@ -639,69 +628,98 @@ class StageController extends GetxController {
     final cancelToken = CancelToken();
     _cancelToken = cancelToken;
 
-    final modelType = _mapCharacterTypeToModelType(exercise.characterType);
+    final modelType =
+        _evalService.mapCharacterTypeToModelType(exercise.characterType);
+
+    // Determine if this exercise has a visible stroke guide.
+    final bool hasGuide = strokeStrokesNorm.isNotEmpty && !isMathCurrent;
 
     bool isCorrect = false;
     String prediction = '';
+    String? strokeHint;
     final boards = activeBoardCount;
 
     try {
-      if (isMathCurrent && boards > 1) {
-        String combinedPred = '';
-        for (int i = 0; i < boards; i++) {
-          if (_rawStrokesList[i].isEmpty) continue;
-
-          Map<String, dynamic>? data = await _predictLocal(modelType, i);
-
-          if (data == null) {
-            final payload = getXYStrokeWithTime(
+      if (hasGuide) {
+        // ── WITH GUIDE: pure stroke-based evaluation ──────────────────
+        strokeHint = StrokeFeedbackUtil.getFeedback(
+          userRawStrokes: _rawStrokesList[0],
+          templateStrokesPx: strokeStrokesNorm,
+          boardWidth: boardWidth.value,
+          boardHeight: boardHeight.value,
+          ignoreBounds: false,
+        );
+        isCorrect = (strokeHint == null);
+        prediction = isCorrect ? exercise.character : '';
+      } else {
+        // ── WITHOUT GUIDE (blank canvas): AI + structural checks ─────
+        if (isMathCurrent && boards > 1) {
+          prediction = await _evalService.predictMultiBoard(
+            modelType: modelType,
+            boardCount: boards,
+            rawStrokesPerBoard: _rawStrokesList,
+            getPayload: (i) => getXYStrokeWithTime(
               modelType: modelType,
               boardIndex: i,
-            );
-            final strokes = (payload['strokes'] as List)
-                .cast<Map<String, dynamic>>();
-            data = await _worldService.predictDrawingVector(
-              strokes: strokes,
-              modelType: payload['model_type'] as String,
-              cancelToken: cancelToken,
-            );
-          }
-          if (myReqId != _redId) return;
-          combinedPred += (data['prediction'] ?? '').toString().trim();
-        }
-        prediction = combinedPred;
-
-        final expected = mathExpected.value;
-        final predValue = NumberFormatUtils.parseIntAny(prediction);
-        isCorrect =
-            expected != null && predValue != null && predValue == expected;
-      } else {
-        Map<String, dynamic>? data = await _predictLocal(modelType, 0);
-        if (data == null) {
-          final payload = getXYStrokeWithTime(
-            modelType: modelType,
-            boardIndex: 0,
-          );
-          final strokes = (payload['strokes'] as List)
-              .cast<Map<String, dynamic>>();
-          data = await _worldService.predictDrawingVector(
-            strokes: strokes,
-            modelType: payload['model_type'] as String,
+            ),
+            getReqId: () => _redId,
+            currentReqId: myReqId,
             cancelToken: cancelToken,
           );
-        }
-        if (myReqId != _redId) return;
+          if (myReqId != _redId) return;
 
-        prediction = (data['prediction'] ?? '').toString().trim();
-
-        if (isMathCurrent) {
           final expected = mathExpected.value;
           final predValue = NumberFormatUtils.parseIntAny(prediction);
           isCorrect =
               expected != null && predValue != null && predValue == expected;
         } else {
-          final expected = exercise.character.trim();
-          isCorrect = prediction == expected;
+          final data = await _evalService.predictBoard(
+            modelType: modelType,
+            rawStrokes: _rawStrokesList[0],
+            getPayload: () => getXYStrokeWithTime(
+              modelType: modelType,
+              boardIndex: 0,
+            ),
+            cancelToken: cancelToken,
+          );
+          if (myReqId != _redId) return;
+
+          prediction = (data?['prediction'] ?? '').toString().trim();
+
+          if (isMathCurrent) {
+            final expected = mathExpected.value;
+            final predValue = NumberFormatUtils.parseIntAny(prediction);
+            isCorrect =
+                expected != null && predValue != null && predValue == expected;
+          } else {
+            final expected = exercise.character.trim();
+            isCorrect = prediction == expected;
+          }
+        }
+
+        // If AI says correct, also validate stroke structure (ignoring bounds).
+        if (isCorrect) {
+          final charToValidate = isMathCurrent
+              ? null // skip structural validation for math for now
+              : exercise.character.trim();
+
+          if (charToValidate != null) {
+            final template = _getTemplateForChar(charToValidate);
+            if (template.isNotEmpty) {
+              final centered =
+                  StrokeTransformUtil.autoCenterStrokes(_rawStrokesList[0], template);
+              strokeHint = StrokeFeedbackUtil.getFeedback(
+                userRawStrokes: centered,
+                templateStrokesPx: template,
+                boardWidth: boardWidth.value,
+                boardHeight: boardHeight.value,
+                ignoreBounds: true,
+              );
+              if (strokeHint != null) {
+                isCorrect = false;
+              }
+            }
+          }
         }
       }
     } on DioException catch (e) {
@@ -718,7 +736,10 @@ class StageController extends GetxController {
     if (!isCorrect) {
       unawaited(audio.playWrongSfx());
 
-      if (!isMathCurrent &&
+      // Show stroke feedback hint if available.
+      if (strokeHint != null) {
+        anim.praiseText.value = strokeHint.tr;
+      } else if (!isMathCurrent &&
           strokeStrokesNorm.isNotEmpty &&
           letterSubpathsNorm.isNotEmpty) {
         final hint = StrokeFeedbackUtil.getFeedback(
@@ -780,6 +801,7 @@ class StageController extends GetxController {
         anim.clearPraise();
         await _finishStageIfLast();
       } else {
+        await Future.delayed(wrongDisplayDuration);
         anim.feedback.value = DrawFeedback.none;
         anim.clearPraise();
         nextExercise();
@@ -1016,11 +1038,22 @@ class StageController extends GetxController {
     final ex = currentExercise;
     if (ex == null) return const [];
 
-    return CharacterOptionUtils.generateOptions(
-      character: ex.character,
-      type: ex.characterType,
-      example: ex.example,
-    );
+    final type = (ex.characterType ?? '').trim().toLowerCase();
+    final char = ex.character.trim();
+
+    if (type == 'consonants') {
+      return KhmerCharUtils.getVowelForms(char);
+    }
+
+    if (type == 'digits') {
+      return ['លេខ $char'];
+    }
+
+    if (type == 'dependent_vowels' || type == 'independent_vowels') {
+      return ['ស្រៈ $char'];
+    }
+
+    return [char];
   }
 
   Future<void> loadStrokeDb() async {
@@ -1031,15 +1064,6 @@ class StageController extends GetxController {
   }
 
   void setGuideForCharacter(String ch) {
-    if (_strokesDbCache == null) {
-      loadStrokeDb().then((_) {
-        if (selectedCharacter.value == ch) {
-          setGuideForCharacter(ch);
-        }
-      });
-      return;
-    }
-
     final db = _strokesDbCache;
     final items = db?['items'] as Map<String, dynamic>?;
 
@@ -1062,8 +1086,8 @@ class StageController extends GetxController {
     final letter = entry['text_px'] as List<dynamic>? ?? [];
     final strokes = entry['paths_px'] as List<dynamic>? ?? [];
 
-    final letterOut = _readSubpathsPx(letter);
-    final strokesOut = _readSubpathsPx(strokes);
+    final letterOut = StrokeTransformUtil.readSubpathsPx(letter);
+    final strokesOut = StrokeTransformUtil.readSubpathsPx(strokes);
 
     if (letterOut.isEmpty && strokesOut.isEmpty) {
       letterSubpathsNorm.clear();
@@ -1073,7 +1097,7 @@ class StageController extends GetxController {
     }
 
     final combined = <List<Offset>>[...letterOut, ...strokesOut];
-    final fitted = _autoFitGlyphPx(
+    final fitted = StrokeTransformUtil.autoFitGlyphPx(
       combined,
       boardW: boardWidth.value,
       boardH: boardHeight.value,
@@ -1088,72 +1112,6 @@ class StageController extends GetxController {
     letterSubpathsNorm.assignAll(fittedLetter);
     strokeStrokesNorm.assignAll(fittedStrokes);
     anim.setGuideFromPx(strokesPx: fittedStrokes);
-  }
-
-  List<List<Offset>> _readSubpathsPx(List<dynamic> raw) {
-    final out = <List<Offset>>[];
-    for (final sub in raw) {
-      final pts = <Offset>[];
-      for (final p in (sub as List)) {
-        pts.add(Offset((p[0] as num).toDouble(), (p[1] as num).toDouble()));
-      }
-      if (pts.isNotEmpty) out.add(pts);
-    }
-    return out;
-  }
-
-  List<List<Offset>> _autoFitGlyphPx(
-    List<List<Offset>> paths, {
-    required double boardW,
-    required double boardH,
-    double pad = 18,
-    double minWidthFill = 0.72,
-    double minHeightFill = 0.78,
-  }) {
-    if (paths.isEmpty) return paths;
-
-    double minX = double.infinity, minY = double.infinity;
-    double maxX = -double.infinity, maxY = -double.infinity;
-
-    for (final sub in paths) {
-      for (final p in sub) {
-        if (p.dx < minX) minX = p.dx;
-        if (p.dy < minY) minY = p.dy;
-        if (p.dx > maxX) maxX = p.dx;
-        if (p.dy > maxY) maxY = p.dy;
-      }
-    }
-
-    final w = maxX - minX;
-    final h = maxY - minY;
-    if (w <= 0 || h <= 0) return paths;
-
-    final innerW = boardW - 2 * pad;
-    final innerH = boardH - 2 * pad;
-
-    final sMax = min(innerW / w, innerH / h);
-    final sWantW = (innerW * minWidthFill) / w;
-    final sWantH = (innerH * minHeightFill) / h;
-
-    final s = min(max(1.0, max(sWantW, sWantH)), sMax);
-
-    final cx = (minX + maxX) / 2;
-    final cy = (minY + maxY) / 2;
-    final boardCx = boardW / 2;
-    final boardCy = boardH / 2;
-
-    return paths
-        .map(
-          (sub) => sub
-              .map(
-                (p) => Offset(
-                  (p.dx - cx) * s + boardCx,
-                  (p.dy - cy) * s + boardCy,
-                ),
-              )
-              .toList(),
-        )
-        .toList();
   }
 
   void _resetSessionState({bool clearGuide = false}) {
@@ -1179,24 +1137,6 @@ class StageController extends GetxController {
       _cancelToken!.cancel();
     }
     _cancelToken = null;
-  }
-
-  String _mapCharacterTypeToModelType(String? characterType) {
-    final t = (characterType ?? '').trim().toLowerCase();
-    switch (t) {
-      case 'digits':
-        return 'digit';
-      case 'consonants':
-        return 'consonant';
-      case 'independent_vowels':
-        return 'independent_vowel';
-      case 'dependent_vowels':
-        return 'dependent_vowel';
-      case 'math':
-        return 'math';
-      default:
-        return 'consonant';
-    }
   }
 
   Future<T?> _runWithSkipLock<T>(Future<T> Function() fn) async {

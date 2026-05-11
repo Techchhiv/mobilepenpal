@@ -438,6 +438,7 @@ final Map<String, String> kmKH = {
   'feedback_draw_slowly': 'គូរយឺតៗតាមស្រមោល!',
   'feedback_wrong_count': 'គូរខុសចំនួនបន្ទាត់សរសេរ!',
   'feedback_out_of_bounds': 'កុំគូរចេញក្រៅ!',
+  'feedback_incomplete': 'សូមគូរឲ្យតាមស្រមោល!',
   'feedback_wrong_direction': 'គូរខុសទិសដៅ!',
   'feedback_wrong_order': 'គូរខុសលំដាប់!',
 
@@ -450,31 +451,4 @@ final Map<String, String> kmKH = {
   'school_subscription_message':
       'មាតិកានេះត្រូវការការបើកប្រាក់ប្រីមៀម។ សូមទាក់ទងអ្នកគ្រប់គ្រងសាលារៀនរបស់អ្នកដើម្បីដំណើរការ។',
   'contact_school_admin': 'ទាក់ទងអ្នកគ្រប់គ្រង',
-
-  // ===== Shop =====
-  'your_points': 'ពិន្ទុរបស់អ្នក',
-  'in_use': 'កំពុងប្រើប្រាស់',
-  'owned': 'មានហើយ',
-  'select_avatar': 'ជ្រើសរើស',
-  'buy_for': 'ទិញក្នុងតម្លៃ @price',
-  'use_this_avatar': 'ប្រើរូបតំណាងនេះ?',
-  'avatar_in_use_desc': 'រូបតំណាងនេះកំពុងប្រើប្រាស់!',
-  'not_enough_points': 'មិនមានពិន្ទុគ្រប់គ្រាន់ទេ!',
-  'need_more_points': 'អ្នកត្រូវការ @amount បន្ថែមទៀត',
-  'your_balance': 'តុល្យភាពរបស់អ្នក៖ @amount ពិន្ទុ',
-  'points_count': '@count ពិន្ទុ',
-
-  // ===== Daily Challenge =====
-  'daily_challenge_done': 'អ្នកបានបញ្ចប់បញ្ហាប្រចាំថ្ងៃហើយ! សូមត្រឡប់មកវិញថ្ងៃស្អែក។',
-  'daily_star': 'តារាប្រចាំថ្ងៃ',
-  'daily_bonus_2x': 'ទទួលបានកាក់ និង XP ២ដង',
-  'daily_game_getting_ready': 'កំពុងរៀបចំការលេងសម្រាប់ថ្ងៃនេះ',
-  'daily_challenge_completed_msg': 'ធ្វើបានល្អណាស់! សូមត្រឡប់មកវិញថ្ងៃស្អែក 🌟',
-  'daily_challenge_ready_msg': 'មាន @count លំហាត់រួចរាល់ • រង្វាន់ ២ដង!',
-  'daily_challenge_more_soon': 'នឹងមានលំហាត់បន្ថែមទៀតឆាប់ៗ',
-  'getting_ready': 'កំពុងរៀបចំ',
-  'completed_today': 'បានបញ្ចប់សម្រាប់ថ្ងៃនេះ',
-  'start_daily_challenge': 'ចាប់ផ្តើមការប្រកួតប្រចាំថ្ងៃ',
-  'come_back_soon': 'សូមត្រឡប់មកវិញឆាប់ៗ',
-  'xp': 'XP',
 };

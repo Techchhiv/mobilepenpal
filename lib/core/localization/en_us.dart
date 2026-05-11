@@ -443,6 +443,7 @@ final Map<String, String> enUS = {
   'feedback_draw_slowly': 'Draw slowly following the guide!',
   'feedback_wrong_count': 'Wrong number of strokes!',
   'feedback_out_of_bounds': "Don't draw outside!",
+  'feedback_incomplete': 'Please complete the drawing!',
   'feedback_wrong_direction': 'Wrong direction!',
   'feedback_wrong_order': 'Wrong order!',
 
@@ -455,31 +456,4 @@ final Map<String, String> enUS = {
   'school_subscription_message':
       'This content requires a premium subscription. Please contact your school administrator to activate access for your account.',
   'contact_school_admin': 'Contact School Admin',
-  
-  // ===== Shop =====
-  'your_points': 'Your Points',
-  'in_use': 'In Use',
-  'owned': 'Owned',
-  'select_avatar': 'Select',
-  'buy_for': 'Buy for @price',
-  'use_this_avatar': 'Use this avatar?',
-  'avatar_in_use_desc': 'This avatar is currently in use!',
-  'not_enough_points': 'Not enough points!',
-  'need_more_points': 'You need @amount more.',
-  'your_balance': 'Your balance: @amount points',
-  'points_count': '@count points',
-
-  // ===== Daily Challenge =====
-  'daily_challenge_done': 'You already completed today\'s challenge! Come back tomorrow.',
-  'daily_star': 'Daily Star',
-  'daily_bonus_2x': '2x Coins & XP',
-  'daily_game_getting_ready': "Getting today's game ready",
-  'daily_challenge_completed_msg': 'Great job! Come back tomorrow 🌟',
-  'daily_challenge_ready_msg': '@count fun tries ready • 2x rewards!',
-  'daily_challenge_more_soon': 'More fun soon',
-  'getting_ready': 'Getting Ready',
-  'completed_today': 'Completed Today',
-  'start_daily_challenge': 'Start Daily Challenge',
-  'come_back_soon': 'Come Back Soon',
-  'xp': 'XP',
 };
