@@ -282,13 +282,13 @@ class _MiniGamePageState extends State<MiniGamePage>
       ),
       child: Column(
         children: [
-          const Text(
-            'HIGHEST SCORE',
+          Text(
+            'highest_score'.tr,
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w900,
               color: Colors.white,
-              letterSpacing: 2,
+              letterSpacing: Get.locale?.languageCode == 'km' ? 0 : 2,
             ),
           ),
           const SizedBox(height: 4),
@@ -361,8 +361,8 @@ class _MiniGamePageState extends State<MiniGamePage>
     final hubCtrl = Get.find<MiniGameHubController>();
     if (hubCtrl.miniGames.isEmpty) {
       Get.snackbar(
-        'Oops!',
-        'No mini-games available right now.',
+        'oops'.tr,
+        'no_mini_games_available_right_now'.tr,
         backgroundColor: Colors.redAccent,
         colorText: Colors.white,
       );
@@ -403,10 +403,10 @@ class _MiniGamePageState extends State<MiniGamePage>
                     ),
                   ),
                   const SizedBox(width: 16),
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'Ready to Play?',
-                      style: TextStyle(
+                      'choose_an_option'.tr,
+                      style: const TextStyle(
                         color: Color(0xFF4A4A4A),
                         fontSize: 26,
                         fontWeight: FontWeight.w900,
@@ -435,7 +435,7 @@ class _MiniGamePageState extends State<MiniGamePage>
 
               // ── Section: Mini Games ──
               _buildSectionLabel(
-                'CHOOSE YOUR GAMES',
+                'choose_your_games'.tr,
                 Icons.sports_esports_rounded,
                 trailing: Obx(() {
                   final allSelected =
@@ -452,8 +452,8 @@ class _MiniGamePageState extends State<MiniGamePage>
                     },
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
+                        horizontal: 14,
+                        vertical: 8,
                       ),
                       decoration: BoxDecoration(
                         color: allSelected
@@ -481,14 +481,14 @@ class _MiniGamePageState extends State<MiniGamePage>
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            allSelected ? 'DESELECT ALL' : 'SELECT ALL',
+                            allSelected ? 'deselect_all'.tr : 'select_all'.tr,
                             style: TextStyle(
                               color: allSelected
                                   ? const Color(0xFFFF9F43)
                                   : Colors.grey.shade500,
-                              fontSize: 11,
+                              fontSize: 13,
                               fontWeight: FontWeight.w900,
-                              letterSpacing: 0.5,
+                              letterSpacing: Get.locale?.languageCode == 'km' ? 0 : 0.5,
                             ),
                           ),
                         ],
@@ -553,10 +553,13 @@ class _MiniGamePageState extends State<MiniGamePage>
                                       child: CircleAvatar(
                                         radius: 40,
                                         backgroundColor: Colors.white,
-                                        child: game.coverImageUrl != null &&
+                                        child:
+                                            game.coverImageUrl != null &&
                                                 game.coverImageUrl!.isNotEmpty
                                             ? Padding(
-                                                padding: const EdgeInsets.all(8),
+                                                padding: const EdgeInsets.all(
+                                                  8,
+                                                ),
                                                 child: Image.network(
                                                   Env.backendUrl +
                                                       game.coverImageUrl!,
@@ -602,7 +605,7 @@ class _MiniGamePageState extends State<MiniGamePage>
               const SizedBox(height: 24),
 
               // ── Section: Input Type ──
-              _buildSectionLabel('HOW TO PLAY', Icons.gamepad_rounded),
+              _buildSectionLabel('how_to_play'.tr, Icons.gamepad_rounded),
               const SizedBox(height: 16),
               Obx(() {
                 final selectedGamesList = hubCtrl.miniGames
@@ -631,7 +634,7 @@ class _MiniGamePageState extends State<MiniGamePage>
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      'Select a game first!',
+                      'select_a_game_first'.tr,
                       style: TextStyle(
                         color: Colors.grey.shade500,
                         fontSize: 16,
@@ -741,14 +744,14 @@ class _MiniGamePageState extends State<MiniGamePage>
                         ),
                         const SizedBox(width: 12),
                         Text(
-                          'START PLAYING',
+                          'start_playing'.tr,
                           style: TextStyle(
                             color: _selectedGames.isEmpty
                                 ? Colors.grey.shade500
                                 : Colors.white,
                             fontSize: 20,
                             fontWeight: FontWeight.w900,
-                            letterSpacing: 1.5,
+                            letterSpacing: Get.locale?.languageCode == 'km' ? 0 : 1.5,
                           ),
                         ),
                       ],
@@ -774,7 +777,7 @@ class _MiniGamePageState extends State<MiniGamePage>
             color: Colors.grey.shade500,
             fontSize: 13,
             fontWeight: FontWeight.w900,
-            letterSpacing: 1.5,
+            letterSpacing: Get.locale?.languageCode == 'km' ? 0 : 1.5,
           ),
         ),
         if (trailing != null) ...[const Spacer(), trailing],
@@ -793,16 +796,16 @@ class _MiniGamePageState extends State<MiniGamePage>
   String _inputTypeLabel(String? type) {
     switch (type) {
       case 'drawing_board':
-        return 'Drawing';
+        return 'drawing'.tr;
       case 'multiple_choice':
-        return 'Choices';
+        return 'choices'.tr;
       case 'drag_and_drop':
-        return 'Drag';
+        return 'drag'.tr;
       case 'typing':
-        return 'Typing';
+        return 'typing'.tr;
       case null:
       default:
-        return 'Surprise Me!';
+        return 'surprise_me'.tr;
     }
   }
 

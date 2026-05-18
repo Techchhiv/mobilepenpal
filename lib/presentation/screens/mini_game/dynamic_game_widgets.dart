@@ -236,9 +236,9 @@ class ScoreChip extends StatelessWidget {
           return Center(
             child: Text(
               '$value',
-              style: const TextStyle(
+              style: TextStyle(
                 color: GameColors.textDark, fontSize: 22,
-                fontWeight: FontWeight.w900, letterSpacing: 1,
+                fontWeight: FontWeight.w900, letterSpacing: Get.locale?.languageCode == 'km' ? 0 : 1,
               ),
             ),
           );
@@ -314,9 +314,9 @@ class _AnimatedScoreChipState extends State<AnimatedScoreChip>
           return Center(
             child: Text(
               '${_countAnim.value}',
-              style: const TextStyle(
+              style: TextStyle(
                 color: GameColors.textDark, fontSize: 22,
-                fontWeight: FontWeight.w900, letterSpacing: 1,
+                fontWeight: FontWeight.w900, letterSpacing: Get.locale?.languageCode == 'km' ? 0 : 1,
               ),
             ),
           );
@@ -456,26 +456,56 @@ class ComboIndicator extends StatelessWidget {
   const ComboIndicator({super.key, required this.combo});
   final int combo;
 
+  String _toKhmerDigits(int n) {
+    const kmDigits = ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'];
+    return n.toString().split('').map((d) => kmDigits[int.parse(d)]).join();
+  }
+
   @override
   Widget build(BuildContext context) {
-    if (combo < 2) return const SizedBox(height: 22);
-    final color = combo >= 5 ? GameColors.softRed : GameColors.gold;
+    if (combo < 2) return const SizedBox(height: 28);
+    final isHot = combo >= 5;
+    final bgColor = isHot
+        ? const Color(0xFFFF6B6B) // vivid red for hot streaks
+        : const Color(0xFFFF9F43); // warm orange for normal streaks
+    final isKhmer = Get.locale?.languageCode == 'km';
+    final comboText = isKhmer ? _toKhmerDigits(combo) : combo.toString();
+
     return Container(
-      height: 22,
+      height: 28,
       alignment: Alignment.center,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            combo >= 5 ? Icons.local_fire_department_rounded : Icons.auto_awesome_rounded,
-            color: color, size: 16,
-          ),
-          const SizedBox(width: 4),
-          Text(
-            '${combo}x Streak!',
-            style: TextStyle(color: color, fontSize: 14, fontWeight: FontWeight.w800),
-          ),
-        ],
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: [
+            BoxShadow(
+              color: bgColor.withValues(alpha: 0.5),
+              blurRadius: 8,
+              spreadRadius: 1,
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              isHot ? Icons.local_fire_department_rounded : Icons.auto_awesome_rounded,
+              color: Colors.white, size: 16,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              'combo_streak'.trParams({'combo': comboText}),
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+                letterSpacing: Get.locale?.languageCode == 'km' ? 0 : 0.5,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -546,7 +576,17 @@ class CountdownOverlay extends StatelessWidget {
               final scale = 1.0 + (1.0 - animCtrl.value) * 0.5;
               final opacity = (1.0 - animCtrl.value * 0.3).clamp(0.0, 1.0);
               final val = countdownValue;
-              final text = val > 0 ? '$val' : 'GO!';
+              String text;
+              if (val > 0) {
+                if (Get.locale?.languageCode == 'km') {
+                  const kmDigits = ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'];
+                  text = val <= 9 ? kmDigits[val] : '$val';
+                } else {
+                  text = '$val';
+                }
+              } else {
+                text = 'go_exclamation'.tr;
+              }
               final isGo = val <= 0;
               return Opacity(
                 opacity: opacity,
@@ -578,7 +618,7 @@ class CountdownOverlay extends StatelessWidget {
                         color: Colors.white,
                         fontSize: isGo ? 42 : 56,
                         fontWeight: FontWeight.w900,
-                        letterSpacing: 2,
+                        letterSpacing: Get.locale?.languageCode == 'km' ? 0 : 2,
                       ),
                     ),
                   ),
@@ -650,7 +690,7 @@ class FeedbackOverlay extends StatelessWidget {
                               text,
                               style: TextStyle(
                                 color: color, fontSize: 26,
-                                fontWeight: FontWeight.w900, letterSpacing: 1,
+                                fontWeight: FontWeight.w900, letterSpacing: Get.locale?.languageCode == 'km' ? 0 : 1,
                               ),
                             ),
                           ],
@@ -701,17 +741,17 @@ class GamePauseDialog extends StatelessWidget {
               child: const Icon(Icons.pause_rounded, color: GameColors.teal, size: 36),
             ),
             const SizedBox(height: 16),
-            const Text(
-              'Paused',
-              style: TextStyle(color: GameColors.textDark, fontSize: 28, fontWeight: FontWeight.w900),
-            ),
+            // Text(
+            //   'paused'.tr,
+            //   style: const TextStyle(color: GameColors.textDark, fontSize: 28, fontWeight: FontWeight.w900),
+            // ),
             const SizedBox(height: 24),
             SizedBox(
               width: double.infinity, height: 52,
               child: ElevatedButton.icon(
                 onPressed: onResume,
                 icon: const Icon(Icons.play_arrow_rounded, size: 24),
-                label: const Text('Keep Playing', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+                label: Text('keep_playing'.tr, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: GameColors.teal,
                   foregroundColor: Colors.white,
@@ -726,7 +766,7 @@ class GamePauseDialog extends StatelessWidget {
               child: OutlinedButton.icon(
                 onPressed: onQuit,
                 icon: const Icon(Icons.home_rounded, size: 22),
-                label: const Text('Go Home', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+                label: Text('go_home'.tr, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: GameColors.pink,
                   side: const BorderSide(color: GameColors.pink, width: 2),
@@ -754,20 +794,20 @@ class InstructionBadge extends StatelessWidget {
     IconData icon;
     switch (inputType) {
       case 'drawing_board':
-        text = 'Trace the answer';
+        text = 'trace_the_answer'.tr;
         icon = Icons.edit_rounded;
       case 'multiple_choice':
-        text = 'Pick the answer';
+        text = 'pick_the_answer'.tr;
         icon = Icons.touch_app_rounded;
       case 'drag_and_drop':
-        text = 'Match the cards';
+        text = 'match_the_cards'.tr;
         icon = Icons.compare_arrows_rounded;
       default:
-        text = 'Play!';
+        text = 'play_exclamation'.tr;
         icon = Icons.play_arrow_rounded;
     }
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.75),
         borderRadius: BorderRadius.circular(14),
@@ -775,9 +815,9 @@ class InstructionBadge extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: GameColors.teal, size: 18),
-          const SizedBox(width: 6),
-          Text(text, style: const TextStyle(color: GameColors.textDark, fontSize: 13, fontWeight: FontWeight.w700)),
+          Icon(icon, color: GameColors.teal, size: 20),
+          const SizedBox(width: 10),
+          Text(text, style: const TextStyle(color: GameColors.textDark, fontSize: 14, fontWeight: FontWeight.w700)),
         ],
       ),
     );
@@ -873,13 +913,14 @@ class ChoiceCard extends StatelessWidget {
 class MatchCard extends StatelessWidget {
   const MatchCard({
     super.key, required this.content, required this.state,
-    required this.onTap,
+    required this.onTap, this.scale = 1.0,
   });
   
   final String content;
   // states: normal, selected, matched, wrong
   final String state;
   final VoidCallback onTap;
+  final double scale;
 
   @override
   Widget build(BuildContext context) {
@@ -902,7 +943,7 @@ class MatchCard extends StatelessWidget {
 
     Widget innerContent;
     if (content == '🔊') {
-      innerContent = Icon(Icons.volume_up_rounded, size: 32, color: textColor);
+      innerContent = Icon(Icons.volume_up_rounded, size: 32 * scale, color: textColor);
     } else if (content.contains('|')) {
       final parts = content.split('|');
       final img = parts[0];
@@ -910,10 +951,10 @@ class MatchCard extends StatelessWidget {
       innerContent = Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (img.isNotEmpty) Image.asset(img, height: 44, fit: BoxFit.contain),
+          if (img.isNotEmpty) Image.asset(img, height: 44 * scale, fit: BoxFit.contain),
           if (txt.isNotEmpty) ...[
-            const SizedBox(height: 4),
-            Text(txt, style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: textColor)),
+            SizedBox(height: 4 * scale),
+            Text(txt, style: TextStyle(fontSize: 22 * scale, fontWeight: FontWeight.w800, color: textColor)),
           ]
         ],
       );
@@ -924,24 +965,24 @@ class MatchCard extends StatelessWidget {
       final imgPath = content.substring(0, starIndex);
       final count = int.tryParse(content.substring(starIndex + 1)) ?? 1;
       innerContent = Container(
-        constraints: const BoxConstraints(maxWidth: 130),
+        constraints: BoxConstraints(maxWidth: 130 * scale),
         child: Wrap(
-          spacing: 4,
-          runSpacing: 4,
+          spacing: 4 * scale,
+          runSpacing: 4 * scale,
           alignment: WrapAlignment.center,
           children: List.generate(
             count,
-            (_) => Image.asset(imgPath, width: 38, height: 38, fit: BoxFit.contain),
+            (_) => Image.asset(imgPath, width: 38 * scale, height: 38 * scale, fit: BoxFit.contain),
           ),
         ),
       );
     } else if (content.startsWith('assets/')) {
-      innerContent = Image.asset(content, height: 44, fit: BoxFit.contain);
+      innerContent = Image.asset(content, height: 44 * scale, fit: BoxFit.contain);
     } else {
       innerContent = Text(
         content,
         textAlign: TextAlign.center,
-        style: TextStyle(color: textColor, fontSize: 28, fontWeight: FontWeight.w900),
+        style: TextStyle(color: textColor, fontSize: 28 * scale, fontWeight: FontWeight.w900),
       );
     }
 
@@ -949,7 +990,7 @@ class MatchCard extends StatelessWidget {
       onTap: (state == 'matched' || state == 'wrong') ? null : onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+        padding: EdgeInsets.symmetric(vertical: 10 * scale, horizontal: 8 * scale),
         decoration: BoxDecoration(
           color: bgColor,
           borderRadius: BorderRadius.circular(18),
@@ -958,7 +999,12 @@ class MatchCard extends StatelessWidget {
             BoxShadow(color: GameColors.teal.withValues(alpha: 0.3), blurRadius: 8, spreadRadius: 1)
           ] : [],
         ),
-        child: Center(child: innerContent),
+        child: Center(
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: innerContent,
+          ),
+        ),
       ),
     );
   }
@@ -1089,7 +1135,7 @@ class _FloatingScoreAnimationState extends State<_FloatingScoreAnimation>
           color: Colors.white,
           fontSize: 32,
           fontWeight: FontWeight.w900,
-          letterSpacing: 2,
+          letterSpacing: Get.locale?.languageCode == 'km' ? 0 : 2,
           shadows: [
             // Multiple dark shadows create a thick outline/stroke effect
             Shadow(color: Colors.black.withValues(alpha: 0.8), blurRadius: 0, offset: const Offset(1, 1)),

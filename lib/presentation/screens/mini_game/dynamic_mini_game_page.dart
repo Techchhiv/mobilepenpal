@@ -167,9 +167,9 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
         ),
-        child: const Text(
-          'Match the pairs 🔀',
-          style: TextStyle(
+        child: Text(
+          'match_the_pairs'.tr,
+          style: const TextStyle(
             color: Colors.white,
             fontSize: 22,
             fontWeight: FontWeight.w800,
@@ -272,8 +272,8 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
                                 ),
                                 const SizedBox(width: 12),
                                 Text(
-                                  'Tap to listen again',
-                                  style: TextStyle(
+                                  'tap_to_listen_again'.tr,
+                                  style: const TextStyle(
                                     color: GameColors.teal,
                                     fontSize: 20,
                                     fontWeight: FontWeight.w700,
@@ -338,7 +338,7 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
                   child: Text(
-                    'How many were there? 🤔',
+                    'how_many_were_there'.tr,
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.6),
                       fontSize: 16,
@@ -420,7 +420,7 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
                       ),
                       const SizedBox(width: 12),
                       Text(
-                        'Tap to listen',
+                        'tap_to_listen'.tr,
                         style: TextStyle(
                           color: Colors.white.withValues(alpha: 0.6),
                           fontSize: 20,
@@ -433,52 +433,54 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
                 )
               else ...
                 [
-                  // Easy & Medium: show word with blank
+                  // If there's an image or text hint, show it first (above the word)
+                  if (hint == 'with_image') ...
+                    [
+                      controller.currentChallenge.value?.imagePath != null
+                          ? Container(
+                              margin: const EdgeInsets.only(bottom: 24),
+                              padding: const EdgeInsets.all(24),
+                              decoration: BoxDecoration(
+                                color: GameColors.teal.withValues(alpha: 0.15),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Image.asset(
+                                controller.currentChallenge.value!.imagePath!,
+                                height: 90, // Reduced size based on feedback
+                                fit: BoxFit.contain,
+                              ),
+                            )
+                          : Container(
+                              margin: const EdgeInsets.only(bottom: 24),
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF4ECDC4).withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Text(
+                                'hint_text'.trParams({'word': fullWord}),
+                                style: const TextStyle(
+                                  color: Color(0xFF4ECDC4),
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ),
+                    ],
+
+                  // Easy & Medium: show word with blank below the image
                   RichText(
+                    textAlign: TextAlign.center,
                     text: TextSpan(
                       style: const TextStyle(
                         color: GameColors.textDark,
-                        fontSize: 56,
+                        fontSize: 64, // Slightly larger font for children
                         fontWeight: FontWeight.w900,
                         height: 1.2,
                       ),
                       children: _buildBlankWordSpans(blank),
                     ),
                   ),
-                  if (hint == 'with_image') ...
-                    [
-                      // Easy: show an image or text hint
-                      controller.currentChallenge.value?.imagePath != null
-                          ? Container(
-                              margin: const EdgeInsets.only(top: 12),
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              child: Image.asset(
-                                controller.currentChallenge.value!.imagePath!,
-                                height: 80,
-                                fit: BoxFit.contain,
-                              ),
-                            )
-                          : Container(
-                              margin: const EdgeInsets.only(top: 12),
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF4ECDC4).withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(
-                                '🖼️ Hint: $fullWord',
-                                style: const TextStyle(
-                                  color: Color(0xFF4ECDC4),
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ),
-                    ],
                 ],
             ],
           ),
@@ -487,20 +489,35 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
     });
   }
 
-  List<TextSpan> _buildBlankWordSpans(String blankWord) {
-    // Replace the '_' placeholder with a styled underline
-    final spans = <TextSpan>[];
+  List<InlineSpan> _buildBlankWordSpans(String blankWord) {
+    // Replace the '_' placeholder with a styled box
+    final spans = <InlineSpan>[];
     for (int i = 0; i < blankWord.length; i++) {
       if (blankWord[i] == '_') {
-        spans.add(const TextSpan(
-          text: ' __ ',
-          style: TextStyle(
-            color: Color(0xFFFFD700),
-            fontSize: 42,
-            fontWeight: FontWeight.w900,
-            decoration: TextDecoration.underline,
-            decorationColor: Color(0xFFFFD700),
-            decorationThickness: 3,
+        spans.add(WidgetSpan(
+          alignment: PlaceholderAlignment.middle,
+          child: Container(
+            width: 64,
+            height: 72,
+            margin: const EdgeInsets.symmetric(horizontal: 6),
+            decoration: BoxDecoration(
+              color: GameColors.cardBorder.withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: GameColors.cardBorder,
+                width: 3,
+              ),
+            ),
+            child: const Center(
+              child: Text(
+                '?',
+                style: TextStyle(
+                  color: GameColors.textMuted,
+                  fontSize: 40,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
           ),
         ));
       } else {
@@ -544,11 +561,11 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
               else
                 Text(
                   challenge.display,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: GameColors.textDark,
                     fontSize: 36,
                     fontWeight: FontWeight.w900,
-                    letterSpacing: 2,
+                    letterSpacing: Get.locale?.languageCode == 'km' ? 0 : 2,
                   ),
                 ),
             ],
@@ -830,82 +847,94 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
       String rightLabel;
       switch (displayType) {
         case 'object_count':
-          leftLabel = 'Digits';
-          rightLabel = 'Objects';
+          leftLabel = 'digits'.tr;
+          rightLabel = 'objects'.tr;
           break;
         case 'missing_character':
-          leftLabel = 'Pictures';
-          rightLabel = 'Letters';
+          leftLabel = 'pictures'.tr;
+          rightLabel = 'letters'.tr;
           break;
         default:
-          leftLabel = 'Pictures';
-          rightLabel = 'Letters';
+          leftLabel = 'pictures'.tr;
+          rightLabel = 'letters'.tr;
           break;
       }
 
       final validSources = sources.where((p) => p.source.isNotEmpty).toList();
+      final itemCount = validSources.length;
+      final double cardScale = itemCount <= 3 ? 1.5 : (itemCount <= 4 ? 1.2 : 1.0);
 
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // ── LEFT COLUMN: Source pictures (in order) ──
             Expanded(
               child: Column(
-                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     leftLabel,
                     style: TextStyle(color: GameColors.textDark.withValues(alpha: 0.6), fontSize: 12, fontWeight: FontWeight.w800),
                   ),
-                  const SizedBox(height: 4),
-                  ...validSources.map((pair) {
-                    final isMatched = pair.matched;
-                    final isSelected = selectedSrc == pair.source;
-                    final state = isMatched ? 'matched' : (isSelected ? 'selected' : 'normal');
+                  const SizedBox(height: 8),
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: validSources.map((pair) {
+                        final isMatched = pair.matched;
+                        final isSelected = selectedSrc == pair.source;
+                        final state = isMatched ? 'matched' : (isSelected ? 'selected' : 'normal');
 
-                    final card = MatchCard(
-                      content: pair.source,
-                      state: state,
-                      onTap: () => controller.selectDragSource(pair.source),
-                    );
+                        final card = MatchCard(
+                          content: pair.source,
+                          state: state,
+                          scale: cardScale,
+                          onTap: () => controller.selectDragSource(pair.source),
+                        );
 
-                    if (isMatched) {
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 6),
-                        child: card,
-                      );
-                    }
+                        if (isMatched) {
+                          return Flexible(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 4),
+                              child: card,
+                            ),
+                          );
+                        }
 
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 6),
-                      child: LongPressDraggable<String>(
-                        data: pair.source,
-                        delay: const Duration(milliseconds: 100),
-                        feedback: Material(
-                          color: Colors.transparent,
-                          child: Opacity(
-                            opacity: 0.85,
-                            child: SizedBox(
-                              width: MediaQuery.of(context).size.width * 0.4,
-                              child: MatchCard(
-                                content: pair.source,
-                                state: 'selected',
-                                onTap: () {},
+                        return Flexible(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 4),
+                            child: LongPressDraggable<String>(
+                              data: pair.source,
+                              delay: const Duration(milliseconds: 100),
+                              feedback: Material(
+                                color: Colors.transparent,
+                                child: Opacity(
+                                  opacity: 0.85,
+                                  child: SizedBox(
+                                    width: MediaQuery.of(context).size.width * 0.4,
+                                    child: MatchCard(
+                                      content: pair.source,
+                                      state: 'selected',
+                                      scale: cardScale,
+                                      onTap: () {},
+                                    ),
+                                  ),
+                                ),
                               ),
+                              childWhenDragging: Opacity(
+                                opacity: 0.3,
+                                child: card,
+                              ),
+                              onDragStarted: () => controller.selectDragSource(pair.source),
+                              child: card,
                             ),
                           ),
-                        ),
-                        childWhenDragging: Opacity(
-                          opacity: 0.3,
-                          child: card,
-                        ),
-                        onDragStarted: () => controller.selectDragSource(pair.source),
-                        child: card,
-                      ),
-                    );
-                  }),
+                        );
+                      }).toList(),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -915,47 +944,54 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
             // ── RIGHT COLUMN: Target answers (randomized) ──
             Expanded(
               child: Column(
-                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     rightLabel,
                     style: TextStyle(color: GameColors.textDark.withValues(alpha: 0.6), fontSize: 12, fontWeight: FontWeight.w800),
                   ),
-                  const SizedBox(height: 4),
-                  ...targets.map((pair) {
-                    final isMatched = pair.matched;
-                    final isWrong = wrongTarget == pair.target;
-                    final state = isMatched ? 'matched' : (isWrong ? 'wrong' : 'normal');
+                  const SizedBox(height: 8),
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: targets.map((pair) {
+                        final isMatched = pair.matched;
+                        final isWrong = wrongTarget == pair.target;
+                        final state = isMatched ? 'matched' : (isWrong ? 'wrong' : 'normal');
 
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 6),
-                      child: DragTarget<String>(
-                        onWillAcceptWithDetails: (details) => !isMatched,
-                        onAcceptWithDetails: (details) {
-                          controller.submitDragDrop(details.data, pair);
-                        },
-                        builder: (context, candidateData, rejectedData) {
-                          final isHovering = candidateData.isNotEmpty;
-                          return AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            decoration: isHovering && !isMatched
-                                ? BoxDecoration(
-                                    borderRadius: BorderRadius.circular(20),
-                                    boxShadow: [
-                                      BoxShadow(color: GameColors.teal.withValues(alpha: 0.4), blurRadius: 12, spreadRadius: 2),
-                                    ],
-                                  )
-                                : null,
-                            child: MatchCard(
-                              content: pair.target,
-                              state: isHovering && !isMatched ? 'selected' : state,
-                              onTap: () => controller.selectDragTarget(pair),
+                        return Flexible(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 4),
+                            child: DragTarget<String>(
+                              onWillAcceptWithDetails: (details) => !isMatched,
+                              onAcceptWithDetails: (details) {
+                                controller.submitDragDrop(details.data, pair);
+                              },
+                              builder: (context, candidateData, rejectedData) {
+                                final isHovering = candidateData.isNotEmpty;
+                                return AnimatedContainer(
+                                  duration: const Duration(milliseconds: 200),
+                                  decoration: isHovering && !isMatched
+                                      ? BoxDecoration(
+                                          borderRadius: BorderRadius.circular(20),
+                                          boxShadow: [
+                                            BoxShadow(color: GameColors.teal.withValues(alpha: 0.4), blurRadius: 12, spreadRadius: 2),
+                                          ],
+                                        )
+                                      : null,
+                                  child: MatchCard(
+                                    content: pair.target,
+                                    state: isHovering && !isMatched ? 'selected' : state,
+                                    scale: cardScale,
+                                    onTap: () => controller.selectDragTarget(pair),
+                                  ),
+                                );
+                              },
                             ),
-                          );
-                        },
-                      ),
-                    );
-                  }),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -1013,7 +1049,7 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
         children: [
           Expanded(
             child: GameActionButton(
-              label: 'Clear',
+              label: 'clear'.tr,
               icon: Icons.delete_outline_rounded,
               color: GameColors.softRed,
               onTap: () => controller.clearBoard(),
@@ -1022,7 +1058,7 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
           const SizedBox(width: 12),
           Expanded(
             child: GameActionButton(
-              label: 'Submit',
+              label: 'submit'.tr,
               icon: Icons.check_rounded,
               color: GameColors.teal,
               onTap: () => controller.forceSubmit(),
@@ -1048,25 +1084,25 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
                 children: [
                   const Icon(Icons.stars_rounded, color: GameColors.gold, size: 80),
                   const SizedBox(height: 16),
-                  const Text(
-                    'Great Job!',
-                    style: TextStyle(color: GameColors.textDark, fontSize: 36, fontWeight: FontWeight.w900, letterSpacing: 2),
+                  Text(
+                    'great_job'.tr,
+                    style: TextStyle(color: GameColors.textDark, fontSize: 36, fontWeight: FontWeight.w900, letterSpacing: Get.locale?.languageCode == 'km' ? 0 : 2),
                   ),
                   const SizedBox(height: 4),
-                  const Text(
-                    'You practiced Khmer letters!',
-                    style: TextStyle(color: GameColors.textMuted, fontSize: 16, fontWeight: FontWeight.w600),
+                  Text(
+                    'you_practiced_khmer_letters'.tr,
+                    style: const TextStyle(color: GameColors.textMuted, fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 32),
-                  StatRow(label: 'Score', value: '${controller.score.value}', color: GameColors.gold),
-                  StatRow(label: 'Best Combo', value: '${controller.bestCombo.value}x', color: GameColors.orange),
-                  StatRow(label: 'Accuracy', value: '${controller.accuracy.toStringAsFixed(1)}%', color: GameColors.teal),
-                  StatRow(label: 'Answered', value: '${controller.correctCount.value}/${controller.totalAnswered.value}', color: GameColors.green),
+                  StatRow(label: 'score'.tr, value: '${controller.score.value}', color: GameColors.gold),
+                  StatRow(label: 'best_combo'.tr, value: '${controller.bestCombo.value}x', color: GameColors.orange),
+                  StatRow(label: 'accuracy'.tr, value: '${controller.accuracy.toStringAsFixed(1)}%', color: GameColors.teal),
+                  StatRow(label: 'answered'.tr, value: '${controller.correctCount.value}/${controller.totalAnswered.value}', color: GameColors.green),
                   
                   if (controller.score.value >= controller.highScore.value && controller.score.value > 0)
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      child: Text('NEW HIGH SCORE!', style: TextStyle(color: GameColors.pink, fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: 1)),
+                      child: Text('new_high_score'.tr, style: TextStyle(color: GameColors.pink, fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: Get.locale?.languageCode == 'km' ? 0 : 1)),
                     )
                   else
                     const SizedBox(height: 24),
@@ -1075,14 +1111,14 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
                     children: [
                       Expanded(
                         child: GameActionButton(
-                          label: 'Home', icon: Icons.home_rounded,
+                          label: 'home'.tr, icon: Icons.home_rounded,
                           color: GameColors.pink, onTap: () => Get.back(),
                         ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: GameActionButton(
-                          label: 'Play Again', icon: Icons.play_arrow_rounded,
+                          label: 'play_again'.tr, icon: Icons.play_arrow_rounded,
                           color: GameColors.teal,
                           onTap: () {
                             controller.startGame();

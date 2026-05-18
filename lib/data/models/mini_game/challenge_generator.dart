@@ -764,13 +764,9 @@ class ChallengeGenerator {
     String displayHint;
     switch (difficulty) {
       case MiniGameDifficulty.easy:
-        displayHint = 'with_image'; // show blank word + picture
-        break;
       case MiniGameDifficulty.medium:
-        displayHint = 'word_only'; // show blank word, no picture
-        break;
       case MiniGameDifficulty.hard:
-        displayHint = 'audio'; // play audio of the word, hide text
+        displayHint = 'with_image';
         break;
     }
 
@@ -831,26 +827,17 @@ class ChallengeGenerator {
     '២': {'emoji': 'assets/images/fruits/orange.png*2', 'hint': '2 Oranges'},
     '៣': {'emoji': 'assets/images/fruits/grape.png*3', 'hint': '3 Grapes'},
     '៤': {'emoji': 'assets/images/fruits/banana.png*4', 'hint': '4 Bananas'},
-    '៥': {'emoji': 'assets/images/fruits/strawberry.png*5', 'hint': '5 Strawberries'},
-    '៦': {'emoji': 'assets/images/fruits/watermelon.png*6', 'hint': '6 Watermelons'},
+    '៥': {
+      'emoji': 'assets/images/fruits/strawberry.png*5',
+      'hint': '5 Strawberries',
+    },
+    '៦': {
+      'emoji': 'assets/images/fruits/watermelon.png*6',
+      'hint': '6 Watermelons',
+    },
     '៧': {'emoji': 'assets/images/fruits/apple.png*7', 'hint': '7 Apples'},
     '៨': {'emoji': 'assets/images/fruits/orange.png*8', 'hint': '8 Oranges'},
     '៩': {'emoji': 'assets/images/fruits/banana.png*9', 'hint': '9 Bananas'},
-    // Dependent Vowels
-    'ា': {'emoji': '🌊', 'hint': 'Water'},
-    'ិ': {'emoji': '🐟', 'hint': 'Fish'},
-    'ី': {'emoji': '🌍', 'hint': 'Earth'},
-    'ុ': {'emoji': '🌪️', 'hint': 'Wind'},
-    'ូ': {'emoji': '🌙', 'hint': 'Moon'},
-    'េ': {'emoji': '🔥', 'hint': 'Fire'},
-    'ែ': {'emoji': '🌧️', 'hint': 'Rain'},
-    'ំ': {'emoji': '🏡', 'hint': 'Home'},
-    // Independent Vowels
-    'ឥ': {'emoji': '🧘', 'hint': 'Hermit'},
-    'ឧ': {'emoji': '🪵', 'hint': 'Firewood'},
-    'ឪ': {'emoji': '👨', 'hint': 'Father'},
-    'ឫ': {'emoji': '🌿', 'hint': 'Root'},
-    'ឯ': {'emoji': '☝️', 'hint': 'One'},
   };
 
   /// Generate pairs for drag-and-drop matching.
@@ -915,28 +902,29 @@ class ChallengeGenerator {
           break;
       }
 
-      return DragMatchPair(
-        id: '${e.key}_$ch',
-        source: source,
-        target: target,
-      );
+      return DragMatchPair(id: '${e.key}_$ch', source: source, target: target);
     }).toList();
 
     // Add distractors for Hard difficulty — only from the same pool
     if (distractorCount > 0) {
-      final unused = pool
-          .where((k) => _dragPairData.containsKey(k) && !selected.contains(k))
-          .toList()
-        ..shuffle(_rng);
+      final unused =
+          pool
+              .where(
+                (k) => _dragPairData.containsKey(k) && !selected.contains(k),
+              )
+              .toList()
+            ..shuffle(_rng);
 
       for (int i = 0; i < distractorCount; i++) {
         if (i >= unused.length) break;
         final ch = unused[i];
-        pairs.add(DragMatchPair(
-          id: 'distractor_$i',
-          source: '', // Empty source means it won't appear on the left column
-          target: ch,
-        ));
+        pairs.add(
+          DragMatchPair(
+            id: 'distractor_$i',
+            source: '', // Empty source means it won't appear on the left column
+            target: ch,
+          ),
+        );
       }
     }
 
@@ -954,9 +942,8 @@ class ChallengeGenerator {
     selected.add(start);
 
     // 2. Try to find its similar characters in the pool
-    final similar = _khmerSimilarMap[start]
-            ?.where((s) => available.contains(s))
-            .toList() ??
+    final similar =
+        _khmerSimilarMap[start]?.where((s) => available.contains(s)).toList() ??
         [];
     similar.shuffle(_rng);
     for (final s in similar) {
@@ -972,7 +959,8 @@ class ChallengeGenerator {
       final next = remainder.first;
       selected.add(next);
 
-      final nextSimilar = _khmerSimilarMap[next]
+      final nextSimilar =
+          _khmerSimilarMap[next]
               ?.where((s) => available.contains(s) && !selected.contains(s))
               .toList() ??
           [];
@@ -1035,11 +1023,13 @@ class ChallengeGenerator {
 
       for (int i = 0; i < distractorCount; i++) {
         if (i >= unusedPool.length) break;
-        pairs.add(DragMatchPair(
-          id: 'distractor_$i',
-          source: '', // Won't show up as a source picture
-          target: unusedPool[i],
-        ));
+        pairs.add(
+          DragMatchPair(
+            id: 'distractor_$i',
+            source: '', // Won't show up as a source picture
+            target: unusedPool[i],
+          ),
+        );
       }
     }
 
@@ -1048,7 +1038,9 @@ class ChallengeGenerator {
 
   /// Similar to _pickSimilarPool but for the _khmerWords list.
   static List<Map<String, String>> _pickSimilarWords(
-      List<String> pool, int count) {
+    List<String> pool,
+    int count,
+  ) {
     final selected = <Map<String, String>>[];
     final usedChars = <String>{};
 
@@ -1066,8 +1058,9 @@ class ChallengeGenerator {
     final similarChars = _khmerSimilarMap[start['missing']] ?? [];
     for (final sim in similarChars) {
       if (selected.length >= count) break;
-      final matches = availableWords
-          .where((w) => w['missing'] == sim && !usedChars.contains(sim));
+      final matches = availableWords.where(
+        (w) => w['missing'] == sim && !usedChars.contains(sim),
+      );
       final match = matches.isEmpty ? null : matches.first;
       if (match != null) {
         selected.add(match);

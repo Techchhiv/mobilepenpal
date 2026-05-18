@@ -16,6 +16,7 @@ import 'package:mobilepenpal/core/utils/stroke_transform_util.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_animation_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_audio_controller.dart';
 import 'package:mobilepenpal/data/models/mini_game/challenge_generator.dart';
+import 'package:mobilepenpal/data/models/api_response.dart';
 import 'package:mobilepenpal/data/models/mini_game/mini_game_model.dart';
 import 'package:mobilepenpal/data/services/drawing_evaluation_service.dart';
 import 'package:mobilepenpal/data/services/world_service.dart';
@@ -38,8 +39,9 @@ class FloatingScoreEvent {
 class DynamicMiniGameController extends GetxController
     with GetTickerProviderStateMixin {
   final WorldService _worldService = WorldService();
-  late final DrawingEvaluationService _evalService =
-      DrawingEvaluationService(worldService: _worldService);
+  late final DrawingEvaluationService _evalService = DrawingEvaluationService(
+    worldService: _worldService,
+  );
   final GetStorage _box = GetStorage();
 
   // ── The mini-games being played ──
@@ -317,7 +319,9 @@ class DynamicMiniGameController extends GetxController
   Future<void> _initGame() async {
     isLoading.value = true;
     try {
-      bool needsDrawing = miniGames.any((g) => g.inputType.contains('drawing_board'));
+      bool needsDrawing = miniGames.any(
+        (g) => g.inputType.contains('drawing_board'),
+      );
       if (needsDrawing) {
         await _loadStrokeDb();
       }
@@ -384,7 +388,24 @@ class DynamicMiniGameController extends GetxController
     }
 
     // Calculate coins: 1 coin per 10 score
-    earnedCoins.value = (score.value / 10).floor();
+    final coins = (score.value / 10).floor();
+    earnedCoins.value = coins;
+
+    // Submit progress to backend
+    if (coins > 0 || score.value > 0) {
+      _worldService.submitExerciseBatch(
+        [], // No specific exercise attempts for endless minigames
+        coinsEarned: coins,
+        xpEarned: score.value,
+      ).catchError((e) {
+        dev.log('Failed to submit mini-game progress: $e', name: 'DynamicMiniGameController');
+        return ApiResponse<Map<String, dynamic>>(
+          code: 500,
+          message: 'Failed to submit progress: $e',
+          data: {},
+        );
+      });
+    }
   }
 
   void _startTimer() {
@@ -443,11 +464,13 @@ class DynamicMiniGameController extends GetxController
     // Determine which input types are valid
     final compatibleTypes = game.compatibleInputTypes(game.displayType);
 
-    if (userChosenInputType != null && compatibleTypes.contains(userChosenInputType)) {
+    if (userChosenInputType != null &&
+        compatibleTypes.contains(userChosenInputType)) {
       // User explicitly chose this input type and it's compatible
       currentInputType.value = userChosenInputType!;
     } else if (compatibleTypes.isNotEmpty) {
-      currentInputType.value = compatibleTypes[Random().nextInt(compatibleTypes.length)];
+      currentInputType.value =
+          compatibleTypes[Random().nextInt(compatibleTypes.length)];
     } else {
       // Fallback
       currentInputType.value = 'drawing_board';
@@ -461,16 +484,21 @@ class DynamicMiniGameController extends GetxController
 
     // ── Populate display-specific state ──
     _populateDisplayState(game, challenge);
-    
+
     // Generate options if multiple choice
     if (currentInputType.value == 'multiple_choice') {
-      final pool = (game.config?['pool'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [];
+      final pool =
+          (game.config?['pool'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [];
       // For object_count, the pool is Khmer digits
       // For math_equation / question, the pool is Arabic digits
       List<String> effectivePool;
       if (game.displayType == 'object_count') {
         effectivePool = ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'];
-      } else if (game.displayType == 'math_equation' || game.displayType == 'question') {
+      } else if (game.displayType == 'math_equation' ||
+          game.displayType == 'question') {
         effectivePool = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
       } else {
         effectivePool = pool;
@@ -487,7 +515,11 @@ class DynamicMiniGameController extends GetxController
 
     // Generate drag pairs if drag_and_drop
     if (currentInputType.value == 'drag_and_drop') {
-      final pool = (game.config?['pool'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [];
+      final pool =
+          (game.config?['pool'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [];
       final pairs = ChallengeGenerator.generateDragMatchPairs(
         pool: pool,
         difficulty: difficulty.value,
@@ -503,8 +535,7 @@ class DynamicMiniGameController extends GetxController
       shuffledDragTargets.clear();
       selectedDragSource.value = null;
     }
-    
-    
+
     hasRetried.value = false;
     lastWrongAnswer.value = '';
     clearBoard();
@@ -512,7 +543,8 @@ class DynamicMiniGameController extends GetxController
     // If drawing board and we have stroke data, set guide
     // Only show the shadow guide on Easy difficulty
     // No shadow guide for math/question since the answer is a digit, not a character
-    final isNumericDisplay = game.displayType == 'math_equation' || game.displayType == 'question';
+    final isNumericDisplay =
+        game.displayType == 'math_equation' || game.displayType == 'question';
     if (currentInputType.value == 'drawing_board' && !isNumericDisplay) {
       if (showShadowGuide) {
         setGuideForCharacter(challenge.target);
@@ -550,7 +582,8 @@ class DynamicMiniGameController extends GetxController
 
     if (game.displayType == 'object_count') {
       objectCountEmojis.assignAll(challenge.objectEmojis ?? []);
-      objectCountLayout.value = challenge.display; // 'neat' / 'scattered' / 'memory'
+      objectCountLayout.value =
+          challenge.display; // 'neat' / 'scattered' / 'memory'
       objectCountMemoryVisible.value = true;
 
       // For Hard (memory mode): show objects briefly, then fade
@@ -567,7 +600,8 @@ class DynamicMiniGameController extends GetxController
     if (game.displayType == 'missing_character') {
       missingCharWordBlank.value = challenge.wordWithBlank ?? '';
       missingCharFullWord.value = challenge.fullWord ?? '';
-      missingCharDisplayHint.value = challenge.display; // 'with_image' / 'word_only' / 'audio'
+      missingCharDisplayHint.value =
+          challenge.display; // 'with_image' / 'word_only' / 'audio'
     } else {
       missingCharWordBlank.value = '';
       missingCharFullWord.value = '';
@@ -608,11 +642,16 @@ class DynamicMiniGameController extends GetxController
 
     // 1. Re-generate options if multiple choice
     if (currentInputType.value == 'multiple_choice') {
-      final pool = (game.config?['pool'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [];
+      final pool =
+          (game.config?['pool'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [];
       List<String> effectivePool;
       if (game.displayType == 'object_count') {
         effectivePool = ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'];
-      } else if (game.displayType == 'math_equation' || game.displayType == 'question') {
+      } else if (game.displayType == 'math_equation' ||
+          game.displayType == 'question') {
         effectivePool = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
       } else {
         effectivePool = pool;
@@ -627,7 +666,11 @@ class DynamicMiniGameController extends GetxController
 
     // 1b. Re-generate pairs if drag and drop
     if (currentInputType.value == 'drag_and_drop') {
-      final pool = (game.config?['pool'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [];
+      final pool =
+          (game.config?['pool'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [];
       final pairs = ChallengeGenerator.generateDragMatchPairs(
         pool: pool,
         difficulty: difficulty.value,
@@ -652,7 +695,8 @@ class DynamicMiniGameController extends GetxController
     }
 
     // 3. Update drawing board guide
-    final isNumericDisplay = game.displayType == 'math_equation' || game.displayType == 'question';
+    final isNumericDisplay =
+        game.displayType == 'math_equation' || game.displayType == 'question';
     if (currentInputType.value == 'drawing_board' && !isNumericDisplay) {
       if (showShadowGuide) {
         setGuideForCharacter(challenge.target);
@@ -668,14 +712,19 @@ class DynamicMiniGameController extends GetxController
     final game = currentMiniGame.value;
     final challenge = currentChallenge.value;
     if (game == null || challenge == null) return;
-    
+
     final dt = game.displayType;
-    if (dt == 'character' || dt == 'letter' || dt == 'number' || dt == 'text' || dt == 'image') {
+    if (dt == 'character' ||
+        dt == 'letter' ||
+        dt == 'number' ||
+        dt == 'text' ||
+        dt == 'image') {
       // If the game config explicitly provides a character_type, use it.
       // Otherwise, we infer it from the target character itself.
-      String? audioType = (game.config?['character_type'] as String?) ?? 
-                         (game.config?['type'] as String?);
-      
+      String? audioType =
+          (game.config?['character_type'] as String?) ??
+          (game.config?['type'] as String?);
+
       if (audioType == null) {
         audioType = _getAudioFolderForCharacter(challenge.target);
       } else {
@@ -685,16 +734,14 @@ class DynamicMiniGameController extends GetxController
         if (audioType == 'number') audioType = 'digits';
         if (!audioType.endsWith('s')) {
           // Attempt to pluralize if missing (consonant -> consonants, etc)
-          if (audioType == 'independent_vowel') audioType = 'independent_vowels';
+          if (audioType == 'independent_vowel')
+            audioType = 'independent_vowels';
           if (audioType == 'dependent_vowel') audioType = 'dependent_vowels';
           if (audioType == 'digit') audioType = 'digits';
         }
       }
-      
-      audio.autoPlayCharacter(
-        type: audioType,
-        ch: challenge.target,
-      );
+
+      audio.autoPlayCharacter(type: audioType, ch: challenge.target);
     }
   }
 
@@ -709,7 +756,8 @@ class DynamicMiniGameController extends GetxController
     anim.setBoardSize(width: boardWidth.value, height: boardHeight.value);
     final dt = currentMiniGame.value?.displayType;
     if (currentChallenge.value != null &&
-        dt != 'math_equation' && dt != 'question') {
+        dt != 'math_equation' &&
+        dt != 'question') {
       setGuideForCharacter(currentChallenge.value!.target);
     }
   }
@@ -732,8 +780,7 @@ class DynamicMiniGameController extends GetxController
     _idleTimer = Timer(const Duration(seconds: 3), () {
       if (!isGameActive.value || isGameOver.value || isPaused.value) return;
       final dt = currentMiniGame.value?.displayType;
-      if (showShadowGuide &&
-          dt != 'math_equation' && dt != 'question') {
+      if (showShadowGuide && dt != 'math_equation' && dt != 'question') {
         anim.restartGuideFromStart();
       }
     });
@@ -857,7 +904,9 @@ class DynamicMiniGameController extends GetxController
       audio.playCorrectSfx();
 
       // Check if all valid pairs are matched
-      if (currentDragPairs.where((p) => p.source.isNotEmpty).every((p) => p.matched)) {
+      if (currentDragPairs
+          .where((p) => p.source.isNotEmpty)
+          .every((p) => p.matched)) {
         // All pairs matched — count as a correct answer
         totalAnswered.value++;
         _applyCorrectResult();
@@ -873,16 +922,19 @@ class DynamicMiniGameController extends GetxController
         isCorrectFeedback.value = false;
         feedbackText.value = 'Try again!';
         feedbackTrigger.value++;
+
+        Future.delayed(const Duration(seconds: 1), () {
+          if (lastWrongAnswer.value == tappedTarget.target) {
+            lastWrongAnswer.value = '';
+          }
+        });
       } else {
-        // Second mistake — apply full wrong result
         totalAnswered.value++;
         _applyWrongResult();
       }
     }
   }
 
-  /// Fetch the template strokes for a character from the stroke database,
-  /// fitted to the current board size. Used for structural validation.
   List<List<Offset>> _getTemplateForChar(String ch) {
     final db = _strokesDbCache;
     final items = db?['items'] as Map<String, dynamic>?;
@@ -950,8 +1002,10 @@ class DynamicMiniGameController extends GetxController
         if (isCorrect) {
           final template = _getTemplateForChar(expectedChar);
           if (template.isNotEmpty) {
-            final centered =
-                StrokeTransformUtil.autoCenterStrokes(_rawStrokes, template);
+            final centered = StrokeTransformUtil.autoCenterStrokes(
+              _rawStrokes,
+              template,
+            );
             final hint = StrokeFeedbackUtil.getFeedback(
               userRawStrokes: centered,
               templateStrokesPx: template,
@@ -986,32 +1040,87 @@ class DynamicMiniGameController extends GetxController
   }
 
   /// Khmer digit codepoints: ០ (U+17E0) through ៩ (U+17E9)
-  static const _khmerDigits = {'០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'};
+  static const _khmerDigits = {
+    '០',
+    '១',
+    '២',
+    '៣',
+    '៤',
+    '៥',
+    '៦',
+    '៧',
+    '៨',
+    '៩',
+  };
 
   String _getModelTypeForDisplay() {
     final dt = currentMiniGame.value?.displayType;
 
     // Legacy explicit types
-    if (dt == 'number' || dt == 'math_equation' || dt == 'question') return 'digit';
+    if (dt == 'number' || dt == 'math_equation' || dt == 'question')
+      return 'digit';
 
     // For generic 'character' display type, inspect the pool to decide
     if (dt == 'character') {
-      final pool = (currentMiniGame.value?.config?['pool'] as List<dynamic>?)
+      final pool =
+          (currentMiniGame.value?.config?['pool'] as List<dynamic>?)
               ?.map((e) => e.toString())
               .toList() ??
           [];
-      
+
       if (pool.isNotEmpty) {
         // Check if all digits
         if (pool.every((c) => _khmerDigits.contains(c))) return 'digit';
-        
+
         // Check for independent vowels
-        final independentVowels = ['ឥ', 'ឦ', 'ឧ', 'ឩ', 'ឪ', 'ឫ', 'ឬ', 'ឭ', 'ឮ', 'ឯ', 'ឰ', 'ឱ', 'ឲ', 'ឳ'];
-        if (pool.any((c) => independentVowels.contains(c))) return 'independent_vowel';
-        
+        final independentVowels = [
+          'ឥ',
+          'ឦ',
+          'ឧ',
+          'ឩ',
+          'ឪ',
+          'ឫ',
+          'ឬ',
+          'ឭ',
+          'ឮ',
+          'ឯ',
+          'ឰ',
+          'ឱ',
+          'ឲ',
+          'ឳ',
+        ];
+        if (pool.any((c) => independentVowels.contains(c)))
+          return 'independent_vowel';
+
         // Check for dependent vowels
-        final dependentVowels = ['ា', 'ិ', 'ី', 'ឹ', 'ឺ', 'ុ', 'ូ', 'ួ', 'ើ', 'ឿ', 'ៀ', 'េ', 'ែ', 'ៃ', 'ោ', 'ៅ', 'ុំ', 'ំ', 'ាំ', 'ះ', 'ិះ', 'ុះ', 'េះ', 'ោះ'];
-        if (pool.any((c) => dependentVowels.contains(c))) return 'dependent_vowel';
+        final dependentVowels = [
+          'ា',
+          'ិ',
+          'ី',
+          'ឹ',
+          'ឺ',
+          'ុ',
+          'ូ',
+          'ួ',
+          'ើ',
+          'ឿ',
+          'ៀ',
+          'េ',
+          'ែ',
+          'ៃ',
+          'ោ',
+          'ៅ',
+          'ុំ',
+          'ំ',
+          'ាំ',
+          'ះ',
+          'ិះ',
+          'ុះ',
+          'េះ',
+          'ោះ',
+        ];
+        if (pool.any((c) => dependentVowels.contains(c)))
+          return 'dependent_vowel';
       }
     }
 
@@ -1021,20 +1130,63 @@ class DynamicMiniGameController extends GetxController
   String _getAudioFolderForCharacter(String ch) {
     final c = ch.trim();
     if (_khmerDigits.contains(c)) return 'digits';
-    
-    const independentVowels = ['ឥ', 'ឦ', 'ឧ', 'ឩ', 'ឪ', 'ឫ', 'ឬ', 'ឭ', 'ឮ', 'ឯ', 'ឰ', 'ឱ', 'ឲ', 'ឳ'];
+
+    const independentVowels = [
+      'ឥ',
+      'ឦ',
+      'ឧ',
+      'ឩ',
+      'ឪ',
+      'ឫ',
+      'ឬ',
+      'ឭ',
+      'ឮ',
+      'ឯ',
+      'ឰ',
+      'ឱ',
+      'ឲ',
+      'ឳ',
+    ];
     if (independentVowels.contains(c)) return 'independent_vowels';
-    
-    const dependentVowels = ['ា', 'ិ', 'ី', 'ឹ', 'ឺ', 'ុ', 'ូ', 'ួ', 'ើ', 'ឿ', 'ៀ', 'េ', 'ែ', 'ៃ', 'ោ', 'ៅ', 'ុំ', 'ំ', 'ាំ', 'ះ', 'ិះ', 'ុះ', 'េះ', 'ោះ'];
+
+    const dependentVowels = [
+      'ា',
+      'ិ',
+      'ី',
+      'ឹ',
+      'ឺ',
+      'ុ',
+      'ូ',
+      'ួ',
+      'ើ',
+      'ឿ',
+      'ៀ',
+      'េ',
+      'ែ',
+      'ៃ',
+      'ោ',
+      'ៅ',
+      'ុំ',
+      'ំ',
+      'ាំ',
+      'ះ',
+      'ិះ',
+      'ុះ',
+      'េះ',
+      'ោះ',
+    ];
     if (dependentVowels.contains(c)) return 'dependent_vowels';
-    
+
     return 'consonants';
   }
 
-
-
   void _applyCorrectResult() {
     correctCount.value++;
+
+    // Briefly show the completed word (replace the '?' box) for missing_character games
+    if (currentMiniGame.value?.displayType == 'missing_character') {
+      missingCharWordBlank.value = currentChallenge.value?.fullWord ?? '';
+    }
 
     // Update combo
     combo.value++;
@@ -1050,8 +1202,10 @@ class DynamicMiniGameController extends GetxController
     final earnedScore = (10 * comboMultiplier).round();
 
     // Add time
-    timeLeft.value =
-        (timeLeft.value + timeRewardCorrect).clamp(0.0, maxTime.value);
+    timeLeft.value = (timeLeft.value + timeRewardCorrect).clamp(
+      0.0,
+      maxTime.value,
+    );
 
     // Show feedback
     isCorrectFeedback.value = true;
@@ -1102,8 +1256,10 @@ class DynamicMiniGameController extends GetxController
     _correctStreakForDifficulty = 0;
 
     // Time penalty
-    timeLeft.value =
-        (timeLeft.value + timePenaltyWrong).clamp(0.0, maxTime.value);
+    timeLeft.value = (timeLeft.value + timePenaltyWrong).clamp(
+      0.0,
+      maxTime.value,
+    );
 
     // Show feedback
     isCorrectFeedback.value = false;
@@ -1198,8 +1354,6 @@ class DynamicMiniGameController extends GetxController
     anim.setGuideFromPx(strokesPx: fittedStrokes);
   }
 
-
-
   Map<String, dynamic> _getXYStrokeWithTime({required String modelType}) {
     final allStrokes = <Map<String, dynamic>>[];
     for (int si = 0; si < _rawStrokes.length; si++) {
@@ -1213,10 +1367,7 @@ class DynamicMiniGameController extends GetxController
         });
       }
     }
-    return {
-      'strokes': allStrokes,
-      'model_type': modelType,
-    };
+    return {'strokes': allStrokes, 'model_type': modelType};
   }
 
   void _cancelPredictIfAny() {
