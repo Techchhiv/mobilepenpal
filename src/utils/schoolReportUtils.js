@@ -96,6 +96,44 @@ function escapeCSVValue(value) {
   return str;
 }
 
+function pad2(value) {
+  return String(value).padStart(2, '0');
+}
+
+function formatDateForExport(value, includeTime = false) {
+  if (!value) return '';
+
+  if (typeof value === 'string') {
+    const normalized = value.trim().replace('T', ' ').replace(/Z$/, '');
+    if (/^\d{4}-\d{2}-\d{2}/.test(normalized)) {
+      return includeTime ? normalized.slice(0, 16) : normalized.slice(0, 10);
+    }
+    return normalized;
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return String(value);
+  }
+
+  const yyyy = date.getFullYear();
+  const mm = pad2(date.getMonth() + 1);
+  const dd = pad2(date.getDate());
+
+  if (!includeTime) {
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  const hh = pad2(date.getHours());
+  const min = pad2(date.getMinutes());
+  return `${yyyy}-${mm}-${dd} ${hh}:${min}`;
+}
+
+function asExcelText(value) {
+  if (!value) return '';
+  return `="${String(value).replace(/"/g, '""')}"`;
+}
+
 /**
  * Serialize an array of school objects to CSV and trigger a browser download.
  * Does NOT mutate the input array.
@@ -105,40 +143,32 @@ function escapeCSVValue(value) {
  */
 export function exportToCSV(schools, filename) {
   const headers = [
-    'School Name', 'School Code', 'Type', 'Status',
-    'Country', 'City', 'Province',
-    'Total Students', 'Active Students',
-    'Total Teachers', 'Teacher-Student Ratio',
-    'Subscription Plan', 'Subscription Status',
-    'Billing Cycle', 'Payment Status',
-    'Subscription Start', 'Subscription End',
-    'Created At', 'Last Login', 'Active Users',
+    'School Name', 'School Key', 'Admin Email', 'School Status',
+    'Students', 'Active Students',
+    'Teachers', 'Active Teachers',
+    'Plan', 'Subscription Status',
+    'Sub Start', 'Sub End',
+    'Created', 'Updated',
   ];
 
   const rows = schools.map((school) => [
     school.schoolName,
     school.schoolCode,
-    school.schoolType,
+    school.schoolEmail,
     school.status,
-    school.country,
-    school.city,
-    school.provinceOrState,
     school.totalStudents,
     school.activeStudents,
     school.totalTeachers,
-    school.teacherStudentRatio,
+    school.activeTeachers,
     school.subscriptionPlan,
     school.subscriptionStatus,
-    school.billingCycle,
-    school.paymentStatus,
-    school.subscriptionStartDate,
-    school.subscriptionEndDate,
-    school.createdAt,
-    school.lastLoginAt,
-    school.numberOfActiveUsers,
+    asExcelText(formatDateForExport(school.subscriptionStartDate)),
+    asExcelText(formatDateForExport(school.subscriptionEndDate)),
+    asExcelText(formatDateForExport(school.createdAt, true)),
+    asExcelText(formatDateForExport(school.lastUpdatedAt, true)),
   ].map(escapeCSVValue).join(','));
 
-  const csvContent = [headers.map(escapeCSVValue).join(','), ...rows].join('\n');
+  const csvContent = '\uFEFF' + [headers.map(escapeCSVValue).join(','), ...rows].join('\n');
 
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   const url  = URL.createObjectURL(blob);
@@ -165,9 +195,9 @@ export function syncFiltersToURL(filters, setSearchParams) {
   const params = new URLSearchParams();
 
   if (filters.search)             params.set('search',             filters.search);
-  if (filters.location)           params.set('location',           filters.location);
+  if (filters.schoolStatus)       params.set('schoolStatus',       filters.schoolStatus);
   if (filters.subscriptionStatus) params.set('subscriptionStatus', filters.subscriptionStatus);
-  if (filters.subscriptionPlan)   params.set('subscriptionPlan',   filters.subscriptionPlan);
+  if (filters.plan)               params.set('plan',               filters.plan);
   if (filters.page && filters.page > 1) params.set('page',         String(filters.page));
 
   setSearchParams(params);

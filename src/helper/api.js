@@ -6,6 +6,7 @@ const viteEnv = (typeof import.meta !== "undefined" && import.meta.env) || {};
 const API_BASE =
   viteEnv.VITE_API_BASE ||
   viteEnv.VITE_APP_API_BASE ||              // just in case you used this name
+  process.env.REACT_APP_API_URL ||
   process.env.REACT_APP_API_BASE ||         // CRA style
   "http://127.0.0.1:8000/api";              // fallback
 

@@ -1,18 +1,19 @@
 const STATUS_BADGE = {
-  active:    { bg: 'bg-success-focus', text: 'text-success-main' },
-  trial:     { bg: 'bg-warning-focus', text: 'text-warning-main' },
-  expired:   { bg: 'bg-danger-focus',  text: 'text-danger-main'  },
-  cancelled: { bg: 'bg-neutral-200',   text: 'text-secondary-light' },
+  active: { bg: 'bg-success-focus', text: 'text-success-main' },
+  scheduled: { bg: 'bg-warning-focus', text: 'text-warning-main' },
+  expired: { bg: 'bg-danger-focus', text: 'text-danger-main' },
+  inactive: { bg: 'bg-neutral-200', text: 'text-secondary-light' },
+  none: { bg: 'bg-neutral-200', text: 'text-secondary-light' },
 };
 
 const PLAN_BADGE = {
-  basic:      { bg: 'bg-neutral-200',   text: 'text-secondary-light' },
-  pro:        { bg: 'bg-primary-focus', text: 'text-primary-600'     },
-  enterprise: { bg: 'bg-info-focus',    text: 'text-info-main'       },
+  monthly: { bg: 'bg-primary-focus', text: 'text-primary-600' },
+  yearly: { bg: 'bg-info-focus', text: 'text-info-main' },
+  none: { bg: 'bg-neutral-200', text: 'text-secondary-light' },
 };
 
 function formatDate(isoString) {
-  if (!isoString) return '—';
+  if (!isoString) return '-';
   return new Date(isoString).toLocaleDateString(undefined, {
     year: 'numeric',
     month: 'short',
@@ -20,29 +21,22 @@ function formatDate(isoString) {
   });
 }
 
-/**
- * SchoolReportRow renders a single clickable row in the school report table.
- *
- * Props:
- *   school     — SchoolReport object
- *   isSelected — boolean; applies highlight when true
- *   onSelect   — () => void; called when the row is clicked
- */
 export default function SchoolReportRow({ school, isSelected, onSelect }) {
   const {
     schoolName,
-    city,
-    country,
+    schoolCode,
+    schoolEmail,
     totalStudents,
     totalTeachers,
     subscriptionPlan,
     subscriptionStatus,
-    createdAt,
-    lastLoginAt,
+    lastUpdatedAt,
   } = school;
 
-  const statusBadge = STATUS_BADGE[subscriptionStatus] ?? STATUS_BADGE.cancelled;
-  const planBadge   = PLAN_BADGE[subscriptionPlan]      ?? PLAN_BADGE.basic;
+  const statusBadge = STATUS_BADGE[subscriptionStatus] ?? STATUS_BADGE.none;
+  const planBadge = PLAN_BADGE[subscriptionPlan] ?? PLAN_BADGE.none;
+  const planLabel = subscriptionPlan || 'No plan';
+  const statusLabel = subscriptionStatus === 'none' ? 'No subscription' : subscriptionStatus;
 
   return (
     <tr
@@ -54,7 +48,10 @@ export default function SchoolReportRow({ school, isSelected, onSelect }) {
         <span className="text-md fw-semibold text-primary-light">{schoolName}</span>
       </td>
       <td>
-        <span className="text-md fw-normal text-secondary-light">{city}, {country}</span>
+        <span className="text-md fw-normal text-secondary-light">{schoolCode || '-'}</span>
+      </td>
+      <td>
+        <span className="text-md fw-normal text-secondary-light">{schoolEmail || '-'}</span>
       </td>
       <td>
         <span className="text-md fw-medium text-secondary-light">{totalStudents.toLocaleString()}</span>
@@ -64,19 +61,16 @@ export default function SchoolReportRow({ school, isSelected, onSelect }) {
       </td>
       <td>
         <span className={`badge text-sm fw-semibold ${planBadge.bg} ${planBadge.text} px-12 py-6 radius-4 text-capitalize`}>
-          {subscriptionPlan}
+          {planLabel}
         </span>
       </td>
       <td>
         <span className={`badge text-sm fw-semibold ${statusBadge.bg} ${statusBadge.text} px-12 py-6 radius-4 text-capitalize`}>
-          {subscriptionStatus}
+          {statusLabel}
         </span>
       </td>
       <td>
-        <span className="text-md fw-normal text-secondary-light">{formatDate(createdAt)}</span>
-      </td>
-      <td>
-        <span className="text-md fw-normal text-secondary-light">{formatDate(lastLoginAt)}</span>
+        <span className="text-md fw-normal text-secondary-light">{formatDate(lastUpdatedAt)}</span>
       </td>
     </tr>
   );

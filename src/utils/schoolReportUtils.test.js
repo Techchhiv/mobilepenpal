@@ -15,7 +15,7 @@ const makeSchool = (overrides = {}) => ({
   schoolId: 'SCH-001',
   schoolName: 'Test School',
   schoolCode: 'TS01',
-  schoolType: 'public',
+  schoolEmail: 'admin@school.edu',
   status: 'active',
   country: 'Cambodia',
   provinceOrState: 'Phnom Penh',
@@ -38,6 +38,7 @@ const makeSchool = (overrides = {}) => ({
   activeStudents: 480,
   inactiveStudents: 20,
   totalTeachers: 30,
+  activeTeachers: 25,
   fullTimeTeachers: 25,
   partTimeTeachers: 5,
   teacherStudentRatio: '1:17',
@@ -260,9 +261,23 @@ describe('exportToCSV', () => {
     exportToCSV([makeSchool()], 'report');
     const header = capturedContent.split('\n')[0];
     expect(header).toContain('School Name');
-    expect(header).toContain('School Code');
-    expect(header).toContain('Subscription Plan');
-    expect(header).toContain('Active Users');
+    expect(header).toContain('School Key');
+    expect(header).toContain('Admin Email');
+    expect(header).toContain('Plan');
+    expect(header).toContain('Updated');
+  });
+
+  test('formats exported dates for spreadsheet display', () => {
+    let capturedContent = '';
+    global.Blob = class {
+      constructor(parts) { capturedContent = parts[0]; }
+    };
+
+    exportToCSV([makeSchool()], 'report');
+    expect(capturedContent).toContain('2024-01-01');
+    expect(capturedContent).toContain('2024-12-31');
+    expect(capturedContent).toContain('2023-01-01 00:00');
+    expect(capturedContent).not.toContain('2023-01-01T00:00:00Z');
   });
 
   test('does not mutate the input array', () => {
@@ -308,42 +323,42 @@ describe('syncFiltersToURL', () => {
   });
 
   test('sets non-empty search param', () => {
-    syncFiltersToURL({ search: 'alpha', location: '', subscriptionStatus: '', subscriptionPlan: '', page: 1 }, setSearchParams);
+    syncFiltersToURL({ search: 'alpha', schoolStatus: '', subscriptionStatus: '', plan: '', page: 1 }, setSearchParams);
     expect(capturedParams.get('search')).toBe('alpha');
   });
 
   test('omits empty search param', () => {
-    syncFiltersToURL({ search: '', location: '', subscriptionStatus: '', subscriptionPlan: '', page: 1 }, setSearchParams);
+    syncFiltersToURL({ search: '', schoolStatus: '', subscriptionStatus: '', plan: '', page: 1 }, setSearchParams);
     expect(capturedParams.has('search')).toBe(false);
   });
 
   test('omits page param when page is 1', () => {
-    syncFiltersToURL({ search: '', location: '', subscriptionStatus: '', subscriptionPlan: '', page: 1 }, setSearchParams);
+    syncFiltersToURL({ search: '', schoolStatus: '', subscriptionStatus: '', plan: '', page: 1 }, setSearchParams);
     expect(capturedParams.has('page')).toBe(false);
   });
 
   test('sets page param when page > 1', () => {
-    syncFiltersToURL({ search: '', location: '', subscriptionStatus: '', subscriptionPlan: '', page: 3 }, setSearchParams);
+    syncFiltersToURL({ search: '', schoolStatus: '', subscriptionStatus: '', plan: '', page: 3 }, setSearchParams);
     expect(capturedParams.get('page')).toBe('3');
   });
 
   test('sets all non-empty fields', () => {
     syncFiltersToURL({
       search: 'test',
-      location: 'Bangkok',
+      schoolStatus: 'active',
       subscriptionStatus: 'active',
-      subscriptionPlan: 'pro',
+      plan: 'yearly',
       page: 2,
     }, setSearchParams);
     expect(capturedParams.get('search')).toBe('test');
-    expect(capturedParams.get('location')).toBe('Bangkok');
+    expect(capturedParams.get('schoolStatus')).toBe('active');
     expect(capturedParams.get('subscriptionStatus')).toBe('active');
-    expect(capturedParams.get('subscriptionPlan')).toBe('pro');
+    expect(capturedParams.get('plan')).toBe('yearly');
     expect(capturedParams.get('page')).toBe('2');
   });
 
   test('omits all params when all filters are empty/default', () => {
-    syncFiltersToURL({ search: '', location: '', subscriptionStatus: '', subscriptionPlan: '', page: 1 }, setSearchParams);
+    syncFiltersToURL({ search: '', schoolStatus: '', subscriptionStatus: '', plan: '', page: 1 }, setSearchParams);
     expect([...capturedParams.keys()]).toHaveLength(0);
   });
 

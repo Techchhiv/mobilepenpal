@@ -1,55 +1,41 @@
 import SchoolReportRow from './SchoolReportRow';
 
-/**
- * SchoolReportTable renders the school data table with pagination.
- *
- * Props:
- *   schools      — SchoolReport[] for the current page
- *   selectedId   — string | null; currently selected school id
- *   onSelect     — (id: string) => void
- *   page         — current page number (1-based)
- *   totalPages   — total number of pages
- *   onPageChange — (page: number) => void
- *   loading      — boolean; shows spinner when true
- */
 export default function SchoolReportTable({
   schools = [],
   selectedId,
   onSelect,
   page,
   totalPages,
+  totalItems = 0,
   onPageChange,
   loading,
 }) {
-  // Build page number array, capping at a reasonable window
   const pageNumbers = buildPageNumbers(page, totalPages);
 
   return (
     <div className="school-report-table overflow-hidden ">
-      {/* Card Header */}
       <div className="card-header border-bottom bg-base py-16 px-24 d-flex align-items-center justify-content-between">
         <h6 className="fw-semibold mb-0">School List</h6>
         {!loading && (
           <span className="badge text-sm fw-semibold bg-primary-focus text-primary-600 px-12 py-6 radius-4">
-            {schools.length} schools
+            {totalItems} {totalItems === 1 ? 'school' : 'schools'}
           </span>
         )}
       </div>
 
-      {/* Table */}
       <div className="card-body p-0">
         <div className="table-responsive scroll-sm school-report-table-responsive">
           <table className="table sm-table mb-0 school-report-data-table">
             <thead className="school-list-head">
               <tr>
                 <th scope="col">School Name</th>
-                <th scope="col">Location</th>
+                <th scope="col">School Key</th>
+                <th scope="col">Admin Email</th>
                 <th scope="col">Students</th>
                 <th scope="col">Teachers</th>
                 <th scope="col">Plan</th>
-                <th scope="col">Status</th>
-                <th scope="col">Created</th>
-                <th scope="col">Last Activity</th>
+                <th scope="col">Subscription</th>
+                <th scope="col">Updated</th>
               </tr>
             </thead>
             <tbody>
@@ -61,7 +47,7 @@ export default function SchoolReportTable({
                       role="status"
                       aria-label="Loading"
                     >
-                      <span className="visually-hidden">Loading…</span>
+                      <span className="visually-hidden">Loading...</span>
                     </div>
                   </td>
                 </tr>
@@ -88,12 +74,10 @@ export default function SchoolReportTable({
         </div>
       </div>
 
-      {/* Pagination */}
       {!loading && totalPages > 1 && (
         <div className="card-footer border-top bg-base py-16 px-24">
           <nav aria-label="School report pagination">
             <ul className="pagination pagination-sm justify-content-center mb-0">
-              {/* Prev */}
               <li className={`page-item${page <= 1 ? ' disabled' : ''}`}>
                 <button
                   className="page-link"
@@ -105,11 +89,10 @@ export default function SchoolReportTable({
                 </button>
               </li>
 
-              {/* Numbered pages */}
               {pageNumbers.map((num, idx) =>
                 num === '...' ? (
                   <li key={`ellipsis-${idx}`} className="page-item disabled">
-                    <span className="page-link">…</span>
+                    <span className="page-link">...</span>
                   </li>
                 ) : (
                   <li
@@ -127,7 +110,6 @@ export default function SchoolReportTable({
                 )
               )}
 
-              {/* Next */}
               <li className={`page-item${page >= totalPages ? ' disabled' : ''}`}>
                 <button
                   className="page-link"
@@ -146,10 +128,6 @@ export default function SchoolReportTable({
   );
 }
 
-/**
- * Returns an array of page numbers (and '...' ellipsis markers) for the
- * pagination bar. Always shows first, last, current ±1, with ellipsis gaps.
- */
 function buildPageNumbers(current, total) {
   if (total <= 7) {
     return Array.from({ length: total }, (_, i) => i + 1);
