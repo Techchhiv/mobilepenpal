@@ -10,24 +10,23 @@ import 'package:flutter_drawing_board/flutter_drawing_board.dart';
 import 'package:flutter_drawing_board/paint_contents.dart';
 import 'package:mobilepenpal/presentation/widgets/world/image_stamp_content.dart';
 import 'package:get/get.dart';
-import 'package:mobilepenpal/core/network/route_builder.dart';
 import 'package:mobilepenpal/core/utils/character_option_utils.dart';
 import 'package:mobilepenpal/core/utils/stroke_feedback_util.dart';
-import 'package:mobilepenpal/core/utils/stroke_preprocessor.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_animation_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_audio_controller.dart';
 import 'package:mobilepenpal/data/models/exercise/exercise.dart';
 import 'package:mobilepenpal/data/models/quest/quest.dart';
-import 'package:mobilepenpal/data/models/stage/stage.dart';
 import 'package:mobilepenpal/data/models/stage/stage_exercise.dart';
 import 'package:mobilepenpal/data/controllers/quest/quest_controller.dart';
-import 'package:mobilepenpal/data/services/onnx_inference_service.dart';
 import 'package:mobilepenpal/data/services/world_service.dart';
+import 'package:mobilepenpal/data/services/drawing_evaluation_service.dart';
+import 'package:mobilepenpal/core/utils/stroke_transform_util.dart';
 import 'package:mobilepenpal/presentation/routes/app_routes.dart';
-import 'package:mobilepenpal/presentation/widgets/app_snackbar.dart';
 
 class QuestBoardController extends GetxController {
   final WorldService _worldService = WorldService();
+  late final DrawingEvaluationService _evalService =
+      DrawingEvaluationService(worldService: _worldService);
 
   final isLoading = true.obs;
   final isSubmitting = false.obs;
@@ -502,24 +501,27 @@ class QuestBoardController extends GetxController {
     onPointerUp();
   }
 
-  Future<Map<String, dynamic>?> _predictLocal(
-    String modelType,
-    int boardIndex,
-  ) async {
-    try {
-      final result = StrokePreprocessor.preprocessForModel(
-        modelType,
-        _rawStrokesList[boardIndex],
-      );
+  /// Build template strokes for a given character from the strokes DB,
+  /// fitted to the current board size.  Used for behind-the-scenes
+  /// structural validation when there is no visible guide.
+  List<List<Offset>> _getTemplateForChar(String ch) {
+    final db = _strokesDbCache;
+    final items = db?['items'] as Map<String, dynamic>?;
+    final entry = items?[ch.trim()] as Map<String, dynamic>?;
+    if (entry == null) return [];
 
-      return await OnnxInferenceService.instance.predict(
-        modelType,
-        result.segments[0],
-        result.shapes[0],
-      );
-    } catch (e) {
-      return null;
-    }
+    final strokes = entry['paths_px'] as List<dynamic>? ?? [];
+    final strokesOut = StrokeTransformUtil.readSubpathsPx(strokes);
+    if (strokesOut.isEmpty) return [];
+
+    return StrokeTransformUtil.autoFitGlyphPx(
+      strokesOut,
+      boardW: boardWidth.value,
+      boardH: boardHeight.value,
+      pad: 24,
+      minWidthFill: 0.72,
+      minHeightFill: 0.78,
+    );
   }
 
   Future<void> checkDrawing() async {
@@ -531,59 +533,67 @@ class QuestBoardController extends GetxController {
     final cancelToken = CancelToken();
     _cancelToken = cancelToken;
 
-    final modelType = _mapCharacterTypeToModelType(exercise.characterType);
+    final modelType =
+        _evalService.mapCharacterTypeToModelType(exercise.characterType);
+
+    // Determine if this exercise has a visible stroke guide.
+    final bool hasGuide = strokeStrokesNorm.isNotEmpty && !isMathCurrent;
 
     bool isCorrect = false;
     String prediction = '';
+    String? strokeHint;
 
     try {
-      Map<String, dynamic>? data = await _predictLocal(modelType, 0);
-      if (data == null) {
-        final payload = getXYStrokeWithTime(
-          modelType: modelType,
-          boardIndex: 0,
+      if (hasGuide) {
+        // ── WITH GUIDE: pure stroke-based evaluation ──────────────────
+        strokeHint = StrokeFeedbackUtil.getFeedback(
+          userRawStrokes: _rawStrokesList[0],
+          templateStrokesPx: strokeStrokesNorm,
+          boardWidth: boardWidth.value,
+          boardHeight: boardHeight.value,
+          ignoreBounds: false,
         );
-        final strokes = (payload['strokes'] as List)
-            .cast<Map<String, dynamic>>();
-        data = await _worldService.predictDrawingVector(
-          strokes: strokes,
-          modelType: payload['model_type'] as String,
+        isCorrect = (strokeHint == null);
+        prediction = isCorrect ? exercise.character : '';
+      } else {
+        // ── WITHOUT GUIDE (blank canvas): AI + structural checks ─────
+        final data = await _evalService.predictBoard(
+          modelType: modelType,
+          rawStrokes: _rawStrokesList[0],
+          getPayload: () => getXYStrokeWithTime(
+            modelType: modelType,
+            boardIndex: 0,
+          ),
           cancelToken: cancelToken,
         );
-      }
-      if (myReqId != _reqId) return;
+        if (myReqId != _reqId) return;
 
-      prediction = (data['prediction'] ?? '').toString().trim();
-      final expected = exercise.character.trim();
-
-      if (isMathCurrent) {
+        prediction = (data?['prediction'] ?? '').toString().trim();
+        final expected = exercise.character.trim();
         isCorrect = prediction == expected;
-      } else {
-        isCorrect = (prediction == expected);
-        if (!isCorrect && expected.length == 1 && prediction.length == 1) {
-          final khmerDigits = [
-            '០',
-            '១',
-            '២',
-            '៣',
-            '៤',
-            '៥',
-            '៦',
-            '៧',
-            '៨',
-            '៩',
-          ];
-          final engDigits = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
-          final kIdx = khmerDigits.indexOf(expected);
-          final eIdx = engDigits.indexOf(prediction);
-          if (kIdx != -1 && eIdx != -1 && kIdx == eIdx) {
-            isCorrect = true;
+
+        // If AI says correct, also validate stroke structure (ignoring bounds).
+        if (isCorrect) {
+          final charToValidate = exercise.character.trim();
+          final template = _getTemplateForChar(charToValidate);
+          if (template.isNotEmpty) {
+            final centered =
+                StrokeTransformUtil.autoCenterStrokes(_rawStrokesList[0], template);
+            strokeHint = StrokeFeedbackUtil.getFeedback(
+              userRawStrokes: centered,
+              templateStrokesPx: template,
+              boardWidth: boardWidth.value,
+              boardHeight: boardHeight.value,
+              ignoreBounds: true,
+            );
+            if (strokeHint != null) {
+              isCorrect = false;
+            }
           }
         }
       }
     } on DioException catch (e) {
       if (CancelToken.isCancel(e)) return;
-      isCorrect = isMathCurrent ? false : (Random().nextDouble() <= 0.9);
     } catch (e) {
       lastError.value = 'Predict failed: $e';
       isCorrect = isMathCurrent ? false : (Random().nextDouble() <= 0.9);
@@ -592,10 +602,16 @@ class QuestBoardController extends GetxController {
         _cancelToken = null;
       }
     }
+
     if (!isCorrect) {
       unawaited(audio.playWrongSfx());
 
-      if (strokeStrokesNorm.isNotEmpty && letterSubpathsNorm.isNotEmpty) {
+      // Show stroke feedback hint if available.
+      if (strokeHint != null) {
+        anim.praiseText.value = strokeHint.tr;
+      } else if (!isMathCurrent &&
+          strokeStrokesNorm.isNotEmpty &&
+          letterSubpathsNorm.isNotEmpty) {
         final hint = StrokeFeedbackUtil.getFeedback(
           userRawStrokes: _rawStrokesList[0],
           templateStrokesPx: strokeStrokesNorm,
@@ -621,7 +637,7 @@ class QuestBoardController extends GetxController {
         customDuration: wrongDisplayDuration,
         onAfterReset: () {
           clearBoard();
-          anim.restartGuideFromStart();
+          if (!isMathCurrent) anim.restartGuideFromStart();
         },
       );
 
@@ -650,6 +666,7 @@ class QuestBoardController extends GetxController {
         anim.clearPraise();
         await _finishQuest();
       } else {
+        await Future.delayed(wrongDisplayDuration);
         anim.feedback.value = DrawFeedback.none;
         anim.clearPraise();
         nextExercise();
@@ -988,23 +1005,7 @@ class QuestBoardController extends GetxController {
     _cancelToken = null;
   }
 
-  String _mapCharacterTypeToModelType(String? characterType) {
-    final t = (characterType ?? '').trim().toLowerCase();
-    switch (t) {
-      case 'digits':
-        return 'digit';
-      case 'consonants':
-        return 'consonant';
-      case 'independent_vowels':
-        return 'independent_vowel';
-      case 'dependent_vowels':
-        return 'dependent_vowel';
-      case 'math':
-        return 'math';
-      default:
-        return 'consonant';
-    }
-  }
+
 
   Future<T?> _runWithSkipLock<T>(Future<T> Function() fn) async {
     if (isSkipLocked.value) return null;

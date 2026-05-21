@@ -3,7 +3,9 @@ enum MiniGameDifficulty { easy, medium, hard }
 class MiniGameModel {
   final int id;
   final String title;
+  final String? titleKh;
   final String? description;
+  final String? descriptionKh;
   final String displayType;
   final String inputType;
   final bool isActive;
@@ -13,7 +15,9 @@ class MiniGameModel {
   MiniGameModel({
     required this.id,
     required this.title,
+    this.titleKh,
     this.description,
+    this.descriptionKh,
     required this.displayType,
     required this.inputType,
     this.isActive = true,
@@ -63,7 +67,9 @@ class MiniGameModel {
     return MiniGameModel(
       id: json['id'] as int,
       title: json['title'] as String,
+      titleKh: json['title_kh'] as String?,
       description: json['description'] as String?,
+      descriptionKh: json['description_kh'] as String?,
       displayType: json['display_type'] as String,
       inputType: json['input_type'] as String,
       isActive: json['is_active'] == true || json['is_active'] == 1,

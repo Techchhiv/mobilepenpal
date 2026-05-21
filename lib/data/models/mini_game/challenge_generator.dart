@@ -759,7 +759,6 @@ class ChallengeGenerator {
     final fullWord = entry['word']!;
     final missing = entry['missing']!;
     final blank = entry['blank']!;
-    final meaning = entry['meaning']!;
 
     String displayHint;
     switch (difficulty) {

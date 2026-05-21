@@ -136,9 +136,9 @@ class QuestPage extends GetView<QuestController> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  '🗡️  Daily Quests',
-                  style: TextStyle(
+                Text(
+                  '🗡️  ' + 'daily_quests'.tr,
+                  style: const TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w900,
                     color: Colors.white,
@@ -149,8 +149,11 @@ class QuestPage extends GetView<QuestController> {
                 Obx(
                   () => Text(
                     controller.allCompleted
-                        ? 'All quests completed! 🎉'
-                        : '${controller.completedCount}/${controller.totalQuests} quests done today',
+                        ? 'all_quests_completed'.tr
+                        : 'quests_done_today'.trParams({
+                            'completed': controller.completedCount.toString(),
+                            'total': controller.totalQuests.toString(),
+                          }),
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -164,13 +167,17 @@ class QuestPage extends GetView<QuestController> {
                   children: [
                     _miniPill(
                       icon: Icons.local_fire_department_rounded,
-                      label: '${controller.dailyStreak} streak',
+                      label: 'daily_streak_count'.trParams({
+                        'streak': controller.dailyStreak.toString(),
+                      }),
                       color: const Color(0xFFFF6B6B),
                     ),
                     const SizedBox(width: 8),
                     _miniPill(
                       icon: Icons.monetization_on_rounded,
-                      label: '${controller.totalCoins} coins',
+                      label: 'coins_count'.trParams({
+                        'coins': controller.totalCoins.toString(),
+                      }),
                       color: const Color(0xFFFFB347),
                     ),
                   ],
@@ -239,7 +246,7 @@ class QuestPage extends GetView<QuestController> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'done',
+                  'done'.tr.toLowerCase(),
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
@@ -306,9 +313,9 @@ class QuestPage extends GetView<QuestController> {
               ),
             ),
             const SizedBox(height: 20),
-            const Text(
-              'No Quests Available',
-              style: TextStyle(
+            Text(
+              'no_quests_available'.tr,
+              style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w800,
                 color: Color(0xFF3A3A5C),
@@ -316,7 +323,7 @@ class QuestPage extends GetView<QuestController> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Complete more lessons to unlock daily quests.\nCheck back tomorrow!',
+              'complete_lessons_unlock_quests'.tr,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
@@ -329,7 +336,7 @@ class QuestPage extends GetView<QuestController> {
             OutlinedButton.icon(
               onPressed: () => controller.refreshQuests(),
               icon: const Icon(Icons.refresh_rounded, size: 18),
-              label: const Text('Refresh'),
+              label: Text('refresh'.tr),
               style: OutlinedButton.styleFrom(
                 foregroundColor: const Color(0xFF845EF7),
                 side: const BorderSide(color: Color(0xFF845EF7)),

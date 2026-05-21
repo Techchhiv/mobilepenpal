@@ -2,9 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobilepenpal/core/config/env.dart';
-import 'package:mobilepenpal/core/theme/app_colors.dart';
 import 'package:mobilepenpal/data/controllers/mini_game/dynamic_mini_game_controller.dart';
-import 'package:mobilepenpal/data/controllers/world/stage_animation_controller.dart';
 import 'package:mobilepenpal/data/models/mini_game/challenge_generator.dart';
 import 'package:mobilepenpal/data/models/mini_game/mini_game_model.dart';
 import 'package:mobilepenpal/presentation/screens/mini_game/dynamic_game_widgets.dart';
@@ -150,33 +148,6 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
     if (displayType == 'question') return _buildQuestionDisplay();
 
     return _buildDefaultDisplay(challenge, displayType);
-  }
-
-  // ── Drag & Drop Display ──────────────────────────────────────────
-  Widget _buildDragAndDropDisplay() {
-    return AnimatedBuilder(
-      animation: controller.promptBounceCtrl,
-      builder: (_, child) {
-        final dy = -3 * controller.promptBounceCtrl.value;
-        return Transform.translate(offset: Offset(0, dy), child: child);
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.06),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
-        ),
-        child: Text(
-          'match_the_pairs'.tr,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 22,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-      ),
-    );
   }
 
   /// Default display for character / math_equation / image / etc.
@@ -746,7 +717,7 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
         case 'drawing_board':
           return _buildDrawingBoardInput();
         case 'multiple_choice':
-          return _buildMultipleChoiceInput();
+          return _buildMultipleChoiceInput(context);
         case 'drag_and_drop':
           return _buildDragAndDropInput(context);
         default:
@@ -791,14 +762,41 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
     });
   }
 
-  Widget _buildMultipleChoiceInput() {
+  Widget _buildMultipleChoiceInput(BuildContext context) {
     return Obx(() {
       final options = controller.currentOptions;
       if (options.isEmpty) return const SizedBox();
 
-      // Adapt grid layout based on option count
-      final crossAxisCount = options.length <= 4 ? 2 : (options.length <= 6 ? 3 : 4);
-      final aspectRatio = options.length <= 4 ? 1.5 : 1.2;
+      final screenHeight = MediaQuery.of(context).size.height;
+      final isTallScreen = screenHeight > 800;
+
+      // Adapt grid layout based on option count and screen height
+      final int crossAxisCount;
+      final double aspectRatio;
+
+      if (options.length <= 4) {
+        crossAxisCount = 2;
+        aspectRatio = 1.15;
+      } else if (options.length <= 6) {
+        if (isTallScreen) {
+          crossAxisCount = 2; // Renders 3 rows
+          aspectRatio = 1.2;
+        } else {
+          crossAxisCount = 3; // Renders 2 rows
+          aspectRatio = 1.0;
+        }
+      } else {
+        // More than 6 options (typically 8)
+        if (isTallScreen) {
+          crossAxisCount = 2; // Renders 4 rows (large cards)
+          aspectRatio = 1.4;
+        } else {
+          crossAxisCount = 3; // Renders 3 rows (3, 3, 2)
+          aspectRatio = 1.0;
+        }
+      }
+
+      final spacing = isTallScreen ? 18.0 : 16.0;
 
       return Center(
         child: Padding(
@@ -808,8 +806,8 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: crossAxisCount,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
+              crossAxisSpacing: spacing,
+              mainAxisSpacing: spacing,
               childAspectRatio: aspectRatio,
             ),
             itemCount: options.length,

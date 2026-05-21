@@ -2,13 +2,11 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:developer' as dev;
 import 'dart:math';
-import 'dart:ui' as ui;
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_drawing_board/flutter_drawing_board.dart';
-import 'package:flutter_drawing_board/paint_contents.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:mobilepenpal/core/utils/stroke_feedback_util.dart';
@@ -730,14 +728,23 @@ class DynamicMiniGameController extends GetxController
       } else {
         // Normalize common types to folder names
         audioType = audioType.trim().toLowerCase();
-        if (audioType == 'letter') audioType = 'consonants';
-        if (audioType == 'number') audioType = 'digits';
+        if (audioType == 'letter') {
+          audioType = 'consonants';
+        }
+        if (audioType == 'number') {
+          audioType = 'digits';
+        }
         if (!audioType.endsWith('s')) {
           // Attempt to pluralize if missing (consonant -> consonants, etc)
-          if (audioType == 'independent_vowel')
+          if (audioType == 'independent_vowel') {
             audioType = 'independent_vowels';
-          if (audioType == 'dependent_vowel') audioType = 'dependent_vowels';
-          if (audioType == 'digit') audioType = 'digits';
+          }
+          if (audioType == 'dependent_vowel') {
+            audioType = 'dependent_vowels';
+          }
+          if (audioType == 'digit') {
+            audioType = 'digits';
+          }
         }
       }
 
@@ -938,7 +945,21 @@ class DynamicMiniGameController extends GetxController
   List<List<Offset>> _getTemplateForChar(String ch) {
     final db = _strokesDbCache;
     final items = db?['items'] as Map<String, dynamic>?;
-    final entry = items?[ch.trim()] as Map<String, dynamic>?;
+    
+    const arabicToKhmer = {
+      '0': '០',
+      '1': '១',
+      '2': '២',
+      '3': '៣',
+      '4': '៤',
+      '5': '៥',
+      '6': '៦',
+      '7': '៧',
+      '8': '៨',
+      '9': '៩',
+    };
+    final normalizedCh = arabicToKhmer[ch.trim()] ?? ch.trim();
+    final entry = items?[normalizedCh] as Map<String, dynamic>?;
     if (entry == null) return [];
 
     final strokes = entry['paths_px'] as List<dynamic>? ?? [];
@@ -996,7 +1017,7 @@ class DynamicMiniGameController extends GetxController
         if (myReqId != _reqId) return;
 
         final prediction = (data?['prediction'] ?? '').toString().trim();
-        isCorrect = prediction == expectedChar.trim();
+        isCorrect = _isDrawingCorrect(prediction, expectedChar);
 
         // If AI says correct, also validate stroke structure (ignoring bounds).
         if (isCorrect) {
@@ -1053,12 +1074,72 @@ class DynamicMiniGameController extends GetxController
     '៩',
   };
 
+  String _getModelTypeForChar(String target) {
+    final char = target.trim();
+    if (char.isEmpty) return 'consonant';
+
+    // 1. Digits (Khmer or Arabic)
+    const khmerDigits = {'០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'};
+    const arabicDigits = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'};
+    if (khmerDigits.contains(char) || arabicDigits.contains(char)) {
+      return 'digit';
+    }
+
+    // 2. Independent Vowels
+    const independentVowels = {
+      'ឥ', 'ឦ', 'ឧ', 'ឩ', 'ឪ', 'ឫ', 'ឬ', 'ឭ', 'ឮ', 'ឯ', 'ឰ', 'ឱ', 'ឲ', 'ឳ'
+    };
+    if (independentVowels.contains(char)) {
+      return 'independent_vowel';
+    }
+
+    // 3. Dependent Vowels
+    const dependentVowels = {
+      'ា', 'ិ', 'ី', 'ឹ', 'ឺ', 'ុ', 'ូ', 'ួ', 'ើ', 'ឿ', 'ៀ', 'េ', 'ែ', 'ៃ', 'ោ', 'ៅ', 'ុំ', 'ំ', 'ាំ', 'ះ', 'ិះ', 'ុះ', 'េះ', 'ោះ'
+    };
+    if (dependentVowels.contains(char)) {
+      return 'dependent_vowel';
+    }
+
+    return 'consonant';
+  }
+
+  bool _isDrawingCorrect(String prediction, String expected) {
+    final p = prediction.trim();
+    final e = expected.trim();
+    if (p == e) return true;
+
+    // Normalize Arabic numerals to Khmer numerals for comparison
+    const arabicToKhmer = {
+      '0': '០',
+      '1': '១',
+      '2': '២',
+      '3': '៣',
+      '4': '៤',
+      '5': '៥',
+      '6': '៦',
+      '7': '៧',
+      '8': '៨',
+      '9': '៩',
+    };
+
+    final normP = arabicToKhmer[p] ?? p;
+    final normE = arabicToKhmer[e] ?? e;
+    return normP == normE;
+  }
+
   String _getModelTypeForDisplay() {
+    final challenge = currentChallenge.value;
+    if (challenge != null && challenge.target.isNotEmpty) {
+      return _getModelTypeForChar(challenge.target);
+    }
+
     final dt = currentMiniGame.value?.displayType;
 
     // Legacy explicit types
-    if (dt == 'number' || dt == 'math_equation' || dt == 'question')
+    if (dt == 'number' || dt == 'math_equation' || dt == 'question' || dt == 'object_count') {
       return 'digit';
+    }
 
     // For generic 'character' display type, inspect the pool to decide
     if (dt == 'character') {
@@ -1070,7 +1151,9 @@ class DynamicMiniGameController extends GetxController
 
       if (pool.isNotEmpty) {
         // Check if all digits
-        if (pool.every((c) => _khmerDigits.contains(c))) return 'digit';
+        if (pool.every((c) => _khmerDigits.contains(c))) {
+          return 'digit';
+        }
 
         // Check for independent vowels
         final independentVowels = [
@@ -1089,8 +1172,9 @@ class DynamicMiniGameController extends GetxController
           'ឲ',
           'ឳ',
         ];
-        if (pool.any((c) => independentVowels.contains(c)))
+        if (pool.any((c) => independentVowels.contains(c))) {
           return 'independent_vowel';
+        }
 
         // Check for dependent vowels
         final dependentVowels = [
@@ -1119,8 +1203,9 @@ class DynamicMiniGameController extends GetxController
           'េះ',
           'ោះ',
         ];
-        if (pool.any((c) => dependentVowels.contains(c)))
+        if (pool.any((c) => dependentVowels.contains(c))) {
           return 'dependent_vowel';
+        }
       }
     }
 
@@ -1311,7 +1396,20 @@ class DynamicMiniGameController extends GetxController
     }
 
     final items = _strokesDbCache!['items'] as Map<String, dynamic>?;
-    final entry = items?[ch.trim()] as Map<String, dynamic>?;
+    const arabicToKhmer = {
+      '0': '០',
+      '1': '១',
+      '2': '២',
+      '3': '៣',
+      '4': '៤',
+      '5': '៥',
+      '6': '៦',
+      '7': '៧',
+      '8': '៨',
+      '9': '៩',
+    };
+    final normalizedCh = arabicToKhmer[ch.trim()] ?? ch.trim();
+    final entry = items?[normalizedCh] as Map<String, dynamic>?;
 
     if (entry == null) {
       letterSubpathsNorm.clear();
@@ -1355,19 +1453,21 @@ class DynamicMiniGameController extends GetxController
   }
 
   Map<String, dynamic> _getXYStrokeWithTime({required String modelType}) {
-    final allStrokes = <Map<String, dynamic>>[];
-    for (int si = 0; si < _rawStrokes.length; si++) {
-      final stroke = _rawStrokes[si];
-      for (final point in stroke) {
-        allStrokes.add({
-          'x': point['x'],
-          'y': point['y'],
-          'time': point['time'],
-          'stroke_index': si,
-        });
-      }
-    }
-    return {'strokes': allStrokes, 'model_type': modelType};
+    final formattedStrokes = _rawStrokes.map((stroke) {
+      return {
+        "points": stroke.map((point) {
+          return {
+            "x": (point["x"] as num).toDouble(),
+            "y": (point["y"] as num).toDouble(),
+            "time": (point["time"] as num?)?.toInt(),
+          };
+        }).toList(),
+      };
+    }).toList();
+    return {
+      "strokes": formattedStrokes,
+      "model_type": modelType,
+    };
   }
 
   void _cancelPredictIfAny() {

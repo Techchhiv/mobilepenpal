@@ -338,7 +338,6 @@ class DifficultyChip extends StatelessWidget {
   Widget build(BuildContext context) {
     String label;
     Color color;
-    IconData icon;
     switch (difficulty) {
       case MiniGameDifficulty.easy:
         label = 'E';

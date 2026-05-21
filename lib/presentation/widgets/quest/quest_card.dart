@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:mobilepenpal/data/models/quest/quest.dart';
 import 'package:mobilepenpal/data/models/quest/quest_type.dart';
 
@@ -122,7 +123,7 @@ class QuestCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  quest.title,
+                  quest.title.tr,
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
@@ -132,7 +133,7 @@ class QuestCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  quest.subtitle,
+                  quest.subtitle.tr,
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -224,7 +225,7 @@ class QuestCard extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              quest.isCompleted ? 'Completed!' : 'Progress',
+              quest.isCompleted ? 'completed_exclamation'.tr : 'progress'.tr,
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
@@ -290,7 +291,7 @@ class QuestCard extends StatelessWidget {
         child: OutlinedButton.icon(
           onPressed: null,
           icon: const Icon(Icons.check_circle_rounded, size: 18),
-          label: const Text('Completed'),
+          label: Text('completed_exclamation'.tr),
           style: OutlinedButton.styleFrom(
             foregroundColor: const Color(0xFF4CAF50),
             disabledForegroundColor: const Color(0xFF4CAF50),
@@ -313,7 +314,7 @@ class QuestCard extends StatelessWidget {
       child: ElevatedButton.icon(
         onPressed: onStart,
         icon: const Icon(Icons.play_arrow_rounded, size: 20),
-        label: const Text('Start Quest'),
+        label: Text('start_quest'.tr),
         style: ElevatedButton.styleFrom(
           elevation: 0,
           backgroundColor: _primary,

@@ -5,6 +5,8 @@ import 'package:mobilepenpal/data/models/quest/quest.dart';
 import 'package:mobilepenpal/data/models/quest/quest_summary.dart';
 import 'package:mobilepenpal/data/models/quest/quest_type.dart';
 import 'package:mobilepenpal/data/controllers/quest/quest_board_controller.dart';
+import 'package:mobilepenpal/data/controllers/world/stage_animation_controller.dart';
+import 'package:mobilepenpal/data/controllers/world/stage_audio_controller.dart';
 import 'package:mobilepenpal/data/services/home_service.dart';
 
 /// Controller backing the Quest screen.
@@ -62,7 +64,24 @@ class QuestController extends GetxController {
 
     isStartingQuest.value = true;
     try {
+      // Ensure StageAnimationController and StageAudioController are registered
+      if (!Get.isRegistered<StageAnimationController>()) {
+        Get.put(StageAnimationController());
+      }
+      if (!Get.isRegistered<StageAudioController>()) {
+        Get.put(StageAudioController());
+      }
+
+      // Pre-load/prepare the quest details
+      final boardController = Get.isRegistered<QuestBoardController>()
+          ? Get.find<QuestBoardController>()
+          : Get.put(QuestBoardController());
+
+      await boardController.prepareQuest(quest);
+
       Get.toNamed('/quest/board', arguments: {'quest': quest});
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to start quest: $e');
     } finally {
       isStartingQuest.value = false;
     }
@@ -153,8 +172,8 @@ class QuestController extends GetxController {
       return Quest(
         id: 'q1_weakest',
         type: QuestType.weakestCharacters,
-        title: 'Weakest Character',
-        subtitle: 'Practice your lowest-accuracy letters',
+        title: 'quest_title_weakest',
+        subtitle: 'quest_subtitle_weakest',
         previewCharacters: chars,
         progress: 0,
         total: chars.length,
@@ -168,8 +187,8 @@ class QuestController extends GetxController {
     return Quest(
       id: 'q1_mastery',
       type: QuestType.masteryShowcase,
-      title: 'Mastery Showcase ⭐',
-      subtitle: 'Show off your best writing!',
+      title: 'quest_title_mastery',
+      subtitle: 'quest_subtitle_mastery',
       previewCharacters: [char],
       progress: 0,
       total: 1,
@@ -189,8 +208,8 @@ class QuestController extends GetxController {
       return Quest(
         id: 'q2_deep_memory',
         type: QuestType.deepMemory,
-        title: 'Deep Memory 🧠',
-        subtitle: 'Refresh a character from long ago',
+        title: 'quest_title_deep_memory',
+        subtitle: 'quest_subtitle_deep_memory',
         previewCharacters: [char],
         progress: 0,
         total: 1,
@@ -206,8 +225,8 @@ class QuestController extends GetxController {
       return Quest(
         id: 'q2_recent',
         type: QuestType.recentReview,
-        title: 'Recent Characters',
-        subtitle: 'Revisit your latest lesson',
+        title: 'quest_title_recent',
+        subtitle: 'quest_subtitle_recent',
         previewCharacters: chars,
         progress: 0,
         total: chars.length,
@@ -221,8 +240,8 @@ class QuestController extends GetxController {
     return Quest(
       id: 'q2_recent_fallback',
       type: QuestType.recentReview,
-      title: 'Recent Characters',
-      subtitle: 'Revisit characters you\'ve learned',
+      title: 'quest_title_recent',
+      subtitle: 'quest_subtitle_recent_fallback',
       previewCharacters: chars,
       progress: 0,
       total: chars.length,
@@ -239,8 +258,8 @@ class QuestController extends GetxController {
     return Quest(
       id: 'q3_random',
       type: QuestType.randomReview,
-      title: 'Random Review',
-      subtitle: 'Random mix of everything you\'ve learned',
+      title: 'quest_title_random',
+      subtitle: 'quest_subtitle_random',
       previewCharacters: chars,
       progress: 0,
       total: chars.length,

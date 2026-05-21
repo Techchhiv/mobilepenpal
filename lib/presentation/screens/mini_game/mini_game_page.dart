@@ -24,6 +24,7 @@ class _MiniGamePageState extends State<MiniGamePage>
   late final AnimationController _floatCtrl;
   final RxSet<int> _selectedGames = <int>{}.obs;
   final RxnString _selectedInputType = RxnString(null);
+  final RxBool _isDetailView = false.obs;
 
   @override
   void initState() {
@@ -440,167 +441,105 @@ class _MiniGamePageState extends State<MiniGamePage>
                 trailing: Obx(() {
                   final allSelected =
                       _selectedGames.length == hubCtrl.miniGames.length;
-                  return GestureDetector(
-                    onTap: () {
-                      if (allSelected) {
-                        _selectedGames.clear();
-                      } else {
-                        _selectedGames.addAll(
-                          hubCtrl.miniGames.map((g) => g.id),
-                        );
-                      }
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: allSelected
-                            ? const Color(0xFFFF9F43).withValues(alpha: 0.1)
-                            : Colors.transparent,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: allSelected
-                              ? const Color(0xFFFF9F43)
-                              : Colors.grey.shade300,
-                          width: 1.5,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            allSelected
-                                ? Icons.deselect_rounded
-                                : Icons.select_all_rounded,
-                            size: 16,
-                            color: allSelected
-                                ? const Color(0xFFFF9F43)
-                                : Colors.grey.shade500,
+                  return Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Select/Deselect All Button
+                      GestureDetector(
+                        onTap: () {
+                          if (allSelected) {
+                            _selectedGames.clear();
+                          } else {
+                            _selectedGames.addAll(
+                              hubCtrl.miniGames.map((g) => g.id),
+                            );
+                          }
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 8,
                           ),
-                          const SizedBox(width: 6),
-                          Text(
-                            allSelected ? 'deselect_all'.tr : 'select_all'.tr,
-                            style: TextStyle(
+                          decoration: BoxDecoration(
+                            color: allSelected
+                                ? const Color(0xFFFF9F43).withValues(alpha: 0.1)
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
                               color: allSelected
                                   ? const Color(0xFFFF9F43)
-                                  : Colors.grey.shade500,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: Get.locale?.languageCode == 'km' ? 0 : 0.5,
+                                  : Colors.grey.shade300,
+                              width: 1.5,
                             ),
                           ),
-                        ],
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                allSelected
+                                    ? Icons.deselect_rounded
+                                    : Icons.select_all_rounded,
+                                size: 16,
+                                color: allSelected
+                                    ? const Color(0xFFFF9F43)
+                                    : Colors.grey.shade500,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                allSelected ? 'deselect_all'.tr : 'select_all'.tr,
+                                style: TextStyle(
+                                  color: allSelected
+                                      ? const Color(0xFFFF9F43)
+                                      : Colors.grey.shade500,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: Get.locale?.languageCode == 'km' ? 0 : 0.5,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
+                      const SizedBox(width: 10),
+                      // Layout Toggle Button
+                      GestureDetector(
+                        onTap: () => _isDetailView.toggle(),
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: _isDetailView.value
+                                ? const Color(0xFF4ECDC4).withValues(alpha: 0.1)
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: _isDetailView.value
+                                  ? const Color(0xFF4ECDC4)
+                                  : Colors.grey.shade300,
+                              width: 1.5,
+                            ),
+                          ),
+                          child: Icon(
+                            _isDetailView.value
+                                ? Icons.grid_view_rounded
+                                : Icons.view_list_rounded,
+                            size: 18,
+                            color: _isDetailView.value
+                                ? const Color(0xFF4ECDC4)
+                                : Colors.grey.shade500,
+                          ),
+                        ),
+                      ),
+                    ],
                   );
                 }),
               ),
               Flexible(
-                child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  child: Center(
-                    child: Wrap(
-                      spacing: 24,
-                      runSpacing: 24,
-                      alignment: WrapAlignment.center,
-                      children: [
-                        ...hubCtrl.miniGames.map((game) {
-                          return Obx(() {
-                            final isSelected = _selectedGames.contains(game.id);
-                            return GestureDetector(
-                              onTap: () {
-                                if (isSelected) {
-                                  _selectedGames.remove(game.id);
-                                } else {
-                                  _selectedGames.add(game.id);
-                                }
-                              },
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 200),
-                                curve: Curves.easeInOut,
-                                transform: Matrix4.identity()
-                                  ..scale(isSelected ? 1.15 : 1.0),
-                                transformAlignment: Alignment.center,
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Container(
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                          color: isSelected
-                                              ? const Color(0xFF4ECDC4)
-                                              : Colors.transparent,
-                                          width: 4,
-                                        ),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: isSelected
-                                                ? const Color(
-                                                    0xFF4ECDC4,
-                                                  ).withValues(alpha: 0.4)
-                                                : Colors.transparent,
-                                            blurRadius: isSelected ? 12 : 0.0,
-                                            offset: isSelected
-                                                ? const Offset(0, 6)
-                                                : Offset.zero,
-                                          ),
-                                        ],
-                                      ),
-                                      child: CircleAvatar(
-                                        radius: 40,
-                                        backgroundColor: Colors.white,
-                                        child:
-                                            game.coverImageUrl != null &&
-                                                game.coverImageUrl!.isNotEmpty
-                                            ? Padding(
-                                                padding: const EdgeInsets.all(
-                                                  8,
-                                                ),
-                                                child: Image.network(
-                                                  Env.backendUrl +
-                                                      game.coverImageUrl!,
-                                                  fit: BoxFit.contain,
-                                                  errorBuilder: (_, __, ___) =>
-                                                      _buildFallbackIcon(),
-                                                ),
-                                              )
-                                            : _buildFallbackIcon(),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    SizedBox(
-                                      width: 88,
-                                      child: Text(
-                                        game.title,
-                                        textAlign: TextAlign.center,
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(
-                                          color: isSelected
-                                              ? const Color(0xFF4ECDC4)
-                                              : Colors.grey.shade600,
-                                          fontSize: 12,
-                                          fontWeight: isSelected
-                                              ? FontWeight.w900
-                                              : FontWeight.bold,
-                                          height: 1.2,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          });
-                        }),
-                      ],
-                    ),
-                  ),
-                ),
+                child: Obx(() {
+                  if (_isDetailView.value) {
+                    return _buildDetailListView(hubCtrl);
+                  }
+                  return _buildCompactGridView(hubCtrl);
+                }),
               ),
               const SizedBox(height: 24),
 
@@ -655,7 +594,6 @@ class _MiniGamePageState extends State<MiniGamePage>
                   runSpacing: 12,
                   children: allOptions.map((option) {
                     final isActive = _selectedInputType.value == option;
-                    final label = _inputTypeLabel(option);
                     final icon = _inputTypeIcon(option);
 
                     return GestureDetector(
@@ -664,7 +602,7 @@ class _MiniGamePageState extends State<MiniGamePage>
                         duration: const Duration(milliseconds: 200),
                         curve: Curves.easeInOut,
                         transform: Matrix4.identity()
-                          ..scale(isActive ? 1.15 : 1.0),
+                          ..scaleByDouble(isActive ? 1.15 : 1.0, isActive ? 1.15 : 1.0, 1.0, 1.0),
                         transformAlignment: Alignment.center,
                         width: 70,
                         height: 70,
@@ -793,20 +731,246 @@ class _MiniGamePageState extends State<MiniGamePage>
     );
   }
 
-  String _inputTypeLabel(String? type) {
-    switch (type) {
-      case 'drawing_board':
-        return 'drawing'.tr;
-      case 'multiple_choice':
-        return 'choices'.tr;
-      case 'drag_and_drop':
-        return 'drag'.tr;
-      case 'typing':
-        return 'typing'.tr;
-      case null:
-      default:
-        return 'surprise_me'.tr;
-    }
+
+  Widget _buildCompactGridView(MiniGameHubController hubCtrl) {
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: Center(
+        child: Wrap(
+          spacing: 24,
+          runSpacing: 24,
+          alignment: WrapAlignment.center,
+          children: [
+            ...hubCtrl.miniGames.map((game) {
+              return Obx(() {
+                final isSelected = _selectedGames.contains(game.id);
+                final title = Get.locale?.languageCode == 'km'
+                    ? (game.titleKh ?? game.title)
+                    : game.title;
+                return GestureDetector(
+                  onTap: () {
+                    if (isSelected) {
+                      _selectedGames.remove(game.id);
+                    } else {
+                      _selectedGames.add(game.id);
+                    }
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    curve: Curves.easeInOut,
+                    transform: Matrix4.identity()
+                      ..scaleByDouble(isSelected ? 1.15 : 1.0, isSelected ? 1.15 : 1.0, 1.0, 1.0),
+                    transformAlignment: Alignment.center,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: isSelected
+                                  ? const Color(0xFF4ECDC4)
+                                  : Colors.transparent,
+                              width: 4,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: isSelected
+                                    ? const Color(0xFF4ECDC4).withValues(alpha: 0.4)
+                                    : Colors.transparent,
+                                blurRadius: isSelected ? 12 : 0.0,
+                                offset: isSelected
+                                    ? const Offset(0, 6)
+                                    : Offset.zero,
+                              ),
+                            ],
+                          ),
+                          child: CircleAvatar(
+                            radius: 40,
+                            backgroundColor: Colors.white,
+                            child: game.coverImageUrl != null &&
+                                    game.coverImageUrl!.isNotEmpty
+                                ? Padding(
+                                    padding: const EdgeInsets.all(8),
+                                    child: Image.network(
+                                      Env.backendUrl + game.coverImageUrl!,
+                                      fit: BoxFit.contain,
+                                      errorBuilder: (_, __, ___) =>
+                                          _buildFallbackIcon(),
+                                    ),
+                                  )
+                                : _buildFallbackIcon(),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          width: 88,
+                          child: Text(
+                            title,
+                            textAlign: TextAlign.center,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: isSelected
+                                  ? const Color(0xFF4ECDC4)
+                                  : Colors.grey.shade600,
+                              fontSize: 12,
+                              fontWeight: isSelected
+                                  ? FontWeight.w900
+                                  : FontWeight.bold,
+                              height: 1.2,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              });
+            }),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDetailListView(MiniGameHubController hubCtrl) {
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: Column(
+        children: hubCtrl.miniGames.map((game) {
+          return Obx(() {
+            final isSelected = _selectedGames.contains(game.id);
+            final title = Get.locale?.languageCode == 'km'
+                ? (game.titleKh ?? game.title)
+                : game.title;
+            final description = Get.locale?.languageCode == 'km'
+                ? (game.descriptionKh ?? game.description ?? '')
+                : game.description ?? '';
+
+            return GestureDetector(
+              onTap: () {
+                if (isSelected) {
+                  _selectedGames.remove(game.id);
+                } else {
+                  _selectedGames.add(game.id);
+                }
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? const Color(0xFF4ECDC4).withValues(alpha: 0.05)
+                      : Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: isSelected
+                        ? const Color(0xFF4ECDC4)
+                        : Colors.grey.shade200,
+                    width: 2,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: isSelected
+                          ? const Color(0xFF4ECDC4).withValues(alpha: 0.1)
+                          : Colors.grey.shade100,
+                      blurRadius: isSelected ? 8 : 4,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Cover image or fallback
+                    Container(
+                      width: 60,
+                      height: 60,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade50,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: game.coverImageUrl != null &&
+                              game.coverImageUrl!.isNotEmpty
+                          ? Padding(
+                              padding: const EdgeInsets.all(6),
+                              child: Image.network(
+                                Env.backendUrl + game.coverImageUrl!,
+                                fit: BoxFit.contain,
+                                errorBuilder: (_, __, ___) =>
+                                    _buildFallbackIcon(),
+                              ),
+                            )
+                          : _buildFallbackIcon(),
+                    ),
+                    const SizedBox(width: 16),
+                    // Details
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title,
+                            style: TextStyle(
+                              color: isSelected
+                                  ? const Color(0xFF4ECDC4)
+                                  : const Color(0xFF4A4A4A),
+                              fontSize: 16,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          if (description.isNotEmpty) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              description,
+                              style: TextStyle(
+                                color: Colors.grey.shade600,
+                                fontSize: 12,
+                                height: 1.3,
+                              ),
+                            ),
+                          ],
+
+                        ],
+                      ),
+                    ),
+                    // Selection indicator checkbox or check circle
+                    const SizedBox(width: 8),
+                    Container(
+                      width: 24,
+                      height: 24,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: isSelected
+                            ? const Color(0xFF4ECDC4)
+                            : Colors.transparent,
+                        border: Border.all(
+                          color: isSelected
+                              ? const Color(0xFF4ECDC4)
+                              : Colors.grey.shade300,
+                          width: 2,
+                        ),
+                      ),
+                      child: isSelected
+                          ? const Icon(
+                              Icons.check_rounded,
+                              color: Colors.white,
+                              size: 16,
+                            )
+                          : null,
+                    ),
+                  ],
+                ),
+              ),
+            );
+          });
+        }).toList(),
+      ),
+    );
   }
 
   IconData _inputTypeIcon(String? type) {
