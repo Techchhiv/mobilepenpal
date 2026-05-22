@@ -497,6 +497,11 @@ final Map<String, String> enUS = {
   'play_exclamation': 'Play!',
   'combo_streak': '@combo x Streak!',
   'go_exclamation': 'GO!',
+  'game_over': 'GAME OVER',
+  'coins_earned': 'Coins Earned',
+  'best_score': 'Best Score',
+  'correct': 'Correct',
+  'wrong': 'Wrong',
 
   // ===== Quest & Challenge =====
   'daily_quests': 'Daily Quests',

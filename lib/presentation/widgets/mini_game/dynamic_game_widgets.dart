@@ -370,7 +370,43 @@ class DifficultyChip extends StatelessWidget {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-//  PILL BUTTON — Rounded circle button for pause / close
+//  COIN CHIP — Gold-themed chip showing earned coins with coin icon
+// ═══════════════════════════════════════════════════════════════════════════
+class CoinChip extends StatelessWidget {
+  const CoinChip({super.key, required this.coins});
+  final int coins;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.85),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: GameColors.gold.withValues(alpha: 0.5), width: 2),
+        boxShadow: [
+          BoxShadow(color: GameColors.gold.withValues(alpha: 0.3), blurRadius: 8, spreadRadius: 1),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.monetization_on_rounded, color: GameColors.gold, size: 20),
+          const SizedBox(width: 6),
+          Text(
+            '$coins',
+            style: const TextStyle(
+              color: GameColors.textDark,
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 class PillIconButton extends StatelessWidget {
   const PillIconButton({super.key, required this.icon, required this.onTap});

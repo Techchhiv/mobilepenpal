@@ -5,7 +5,7 @@ import 'package:mobilepenpal/core/config/env.dart';
 import 'package:mobilepenpal/data/controllers/mini_game/dynamic_mini_game_controller.dart';
 import 'package:mobilepenpal/data/models/mini_game/challenge_generator.dart';
 import 'package:mobilepenpal/data/models/mini_game/mini_game_model.dart';
-import 'package:mobilepenpal/presentation/screens/mini_game/dynamic_game_widgets.dart';
+import 'package:mobilepenpal/presentation/widgets/mini_game/dynamic_game_widgets.dart';
 import 'package:mobilepenpal/presentation/widgets/world/stage_components/stage_drawing_board.dart';
 
 class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
@@ -1004,19 +1004,7 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
   Widget _buildGameTopBar(BuildContext context) {
     return Row(
       children: [
-        Obx(() => DifficultyChip(
-          difficulty: controller.difficulty.value,
-          onTap: () {
-            final current = controller.difficulty.value;
-            if (current == MiniGameDifficulty.easy) {
-              controller.forceDifficultyForShowcase(MiniGameDifficulty.medium);
-            } else if (current == MiniGameDifficulty.medium) {
-              controller.forceDifficultyForShowcase(MiniGameDifficulty.hard);
-            } else {
-              controller.forceDifficultyForShowcase(MiniGameDifficulty.easy);
-            }
-          },
-        )),
+        Obx(() => CoinChip(coins: controller.earnedCoins.value)),
         const SizedBox(width: 12),
         Expanded(
           child: Obx(() => AnimatedScoreChip(score: controller.score.value)),
@@ -1070,54 +1058,157 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
   // ── Game Over ─────────────────────────────────────────────────────
   Widget _buildGameOverScreen() {
     return Container(
-      color: GameColors.card,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFF2C5364), Color(0xFF1B2838)],
+        ),
+      ),
       child: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: Env.globalMaxWidth),
-            child: Padding(
-              padding: const EdgeInsets.all(24),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 28),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.stars_rounded, color: GameColors.gold, size: 80),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
                   Text(
-                    'great_job'.tr,
-                    style: TextStyle(color: GameColors.textDark, fontSize: 36, fontWeight: FontWeight.w900, letterSpacing: Get.locale?.languageCode == 'km' ? 0 : 2),
+                    'game_over'.tr,
+                    style: TextStyle(
+                      color: GameColors.softRed,
+                      fontSize: 32,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: Get.locale?.languageCode == 'km' ? 0 : 4,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // ── Large gradient score ──
+                  Text(
+                    'score'.tr.toUpperCase(),
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.45),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 2,
+                    ),
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    'you_practiced_khmer_letters'.tr,
-                    style: const TextStyle(color: GameColors.textMuted, fontSize: 16, fontWeight: FontWeight.w600),
+                  ShaderMask(
+                    shaderCallback: (bounds) => const LinearGradient(
+                      colors: [GameColors.purple, GameColors.teal],
+                    ).createShader(bounds),
+                    child: Text(
+                      '${controller.score.value}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 56,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
                   ),
-                  const SizedBox(height: 32),
-                  StatRow(label: 'score'.tr, value: '${controller.score.value}', color: GameColors.gold),
-                  StatRow(label: 'best_combo'.tr, value: '${controller.bestCombo.value}x', color: GameColors.orange),
-                  StatRow(label: 'accuracy'.tr, value: '${controller.accuracy.toStringAsFixed(1)}%', color: GameColors.teal),
-                  StatRow(label: 'answered'.tr, value: '${controller.correctCount.value}/${controller.totalAnswered.value}', color: GameColors.green),
-                  
+
+                  // ── High score badge ──
                   if (controller.score.value >= controller.highScore.value && controller.score.value > 0)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      child: Text('new_high_score'.tr, style: TextStyle(color: GameColors.pink, fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: Get.locale?.languageCode == 'km' ? 0 : 1)),
+                    Container(
+                      margin: const EdgeInsets.only(top: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: GameColors.gold.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: GameColors.gold.withValues(alpha: 0.3)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.emoji_events_rounded, color: GameColors.gold, size: 16),
+                          const SizedBox(width: 6),
+                          Text(
+                            'new_high_score'.tr.toUpperCase(),
+                            style: TextStyle(
+                              color: GameColors.gold,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: Get.locale?.languageCode == 'km' ? 0 : 1,
+                            ),
+                          ),
+                        ],
+                      ),
                     )
                   else
-                    const SizedBox(height: 24),
-                  
+                    const SizedBox(height: 8),
+
+                  const SizedBox(height: 24),
+
+                  // ── Stats grid ──
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.05),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _resultStat('🏆', 'best_score'.tr, '${controller.highScore.value}'),
+                            ),
+                            Expanded(
+                              child: _resultStat('🪙', 'coins_earned'.tr, '${controller.earnedCoins.value}'),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _resultStat('🔥', 'best_combo'.tr, '${controller.bestCombo.value}x'),
+                            ),
+                            Expanded(
+                              child: _resultStat('🎯', 'accuracy'.tr, '${controller.accuracy.toStringAsFixed(0)}%'),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        // Answered breakdown
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            _ratingChip('answered'.tr, '${controller.totalAnswered.value}', GameColors.teal),
+                            _ratingChip('correct'.tr, '${controller.correctCount.value}', GameColors.green),
+                            _ratingChip('wrong'.tr, '${controller.wrongCount.value}', GameColors.softRed),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 28),
+
+                  // ── Action buttons ──
                   Row(
                     children: [
                       Expanded(
-                        child: GameActionButton(
-                          label: 'home'.tr, icon: Icons.home_rounded,
-                          color: GameColors.pink, onTap: () => Get.back(),
+                        child: _gameOverButton(
+                          label: 'home'.tr,
+                          icon: Icons.home_rounded,
+                          color: Colors.white.withValues(alpha: 0.08),
+                          textColor: Colors.white70,
+                          onTap: () => Get.back(),
                         ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: GameActionButton(
-                          label: 'play_again'.tr, icon: Icons.play_arrow_rounded,
+                        child: _gameOverButton(
+                          label: 'play_again'.tr,
+                          icon: Icons.replay_rounded,
                           color: GameColors.teal,
+                          textColor: Colors.white,
                           onTap: () {
                             controller.startGame();
                             controller.pauseGame();
@@ -1127,9 +1218,98 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 20),
                 ],
               ),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _resultStat(String emoji, String label, String value) {
+    return Column(
+      children: [
+        Text(emoji, style: const TextStyle(fontSize: 20)),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.4),
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _ratingChip(String label, String value, Color color) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: TextStyle(
+            color: color,
+            fontSize: 18,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: TextStyle(
+            color: color.withValues(alpha: 0.7),
+            fontSize: 10,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _gameOverButton({
+    required String label,
+    required IconData icon,
+    required Color color,
+    required Color textColor,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Ink(
+          height: 52,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: textColor, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: TextStyle(
+                  color: textColor,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
           ),
         ),
       ),

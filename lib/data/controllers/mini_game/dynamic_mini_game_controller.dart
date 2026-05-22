@@ -385,11 +385,8 @@ class DynamicMiniGameController extends GetxController
       _box.write(_highScoreKey, highScore.value);
     }
 
-    // Calculate coins: 1 coin per 10 score
-    final coins = (score.value / 10).floor();
-    earnedCoins.value = coins;
-
-    // Submit progress to backend
+    // Submit progress to backend (coins accumulated during gameplay)
+    final coins = earnedCoins.value;
     if (coins > 0 || score.value > 0) {
       _worldService.submitExerciseBatch(
         [], // No specific exercise attempts for endless minigames
@@ -629,82 +626,7 @@ class DynamicMiniGameController extends GetxController
     }
   }
 
-  /// Forces a specific difficulty and re-evaluates the current challenge state.
-  /// Used primarily for showcasing/debugging via the UI toggle button.
-  void forceDifficultyForShowcase(MiniGameDifficulty newDiff) {
-    difficulty.value = newDiff;
 
-    final game = currentMiniGame.value;
-    final challenge = currentChallenge.value;
-    if (game == null || challenge == null) return;
-
-    // 1. Re-generate options if multiple choice
-    if (currentInputType.value == 'multiple_choice') {
-      final pool =
-          (game.config?['pool'] as List<dynamic>?)
-              ?.map((e) => e.toString())
-              .toList() ??
-          [];
-      List<String> effectivePool;
-      if (game.displayType == 'object_count') {
-        effectivePool = ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'];
-      } else if (game.displayType == 'math_equation' ||
-          game.displayType == 'question') {
-        effectivePool = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
-      } else {
-        effectivePool = pool;
-      }
-      final options = ChallengeGenerator.generateOptions(
-        target: challenge.target,
-        pool: effectivePool,
-        difficulty: difficulty.value,
-      );
-      currentOptions.assignAll(options);
-    }
-
-    // 1b. Re-generate pairs if drag and drop
-    if (currentInputType.value == 'drag_and_drop') {
-      final pool =
-          (game.config?['pool'] as List<dynamic>?)
-              ?.map((e) => e.toString())
-              .toList() ??
-          [];
-      final pairs = ChallengeGenerator.generateDragMatchPairs(
-        pool: pool,
-        difficulty: difficulty.value,
-        displayType: game.displayType,
-      );
-      currentDragPairs.assignAll(pairs);
-      final shuffled = List<DragMatchPair>.from(pairs)..shuffle(Random());
-      shuffledDragTargets.assignAll(shuffled);
-      selectedDragSource.value = null;
-    }
-
-    // 2. Restart prompt visibility logic
-    mediumTimerCtrl.stop();
-    if (difficulty.value == MiniGameDifficulty.easy) {
-      isPromptVisible.value = true;
-    } else if (difficulty.value == MiniGameDifficulty.medium) {
-      isPromptVisible.value = true;
-      mediumTimerCtrl.reverse(from: 1.0);
-    } else {
-      isPromptVisible.value = false;
-      replayPromptAudio();
-    }
-
-    // 3. Update drawing board guide
-    final isNumericDisplay =
-        game.displayType == 'math_equation' || game.displayType == 'question';
-    if (currentInputType.value == 'drawing_board' && !isNumericDisplay) {
-      if (showShadowGuide) {
-        setGuideForCharacter(challenge.target);
-      } else {
-        letterSubpathsNorm.clear();
-        strokeStrokesNorm.clear();
-        anim.setGuideFromPx(strokesPx: const []);
-      }
-    }
-  }
 
   void replayPromptAudio() {
     final game = currentMiniGame.value;
@@ -1285,6 +1207,11 @@ class DynamicMiniGameController extends GetxController
     // Calculate score with combo multiplier
     final comboMultiplier = 1.0 + (combo.value - 1) * 0.1;
     final earnedScore = (10 * comboMultiplier).round();
+
+    // Calculate coins earned for this answer (combo-based)
+    // Base: 1 coin, +1 per 2 combo levels → combo 1-2 = 1, 3-4 = 2, 5-6 = 3, etc.
+    final coinsForAnswer = (1 + (combo.value - 1) ~/ 2).clamp(1, 999);
+    earnedCoins.value += coinsForAnswer;
 
     // Add time
     timeLeft.value = (timeLeft.value + timeRewardCorrect).clamp(

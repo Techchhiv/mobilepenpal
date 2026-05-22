@@ -1007,7 +1007,9 @@ class _MiniGamePageState extends State<MiniGamePage>
         'miniGames': selectedGamesList,
         'inputType': _selectedInputType.value, // null = auto/random
       },
-    );
+    )?.then((_) {
+      setState(() {});
+    });
   }
 }
 

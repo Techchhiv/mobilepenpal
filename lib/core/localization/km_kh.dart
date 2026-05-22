@@ -492,6 +492,11 @@ final Map<String, String> kmKH = {
   'play_exclamation': 'លេង!',
   'combo_streak': 'ឈ្នះ @combo ដងជាប់គ្នា!',
   'go_exclamation': 'ចាប់ផ្ដើម!',
+  'game_over': 'ហ្គេមចប់',
+  'coins_earned': 'កាក់ដែលទទួលបាន',
+  'best_score': 'ពិន្ទុល្អបំផុត',
+  'correct': 'ត្រូវ',
+  'wrong': 'ខុស',
 
   // ===== Quest & Challenge =====
   'daily_quests': 'បេសកកម្មប្រចាំថ្ងៃ',
