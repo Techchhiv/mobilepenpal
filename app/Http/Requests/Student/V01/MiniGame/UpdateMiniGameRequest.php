@@ -37,7 +37,9 @@ class UpdateMiniGameRequest extends FormRequest
     {
         return [
             'title' => 'sometimes|required|string|max:255',
+            'title_kh' => 'sometimes|nullable|string|max:255',
             'description' => 'sometimes|nullable|string',
+            'description_kh' => 'sometimes|nullable|string',
             'display_type' => 'sometimes|required|string|max:255',
             'input_type' => 'sometimes|required|string|max:255',
             'is_active' => 'sometimes|boolean',

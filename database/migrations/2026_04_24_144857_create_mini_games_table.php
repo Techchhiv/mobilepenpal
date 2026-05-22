@@ -15,7 +15,9 @@ return new class extends Migration {
         Schema::create('mini_games', function (Blueprint $table) {
             $table->id();
             $table->string('title');
+            $table->string('title_kh')->nullable();
             $table->text('description')->nullable();
+            $table->text('description_kh')->nullable();
             $table->string('display_type');
             $table->string('input_type');
             $table->boolean('is_active')->default(true);

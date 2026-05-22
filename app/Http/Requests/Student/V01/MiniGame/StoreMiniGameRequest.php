@@ -36,7 +36,9 @@ class StoreMiniGameRequest extends FormRequest
     {
         return [
             'title' => 'required|string|max:255',
+            'title_kh' => 'nullable|string|max:255',
             'description' => 'nullable|string',
+            'description_kh' => 'nullable|string',
             'display_type' => 'required|string|max:255',
             'input_type' => 'required|string|max:255',
             'is_active' => 'sometimes|boolean',

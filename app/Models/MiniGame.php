@@ -11,7 +11,9 @@ class MiniGame extends Model
 
     protected $fillable = [
         'title',
+        'title_kh',
         'description',
+        'description_kh',
         'display_type',
         'input_type',
         'is_active',
