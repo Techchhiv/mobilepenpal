@@ -4,6 +4,14 @@ import { Icon } from "@iconify/react";
 import MasterLayout from "../../../masterLayout/MasterLayout";
 import API from "../../../helper/api";
 
+const SETTINGS_DEFAULTS = {
+    price: 5.0,
+    discount: 50,
+    billing_cycle: "month",
+    contact_phone: "+855 935 248 60",
+    contact_email: "nginkimlong@gmail.com",
+};
+
 export default function UserSubscriptionsPage() {
     const [students, setStudents] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -15,6 +23,12 @@ export default function UserSubscriptionsPage() {
     const [modal, setModal] = useState(null);
     const [plan, setPlan] = useState("monthly");
     const [amount, setAmount] = useState("");
+
+    // --- Settings modal state ---
+    const [showSettings, setShowSettings] = useState(false);
+    const [settingsLoading, setSettingsLoading] = useState(false);
+    const [settingsSaving, setSettingsSaving] = useState(false);
+    const [settings, setSettings] = useState({ ...SETTINGS_DEFAULTS });
 
     const load = async () => {
         setLoading(true);
@@ -35,6 +49,39 @@ export default function UserSubscriptionsPage() {
     const flash = (text, isError = false) => {
         (isError ? setErr : setMsg)(text);
         setTimeout(() => (isError ? setErr("") : setMsg("")), 3000);
+    };
+
+    // --- Settings helpers ---
+    const loadSettings = async () => {
+        setSettingsLoading(true);
+        try {
+            const res = await API.get("admin/system-settings/subscription");
+            const s = res.data?.data?.settings || {};
+            setSettings({ ...SETTINGS_DEFAULTS, ...s });
+        } catch {
+            setSettings({ ...SETTINGS_DEFAULTS });
+        } finally {
+            setSettingsLoading(false);
+        }
+    };
+
+    const saveSettings = async (e) => {
+        e.preventDefault();
+        setSettingsSaving(true);
+        try {
+            await API.post("admin/system-settings/subscription", { value: settings });
+            flash("Subscription settings saved successfully");
+            setShowSettings(false);
+        } catch (e) {
+            flash(e?.response?.data?.message || "Failed to save settings", true);
+        } finally {
+            setSettingsSaving(false);
+        }
+    };
+
+    const openSettings = () => {
+        setShowSettings(true);
+        loadSettings();
     };
 
     const handleActivate = async (e) => {
@@ -86,6 +133,14 @@ export default function UserSubscriptionsPage() {
                         <div className="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
                             <h6 className="mb-0">All Public Users</h6>
                             <div className="d-flex align-items-center gap-2">
+                                <button
+                                    type="button"
+                                    className="btn btn-outline-primary btn-sm d-inline-flex align-items-center gap-1"
+                                    onClick={openSettings}
+                                >
+                                    <Icon icon="mdi:cog" />
+                                    Configure Pricing
+                                </button>
                                 <input
                                     className="form-control"
                                     placeholder="Search users…"
@@ -286,6 +341,181 @@ export default function UserSubscriptionsPage() {
                                     </button>
                                 </div>
                             </form>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Configure Pricing Settings Modal */}
+            {showSettings && (
+                <div
+                    className="modal d-block"
+                    tabIndex={-1}
+                    style={{ background: "rgba(0,0,0,0.5)" }}
+                    onClick={(e) => {
+                        if (e.target === e.currentTarget) setShowSettings(false);
+                    }}
+                >
+                    <div className="modal-dialog modal-dialog-centered">
+                        <div className="modal-content">
+                            <div className="modal-header">
+                                <h5 className="modal-title d-flex align-items-center gap-2">
+                                    <Icon icon="mdi:cog" />
+                                    Subscription Settings
+                                </h5>
+                                <button
+                                    type="button"
+                                    className="btn-close"
+                                    onClick={() => setShowSettings(false)}
+                                />
+                            </div>
+                            {settingsLoading ? (
+                                <div className="modal-body text-center py-5">
+                                    <div className="spinner-border text-primary" role="status" />
+                                    <p className="mt-2 text-muted">Loading settings…</p>
+                                </div>
+                            ) : (
+                                <form onSubmit={saveSettings}>
+                                    <div className="modal-body row g-3">
+                                        <div className="col-12 col-sm-6">
+                                            <label className="form-label">Price ($)</label>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                step="0.01"
+                                                className="form-control"
+                                                value={settings.price}
+                                                onChange={(e) =>
+                                                    setSettings((s) => ({
+                                                        ...s,
+                                                        price: parseFloat(e.target.value) || 0,
+                                                    }))
+                                                }
+                                                required
+                                            />
+                                            <div className="form-text">Original price before discount</div>
+                                        </div>
+                                        <div className="col-12 col-sm-6">
+                                            <label className="form-label">Discount (%)</label>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                max="100"
+                                                step="1"
+                                                className="form-control"
+                                                value={settings.discount}
+                                                onChange={(e) =>
+                                                    setSettings((s) => ({
+                                                        ...s,
+                                                        discount: parseInt(e.target.value) || 0,
+                                                    }))
+                                                }
+                                                required
+                                            />
+                                            <div className="form-text">Set 0 for no discount</div>
+                                        </div>
+                                        <div className="col-12 col-sm-6">
+                                            <label className="form-label">Billing Cycle</label>
+                                            <select
+                                                className="form-select"
+                                                value={settings.billing_cycle}
+                                                onChange={(e) =>
+                                                    setSettings((s) => ({
+                                                        ...s,
+                                                        billing_cycle: e.target.value,
+                                                    }))
+                                                }
+                                            >
+                                                <option value="month">Monthly</option>
+                                                <option value="year">Yearly</option>
+                                            </select>
+                                        </div>
+                                        <div className="col-12 col-sm-6">
+                                            <label className="form-label">Contact Phone</label>
+                                            <input
+                                                type="text"
+                                                className="form-control"
+                                                value={settings.contact_phone}
+                                                onChange={(e) =>
+                                                    setSettings((s) => ({
+                                                        ...s,
+                                                        contact_phone: e.target.value,
+                                                    }))
+                                                }
+                                                required
+                                            />
+                                        </div>
+                                        <div className="col-12">
+                                            <label className="form-label">Contact Email</label>
+                                            <input
+                                                type="email"
+                                                className="form-control"
+                                                value={settings.contact_email}
+                                                onChange={(e) =>
+                                                    setSettings((s) => ({
+                                                        ...s,
+                                                        contact_email: e.target.value,
+                                                    }))
+                                                }
+                                                required
+                                            />
+                                        </div>
+
+                                        {/* Live Preview */}
+                                        <div className="col-12">
+                                            <div className="alert alert-light border mb-0">
+                                                <small className="fw-semibold text-muted d-block mb-1">Preview</small>
+                                                <div className="d-flex align-items-end gap-2">
+                                                    {settings.discount > 0 && (
+                                                        <span>
+                                                            <span className="badge bg-danger-focus text-danger-main me-1">
+                                                                {settings.discount}% OFF
+                                                            </span>
+                                                            <span className="text-muted text-decoration-line-through">
+                                                                ${Number(settings.price).toFixed(2)}
+                                                            </span>
+                                                        </span>
+                                                    )}
+                                                    <span className="fw-bold text-primary fs-5">
+                                                        $
+                                                        {(
+                                                            settings.price *
+                                                            (1 - settings.discount / 100)
+                                                        ).toFixed(2)}{" "}
+                                                        / {settings.billing_cycle === "year" ? "year" : "month"}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="modal-footer">
+                                        <button
+                                            type="button"
+                                            className="btn btn-light"
+                                            onClick={() => setShowSettings(false)}
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            className="btn btn-primary d-inline-flex align-items-center justify-content-center"
+                                            disabled={settingsSaving}
+                                        >
+                                            {settingsSaving ? (
+                                                <>
+                                                    <span className="spinner-border spinner-border-sm me-1" />
+                                                    Saving…
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Icon icon="mdi:content-save" className="me-1" />
+                                                    Save Settings
+                                                </>
+                                            )}
+                                        </button>
+                                    </div>
+                                </form>
+                            )}
                         </div>
                     </div>
                 </div>
