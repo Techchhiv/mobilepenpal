@@ -7,6 +7,8 @@ import 'package:mobilepenpal/presentation/screens/home/qr_scanner_page.dart';
 import 'package:mobilepenpal/presentation/widgets/home/parent_summary_page.dart';
 import 'package:mobilepenpal/presentation/widgets/home/subscribe_modal.dart';
 import 'package:mobilepenpal/presentation/widgets/input_modal.dart';
+import 'package:mobilepenpal/core/utils/report_format.dart';
+import 'package:mobilepenpal/presentation/widgets/home/subscribe_modal.dart';
 import 'package:shimmer/shimmer.dart';
 
 class ParentHome extends StatelessWidget {

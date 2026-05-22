@@ -44,6 +44,13 @@ class HomeController extends GetxController {
   var monthlySummary = Rxn<MonthlySummary>();
   var selectedMonth = ''.obs;
 
+  // Subscription settings (dynamic from backend)
+  var subscriptionPrice = 5.0.obs;
+  var subscriptionDiscount = 50.obs;
+  var subscriptionBillingCycle = 'month'.obs;
+  var contactPhone = '+855 935 248 60'.obs;
+  var contactEmail = 'nginkimlong@gmail.com'.obs;
+
   String get avatarUrl => student.value?.avatar ?? '';
 
   bool get isAdventureUnlocked => isConsonantsWorldCompleted;
@@ -95,6 +102,7 @@ class HomeController extends GetxController {
     }
 
     fetchStudentProfile();
+    fetchSubscriptionSettings();
   }
 
   Future<void> fetchStudentProfile() async {
@@ -414,6 +422,7 @@ class HomeController extends GetxController {
     isLoading.value = true;
     try {
       await fetchStudentProfile();
+      await fetchSubscriptionSettings();
 
       if (currentMode.value == 'parent') {
         if (hasSchool) {
@@ -430,6 +439,27 @@ class HomeController extends GetxController {
       }
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  Future<void> fetchSubscriptionSettings() async {
+    try {
+      final res = await _homeService.getSubscriptionSettings();
+      if (res.code == 200 && res.data != null) {
+        final s = res.data!;
+        subscriptionPrice.value = (s['price'] is num)
+            ? (s['price'] as num).toDouble()
+            : double.tryParse(s['price']?.toString() ?? '') ?? 5.0;
+        subscriptionDiscount.value = (s['discount'] is num)
+            ? (s['discount'] as num).toInt()
+            : int.tryParse(s['discount']?.toString() ?? '') ?? 50;
+        subscriptionBillingCycle.value =
+            s['billing_cycle']?.toString() ?? 'month';
+        contactPhone.value = s['contact_phone']?.toString() ?? '+855 935 248 60';
+        contactEmail.value = s['contact_email']?.toString() ?? 'nginkimlong@gmail.com';
+      }
+    } catch (_) {
+      // Keep defaults on error
     }
   }
 

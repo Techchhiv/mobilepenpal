@@ -230,4 +230,17 @@ class HomeService {
       return ApiResponse<Classroom>(code: 500, message: e.toString());
     }
   }
+
+  Future<ApiResponse<Map<String, dynamic>>> getSubscriptionSettings() async {
+    final result = await _apiClient.request<Map<String, dynamic>>(
+      method: 'GET',
+      path: HomeEndpoints.subscriptionSettings,
+      fromData: (data) {
+        final settings = data['settings'];
+        if (settings is Map<String, dynamic>) return settings;
+        return <String, dynamic>{};
+      },
+    );
+    return result;
+  }
 }

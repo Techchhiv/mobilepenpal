@@ -1,10 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 
-/// Utility that compares a user's raw drawing strokes against the
-/// reference / template strokes and returns a human-readable hint
-/// describing what they drew incorrectly.
-///
 /// Checks are run in priority order – the first failing check wins:
 ///   1. Stroke count
 ///   2. Out-of-bounds (drawing far from the guide shadow)
@@ -14,16 +10,13 @@ class StrokeFeedbackUtil {
   StrokeFeedbackUtil._();
 
   /// How much of the drawing must be inside the shadow (0.0 to 1.0).
-  /// means 80% of the user's drawing points must be within the shadow area.
-  static const double minOverlapRatio = 0.80;
+  static const double minOverlapRatio = 0.95;
 
   /// How much of the SHADOW must be covered by the user's drawing (0.0 to 1.0).
-  /// means they must draw over at least 70% of the template's length.
   static const double minCoverageRatio = 0.95;
 
   /// The thickness of the shadow area relative to the board size.
-  /// We relax this slightly so wobbly drawings don't trigger "out of bounds".
-  static const double allowedDistanceRatio = 0.10;
+  static const double allowedDistanceRatio = 0.065;
 
   static String? getFeedback({
     required List<List<Map<String, dynamic>>> userRawStrokes,

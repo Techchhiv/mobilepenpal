@@ -122,120 +122,135 @@ class SubscribeModal extends StatelessWidget {
   /// Content shown to public / general users (no school).
   /// They can subscribe directly.
   Widget _buildPublicUserContent() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Text(
-          'subscription'.tr,
-          style: const TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.w900,
-            color: Colors.black87,
-          ),
-        ),
+    final homeController = Get.find<HomeController>();
 
-        const SizedBox(height: 24),
+    return Obx(() {
+      final price = homeController.subscriptionPrice.value;
+      final discount = homeController.subscriptionDiscount.value;
+      final billingCycle = homeController.subscriptionBillingCycle.value;
+      final phone = homeController.contactPhone.value;
+      final email = homeController.contactEmail.value;
 
-        // Logo placeholder
-        Container(
-          width: 80,
-          height: 80,
-          decoration: BoxDecoration(
-            color: Colors.blue.withValues(alpha: 0.1),
-            shape: BoxShape.circle,
-          ),
-          child: const Icon(
-            Icons.workspace_premium_rounded,
-            size: 40,
-            color: Colors.blue,
-          ),
-        ),
+      final discountedPrice = price * (1 - discount / 100);
+      final hasDiscount = discount > 0;
 
-        const SizedBox(height: 20),
-
-        // Pricing
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            // Original price crossed out
-            Column(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.red.shade100,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    "50% OFF",
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.red.shade700,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 2),
-                const Text(
-                  "\$5.0",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.grey,
-                    decoration: TextDecoration.lineThrough,
-                  ),
-                ),
-              ],
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(
+            'subscription'.tr,
+            style: const TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w900,
+              color: Colors.black87,
             ),
-            const SizedBox(width: 8),
+          ),
 
-            // Discounted price
-            Text(
-              "\$2.5 / ${'month'.tr}",
-              style: const TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.w900,
-                color: Colors.blue,
-              ),
+          const SizedBox(height: 24),
+
+          // Logo placeholder
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              color: Colors.blue.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
             ),
-          ],
-        ),
-
-        const SizedBox(height: 24),
-
-        // Contact Information section
-        Text(
-          'contact_information'.tr,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w800,
-            color: Colors.black87,
+            child: const Icon(
+              Icons.workspace_premium_rounded,
+              size: 40,
+              color: Colors.blue,
+            ),
           ),
-        ),
 
-        const SizedBox(height: 12),
+          const SizedBox(height: 20),
 
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.grey.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: const Column(
+          // Pricing
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              _ContactRow(icon: Icons.phone, text: "+855 935 248 60"),
-              SizedBox(height: 8),
-              _ContactRow(icon: Icons.email, text: "nginkimlong@gmail.com"),
+              if (hasDiscount) ...[
+                // Original price crossed out
+                Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade100,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        "$discount% OFF",
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.red.shade700,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      "\$${price.toStringAsFixed(1)}",
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.grey,
+                        decoration: TextDecoration.lineThrough,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(width: 8),
+              ],
+
+              // Discounted price (or full price if no discount)
+              Text(
+                "\$${discountedPrice.toStringAsFixed(1)} / ${billingCycle.tr}",
+                style: const TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.blue,
+                ),
+              ),
             ],
           ),
-        ),
-      ],
-    );
+
+          const SizedBox(height: 24),
+
+          // Contact Information section
+          Text(
+            'contact_information'.tr,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+              color: Colors.black87,
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.grey.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              children: [
+                _ContactRow(icon: Icons.phone, text: phone),
+                const SizedBox(height: 8),
+                _ContactRow(icon: Icons.email, text: email),
+              ],
+            ),
+          ),
+        ],
+      );
+    });
   }
 }
 

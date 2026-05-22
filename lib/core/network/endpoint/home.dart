@@ -20,5 +20,8 @@ class HomeEndpoints {
   static const String classrooms = '$_base/classrooms';
   static const String joinClassroom  = '$_base/classrooms/join';
 
+  // System Settings
+  static const String subscriptionSettings = '$_base/system-settings/subscription';
+
   static String getClassroomById(int id) => '$classrooms/$id';
 }

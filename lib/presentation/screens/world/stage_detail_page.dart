@@ -529,16 +529,21 @@ class StageDetailPage extends GetView<StageController> {
         ) {
           final isFilled = index < left;
           return Padding(
-            padding: EdgeInsets.only(left: 2.0),
-            child: Icon(
-              isFilled ? Icons.favorite : Icons.favorite_border,
-              color: Colors.redAccent,
-              size: 26,
-              shadows: [
-                Shadow(
-                  color: Colors.black26,
-                  offset: Offset(0, 2),
-                  blurRadius: 4,
+            padding: const EdgeInsets.only(left: 4.0),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                const Icon(
+                  Icons.favorite,
+                  color: Colors.white,
+                  size: 28,
+                ),
+                Icon(
+                  Icons.favorite,
+                  color: isFilled
+                      ? Colors.redAccent
+                      : Colors.grey.shade400,
+                  size: 24,
                 ),
               ],
             ),
@@ -598,132 +603,138 @@ class StageDetailPage extends GetView<StageController> {
                           scale = 1.0;
                       }
 
-                      return AnimatedScale(
-                        scale: scale,
-                        duration: const Duration(milliseconds: 150),
-                        curve: Curves.easeOut,
-                        child: Transform.translate(
-                          offset: Offset(dx, 0),
-                          child: Stack(
-                            alignment: Alignment.center,
-                            clipBehavior: Clip.none,
-                            children: [
-                              Positioned(
-                                top: -30,
-                                right: 12,
-                                child: IgnorePointer(child: _buildAttemptsIndicator()),
+                      return Stack(
+                        alignment: Alignment.center,
+                        clipBehavior: Clip.none,
+                        children: [
+                          AnimatedScale(
+                            scale: scale,
+                            duration: const Duration(milliseconds: 150),
+                            curve: Curves.easeOut,
+                            child: Transform.translate(
+                              offset: Offset(dx, 0),
+                              child: Stack(
+                                alignment: Alignment.center,
+                                clipBehavior: Clip.none,
+                                children: [
+                                  Positioned(
+                                    top: -30,
+                                    right: 12,
+                                    child: IgnorePointer(child: _buildAttemptsIndicator()),
+                                  ),
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: List.generate(boardsNum, (index) {
+                                      return Padding(
+                                        padding: EdgeInsets.only(
+                                          right: index < boardsNum - 1 ? 6.0 : 0,
+                                        ),
+                                        child: _buildSingleBoard(
+                                          width,
+                                          height,
+                                          index,
+                                          showShadowGuide: showShadowGuide,
+                                        ),
+                                      );
+                                    }),
+                                  ),
+                                ],
                               ),
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: List.generate(boardsNum, (index) {
-                                  return Padding(
-                                    padding: EdgeInsets.only(
-                                      right: index < boardsNum - 1 ? 6.0 : 0,
-                                    ),
-                                    child: _buildSingleBoard(
-                                      width,
-                                      height,
-                                      index,
-                                      showShadowGuide: showShadowGuide,
-                                    ),
-                                  );
-                                }),
+                            ),
+                          ),
+                          Positioned.fill(
+                            child: Align(
+                              alignment: Alignment.center,
+                              child: ConfettiWidget(
+                                confettiController:
+                                    controller.anim.confettiController,
+                                blastDirectionality:
+                                    BlastDirectionality.explosive,
+                                emissionFrequency: 0.01,
+                                numberOfParticles: 25,
+                                maxBlastForce: 30,
+                                minBlastForce: 10,
+                                gravity: 0.25,
+                                shouldLoop: false,
                               ),
-                              Positioned.fill(
-                                child: Align(
-                                  alignment: Alignment.center,
-                                  child: ConfettiWidget(
-                                    confettiController:
-                                        controller.anim.confettiController,
-                                    blastDirectionality:
-                                        BlastDirectionality.explosive,
-                                    emissionFrequency: 0.01,
-                                    numberOfParticles: 25,
-                                    maxBlastForce: 30,
-                                    minBlastForce: 10,
-                                    gravity: 0.25,
-                                    shouldLoop: false,
+                            ),
+                          ),
+                          Obx(() {
+                            final praise = controller.anim.praiseText.value;
+                            final isWrong =
+                                feedbackState == DrawFeedback.wrong;
+                            final isVisible =
+                                feedbackState != DrawFeedback.none &&
+                                praise.isNotEmpty;
+
+                            return Positioned(
+                              top: 50,
+                              child: AnimatedScale(
+                                scale: isVisible ? 1.0 : 0.0,
+                                duration: const Duration(
+                                  milliseconds: 1000,
+                                ),
+                                curve: Curves.elasticOut,
+                                child: AnimatedOpacity(
+                                  opacity: isVisible ? 1.0 : 0.0,
+                                  duration: const Duration(
+                                    milliseconds: 500,
+                                  ),
+                                  child: Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 10,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: isWrong
+                                          ? Colors.redAccent
+                                          : Colors.yellow.shade700,
+                                      borderRadius: BorderRadius.circular(
+                                        16,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withValues(
+                                            alpha: 0.20,
+                                          ),
+                                          blurRadius: 6,
+                                          offset: const Offset(0, 3),
+                                        ),
+                                      ],
+                                      border: Border.all(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.8,
+                                        ),
+                                        width: 2,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          isWrong
+                                              ? Icons.info_outline
+                                              : Icons.star,
+                                          color: Colors.white,
+                                          size: 18,
+                                        ),
+                                        SizedBox(width: 6),
+                                        Text(
+                                          praise,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),
-                              Obx(() {
-                                final praise = controller.anim.praiseText.value;
-                                final isWrong =
-                                    feedbackState == DrawFeedback.wrong;
-                                final isVisible =
-                                    feedbackState != DrawFeedback.none &&
-                                    praise.isNotEmpty;
-
-                                return Positioned(
-                                  top: 50,
-                                  child: AnimatedScale(
-                                    scale: isVisible ? 1.0 : 0.0,
-                                    duration: const Duration(
-                                      milliseconds: 1000,
-                                    ),
-                                    curve: Curves.elasticOut,
-                                    child: AnimatedOpacity(
-                                      opacity: isVisible ? 1.0 : 0.0,
-                                      duration: const Duration(
-                                        milliseconds: 500,
-                                      ),
-                                      child: Container(
-                                        padding: EdgeInsets.symmetric(
-                                          horizontal: 16,
-                                          vertical: 10,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: isWrong
-                                              ? Colors.redAccent
-                                              : Colors.yellow.shade700,
-                                          borderRadius: BorderRadius.circular(
-                                            16,
-                                          ),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: Colors.black.withValues(
-                                                alpha: 0.20,
-                                              ),
-                                              blurRadius: 6,
-                                              offset: const Offset(0, 3),
-                                            ),
-                                          ],
-                                          border: Border.all(
-                                            color: Colors.white.withValues(
-                                              alpha: 0.8,
-                                            ),
-                                            width: 2,
-                                          ),
-                                        ),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Icon(
-                                              isWrong
-                                                  ? Icons.info_outline
-                                                  : Icons.star,
-                                              color: Colors.white,
-                                              size: 18,
-                                            ),
-                                            SizedBox(width: 6),
-                                            Text(
-                                              praise,
-                                              style: const TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.w700,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              }),
-                            ],
-                          ),
-                        ),
+                            );
+                          }),
+                        ],
                       );
                     }),
                   );
