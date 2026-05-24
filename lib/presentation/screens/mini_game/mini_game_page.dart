@@ -456,15 +456,12 @@ class _MiniGamePageState extends State<MiniGamePage>
                           }
                         },
                         child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 8,
-                          ),
+                          padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
                             color: allSelected
                                 ? const Color(0xFFFF9F43).withValues(alpha: 0.1)
                                 : Colors.transparent,
-                            borderRadius: BorderRadius.circular(20),
+                            borderRadius: BorderRadius.circular(12),
                             border: Border.all(
                               color: allSelected
                                   ? const Color(0xFFFF9F43)
@@ -472,31 +469,14 @@ class _MiniGamePageState extends State<MiniGamePage>
                               width: 1.5,
                             ),
                           ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                allSelected
-                                    ? Icons.deselect_rounded
-                                    : Icons.select_all_rounded,
-                                size: 16,
-                                color: allSelected
-                                    ? const Color(0xFFFF9F43)
-                                    : Colors.grey.shade500,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                allSelected ? 'deselect_all'.tr : 'select_all'.tr,
-                                style: TextStyle(
-                                  color: allSelected
-                                      ? const Color(0xFFFF9F43)
-                                      : Colors.grey.shade500,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: Get.locale?.languageCode == 'km' ? 0 : 0.5,
-                                ),
-                              ),
-                            ],
+                          child: Icon(
+                            allSelected
+                                ? Icons.deselect_rounded
+                                : Icons.select_all_rounded,
+                            size: 18,
+                            color: allSelected
+                                ? const Color(0xFFFF9F43)
+                                : Colors.grey.shade500,
                           ),
                         ),
                       ),
@@ -709,16 +689,19 @@ class _MiniGamePageState extends State<MiniGamePage>
       children: [
         Icon(icon, color: Colors.grey.shade400, size: 20),
         const SizedBox(width: 8),
-        Text(
-          text,
-          style: TextStyle(
-            color: Colors.grey.shade500,
-            fontSize: 13,
-            fontWeight: FontWeight.w900,
-            letterSpacing: Get.locale?.languageCode == 'km' ? 0 : 1.5,
+        Expanded(
+          child: Text(
+            text,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: Colors.grey.shade500,
+              fontSize: 13,
+              fontWeight: FontWeight.w900,
+              letterSpacing: Get.locale?.languageCode == 'km' ? 0 : 1.5,
+            ),
           ),
         ),
-        if (trailing != null) ...[const Spacer(), trailing],
+        if (trailing != null) ...[const SizedBox(width: 8), trailing],
       ],
     );
   }
