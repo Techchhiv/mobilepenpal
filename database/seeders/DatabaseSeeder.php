@@ -26,6 +26,7 @@ class DatabaseSeeder extends Seeder
                 // SubscriptionSeeder::class,
                 // TeacherRolesSeeder::class
             StudentExerciseAttemptSeeder::class,
+            SystemSettingSeeder::class,
         ]);
 
         // \App\Models\User::factory(10)->create();

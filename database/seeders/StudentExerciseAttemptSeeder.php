@@ -10,9 +10,7 @@ class StudentExerciseAttemptSeeder extends Seeder
 {
     public function run(): void
     {
-        $studentIds = Student::where('id', 1)
-            ->orWhere('email', 'sok.chea@itc.edu.kh')
-            ->pluck('id');
+        $studentIds = Student::pluck('id');
 
         foreach ($studentIds as $studentId) {
             DB::transaction(function () use ($studentId) {

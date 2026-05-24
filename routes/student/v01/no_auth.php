@@ -16,3 +16,6 @@ Route::prefix('auth')->group(function () {
     Route::post('/login-test', [AuthController::class, 'login_test']);
     Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
 });
+
+Route::get('/system-settings/{key}', [\App\Http\Controllers\Admin\V01\SystemSettingController::class, 'show']);
+

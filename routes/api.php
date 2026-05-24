@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\V01\LevelController;
 use App\Http\Controllers\Admin\V01\ReportController;
 use App\Http\Controllers\Admin\V01\SubscriptionController as AdminSubscriptionController;
+use App\Http\Controllers\Admin\V01\SystemSettingController;
 use App\Http\Controllers\Admin\V01\WorldController;
 use App\Http\Controllers\School\V01\WorldController as SchoolWorldController;
 use Illuminate\Support\Facades\Route;
@@ -84,6 +85,11 @@ Route::middleware('auth:api')->group(function () {
             // Existing routes (you can keep or remove depending on if you want to use the new one exclusively)
             Route::get('/schools/{school}/subscriptions', [SubscriptionController::class, 'index']);
             Route::post('/schools/{school}/subscriptions', [SubscriptionController::class, 'store']);
+        });
+
+        Route::middleware(['permission:menu.subscription'])->group(function () {
+            Route::get('/system-settings/{key}', [SystemSettingController::class, 'show']);
+            Route::post('/system-settings/{key}', [SystemSettingController::class, 'update']);
         });
 
         // Users
