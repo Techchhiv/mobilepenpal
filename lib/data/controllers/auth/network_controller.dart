@@ -21,7 +21,6 @@ class NetworkController extends GetxController {
   DateTime? _lastRouteChangeAt;
   static const Duration _routeCooldown = Duration(seconds: 2);
 
-  int _failStreak = 0;
   static const int _failStreakToOffline = 2;
 
   bool get _isAuthed => box.read('is_logged_in') == true;
@@ -67,7 +66,6 @@ class NetworkController extends GetxController {
       if (connected) {
         _offlineDebounce?.cancel();
         _offlineDebounce = null;
-        _failStreak = 0;
 
         if (!isOnline.value) {
           isOnline.value = true;
@@ -98,18 +96,19 @@ class NetworkController extends GetxController {
   }
 
   Future<bool> _confirmInternetWithStreak({bool force = false}) async {
-    final ok = await _connection.hasInternetAccess;
-
-    if (ok) {
-      _failStreak = 0;
-      return true;
-    }
-    _failStreak++;
-
-    if (_failStreak < _failStreakToOffline) {
-      return true;
+    if (force) {
+      return await _connection.hasInternetAccess;
     }
 
+    for (int i = 0; i < _failStreakToOffline; i++) {
+      final ok = await _connection.hasInternetAccess;
+      if (ok) {
+        return true;
+      }
+      if (i < _failStreakToOffline - 1) {
+        await Future.delayed(const Duration(seconds: 2));
+      }
+    }
     return false;
   }
 

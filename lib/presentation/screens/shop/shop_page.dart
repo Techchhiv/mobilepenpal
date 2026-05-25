@@ -26,7 +26,6 @@ class ShopPage extends StatelessWidget {
         ),
         child: Stack(
           children: [
-            // Decorative background bubbles matching QuestPage color scheme
             _buildBubble(
               top: -40,
               right: -30,
@@ -56,9 +55,7 @@ class ShopPage extends StatelessWidget {
                   child: Column(
                     children: [
                       _buildPointsHeader(),
-                      Expanded(
-                        child: _buildAvatarGrid(context),
-                      ),
+                      Expanded(child: _buildAvatarGrid(context)),
                     ],
                   ),
                 ),
@@ -70,14 +67,12 @@ class ShopPage extends StatelessWidget {
     );
   }
 
-  // Helper to translate avatar names or fallback to original name
   String _getAvatarDisplayName(ShopAvatar avatar) {
     final key = 'avatar_${avatar.id}';
     final translated = key.tr;
     return translated == key ? avatar.name : translated;
   }
 
-  // Decorative bubble painter matching QuestPage style
   Widget _buildBubble({
     double? top,
     double? right,
@@ -131,7 +126,6 @@ class ShopPage extends StatelessWidget {
       ),
       child: Stack(
         children: [
-          // Background decorative bubble pattern
           Positioned(
             right: -20,
             top: -20,
@@ -159,7 +153,6 @@ class ShopPage extends StatelessWidget {
 
           Row(
             children: [
-              // Large Gold Star Coin
               Container(
                 width: 54,
                 height: 54,
@@ -195,26 +188,28 @@ class ShopPage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 2),
-                    Obx(() => Text(
-                          '${controller.totalPoints.value}',
-                          style: const TextStyle(
-                            fontSize: 34,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.white,
-                            height: 1.1,
-                            shadows: [
-                              Shadow(
-                                color: Colors.black12,
-                                offset: Offset(0, 2),
-                                blurRadius: 4,
-                              ),
-                            ],
-                          ),
-                        )),
+                    Obx(
+                      () => Text(
+                        '${controller.totalPoints.value}',
+                        style: const TextStyle(
+                          fontSize: 34,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                          height: 1.1,
+                          shadows: [
+                            Shadow(
+                              color: Colors.black12,
+                              offset: Offset(0, 2),
+                              blurRadius: 4,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
-              // Current Avatar Profile Display
+
               Obx(() {
                 final avatar = controller.currentAvatar;
                 return Container(
@@ -229,7 +224,11 @@ class ShopPage extends StatelessWidget {
                       ),
                     ],
                   ),
-                  child: _buildAvatarCircle(avatar, size: 56, showBorder: false),
+                  child: _buildAvatarCircle(
+                    avatar,
+                    size: 56,
+                    showBorder: false,
+                  ),
                 );
               }),
             ],
@@ -243,7 +242,6 @@ class ShopPage extends StatelessWidget {
     final isTablet = MediaQuery.of(context).size.width >= 600;
 
     return Obx(() {
-      // Force reactive rebuild when unlocked list or selected changes
       controller.unlockedAvatarIds.length;
       controller.selectedAvatarId.value;
 
@@ -290,14 +288,16 @@ class ShopPage extends StatelessWidget {
         decoration: BoxDecoration(
           color: selected
               ? avatar.color
-              : (unlocked ? Colors.white : avatar.color.withValues(alpha: 0.05)),
+              : (unlocked
+                    ? Colors.white
+                    : avatar.color.withValues(alpha: 0.05)),
           borderRadius: BorderRadius.circular(26),
           border: Border.all(
             color: selected
                 ? Colors.white
                 : (unlocked
-                    ? avatar.color.withValues(alpha: 0.3)
-                    : avatar.color.withValues(alpha: 0.15)),
+                      ? avatar.color.withValues(alpha: 0.3)
+                      : avatar.color.withValues(alpha: 0.15)),
             width: selected ? 3.5 : 2.0,
           ),
           boxShadow: [
@@ -323,7 +323,6 @@ class ShopPage extends StatelessWidget {
                   isLocked: !unlocked,
                 ),
 
-                // Lock Overlay (Cute keyhole style or padlock badge)
                 if (!unlocked)
                   Container(
                     width: isTablet ? 86 : 66,
@@ -339,7 +338,6 @@ class ShopPage extends StatelessWidget {
                     ),
                   ),
 
-                // Selected Checkmark Badge (Star style badge)
                 if (selected)
                   Positioned(
                     right: 0,
@@ -348,19 +346,19 @@ class ShopPage extends StatelessWidget {
                       width: isTablet ? 28 : 22,
                       height: isTablet ? 28 : 22,
                       decoration: const BoxDecoration(
-                        color: Colors.white,
+                        color: Color(0xFF16A34A),
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black12,
                             blurRadius: 4,
                             offset: Offset(0, 2),
-                          )
+                          ),
                         ],
                       ),
                       child: Icon(
-                        Icons.star_rounded,
-                        color: Colors.amber.shade700,
+                        Icons.check_rounded,
+                        color: Colors.white,
                         size: isTablet ? 18 : 14,
                       ),
                     ),
@@ -375,16 +373,20 @@ class ShopPage extends StatelessWidget {
                 fontWeight: FontWeight.w900,
                 color: selected
                     ? Colors.white
-                    : (unlocked ? const Color(0xFF3A3A5C) : Colors.grey.shade500),
+                    : (unlocked
+                          ? const Color(0xFF3A3A5C)
+                          : Colors.grey.shade500),
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 6),
             if (!unlocked)
-              // Coin price pill tag
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.amber.shade50,
                   borderRadius: BorderRadius.circular(12),
@@ -420,9 +422,11 @@ class ShopPage extends StatelessWidget {
                 ),
               )
             else
-              // Owned tag
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 3,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.grey.shade100,
                   borderRadius: BorderRadius.circular(12),
@@ -454,16 +458,11 @@ class ShopPage extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         gradient: LinearGradient(
-          colors: [
-            avatar.color.withValues(alpha: 0.75),
-            avatar.color,
-          ],
+          colors: [avatar.color.withValues(alpha: 0.75), avatar.color],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        border: showBorder
-            ? Border.all(color: Colors.white, width: 3.5)
-            : null,
+        border: showBorder ? Border.all(color: Colors.white, width: 3.5) : null,
       ),
       child: avatar.assetPath != null
           ? ClipOval(
@@ -475,7 +474,9 @@ class ShopPage extends StatelessWidget {
                     avatar.assetPath!,
                     fit: BoxFit.contain,
                     errorBuilder: (ctx, err, stack) {
-                      debugPrint('ShopPage: Failed to load asset: ${avatar.assetPath} - Error: $err');
+                      debugPrint(
+                        'ShopPage: Failed to load asset: ${avatar.assetPath} - Error: $err',
+                      );
                       return Icon(
                         avatar.icon ?? Icons.person,
                         color: Colors.white,
@@ -494,11 +495,7 @@ class ShopPage extends StatelessWidget {
     );
   }
 
-  void _onAvatarTap(
-    BuildContext context,
-    ShopAvatar avatar,
-    bool unlocked,
-  ) {
+  void _onAvatarTap(BuildContext context, ShopAvatar avatar, bool unlocked) {
     if (unlocked) {
       _showSelectDialog(context, avatar);
     } else {
@@ -522,14 +519,15 @@ class ShopPage extends StatelessWidget {
               child: Stack(
                 clipBehavior: Clip.none,
                 children: [
-                  // Top pastel background highlight
                   Positioned(
                     top: 0,
                     left: 0,
                     right: 0,
                     height: 120,
                     child: ClipRRect(
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(28),
+                      ),
                       child: Container(
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
@@ -550,12 +548,15 @@ class ShopPage extends StatelessWidget {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Rotating sunburst background behind avatar preview
                         Stack(
                           alignment: Alignment.center,
                           children: [
                             const SunburstWidget(size: 140),
-                            _buildAvatarCircle(avatar, size: 90, showBorder: true),
+                            _buildAvatarCircle(
+                              avatar,
+                              size: 90,
+                              showBorder: true,
+                            ),
                           ],
                         ),
                         const SizedBox(height: 20),
@@ -646,7 +647,9 @@ class ShopPage extends StatelessWidget {
                     right: 0,
                     height: 120,
                     child: ClipRRect(
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(28),
+                      ),
                       child: Container(
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
@@ -671,7 +674,11 @@ class ShopPage extends StatelessWidget {
                           alignment: Alignment.center,
                           children: [
                             const SunburstWidget(size: 140),
-                            _buildAvatarCircle(avatar, size: 90, showBorder: true),
+                            _buildAvatarCircle(
+                              avatar,
+                              size: 90,
+                              showBorder: true,
+                            ),
                           ],
                         ),
                         const SizedBox(height: 20),
@@ -694,7 +701,9 @@ class ShopPage extends StatelessWidget {
                             ),
                             const SizedBox(width: 6),
                             Text(
-                              'points_count'.trParams({'count': '${avatar.price}'}),
+                              'points_count'.trParams({
+                                'count': '${avatar.price}',
+                              }),
                               style: const TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w900,
@@ -737,9 +746,7 @@ class ShopPage extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 6),
                                 Text(
-                                  '${'need_more_points'.trParams({
-                                    'amount': '${avatar.price - controller.totalPoints.value}'
-                                  })}\n\n${'shop_earn_more'.tr}',
+                                  '${'need_more_points'.trParams({'amount': '${avatar.price - controller.totalPoints.value}'})}\n\n${'shop_earn_more'.tr}',
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: Colors.orange.shade700,
@@ -758,14 +765,18 @@ class ShopPage extends StatelessWidget {
                             onTap: () => Navigator.of(context).pop(),
                           ),
                         ] else ...[
-                          Obx(() => Text(
-                                'your_balance'.trParams({'amount': '${controller.totalPoints.value}'}),
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey.shade500,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              )),
+                          Obx(
+                            () => Text(
+                              'your_balance'.trParams({
+                                'amount': '${controller.totalPoints.value}',
+                              }),
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey.shade500,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
                           const SizedBox(height: 24),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -782,11 +793,14 @@ class ShopPage extends StatelessWidget {
                                 ),
                               ),
                               Playful3DButton(
-                                label: 'buy_for'.trParams({'price': '${avatar.price}'}),
+                                label: 'buy_for'.trParams({
+                                  'price': '${avatar.price}',
+                                }),
                                 icon: Icons.shopping_cart_rounded,
                                 color: Colors.green.shade600,
                                 onTap: () async {
-                                  final success = await controller.purchaseAvatar(avatar.id);
+                                  final success = await controller
+                                      .purchaseAvatar(avatar.id);
                                   if (context.mounted) {
                                     Navigator.of(context).pop();
                                     if (success) {
@@ -819,7 +833,6 @@ class ShopPage extends StatelessWidget {
         child: Stack(
           alignment: Alignment.center,
           children: [
-            // Confetti falling behind
             const Positioned.fill(child: ConfettiWidget()),
 
             Container(
@@ -834,7 +847,6 @@ class ShopPage extends StatelessWidget {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Giant rotating golden sunburst behind avatar
                         Stack(
                           alignment: Alignment.center,
                           children: [
@@ -842,7 +854,11 @@ class ShopPage extends StatelessWidget {
                               size: 180,
                               color: Color(0x35FFD700),
                             ),
-                            _buildAvatarCircle(avatar, size: 100, showBorder: true),
+                            _buildAvatarCircle(
+                              avatar,
+                              size: 100,
+                              showBorder: true,
+                            ),
                           ],
                         ),
                         const SizedBox(height: 24),
@@ -856,7 +872,9 @@ class ShopPage extends StatelessWidget {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'congrats_unlock_desc'.trParams({'name': displayName}),
+                          'congrats_unlock_desc'.trParams({
+                            'name': displayName,
+                          }),
                           style: TextStyle(
                             fontSize: 15,
                             color: Colors.grey.shade600,
@@ -888,9 +906,6 @@ class ShopPage extends StatelessWidget {
   }
 }
 
-// ── CUSTOM CHILD-FRIENDLY WIDGETS ───────────────────────────────────
-
-/// Bouncy InkWell alternative that scales down when pressed
 class BouncyGestureDetector extends StatefulWidget {
   final Widget child;
   final VoidCallback onTap;
@@ -917,9 +932,10 @@ class _BouncyGestureDetectorState extends State<BouncyGestureDetector>
       vsync: this,
       duration: const Duration(milliseconds: 100),
     );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.93).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
-    );
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 0.93,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
   }
 
   @override
@@ -937,15 +953,11 @@ class _BouncyGestureDetectorState extends State<BouncyGestureDetector>
         widget.onTap();
       },
       onTapCancel: () => _controller.reverse(),
-      child: ScaleTransition(
-        scale: _scaleAnimation,
-        child: widget.child,
-      ),
+      child: ScaleTransition(scale: _scaleAnimation, child: widget.child),
     );
   }
 }
 
-/// Plays a smooth elastic scale transition upon display (Dialog pop-in)
 class ScaleTransitionWidget extends StatefulWidget {
   final Widget child;
 
@@ -967,10 +979,7 @@ class _ScaleTransitionWidgetState extends State<ScaleTransitionWidget>
       vsync: this,
       duration: const Duration(milliseconds: 320),
     );
-    _animation = CurvedAnimation(
-      parent: _controller,
-      curve: Curves.elasticOut,
-    );
+    _animation = CurvedAnimation(parent: _controller, curve: Curves.elasticOut);
     _controller.forward();
   }
 
@@ -982,14 +991,10 @@ class _ScaleTransitionWidgetState extends State<ScaleTransitionWidget>
 
   @override
   Widget build(BuildContext context) {
-    return ScaleTransition(
-      scale: _animation,
-      child: widget.child,
-    );
+    return ScaleTransition(scale: _animation, child: widget.child);
   }
 }
 
-/// Rotating starburst sunburst backdrop for unlocking dialogs
 class SunburstWidget extends StatefulWidget {
   final double size;
   final Color color;
@@ -1078,7 +1083,6 @@ class StarburstPainter extends CustomPainter {
       oldDelegate.color != color || oldDelegate.rayCount != rayCount;
 }
 
-/// 3D Playful styled button with shadow offsets
 class Playful3DButton extends StatelessWidget {
   final String label;
   final IconData? icon;
@@ -1136,8 +1140,6 @@ class Playful3DButton extends StatelessWidget {
     );
   }
 }
-
-// ── CONFETTI CELEBRATION EFFECT ─────────────────────────────────────
 
 class ConfettiParticle {
   double x;
@@ -1261,9 +1263,12 @@ class ConfettiPainter extends CustomPainter {
       canvas.translate(px, py);
       canvas.rotate(p.rotation);
 
-      // Draw flake
       canvas.drawRect(
-        Rect.fromCenter(center: Offset.zero, width: p.size, height: p.size * 0.65),
+        Rect.fromCenter(
+          center: Offset.zero,
+          width: p.size,
+          height: p.size * 0.65,
+        ),
         paint,
       );
       canvas.restore();

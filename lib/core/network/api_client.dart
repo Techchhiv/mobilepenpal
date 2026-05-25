@@ -111,7 +111,17 @@ class ApiClient {
           fromData ?? (d) => d as T,
         );
       } else {
-        return ApiResponse(code: 500, message: e.message ?? 'Unexpected error');
+        String msg = e.message ?? 'Unexpected error';
+        if (e.type == DioExceptionType.connectionTimeout ||
+            e.type == DioExceptionType.sendTimeout ||
+            e.type == DioExceptionType.receiveTimeout ||
+            e.type == DioExceptionType.connectionError ||
+            msg.contains('SocketException') ||
+            msg.contains('Connection failed') ||
+            msg.contains('Network is unreachable')) {
+          msg = 'network_error'.tr;
+        }
+        return ApiResponse(code: 500, message: msg);
       }
     }
   }

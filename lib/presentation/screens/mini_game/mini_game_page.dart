@@ -39,11 +39,12 @@ class _MiniGamePageState extends State<MiniGamePage>
       duration: const Duration(milliseconds: 3000),
     )..repeat(reverse: true);
 
-    // Initialize selected games
     if (Get.isRegistered<MiniGameHubController>()) {
       final hubCtrl = Get.find<MiniGameHubController>();
       if (hubCtrl.miniGames.isNotEmpty) {
         _selectedGames.addAll(hubCtrl.miniGames.map((e) => e.id));
+      } else if (!hubCtrl.isLoading.value) {
+        hubCtrl.fetchMiniGames();
       }
       ever(hubCtrl.miniGames, (List<MiniGameModel> games) {
         if (_selectedGames.isEmpty && games.isNotEmpty) {
@@ -65,7 +66,6 @@ class _MiniGamePageState extends State<MiniGamePage>
     return Scaffold(
       body: Stack(
         children: [
-          // Background Image
           Positioned.fill(
             child: Image.asset(
               'assets/images/backgrounds/hub_cartoon_background.png',
@@ -73,10 +73,8 @@ class _MiniGamePageState extends State<MiniGamePage>
             ),
           ),
 
-          // Decorative Elements
           _buildDecorations(),
 
-          // Main Content
           SafeArea(
             child: Center(
               child: ConstrainedBox(
@@ -88,7 +86,7 @@ class _MiniGamePageState extends State<MiniGamePage>
                       const SizedBox(height: 16),
                       _buildTopBar(),
                       const Spacer(flex: 1),
-                      _buildLevelSign(),
+                      Obx(() => _buildLevelSign()),
                       const Spacer(flex: 2),
                       _buildCentralPlayArea(),
                       const Spacer(flex: 3),
@@ -131,7 +129,6 @@ class _MiniGamePageState extends State<MiniGamePage>
   Widget _buildTopBar() {
     return Row(
       children: [
-        // Avatar and Player Name Chip
         Expanded(
           child: Container(
             padding: const EdgeInsets.all(6),
@@ -177,7 +174,7 @@ class _MiniGamePageState extends State<MiniGamePage>
           ),
         ),
         const SizedBox(width: 16),
-        // Coin balance
+
         _buildCoinChip(),
       ],
     );
@@ -315,12 +312,20 @@ class _MiniGamePageState extends State<MiniGamePage>
   }
 
   Widget _buildCentralPlayArea() {
+    if (!Get.isRegistered<MiniGameHubController>()) {
+      return const SizedBox.shrink();
+    }
+    final hubCtrl = Get.find<MiniGameHubController>();
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // The big play button
         GestureDetector(
-          onTap: _showGameSelectionModal,
+          onTap: () {
+            if (!hubCtrl.isLoading.value) {
+              _showGameSelectionModal();
+            }
+          },
           child: AnimatedBuilder(
             animation: _pulseCtrl,
             builder: (context, child) {
@@ -342,12 +347,24 @@ class _MiniGamePageState extends State<MiniGamePage>
                       ),
                     ],
                   ),
-                  child: const Center(
-                    child: Icon(
-                      Icons.play_arrow_rounded,
-                      color: Colors.white,
-                      size: 100,
-                    ),
+                  child: Center(
+                    child: Obx(() {
+                      if (hubCtrl.isLoading.value) {
+                        return const SizedBox(
+                          width: 60,
+                          height: 60,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 6,
+                          ),
+                        );
+                      }
+                      return const Icon(
+                        Icons.play_arrow_rounded,
+                        color: Colors.white,
+                        size: 100,
+                      );
+                    }),
                   ),
                 ),
               );
@@ -358,16 +375,20 @@ class _MiniGamePageState extends State<MiniGamePage>
     );
   }
 
-  void _showGameSelectionModal() {
+  Future<void> _showGameSelectionModal() async {
     final hubCtrl = Get.find<MiniGameHubController>();
     if (hubCtrl.miniGames.isEmpty) {
-      Get.snackbar(
-        'oops'.tr,
-        'no_mini_games_available_right_now'.tr,
-        backgroundColor: Colors.redAccent,
-        colorText: Colors.white,
-      );
-      return;
+      await hubCtrl.fetchMiniGames();
+      if (!mounted) return;
+      if (hubCtrl.miniGames.isEmpty) {
+        Get.snackbar(
+          'oops'.tr,
+          'no_mini_games_available_right_now'.tr,
+          backgroundColor: Colors.redAccent,
+          colorText: Colors.white,
+        );
+        return;
+      }
     }
 
     showModalBottomSheet(
@@ -388,7 +409,6 @@ class _MiniGamePageState extends State<MiniGamePage>
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // ── Header ──
               Row(
                 children: [
                   Container(
@@ -434,7 +454,6 @@ class _MiniGamePageState extends State<MiniGamePage>
               ),
               const SizedBox(height: 30),
 
-              // ── Section: Mini Games ──
               _buildSectionLabel(
                 'choose_your_games'.tr,
                 Icons.sports_esports_rounded,
@@ -444,7 +463,6 @@ class _MiniGamePageState extends State<MiniGamePage>
                   return Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Select/Deselect All Button
                       GestureDetector(
                         onTap: () {
                           if (allSelected) {
@@ -481,7 +499,7 @@ class _MiniGamePageState extends State<MiniGamePage>
                         ),
                       ),
                       const SizedBox(width: 10),
-                      // Layout Toggle Button
+
                       GestureDetector(
                         onTap: () => _isDetailView.toggle(),
                         child: Container(
@@ -523,7 +541,6 @@ class _MiniGamePageState extends State<MiniGamePage>
               ),
               const SizedBox(height: 24),
 
-              // ── Section: Input Type ──
               _buildSectionLabel('how_to_play'.tr, Icons.gamepad_rounded),
               const SizedBox(height: 16),
               Obx(() {
@@ -582,7 +599,12 @@ class _MiniGamePageState extends State<MiniGamePage>
                         duration: const Duration(milliseconds: 200),
                         curve: Curves.easeInOut,
                         transform: Matrix4.identity()
-                          ..scaleByDouble(isActive ? 1.15 : 1.0, isActive ? 1.15 : 1.0, 1.0, 1.0),
+                          ..scaleByDouble(
+                            isActive ? 1.15 : 1.0,
+                            isActive ? 1.15 : 1.0,
+                            1.0,
+                            1.0,
+                          ),
                         transformAlignment: Alignment.center,
                         width: 70,
                         height: 70,
@@ -621,7 +643,6 @@ class _MiniGamePageState extends State<MiniGamePage>
               }),
               const SizedBox(height: 32),
 
-              // ── Start button ──
               Obx(
                 () => GestureDetector(
                   onTap: _selectedGames.isEmpty
@@ -669,7 +690,9 @@ class _MiniGamePageState extends State<MiniGamePage>
                                 : Colors.white,
                             fontSize: 20,
                             fontWeight: FontWeight.w900,
-                            letterSpacing: Get.locale?.languageCode == 'km' ? 0 : 1.5,
+                            letterSpacing: Get.locale?.languageCode == 'km'
+                                ? 0
+                                : 1.5,
                           ),
                         ),
                       ],
@@ -714,7 +737,6 @@ class _MiniGamePageState extends State<MiniGamePage>
     );
   }
 
-
   Widget _buildCompactGridView(MiniGameHubController hubCtrl) {
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
@@ -743,7 +765,12 @@ class _MiniGamePageState extends State<MiniGamePage>
                     duration: const Duration(milliseconds: 200),
                     curve: Curves.easeInOut,
                     transform: Matrix4.identity()
-                      ..scaleByDouble(isSelected ? 1.15 : 1.0, isSelected ? 1.15 : 1.0, 1.0, 1.0),
+                      ..scaleByDouble(
+                        isSelected ? 1.15 : 1.0,
+                        isSelected ? 1.15 : 1.0,
+                        1.0,
+                        1.0,
+                      ),
                     transformAlignment: Alignment.center,
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
@@ -760,7 +787,9 @@ class _MiniGamePageState extends State<MiniGamePage>
                             boxShadow: [
                               BoxShadow(
                                 color: isSelected
-                                    ? const Color(0xFF4ECDC4).withValues(alpha: 0.4)
+                                    ? const Color(
+                                        0xFF4ECDC4,
+                                      ).withValues(alpha: 0.4)
                                     : Colors.transparent,
                                 blurRadius: isSelected ? 12 : 0.0,
                                 offset: isSelected
@@ -772,7 +801,8 @@ class _MiniGamePageState extends State<MiniGamePage>
                           child: CircleAvatar(
                             radius: 40,
                             backgroundColor: Colors.white,
-                            child: game.coverImageUrl != null &&
+                            child:
+                                game.coverImageUrl != null &&
                                     game.coverImageUrl!.isNotEmpty
                                 ? Padding(
                                     padding: const EdgeInsets.all(8),
@@ -869,7 +899,6 @@ class _MiniGamePageState extends State<MiniGamePage>
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Cover image or fallback
                     Container(
                       width: 60,
                       height: 60,
@@ -877,7 +906,8 @@ class _MiniGamePageState extends State<MiniGamePage>
                         color: Colors.grey.shade50,
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: game.coverImageUrl != null &&
+                      child:
+                          game.coverImageUrl != null &&
                               game.coverImageUrl!.isNotEmpty
                           ? Padding(
                               padding: const EdgeInsets.all(6),
@@ -891,7 +921,7 @@ class _MiniGamePageState extends State<MiniGamePage>
                           : _buildFallbackIcon(),
                     ),
                     const SizedBox(width: 16),
-                    // Details
+
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -917,11 +947,10 @@ class _MiniGamePageState extends State<MiniGamePage>
                               ),
                             ),
                           ],
-
                         ],
                       ),
                     ),
-                    // Selection indicator checkbox or check circle
+
                     const SizedBox(width: 8),
                     Container(
                       width: 24,
@@ -980,7 +1009,6 @@ class _MiniGamePageState extends State<MiniGamePage>
 
     if (selectedGamesList.isEmpty) return;
 
-    // Increment played count
     final playedCount = _box.read<int>('dynamic_minigame_played_count') ?? 0;
     _box.write('dynamic_minigame_played_count', playedCount + 1);
 
@@ -1036,7 +1064,6 @@ class _FloatingStarState extends State<_FloatingStar>
 
     _setupAnimation();
 
-    // Randomize initial delay before starting
     Future.delayed(Duration(milliseconds: _rand.nextInt(1500)), () {
       if (mounted) _ctrl.forward();
     });
@@ -1080,12 +1107,10 @@ class _FloatingStarState extends State<_FloatingStar>
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
-      // Fallback in case ctrl is not initialized yet
       animation: _ctrl,
       builder: (context, child) {
-        // Gentle floating
         final floatOffset = sin(_ctrl.value * pi * 2) * 15;
-        // Gentle rotation
+
         final rotation = sin(_ctrl.value * pi * 2) * 0.1;
 
         return Positioned(

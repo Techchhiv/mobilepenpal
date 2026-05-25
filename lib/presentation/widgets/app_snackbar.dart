@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:mobilepenpal/data/controllers/auth/network_controller.dart';
+import 'package:mobilepenpal/presentation/routes/app_routes.dart';
 
 class AppSnackbar {
   static final messengerKey = GlobalKey<ScaffoldMessengerState>();
@@ -12,6 +15,13 @@ class AppSnackbar {
   }) {
     final messenger = messengerKey.currentState;
     if (messenger == null) return;
+
+    if (Get.isRegistered<NetworkController>()) {
+      final network = Get.find<NetworkController>();
+      if (!network.isOnline.value && Get.currentRoute != AppRoutes.offline) {
+        return;
+      }
+    }
 
     messenger.clearSnackBars();
 
