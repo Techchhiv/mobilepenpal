@@ -548,4 +548,8 @@ final Map<String, String> enUS = {
   'congrats_unlock_title': 'Yay! Unlocked!',
   'congrats_unlock_desc': 'You have successfully unlocked @name!',
   'great_button': 'Awesome!',
+  'price': 'Price',
+  'your_coins': 'Your Coins',
+  'buy_avatar_confirm': 'Unlock this new friend?',
+  'avatar_equipped_compliment': 'You look amazing with this avatar!',
 };
