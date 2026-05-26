@@ -1,5 +1,7 @@
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
+import 'package:mobilepenpal/data/controllers/settings/setting_controller.dart';
 import 'package:mobilepenpal/data/models/student/student.dart';
 import 'package:mobilepenpal/data/services/home_service.dart';
 
@@ -134,6 +136,12 @@ class UpdateProfileController extends GetxController {
       if (response.code == 200 && response.data != null) {
         student.value = response.data!;
         box.write('student', response.data!.toJson());
+        if (Get.isRegistered<HomeController>()) {
+          Get.find<HomeController>().student.value = response.data!;
+        }
+        if (Get.isRegistered<SettingController>()) {
+          Get.find<SettingController>().student.value = response.data!;
+        }
       } else {
         errorMessage.value = response.message;
         showLoadingStatus.value = false;

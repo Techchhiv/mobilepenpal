@@ -8,6 +8,7 @@ import 'package:mobilepenpal/data/controllers/world/world_controller.dart';
 import 'package:mobilepenpal/data/models/world/world.dart';
 import 'package:mobilepenpal/data/models/world/world_level.dart';
 import 'package:mobilepenpal/presentation/routes/app_routes.dart';
+import 'package:mobilepenpal/presentation/widgets/home/subscribe_modal.dart';
 
 class WorldMap extends StatefulWidget {
   final World world;
@@ -44,8 +45,11 @@ class _WorldMapState extends State<WorldMap> with TickerProviderStateMixin {
   /// Extra padding at the very top so last level isn't glued to edge.
   static const double _topInsetDesign = 250.0;
 
+  /// Cap scaling so tablets don't get oversized spacing / zoomed background.
+  static const double _maxScaleWidth = 500.0;
+
   /// LevelCircle size approximation for centering.
-  static const double _bubbleSize = 72.0;
+  static const double _bubbleSize = 82.0;
 
   late final AnimationController waveCtrl;
   late final AnimationController bounceCtrl;
@@ -109,9 +113,8 @@ class _WorldMapState extends State<WorldMap> with TickerProviderStateMixin {
     super.dispose();
   }
 
-  double _effectiveScreenWidth(double screenWidth) => min(screenWidth, 600.0);
-
-  double _scaleFactor(double screenWidth) => _effectiveScreenWidth(screenWidth) / _tileOriginalWidth;
+  double _scaleFactor(double screenWidth) =>
+      min(screenWidth, _maxScaleWidth) / _tileOriginalWidth;
   double _tileHeight(double screenWidth) =>
       _tileOriginalHeight * _scaleFactor(screenWidth);
 
@@ -202,7 +205,7 @@ class _WorldMapState extends State<WorldMap> with TickerProviderStateMixin {
 
   Future<void> _onLevelTap(WorldLevel level) async {
     if (level.isLockedBySubscription) {
-      _showSnackBar('👑 ${'subscribe_to_unlock'.tr}', const Color(0xFFB8860B));
+      Get.dialog(const SubscribeModal());
       return;
     }
 
@@ -307,15 +310,10 @@ class _WorldMapState extends State<WorldMap> with TickerProviderStateMixin {
       return Positioned.fill(
         child: asset == null
             ? Container(color: Colors.grey.shade200)
-            : Container(
-                decoration: BoxDecoration(
-                  image: DecorationImage(
-                    image: AssetImage(asset),
-                    fit: BoxFit.fitHeight,
-                    repeat: ImageRepeat.repeatX,
-                    alignment: Alignment.bottomCenter,
-                  ),
-                ),
+            : Image.asset(
+                asset,
+                fit: BoxFit.cover,
+                alignment: Alignment.bottomCenter,
               ),
       );
     }
@@ -329,17 +327,14 @@ class _WorldMapState extends State<WorldMap> with TickerProviderStateMixin {
           right: 0,
           bottom: i * tileHeight,
           height: tileHeight,
-          child: Container(
+          child: Image.asset(
+            a,
             width: width,
             height: tileHeight,
-            decoration: BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage(a),
-                fit: BoxFit.fitHeight,
-                repeat: ImageRepeat.repeatX,
-                alignment: Alignment.bottomCenter,
-              ),
-            ),
+            fit: BoxFit.cover,
+            alignment: Alignment.bottomCenter,
+            errorBuilder: (_, __, ___) =>
+                Container(color: Colors.grey.shade200),
           ),
         );
       }),
@@ -436,10 +431,7 @@ class LevelCircle extends StatelessWidget {
     required this.isCurrent,
   });
 
-  bool get _isUnlocked =>
-      level.isUnlocked == true ||
-      level.isUnlocked == 1 ||
-      level.isUnlocked == '1';
+  bool get _isUnlocked => level.isUnlocked;
 
   bool get _isSubLocked => level.isLockedBySubscription == true;
 
@@ -450,24 +442,82 @@ class LevelCircle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool animateThisOne = isCurrent && _isUnlocked && !_isCompleted;
+    final bool isCompleted = _isCompleted;
+    final bool isSubLocked = _isSubLocked;
+    final bool isUnlocked = _isUnlocked;
+    final bool isLocked = !isUnlocked && !isSubLocked;
+    final bool isCurrentActive = isCurrent && isUnlocked && !isCompleted;
 
-    const double ring = 72;
-    const double halo = 90;
+    const double ring = 82;
+    const double halo = 102;
 
     final title = (level.name).trim();
 
-    final Color borderColor = _isSubLocked
-        ? const Color(0xFFB8860B)
-        : (_isCompleted
-              ? Colors.green.shade700
-              : (isCurrent ? AppColors.primary : Colors.blue.shade700));
+    // Design parameters based on states
+    Gradient? backgroundGradient;
+    Color backgroundColor = Colors.white;
+    Gradient? borderGradient;
+    Color borderColor = Colors.grey;
+    double borderWidth = 3.0;
+    Gradient? waveGradient;
+    Color waveColor = AppColors.primary;
 
-    final Color waveColor = _isCompleted
-        ? Colors.green.shade600
-        : Colors.blue.shade600;
+    if (isCurrentActive) {
+      backgroundGradient = null;
+      backgroundColor = Colors.white;
+      borderGradient = const LinearGradient(
+        colors: [Color(0xFF056E6D), Color(0xFF2EC4B6)],
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+      );
+      borderWidth = 4.0;
+      waveGradient = const LinearGradient(
+        colors: [Color(0xFF056E6D), Color(0xFF2EC4B6)],
+        begin: Alignment.bottomCenter,
+        end: Alignment.topCenter,
+      );
+    } else if (isCompleted) {
+      backgroundGradient = const LinearGradient(
+        colors: [Color(0xFF16A34A), Color(0xFF22C55E)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      );
+      borderGradient = const LinearGradient(
+        colors: [Color(0xFFFBBF24), Color(0xFFD97706)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      );
+      borderWidth = 3.0;
+    } else if (isSubLocked) {
+      backgroundGradient = const LinearGradient(
+        colors: [Color(0xFFFEF3C7), Color(0xFFFDE68A), Color(0xFFFCD34D)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      );
+      borderGradient = const LinearGradient(
+        colors: [Color(0xFFFBBF24), Color(0xFFD97706)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      );
+      borderWidth = 3.0;
+    } else if (isUnlocked) {
+      backgroundGradient = const RadialGradient(
+        colors: [Colors.white, Color(0xFFE6F4F1)],
+        radius: 0.8,
+      );
+      borderColor = const Color(0xFF2EC4B6).withValues(alpha: 0.60);
+      borderWidth = 3.0;
+    } else {
+      backgroundGradient = const LinearGradient(
+        colors: [Color(0xFFF3F4F6), Color(0xFFE5E7EB)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      );
+      borderColor = const Color(0xFF9CA3AF);
+      borderWidth = 2.5;
+    }
 
-    final bool animateWave = _isUnlocked && !_isCompleted && !_isSubLocked;
+    final bool animateWave = isUnlocked && !isCompleted && !isSubLocked;
 
     Widget body = SizedBox(
       width: ring,
@@ -477,86 +527,220 @@ class LevelCircle extends StatelessWidget {
         alignment: Alignment.center,
         children: [
           Positioned(
-            top: -52,
+            top: -50,
             child: _LevelTitlePill(
               text: title.isEmpty ? 'Level' : title,
               isCurrent: isCurrent,
-              isUnlocked: _isUnlocked,
-              isSubLocked: _isSubLocked,
+              isUnlocked: isUnlocked,
+              isSubLocked: isSubLocked,
+              isCompleted: isCompleted,
             ),
           ),
 
-          if (animateThisOne) _GlowHalo(size: halo),
+          if (isCurrentActive) _GlowHalo(size: halo, animation: bounce),
 
           Material(
             color: Colors.transparent,
             shape: const CircleBorder(),
-            child: Ink(
+            child: Container(
               width: ring,
               height: ring,
-              child: InkWell(
-                customBorder: const CircleBorder(),
-                onTap: () => onTap(level),
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Positioned.fill(
-                      child: CustomPaint(
-                        painter: _WaveCirclePainter(
-                          wave: animateWave ? wave : null,
-                          amplitudeFactor: waveAmplitudeFactor,
-                          amplitudeMin: waveAmplitudeMin,
-                          wavelengthFactor: waveWavelengthFactor,
-                          progress: _isUnlocked ? _progress : 0.0,
-                          locked: !_isUnlocked && !_isSubLocked,
-                          subLocked: _isSubLocked,
-                          completed: _isCompleted,
-                          waveColor: waveColor,
-                          backgroundColor: Colors.white.withValues(alpha: 0.92),
-                          borderColor: borderColor,
-                        ),
-                      ),
-                    ),
-
-                    if (_isSubLocked)
-                      const Text('👑', style: TextStyle(fontSize: 22))
-                    else if (_isUnlocked)
-                      _NumberBadge(text: '${level.orderIndex}')
-                    else
-                      const Icon(
-                        Icons.lock_rounded,
-                        color: Colors.white,
-                        size: 22,
-                      ),
-
-                    if (_isCompleted)
-                      Positioned(
-                        right: 2,
-                        top: 2,
-                        child: Container(
-                          padding: const EdgeInsets.all(5),
-                          decoration: BoxDecoration(
-                            color: Colors.green.shade600,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 2),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.12),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: ClipOval(
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () => onTap(level),
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Positioned.fill(
+                          child: CustomPaint(
+                            painter: _WaveCirclePainter(
+                              wave: animateWave ? wave : null,
+                              amplitudeFactor: waveAmplitudeFactor,
+                              amplitudeMin: waveAmplitudeMin,
+                              wavelengthFactor: waveWavelengthFactor,
+                              progress: isUnlocked ? _progress : 0.0,
+                              locked: isLocked,
+                              subLocked: isSubLocked,
+                              completed: isCompleted,
+                              backgroundGradient: backgroundGradient,
+                              backgroundColor: backgroundColor,
+                              borderGradient: borderGradient,
+                              borderColor: borderColor,
+                              borderWidth: borderWidth,
+                              waveGradient: waveGradient,
+                              waveColor: waveColor,
+                            ),
                           ),
-                          child: const Icon(
-                            Icons.check,
+                        ),
+
+                        if (isSubLocked)
+                          const Text(
+                            '👑',
+                            style: TextStyle(
+                              fontSize: 30,
+                              shadows: [
+                                Shadow(
+                                  color: Color(0xFFB45309),
+                                  offset: Offset(0, 2),
+                                  blurRadius: 4,
+                                ),
+                              ],
+                            ),
+                          )
+                        else if (isCompleted)
+                          Text(
+                            '${level.orderIndex}',
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
+                              shadows: [
+                                Shadow(
+                                  color: Color(0xFF15803D),
+                                  offset: Offset(0, 2),
+                                  blurRadius: 4,
+                                ),
+                              ],
+                            ),
+                          )
+                        else if (isCurrentActive)
+                          Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                '${level.orderIndex}',
+                                style: const TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w900,
+                                  color: Color(0xFF056E6D),
+                                  shadows: [
+                                    Shadow(color: Colors.white, offset: Offset(-1.5, -1.5), blurRadius: 2),
+                                    Shadow(color: Colors.white, offset: Offset(1.5, -1.5), blurRadius: 2),
+                                    Shadow(color: Colors.white, offset: Offset(-1.5, 1.5), blurRadius: 2),
+                                    Shadow(color: Colors.white, offset: Offset(1.5, 1.5), blurRadius: 2),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 1),
+                              const Icon(
+                                Icons.play_arrow_rounded,
+                                color: Color(0xFF056E6D),
+                                size: 18,
+                                shadows: [
+                                  Shadow(color: Colors.white, offset: Offset(-1, -1), blurRadius: 1),
+                                  Shadow(color: Colors.white, offset: Offset(1, -1), blurRadius: 1),
+                                  Shadow(color: Colors.white, offset: Offset(-1, 1), blurRadius: 1),
+                                  Shadow(color: Colors.white, offset: Offset(1, 1), blurRadius: 1),
+                                ],
+                              ),
+                            ],
+                          )
+                        else if (isUnlocked)
+                          Text(
+                            '${level.orderIndex}',
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w900,
+                              color: Color(0xFF056E6D),
+                            ),
+                          )
+                        else
+                          const Icon(
+                            Icons.lock_rounded,
                             color: Colors.white,
-                            size: 12,
+                            size: 26,
+                            shadows: [
+                              Shadow(
+                                color: Color(0xFF9CA3AF),
+                                offset: Offset(0, 1.5),
+                                blurRadius: 2,
+                              ),
+                            ],
                           ),
-                        ),
-                      ),
-                  ],
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),
           ),
+
+          if (isCompleted)
+            Positioned(
+              right: -2,
+              top: -2,
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFFBBF24), Color(0xFFF59E0B)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.20),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.check_rounded,
+                  color: Colors.white,
+                  size: 14,
+                ),
+              ),
+            ),
+
+          if (isSubLocked)
+            Positioned(
+              right: -2,
+              top: -2,
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF38BDF8), Color(0xFF0284C7)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 1.5),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.15),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: const Text(
+                  '💎',
+                  style: TextStyle(fontSize: 10),
+                ),
+              ),
+            ),
         ],
       ),
     );
 
-    if (!animateThisOne) return body;
+    if (!isCurrentActive) return body;
 
     return AnimatedBuilder(
       animation: bounce,
@@ -569,60 +753,35 @@ class LevelCircle extends StatelessWidget {
   }
 }
 
-class _NumberBadge extends StatelessWidget {
-  final String text;
-  const _NumberBadge({required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 36,
-      height: 36,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.90),
-        shape: BoxShape.circle,
-        border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.15),
-            blurRadius: 8,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontWeight: FontWeight.w900,
-          fontSize: 18,
-          height: 1.0,
-          color: Colors.black,
-        ),
-      ),
-    );
-  }
-}
 
 class _GlowHalo extends StatelessWidget {
   final double size;
-  const _GlowHalo({required this.size});
+  final Animation<double> animation;
+  const _GlowHalo({required this.size, required this.animation});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.buttonPrimary.withValues(alpha: 0.30),
-            blurRadius: 14,
-            spreadRadius: 2,
+    return AnimatedBuilder(
+      animation: animation,
+      builder: (context, child) {
+        final blur = 12.0 + 8.0 * animation.value;
+        final spread = 1.0 + 3.0 * animation.value;
+
+        return Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF2EC4B6).withValues(alpha: 0.40 * (1.0 - animation.value * 0.2)),
+                blurRadius: blur,
+                spreadRadius: spread,
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -632,54 +791,92 @@ class _LevelTitlePill extends StatelessWidget {
   final bool isCurrent;
   final bool isUnlocked;
   final bool isSubLocked;
+  final bool isCompleted;
 
   const _LevelTitlePill({
     required this.text,
     required this.isCurrent,
     required this.isUnlocked,
     required this.isSubLocked,
+    required this.isCompleted,
   });
 
   @override
   Widget build(BuildContext context) {
-    final bg = Colors.white;
-    final borderColor = isSubLocked
-        ? const Color(0xFFB8860B)
-        : (isCurrent
-              ? AppColors.primary
-              : Colors.green.withValues(alpha: 0.10));
-    final fg = (isUnlocked || isSubLocked)
-        ? Colors.black
-        : Colors.black.withValues(alpha: 0.60);
+    final bool isCurrentActive = isCurrent && isUnlocked && !isCompleted;
+
+    Gradient? bgGradient;
+    Color bgColor = Colors.white;
+    Border? border;
+    Color textColor = Colors.black;
+    String displayText = text;
+
+    if (isCurrentActive) {
+      bgGradient = const LinearGradient(
+        colors: [Color(0xFF056E6D), Color(0xFF2EC4B6)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      );
+      textColor = Colors.white;
+      displayText = text;
+    } else if (isCompleted) {
+      bgGradient = const LinearGradient(
+        colors: [Color(0xFF16A34A), Color(0xFF22C55E)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      );
+      textColor = Colors.white;
+      displayText = text;
+    } else if (isSubLocked) {
+      bgGradient = const LinearGradient(
+        colors: [Color(0xFFFBBF24), Color(0xFFD97706)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      );
+      textColor = Colors.white;
+      displayText = text;
+    } else if (isUnlocked) {
+      bgColor = Colors.white;
+      border = Border.all(
+        color: const Color(0xFF2EC4B6).withValues(alpha: 0.50),
+        width: 1.5,
+      );
+      textColor = const Color(0xFF056E6D);
+    } else {
+      bgGradient = const LinearGradient(
+        colors: [Color(0xFFE5E7EB), Color(0xFFD1D5DB)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      );
+      textColor = const Color(0xFF9CA3AF);
+    }
 
     return Container(
-      constraints: BoxConstraints(maxWidth: 170),
-      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      constraints: const BoxConstraints(maxWidth: 170),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
       decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: borderColor,
-          width: (isCurrent || isSubLocked) ? 2 : 1,
-        ),
+        color: bgGradient == null ? bgColor : null,
+        gradient: bgGradient,
+        borderRadius: BorderRadius.circular(16),
+        border: border,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.14),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: Colors.black.withValues(alpha: 0.12),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
       child: Text(
-        text,
+        displayText,
         textAlign: TextAlign.center,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         style: TextStyle(
-          color: fg,
+          color: textColor,
           fontSize: 16,
-          fontWeight: FontWeight.w800,
-          height: 1.05,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 0.5,
         ),
       ),
     );
@@ -693,9 +890,13 @@ class _WaveCirclePainter extends CustomPainter {
   final bool subLocked;
   final bool completed;
 
-  final Color waveColor;
+  final Gradient? backgroundGradient;
   final Color backgroundColor;
+  final Gradient? borderGradient;
   final Color borderColor;
+  final double borderWidth;
+  final Gradient? waveGradient;
+  final Color waveColor;
 
   final double amplitudeFactor;
   final double amplitudeMin;
@@ -707,9 +908,13 @@ class _WaveCirclePainter extends CustomPainter {
     required this.locked,
     required this.subLocked,
     required this.completed,
-    required this.waveColor,
+    required this.backgroundGradient,
     required this.backgroundColor,
+    required this.borderGradient,
     required this.borderColor,
+    required this.borderWidth,
+    required this.waveGradient,
+    required this.waveColor,
     required this.amplitudeFactor,
     required this.amplitudeMin,
     required this.wavelengthFactor,
@@ -721,15 +926,16 @@ class _WaveCirclePainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = size.width / 2;
 
-    final baseColor = locked
-        ? Colors.grey.shade400
-        : (subLocked
-              ? const Color(0xFFFFD700).withValues(alpha: 0.30)
-              : (completed ? Colors.green : backgroundColor));
-
-    final bgPaint = Paint()
-      ..color = baseColor
-      ..style = PaintingStyle.fill;
+    final bgPaint = Paint()..style = PaintingStyle.fill;
+    if (backgroundGradient != null) {
+      bgPaint.shader = backgroundGradient!.createShader(rect);
+    } else {
+      bgPaint.color = locked
+          ? Colors.grey.shade400
+          : (subLocked
+                ? const Color(0xFFFFD700).withValues(alpha: 0.30)
+                : (completed ? Colors.green : backgroundColor));
+    }
 
     canvas.drawCircle(center, radius, bgPaint);
 
@@ -745,7 +951,15 @@ class _WaveCirclePainter extends CustomPainter {
       final wavelength = size.width * wavelengthFactor;
       final k = 2 * pi / wavelength;
 
-      final wavePaint1 = Paint()..color = waveColor.withValues(alpha: 0.85);
+      final wavePaint1 = Paint()..style = PaintingStyle.fill;
+      if (waveGradient != null) {
+        wavePaint1.shader = waveGradient!.createShader(
+          Rect.fromLTWH(0, fillY - amp, size.width, size.height - fillY + amp),
+        );
+      } else {
+        wavePaint1.color = waveColor.withValues(alpha: 0.85);
+      }
+
       final path1 = Path()..moveTo(-size.width, fillY);
       for (double x = -size.width; x <= size.width * 2; x += 2) {
         final y = fillY + sin((x * k) + phase) * amp;
@@ -757,7 +971,22 @@ class _WaveCirclePainter extends CustomPainter {
         ..close();
       canvas.drawPath(path1, wavePaint1);
 
-      final wavePaint2 = Paint()..color = waveColor.withValues(alpha: 0.45);
+      final wavePaint2 = Paint()..style = PaintingStyle.fill;
+      if (waveGradient != null) {
+        wavePaint2.shader = LinearGradient(
+          colors: [
+            const Color(0xFF056E6D).withValues(alpha: 0.50),
+            const Color(0xFF2EC4B6).withValues(alpha: 0.50),
+          ],
+          begin: Alignment.bottomCenter,
+          end: Alignment.topCenter,
+        ).createShader(
+          Rect.fromLTWH(0, fillY - amp * 0.6, size.width, size.height - fillY + amp * 0.6),
+        );
+      } else {
+        wavePaint2.color = waveColor.withValues(alpha: 0.45);
+      }
+
       final path2 = Path()..moveTo(-size.width, fillY);
       for (double x = -size.width; x <= size.width * 2; x += 2) {
         final y = fillY + sin((x * k) + phase + pi / 2) * (amp * 0.6);
@@ -772,11 +1001,25 @@ class _WaveCirclePainter extends CustomPainter {
       canvas.restore();
     }
 
+    // Add subtle sparkle dots for completed levels
+    if (completed) {
+      final sparklePaint = Paint()..color = const Color(0xFFFEF08A);
+      canvas.drawCircle(Offset(size.width * 0.25, size.height * 0.35), 2.5, sparklePaint);
+      canvas.drawCircle(Offset(size.width * 0.75, size.height * 0.25), 1.8, sparklePaint);
+      canvas.drawCircle(Offset(size.width * 0.3, size.height * 0.7), 2.2, sparklePaint);
+      canvas.drawCircle(Offset(size.width * 0.7, size.height * 0.75), 1.5, sparklePaint);
+    }
+
     final borderPaint = Paint()
-      ..color = borderColor
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 3;
-    canvas.drawCircle(center, radius - 1.5, borderPaint);
+      ..strokeWidth = borderWidth;
+
+    if (borderGradient != null) {
+      borderPaint.shader = borderGradient!.createShader(rect);
+    } else {
+      borderPaint.color = borderColor;
+    }
+    canvas.drawCircle(center, radius - borderWidth / 2, borderPaint);
   }
 
   @override
@@ -788,6 +1031,7 @@ class _WaveCirclePainter extends CustomPainter {
         oldDelegate.waveColor != waveColor ||
         oldDelegate.backgroundColor != backgroundColor ||
         oldDelegate.borderColor != borderColor ||
+        oldDelegate.borderWidth != borderWidth ||
         oldDelegate.amplitudeFactor != amplitudeFactor ||
         oldDelegate.amplitudeMin != amplitudeMin ||
         oldDelegate.wavelengthFactor != wavelengthFactor ||
