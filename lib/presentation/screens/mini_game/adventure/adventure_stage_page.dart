@@ -374,8 +374,8 @@ class AdventureStagePage extends GetView<AdventureStageController> {
       if (shopAvatar != null && shopAvatar.id != 'default') {
         if (shopAvatar.assetPath != null) {
           avatarContent = Padding(
-            padding: const EdgeInsets.all(5),
-            child: Image.asset(shopAvatar.assetPath!, fit: BoxFit.contain),
+            padding: const EdgeInsets.all(2),
+            child: Image.asset(shopAvatar.assetPath!, fit: BoxFit.cover),
           );
         }
       }

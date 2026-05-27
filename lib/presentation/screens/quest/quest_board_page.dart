@@ -79,10 +79,10 @@ class QuestBoardPage extends GetView<QuestBoardController> {
                                     shopAvatar.id != 'default') {
                                   if (shopAvatar.assetPath != null) {
                                     avatarWidget = Padding(
-                                      padding: const EdgeInsets.all(6),
+                                      padding: const EdgeInsets.all(2),
                                       child: Image.asset(
                                         shopAvatar.assetPath!,
-                                        fit: BoxFit.contain,
+                                        fit: BoxFit.cover,
                                       ),
                                     );
                                   } else {

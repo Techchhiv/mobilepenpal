@@ -3,10 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobilepenpal/data/controllers/mini_game/dynamic_mini_game_controller.dart';
 import 'package:mobilepenpal/data/models/mini_game/mini_game_model.dart';
+import 'package:mobilepenpal/core/utils/number_format_utils.dart';
 
-// ═══════════════════════════════════════════════════════════════════════════
-//  COLOR PALETTE — Child-friendly "Consonant Cave / Adventure" theme
-// ═══════════════════════════════════════════════════════════════════════════
 class GameColors {
   static const Color skyTop = Color(0xFF7EC8E3);
   static const Color skyMid = Color(0xFFB5E8D5);
@@ -23,7 +21,6 @@ class GameColors {
   static const Color textDark = Color(0xFF3D405B);
   static const Color textMuted = Color(0xFF8E91A4);
 
-  // Pastel card backgrounds for choices
   static const List<Color> pastels = [
     Color(0xFFFFF3E0), // peach
     Color(0xFFE8F5E9), // mint
@@ -60,7 +57,11 @@ class GameBackground extends StatelessWidget {
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [GameColors.skyTop, GameColors.skyMid, GameColors.skyBot],
+                colors: [
+                  GameColors.skyTop,
+                  GameColors.skyMid,
+                  GameColors.skyBot,
+                ],
                 stops: [0.0, 0.55, 1.0],
               ),
             ),
@@ -75,9 +76,21 @@ class GameBackground extends StatelessWidget {
           child: CustomPaint(painter: _HillsPainter()),
         ),
         // Clouds
-        const Positioned(top: 40, left: 20, child: _Cloud(width: 80, opacity: 0.25)),
-        const Positioned(top: 80, right: 30, child: _Cloud(width: 60, opacity: 0.18)),
-        const Positioned(top: 180, left: 60, child: _Cloud(width: 50, opacity: 0.12)),
+        const Positioned(
+          top: 40,
+          left: 20,
+          child: _Cloud(width: 80, opacity: 0.25),
+        ),
+        const Positioned(
+          top: 80,
+          right: 30,
+          child: _Cloud(width: 60, opacity: 0.18),
+        ),
+        const Positioned(
+          top: 180,
+          left: 60,
+          child: _Cloud(width: 50, opacity: 0.12),
+        ),
         // Floating Khmer letters
         const FloatingKhmerDecoration(),
       ],
@@ -112,8 +125,18 @@ class _HillsPainter extends CustomPainter {
     final p1 = Paint()..color = const Color(0xFF8FCE9E).withValues(alpha: 0.45);
     final path1 = Path()
       ..moveTo(0, size.height * 0.6)
-      ..quadraticBezierTo(size.width * 0.25, 0, size.width * 0.5, size.height * 0.4)
-      ..quadraticBezierTo(size.width * 0.75, size.height * 0.8, size.width, size.height * 0.3)
+      ..quadraticBezierTo(
+        size.width * 0.25,
+        0,
+        size.width * 0.5,
+        size.height * 0.4,
+      )
+      ..quadraticBezierTo(
+        size.width * 0.75,
+        size.height * 0.8,
+        size.width,
+        size.height * 0.3,
+      )
       ..lineTo(size.width, size.height)
       ..lineTo(0, size.height)
       ..close();
@@ -122,8 +145,18 @@ class _HillsPainter extends CustomPainter {
     final p2 = Paint()..color = const Color(0xFFA8D8B5).withValues(alpha: 0.4);
     final path2 = Path()
       ..moveTo(0, size.height * 0.8)
-      ..quadraticBezierTo(size.width * 0.35, size.height * 0.2, size.width * 0.65, size.height * 0.65)
-      ..quadraticBezierTo(size.width * 0.85, size.height * 0.9, size.width, size.height * 0.5)
+      ..quadraticBezierTo(
+        size.width * 0.35,
+        size.height * 0.2,
+        size.width * 0.65,
+        size.height * 0.65,
+      )
+      ..quadraticBezierTo(
+        size.width * 0.85,
+        size.height * 0.9,
+        size.width,
+        size.height * 0.5,
+      )
       ..lineTo(size.width, size.height)
       ..lineTo(0, size.height)
       ..close();
@@ -141,7 +174,8 @@ class FloatingKhmerDecoration extends StatefulWidget {
   const FloatingKhmerDecoration({super.key});
 
   @override
-  State<FloatingKhmerDecoration> createState() => _FloatingKhmerDecorationState();
+  State<FloatingKhmerDecoration> createState() =>
+      _FloatingKhmerDecorationState();
 }
 
 class _FloatingKhmerDecorationState extends State<FloatingKhmerDecoration>
@@ -154,7 +188,10 @@ class _FloatingKhmerDecorationState extends State<FloatingKhmerDecoration>
   @override
   void initState() {
     super.initState();
-    _ctrl = AnimationController(vsync: this, duration: const Duration(seconds: 20))..repeat();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 20),
+    )..repeat();
     final rng = math.Random(42);
     _items = List.generate(10, (i) {
       return _FloatingItem(
@@ -205,8 +242,12 @@ class _FloatingItem {
   final String char;
   final double x, y, speed, size, opacity;
   const _FloatingItem({
-    required this.char, required this.x, required this.y,
-    required this.speed, required this.size, required this.opacity,
+    required this.char,
+    required this.x,
+    required this.y,
+    required this.speed,
+    required this.size,
+    required this.opacity,
   });
 }
 
@@ -225,7 +266,11 @@ class ScoreChip extends StatelessWidget {
         color: Colors.white.withValues(alpha: 0.85),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
-          BoxShadow(color: GameColors.gold.withValues(alpha: 0.3), blurRadius: 8, spreadRadius: 1),
+          BoxShadow(
+            color: GameColors.gold.withValues(alpha: 0.3),
+            blurRadius: 8,
+            spreadRadius: 1,
+          ),
         ],
       ),
       child: TweenAnimationBuilder<int>(
@@ -237,8 +282,10 @@ class ScoreChip extends StatelessWidget {
             child: Text(
               '$value',
               style: TextStyle(
-                color: GameColors.textDark, fontSize: 22,
-                fontWeight: FontWeight.w900, letterSpacing: Get.locale?.languageCode == 'km' ? 0 : 1,
+                color: GameColors.textDark,
+                fontSize: 22,
+                fontWeight: FontWeight.w900,
+                letterSpacing: Get.locale?.languageCode == 'km' ? 0 : 1,
               ),
             ),
           );
@@ -275,8 +322,10 @@ class _AnimatedScoreChipState extends State<AnimatedScoreChip>
       vsync: this,
       duration: const Duration(milliseconds: 400),
     );
-    _countAnim = IntTween(begin: _previousScore, end: _displayScore)
-        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOut));
+    _countAnim = IntTween(
+      begin: _previousScore,
+      end: _displayScore,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOut));
   }
 
   @override
@@ -285,8 +334,10 @@ class _AnimatedScoreChipState extends State<AnimatedScoreChip>
     if (oldWidget.score != widget.score) {
       _previousScore = _displayScore;
       _displayScore = widget.score;
-      _countAnim = IntTween(begin: _previousScore, end: _displayScore)
-          .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOut));
+      _countAnim = IntTween(
+        begin: _previousScore,
+        end: _displayScore,
+      ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOut));
       _ctrl.forward(from: 0);
     }
   }
@@ -305,7 +356,11 @@ class _AnimatedScoreChipState extends State<AnimatedScoreChip>
         color: Colors.white.withValues(alpha: 0.85),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
-          BoxShadow(color: GameColors.gold.withValues(alpha: 0.3), blurRadius: 8, spreadRadius: 1),
+          BoxShadow(
+            color: GameColors.gold.withValues(alpha: 0.3),
+            blurRadius: 8,
+            spreadRadius: 1,
+          ),
         ],
       ),
       child: AnimatedBuilder(
@@ -315,8 +370,10 @@ class _AnimatedScoreChipState extends State<AnimatedScoreChip>
             child: Text(
               '${_countAnim.value}',
               style: TextStyle(
-                color: GameColors.textDark, fontSize: 22,
-                fontWeight: FontWeight.w900, letterSpacing: Get.locale?.languageCode == 'km' ? 0 : 1,
+                color: GameColors.textDark,
+                fontSize: 22,
+                fontWeight: FontWeight.w900,
+                letterSpacing: Get.locale?.languageCode == 'km' ? 0 : 1,
               ),
             ),
           );
@@ -362,7 +419,11 @@ class DifficultyChip extends StatelessWidget {
         ),
         child: Text(
           label,
-          style: TextStyle(color: color, fontWeight: FontWeight.w900, fontSize: 18),
+          style: TextStyle(
+            color: color,
+            fontWeight: FontWeight.w900,
+            fontSize: 18,
+          ),
         ),
       ),
     );
@@ -383,15 +444,26 @@ class CoinChip extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.85),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: GameColors.gold.withValues(alpha: 0.5), width: 2),
+        border: Border.all(
+          color: GameColors.gold.withValues(alpha: 0.5),
+          width: 2,
+        ),
         boxShadow: [
-          BoxShadow(color: GameColors.gold.withValues(alpha: 0.3), blurRadius: 8, spreadRadius: 1),
+          BoxShadow(
+            color: GameColors.gold.withValues(alpha: 0.3),
+            blurRadius: 8,
+            spreadRadius: 1,
+          ),
         ],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.monetization_on_rounded, color: GameColors.gold, size: 20),
+          const Icon(
+            Icons.monetization_on_rounded,
+            color: GameColors.gold,
+            size: 20,
+          ),
           const SizedBox(width: 6),
           Text(
             '$coins',
@@ -453,7 +525,11 @@ class TimerBar extends StatelessWidget {
 
     return Row(
       children: [
-        Icon(Icons.schedule_rounded, color: barColor.withValues(alpha: 0.7), size: 18),
+        Icon(
+          Icons.schedule_rounded,
+          color: barColor.withValues(alpha: 0.7),
+          size: 18,
+        ),
         const SizedBox(width: 6),
         Expanded(
           child: Container(
@@ -472,7 +548,11 @@ class TimerBar extends StatelessWidget {
                     colors: [barColor, barColor.withValues(alpha: 0.7)],
                   ),
                   boxShadow: [
-                    BoxShadow(color: barColor.withValues(alpha: 0.5), blurRadius: 8, spreadRadius: 1),
+                    BoxShadow(
+                      color: barColor.withValues(alpha: 0.5),
+                      blurRadius: 8,
+                      spreadRadius: 1,
+                    ),
                   ],
                 ),
               ),
@@ -526,8 +606,11 @@ class ComboIndicator extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              isHot ? Icons.local_fire_department_rounded : Icons.auto_awesome_rounded,
-              color: Colors.white, size: 16,
+              isHot
+                  ? Icons.local_fire_department_rounded
+                  : Icons.auto_awesome_rounded,
+              color: Colors.white,
+              size: 16,
             ),
             const SizedBox(width: 4),
             Text(
@@ -551,8 +634,11 @@ class ComboIndicator extends StatelessWidget {
 // ═══════════════════════════════════════════════════════════════════════════
 class GameActionButton extends StatelessWidget {
   const GameActionButton({
-    super.key, required this.label, required this.icon,
-    required this.color, required this.onTap,
+    super.key,
+    required this.label,
+    required this.icon,
+    required this.color,
+    required this.onTap,
   });
   final String label;
   final IconData icon;
@@ -578,7 +664,14 @@ class GameActionButton extends StatelessWidget {
             children: [
               Icon(icon, color: color, size: 24),
               const SizedBox(width: 8),
-              Text(label, style: TextStyle(color: color, fontSize: 17, fontWeight: FontWeight.w800)),
+              Text(
+                label,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 17,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
             ],
           ),
         ),
@@ -592,8 +685,10 @@ class GameActionButton extends StatelessWidget {
 // ═══════════════════════════════════════════════════════════════════════════
 class CountdownOverlay extends StatelessWidget {
   const CountdownOverlay({
-    super.key, required this.controller,
-    required this.countdownValue, required this.animCtrl,
+    super.key,
+    required this.controller,
+    required this.countdownValue,
+    required this.animCtrl,
   });
   final DynamicMiniGameController controller;
   final int countdownValue;
@@ -614,7 +709,18 @@ class CountdownOverlay extends StatelessWidget {
               String text;
               if (val > 0) {
                 if (Get.locale?.languageCode == 'km') {
-                  const kmDigits = ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'];
+                  const kmDigits = [
+                    '០',
+                    '១',
+                    '២',
+                    '៣',
+                    '៤',
+                    '៥',
+                    '៦',
+                    '៧',
+                    '៨',
+                    '៩',
+                  ];
                   text = val <= 9 ? kmDigits[val] : '$val';
                 } else {
                   text = '$val';
@@ -641,8 +747,10 @@ class CountdownOverlay extends StatelessWidget {
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: (isGo ? GameColors.teal : GameColors.gold).withValues(alpha: 0.5),
-                          blurRadius: 30, spreadRadius: 5,
+                          color: (isGo ? GameColors.teal : GameColors.gold)
+                              .withValues(alpha: 0.5),
+                          blurRadius: 30,
+                          spreadRadius: 5,
                         ),
                       ],
                     ),
@@ -681,16 +789,22 @@ class FeedbackOverlay extends StatelessWidget {
         child: AnimatedBuilder(
           animation: controller.feedbackAnimCtrl,
           builder: (_, __) {
-            if (controller.feedbackAnimCtrl.value == 0) return const SizedBox.shrink();
+            if (controller.feedbackAnimCtrl.value == 0)
+              return const SizedBox.shrink();
             return Obx(() {
               final text = controller.feedbackText.value;
               if (text.isEmpty) return const SizedBox.shrink();
               final isCorrect = controller.isCorrectFeedback.value;
-              final color = isCorrect ? const Color(0xFF2E7D32) : const Color(0xFFC62828);
+              final color = isCorrect
+                  ? const Color(0xFF2E7D32)
+                  : const Color(0xFFC62828);
               final bgColor = isCorrect
                   ? const Color(0xFFE8F5E9) // very light green, opaque
                   : const Color(0xFFFFEBEE); // very light red, opaque
-              final opacity = (1.0 - controller.feedbackAnimCtrl.value).clamp(0.0, 1.0);
+              final opacity = (1.0 - controller.feedbackAnimCtrl.value).clamp(
+                0.0,
+                1.0,
+              );
               final t = controller.feedbackAnimCtrl.value;
               final scaleVal = 0.6 + (math.sin(t * math.pi * 0.5) * 0.6);
               final yOffset = -30 * t;
@@ -704,28 +818,42 @@ class FeedbackOverlay extends StatelessWidget {
                     child: Transform.scale(
                       scale: scaleVal,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 28,
+                          vertical: 14,
+                        ),
                         decoration: BoxDecoration(
                           color: bgColor,
                           borderRadius: BorderRadius.circular(24),
                           border: Border.all(color: color, width: 2.5),
                           boxShadow: [
-                            BoxShadow(color: Colors.black.withValues(alpha: 0.25), blurRadius: 16, spreadRadius: 2),
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.25),
+                              blurRadius: 16,
+                              spreadRadius: 2,
+                            ),
                           ],
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
-                              isCorrect ? Icons.star_rounded : Icons.refresh_rounded,
-                              color: color, size: 28,
+                              isCorrect
+                                  ? Icons.star_rounded
+                                  : Icons.refresh_rounded,
+                              color: color,
+                              size: 28,
                             ),
                             const SizedBox(width: 8),
                             Text(
                               text,
                               style: TextStyle(
-                                color: color, fontSize: 26,
-                                fontWeight: FontWeight.w900, letterSpacing: Get.locale?.languageCode == 'km' ? 0 : 1,
+                                color: color,
+                                fontSize: 26,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: Get.locale?.languageCode == 'km'
+                                    ? 0
+                                    : 1,
                               ),
                             ),
                           ],
@@ -747,7 +875,11 @@ class FeedbackOverlay extends StatelessWidget {
 //  PAUSE DIALOG — Rounded, child-friendly
 // ═══════════════════════════════════════════════════════════════════════════
 class GamePauseDialog extends StatelessWidget {
-  const GamePauseDialog({super.key, required this.onResume, required this.onQuit});
+  const GamePauseDialog({
+    super.key,
+    required this.onResume,
+    required this.onQuit,
+  });
   final VoidCallback onResume;
   final VoidCallback onQuit;
 
@@ -761,19 +893,28 @@ class GamePauseDialog extends StatelessWidget {
           color: GameColors.card,
           borderRadius: BorderRadius.circular(28),
           boxShadow: [
-            BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 24, spreadRadius: 4),
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.15),
+              blurRadius: 24,
+              spreadRadius: 4,
+            ),
           ],
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 64, height: 64,
+              width: 64,
+              height: 64,
               decoration: BoxDecoration(
                 color: GameColors.teal.withValues(alpha: 0.12),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.pause_rounded, color: GameColors.teal, size: 36),
+              child: const Icon(
+                Icons.pause_rounded,
+                color: GameColors.teal,
+                size: 36,
+              ),
             ),
             const SizedBox(height: 16),
             // Text(
@@ -782,30 +923,48 @@ class GamePauseDialog extends StatelessWidget {
             // ),
             const SizedBox(height: 24),
             SizedBox(
-              width: double.infinity, height: 52,
+              width: double.infinity,
+              height: 52,
               child: ElevatedButton.icon(
                 onPressed: onResume,
                 icon: const Icon(Icons.play_arrow_rounded, size: 24),
-                label: Text('keep_playing'.tr, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+                label: Text(
+                  'keep_playing'.tr,
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: GameColors.teal,
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                   elevation: 0,
                 ),
               ),
             ),
             const SizedBox(height: 12),
             SizedBox(
-              width: double.infinity, height: 52,
+              width: double.infinity,
+              height: 52,
               child: OutlinedButton.icon(
                 onPressed: onQuit,
                 icon: const Icon(Icons.home_rounded, size: 22),
-                label: Text('go_home'.tr, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+                label: Text(
+                  'go_home'.tr,
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: GameColors.pink,
                   side: const BorderSide(color: GameColors.pink, width: 2),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                 ),
               ),
             ),
@@ -852,7 +1011,14 @@ class InstructionBadge extends StatelessWidget {
         children: [
           Icon(icon, color: GameColors.teal, size: 20),
           const SizedBox(width: 10),
-          Text(text, style: const TextStyle(color: GameColors.textDark, fontSize: 14, fontWeight: FontWeight.w700)),
+          Text(
+            text,
+            style: const TextStyle(
+              color: GameColors.textDark,
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
         ],
       ),
     );
@@ -863,7 +1029,13 @@ class InstructionBadge extends StatelessWidget {
 //  STAT ROW — For game over screen
 // ═══════════════════════════════════════════════════════════════════════════
 class StatRow extends StatelessWidget {
-  const StatRow({super.key, required this.label, required this.value, this.icon, required this.color});
+  const StatRow({
+    super.key,
+    required this.label,
+    required this.value,
+    this.icon,
+    required this.color,
+  });
   final String label;
   final String value;
   final IconData? icon;
@@ -886,9 +1058,23 @@ class StatRow extends StatelessWidget {
             Icon(icon!, color: color, size: 22),
             const SizedBox(width: 10),
           ],
-          Text(label, style: TextStyle(color: GameColors.textMuted, fontSize: 15, fontWeight: FontWeight.w600)),
+          Text(
+            label,
+            style: TextStyle(
+              color: GameColors.textMuted,
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
           const Spacer(),
-          Text(value, style: TextStyle(color: color, fontSize: 22, fontWeight: FontWeight.w900)),
+          Text(
+            value,
+            style: TextStyle(
+              color: color,
+              fontSize: 22,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
         ],
       ),
     );
@@ -896,12 +1082,24 @@ class StatRow extends StatelessWidget {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-//  CHOICE CARD — For Multiple Choice inputs
+String _formatOptionText(String opt) {
+  final parsed = NumberFormatUtils.parseIntAny(opt);
+  if (parsed != null) {
+    return NumberFormatUtils.intText(parsed);
+  }
+  return opt;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
-class ChoiceCard extends StatelessWidget {
+//  CHOICE CARD — Animated, child-friendly Multiple Choice card
+// ═══════════════════════════════════════════════════════════════════════════
+class ChoiceCard extends StatefulWidget {
   const ChoiceCard({
-    super.key, required this.option, required this.colorIndex,
-    required this.onTap, this.isWrong = false,
+    super.key,
+    required this.option,
+    required this.colorIndex,
+    required this.onTap,
+    this.isWrong = false,
   });
   final String option;
   final int colorIndex;
@@ -909,32 +1107,221 @@ class ChoiceCard extends StatelessWidget {
   final bool isWrong;
 
   @override
-  Widget build(BuildContext context) {
-    final bgColor = isWrong ? GameColors.cardBorder : GameColors.pastels[colorIndex % GameColors.pastels.length];
-    final borderColor = isWrong ? GameColors.textMuted : GameColors.pastelBorders[colorIndex % GameColors.pastelBorders.length];
-    final textColor = isWrong ? GameColors.textMuted : GameColors.textDark;
+  State<ChoiceCard> createState() => _ChoiceCardState();
+}
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(24),
-        onTap: isWrong ? null : onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
+class _ChoiceCardState extends State<ChoiceCard>
+    with TickerProviderStateMixin {
+  // ── Entrance animation (pop-in with overshoot) ──
+  late final AnimationController _entranceCtrl;
+  late final Animation<double> _entranceScale;
+  late final Animation<double> _entranceOpacity;
+
+  // ── Idle breathing animation (subtle scale pulse) ──
+  late final AnimationController _breatheCtrl;
+
+  // ── Tap press animation (squish-bounce) ──
+  late final AnimationController _tapCtrl;
+  late final Animation<double> _tapScale;
+
+  // ── Wrong-answer shake ──
+  late final AnimationController _shakeCtrl;
+  late final Animation<double> _shakeOffset;
+
+  bool _wasWrong = false;
+
+  // Pastel emoji decorations per index for visual fun
+  static const _cardEmojis = ['🌟', '🎈', '🌸', '🦋', '🍎', '⭐', '🎨', '🌈'];
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Entrance: staggered by colorIndex
+    _entranceCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+    _entranceScale = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _entranceCtrl, curve: Curves.elasticOut),
+    );
+    _entranceOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _entranceCtrl,
+        curve: const Interval(0.0, 0.4, curve: Curves.easeOut),
+      ),
+    );
+    // Stagger: each card waits (colorIndex * 80ms) before popping in
+    Future.delayed(Duration(milliseconds: widget.colorIndex * 80), () {
+      if (mounted) _entranceCtrl.forward();
+    });
+
+    // Idle breathing: gentle scale oscillation
+    _breatheCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1800),
+    )..repeat(reverse: true);
+
+    // Tap press: quick squish-and-bounce
+    _tapCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+    _tapScale = TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween(begin: 1.0, end: 0.85)
+            .chain(CurveTween(curve: Curves.easeOut)),
+        weight: 40,
+      ),
+      TweenSequenceItem(
+        tween: Tween(begin: 0.85, end: 1.08)
+            .chain(CurveTween(curve: Curves.easeInOut)),
+        weight: 35,
+      ),
+      TweenSequenceItem(
+        tween: Tween(begin: 1.08, end: 1.0)
+            .chain(CurveTween(curve: Curves.easeIn)),
+        weight: 25,
+      ),
+    ]).animate(_tapCtrl);
+
+    // Shake: horizontal oscillation for wrong answers
+    _shakeCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+    _shakeOffset = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 0, end: -10), weight: 1),
+      TweenSequenceItem(tween: Tween(begin: -10, end: 10), weight: 2),
+      TweenSequenceItem(tween: Tween(begin: 10, end: -8), weight: 2),
+      TweenSequenceItem(tween: Tween(begin: -8, end: 6), weight: 2),
+      TweenSequenceItem(tween: Tween(begin: 6, end: -3), weight: 2),
+      TweenSequenceItem(tween: Tween(begin: -3, end: 0), weight: 1),
+    ]).animate(CurvedAnimation(parent: _shakeCtrl, curve: Curves.easeOut));
+  }
+
+  @override
+  void didUpdateWidget(covariant ChoiceCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    // Trigger shake when newly marked wrong
+    if (widget.isWrong && !_wasWrong) {
+      _shakeCtrl.forward(from: 0);
+    }
+    _wasWrong = widget.isWrong;
+
+    // Re-trigger entrance if options changed (new challenge)
+    if (oldWidget.option != widget.option) {
+      _entranceCtrl.reset();
+      Future.delayed(Duration(milliseconds: widget.colorIndex * 80), () {
+        if (mounted) _entranceCtrl.forward();
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _entranceCtrl.dispose();
+    _breatheCtrl.dispose();
+    _tapCtrl.dispose();
+    _shakeCtrl.dispose();
+    super.dispose();
+  }
+
+  void _handleTap() {
+    if (widget.isWrong) return;
+    _tapCtrl.forward(from: 0);
+    widget.onTap();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bgColor = widget.isWrong
+        ? GameColors.cardBorder
+        : GameColors.pastels[widget.colorIndex % GameColors.pastels.length];
+    final borderColor = widget.isWrong
+        ? GameColors.textMuted
+        : GameColors.pastelBorders[
+            widget.colorIndex % GameColors.pastelBorders.length];
+    final textColor =
+        widget.isWrong ? GameColors.textMuted : GameColors.textDark;
+    final emoji = _cardEmojis[widget.colorIndex % _cardEmojis.length];
+
+    return AnimatedBuilder(
+      animation: Listenable.merge([
+        _entranceCtrl,
+        _breatheCtrl,
+        _tapCtrl,
+        _shakeCtrl,
+      ]),
+      builder: (context, child) {
+        // Combine scales
+        final entranceScale = _entranceScale.value;
+        final breatheScale = widget.isWrong
+            ? 1.0
+            : 1.0 + (_breatheCtrl.value * 0.02); // ±2% pulse
+        final tapScale = _tapCtrl.isAnimating ? _tapScale.value : 1.0;
+        final combinedScale = entranceScale * breatheScale * tapScale;
+
+        // Shake offset
+        final dx = _shakeCtrl.isAnimating ? _shakeOffset.value : 0.0;
+
+        return Opacity(
+          opacity: _entranceOpacity.value,
+          child: Transform.translate(
+            offset: Offset(dx, 0),
+            child: Transform.scale(
+              scale: combinedScale,
+              child: child,
+            ),
+          ),
+        );
+      },
+      child: GestureDetector(
+        onTap: widget.isWrong ? null : _handleTap,
+        child: Container(
           decoration: BoxDecoration(
             color: bgColor,
             borderRadius: BorderRadius.circular(24),
             border: Border.all(color: borderColor, width: 3),
-            boxShadow: isWrong ? [] : [
-              BoxShadow(color: borderColor.withValues(alpha: 0.4), blurRadius: 8, spreadRadius: 1, offset: const Offset(0, 4)),
-            ],
+            boxShadow: widget.isWrong
+                ? []
+                : [
+                    BoxShadow(
+                      color: borderColor.withValues(alpha: 0.4),
+                      blurRadius: 10,
+                      spreadRadius: 1,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
           ),
-          child: Center(
-            child: Text(
-              option,
-              textAlign: TextAlign.center,
-              style: TextStyle(color: textColor, fontSize: 36, fontWeight: FontWeight.w900),
-            ),
+          child: Stack(
+            children: [
+              // Tiny emoji badge in the top-left corner
+              Positioned(
+                top: 6,
+                left: 8,
+                child: Opacity(
+                  opacity: widget.isWrong ? 0.2 : 0.5,
+                  child: Text(
+                    emoji,
+                    style: const TextStyle(fontSize: 14),
+                  ),
+                ),
+              ),
+              // Main text centered
+              Center(
+                child: Text(
+                  _formatOptionText(widget.option),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: textColor,
+                    fontSize: 36,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -945,24 +1332,126 @@ class ChoiceCard extends StatelessWidget {
 // ═══════════════════════════════════════════════════════════════════════════
 //  MATCH CARD — For Drag and Drop pairs
 // ═══════════════════════════════════════════════════════════════════════════
-class MatchCard extends StatelessWidget {
+class MatchCard extends StatefulWidget {
   const MatchCard({
-    super.key, required this.content, required this.state,
-    required this.onTap, this.scale = 1.0,
+    super.key,
+    required this.content,
+    required this.state,
+    required this.onTap,
+    this.scale = 1.0,
+    this.colorIndex = 0,
   });
-  
+
   final String content;
   // states: normal, selected, matched, wrong
   final String state;
   final VoidCallback onTap;
   final double scale;
+  final int colorIndex;
+
+  @override
+  State<MatchCard> createState() => _MatchCardState();
+}
+
+class _MatchCardState extends State<MatchCard> with TickerProviderStateMixin {
+  late final AnimationController _entranceCtrl;
+  late final Animation<double> _entranceScale;
+  
+  late final AnimationController _shakeCtrl;
+  late final Animation<double> _shakeOffset;
+
+  late final AnimationController _popCtrl;
+  late final Animation<double> _popScale;
+
+  late final AnimationController _breatheCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _entranceCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+    _entranceScale = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _entranceCtrl, curve: Curves.elasticOut),
+    );
+    Future.delayed(Duration(milliseconds: widget.colorIndex * 80), () {
+      if (mounted) _entranceCtrl.forward();
+    });
+
+    _shakeCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+    _shakeOffset = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 0, end: -8), weight: 1),
+      TweenSequenceItem(tween: Tween(begin: -8, end: 8), weight: 2),
+      TweenSequenceItem(tween: Tween(begin: 8, end: -6), weight: 2),
+      TweenSequenceItem(tween: Tween(begin: -6, end: 4), weight: 2),
+      TweenSequenceItem(tween: Tween(begin: 4, end: 0), weight: 1),
+    ]).animate(CurvedAnimation(parent: _shakeCtrl, curve: Curves.easeOut));
+
+    _popCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+    _popScale = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.2), weight: 40),
+      TweenSequenceItem(tween: Tween(begin: 1.2, end: 0.95), weight: 35),
+      TweenSequenceItem(tween: Tween(begin: 0.95, end: 1.0), weight: 25),
+    ]).animate(CurvedAnimation(parent: _popCtrl, curve: Curves.easeInOut));
+
+    _breatheCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1400),
+    )..repeat(reverse: true);
+
+    if (widget.state == 'wrong') {
+      _shakeCtrl.forward(from: 0);
+    } else if (widget.state == 'matched') {
+      _popCtrl.forward(from: 0);
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant MatchCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (widget.state == 'wrong' && oldWidget.state != 'wrong') {
+      _shakeCtrl.forward(from: 0);
+    }
+    if (widget.state == 'matched' && oldWidget.state != 'matched') {
+      _popCtrl.forward(from: 0);
+    }
+
+    if (oldWidget.content != widget.content) {
+      _entranceCtrl.reset();
+      Future.delayed(Duration(milliseconds: widget.colorIndex * 80), () {
+        if (mounted) _entranceCtrl.forward();
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _entranceCtrl.dispose();
+    _shakeCtrl.dispose();
+    _popCtrl.dispose();
+    _breatheCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final scaleVal = widget.scale;
+    final state = widget.state;
+    final content = widget.content;
+
     Color bgColor = GameColors.card;
     Color borderColor = GameColors.cardBorder;
     Color textColor = GameColors.textDark;
-    
+
     if (state == 'selected') {
       bgColor = GameColors.teal.withValues(alpha: 0.15);
       borderColor = GameColors.teal;
@@ -974,11 +1463,18 @@ class MatchCard extends StatelessWidget {
       bgColor = GameColors.softRed.withValues(alpha: 0.15);
       borderColor = GameColors.softRed;
       textColor = GameColors.softRed;
+    } else {
+      bgColor = GameColors.pastels[widget.colorIndex % GameColors.pastels.length];
+      borderColor = GameColors.pastelBorders[widget.colorIndex % GameColors.pastelBorders.length];
     }
 
     Widget innerContent;
     if (content == '🔊') {
-      innerContent = Icon(Icons.volume_up_rounded, size: 32 * scale, color: textColor);
+      innerContent = Icon(
+        Icons.volume_up_rounded,
+        size: 32 * scaleVal,
+        color: textColor,
+      );
     } else if (content.contains('|')) {
       final parts = content.split('|');
       final img = parts[0];
@@ -986,58 +1482,140 @@ class MatchCard extends StatelessWidget {
       innerContent = Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (img.isNotEmpty) Image.asset(img, height: 44 * scale, fit: BoxFit.contain),
+          if (img.isNotEmpty)
+            Image.asset(img, height: 44 * scaleVal, fit: BoxFit.contain),
           if (txt.isNotEmpty) ...[
-            SizedBox(height: 4 * scale),
-            Text(txt, style: TextStyle(fontSize: 22 * scale, fontWeight: FontWeight.w800, color: textColor)),
-          ]
+            SizedBox(height: 4 * scaleVal),
+            Text(
+              txt,
+              style: TextStyle(
+                fontSize: 22 * scaleVal,
+                fontWeight: FontWeight.w800,
+                color: textColor,
+              ),
+            ),
+          ],
         ],
       );
     } else if (content.startsWith('assets/') && content.contains('*')) {
-      // Format: "assets/images/fruits/apple.png*3" — show 3 fruit images
-      // Layout: 3 per row (like the math equation display)
       final starIndex = content.lastIndexOf('*');
       final imgPath = content.substring(0, starIndex);
       final count = int.tryParse(content.substring(starIndex + 1)) ?? 1;
       innerContent = Container(
-        constraints: BoxConstraints(maxWidth: 130 * scale),
+        constraints: BoxConstraints(maxWidth: 130 * scaleVal),
         child: Wrap(
-          spacing: 4 * scale,
-          runSpacing: 4 * scale,
+          spacing: 4 * scaleVal,
+          runSpacing: 4 * scaleVal,
           alignment: WrapAlignment.center,
           children: List.generate(
             count,
-            (_) => Image.asset(imgPath, width: 38 * scale, height: 38 * scale, fit: BoxFit.contain),
+            (_) => Image.asset(
+              imgPath,
+              width: 38 * scaleVal,
+              height: 38 * scaleVal,
+              fit: BoxFit.contain,
+            ),
           ),
         ),
       );
     } else if (content.startsWith('assets/')) {
-      innerContent = Image.asset(content, height: 44 * scale, fit: BoxFit.contain);
+      innerContent = Image.asset(
+        content,
+        height: 44 * scaleVal,
+        fit: BoxFit.contain,
+      );
     } else {
       innerContent = Text(
-        content,
+        _formatOptionText(content),
         textAlign: TextAlign.center,
-        style: TextStyle(color: textColor, fontSize: 28 * scale, fontWeight: FontWeight.w900),
+        style: TextStyle(
+          color: textColor,
+          fontSize: 28 * scaleVal,
+          fontWeight: FontWeight.w900,
+        ),
       );
     }
 
     return GestureDetector(
-      onTap: (state == 'matched' || state == 'wrong') ? null : onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        padding: EdgeInsets.symmetric(vertical: 10 * scale, horizontal: 8 * scale),
-        decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: borderColor, width: state == 'selected' ? 3 : 2),
-          boxShadow: state == 'selected' ? [
-            BoxShadow(color: GameColors.teal.withValues(alpha: 0.3), blurRadius: 8, spreadRadius: 1)
-          ] : [],
-        ),
-        child: Center(
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            child: innerContent,
+      onTap: (state == 'matched' || state == 'wrong') ? null : widget.onTap,
+      child: AnimatedBuilder(
+        animation: Listenable.merge([_entranceCtrl, _shakeCtrl, _popCtrl, _breatheCtrl]),
+        builder: (context, child) {
+          final entranceVal = _entranceScale.value;
+          final shakeVal = _shakeCtrl.isAnimating ? _shakeOffset.value : 0.0;
+          final popVal = _popCtrl.isAnimating ? _popScale.value : 1.0;
+          
+          final breatheVal = state == 'selected'
+              ? 1.0 + (_breatheCtrl.value * 0.03)
+              : 1.0;
+
+          final combinedScale = entranceVal * popVal * breatheVal;
+
+          return Transform.translate(
+            offset: Offset(shakeVal, 0),
+            child: Transform.scale(
+              scale: combinedScale,
+              child: child,
+            ),
+          );
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+          padding: EdgeInsets.symmetric(
+            vertical: 10 * scaleVal,
+            horizontal: 8 * scaleVal,
+          ),
+          decoration: BoxDecoration(
+            color: bgColor,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: borderColor,
+              width: state == 'selected' ? 3.5 : 2.5,
+            ),
+            boxShadow: state == 'selected'
+                ? [
+                    BoxShadow(
+                      color: borderColor.withValues(alpha: 0.45),
+                      blurRadius: 12,
+                      spreadRadius: 2,
+                      offset: const Offset(0, 4),
+                    ),
+                  ]
+                : [
+                    BoxShadow(
+                      color: borderColor.withValues(alpha: 0.25),
+                      blurRadius: 6,
+                      spreadRadius: 1,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+          ),
+          child: Stack(
+            children: [
+              Center(
+                child: FittedBox(fit: BoxFit.scaleDown, child: innerContent),
+              ),
+              if (state == 'matched')
+                const Positioned(
+                  top: 2,
+                  right: 2,
+                  child: Icon(
+                    Icons.check_circle_rounded,
+                    color: Colors.green,
+                    size: 16,
+                  ),
+                ),
+              if (state == 'wrong')
+                const Positioned(
+                  top: 2,
+                  right: 2,
+                  child: Icon(
+                    Icons.cancel_rounded,
+                    color: Colors.red,
+                    size: 16,
+                  ),
+                ),
+            ],
           ),
         ),
       ),
@@ -1058,10 +1636,9 @@ class FloatingScoreOverlay extends StatelessWidget {
       final events = controller.floatingScores;
       if (events.isEmpty) return const SizedBox.shrink();
       return Stack(
-        children: events.map((e) => _FloatingScoreAnimation(
-          key: ValueKey(e.id),
-          event: e,
-        )).toList(),
+        children: events
+            .map((e) => _FloatingScoreAnimation(key: ValueKey(e.id), event: e))
+            .toList(),
       );
     });
   }
@@ -1073,7 +1650,8 @@ class _FloatingScoreAnimation extends StatefulWidget {
   final FloatingScoreEvent event;
 
   @override
-  State<_FloatingScoreAnimation> createState() => _FloatingScoreAnimationState();
+  State<_FloatingScoreAnimation> createState() =>
+      _FloatingScoreAnimationState();
 }
 
 class _FloatingScoreAnimationState extends State<_FloatingScoreAnimation>
@@ -1144,10 +1722,10 @@ class _FloatingScoreAnimationState extends State<_FloatingScoreAnimation>
         if (t >= _hoverEnd) {
           final flyT = ((t - _hoverEnd) / (1.0 - _hoverEnd)).clamp(0.0, 1.0);
           final easeFlyT = Curves.easeInCubic.transform(flyT);
-          
+
           final targetX = screenW / 2;
           final targetY = 50.0; // Approximate center of top bar
-          
+
           currentX = startX + (targetX - startX) * easeFlyT;
           currentY = startY + (targetY - startY) * easeFlyT;
         }
@@ -1157,10 +1735,7 @@ class _FloatingScoreAnimationState extends State<_FloatingScoreAnimation>
           top: currentY - 20,
           child: Opacity(
             opacity: opacity,
-            child: Transform.scale(
-              scale: scale,
-              child: child,
-            ),
+            child: Transform.scale(scale: scale, child: child),
           ),
         );
       },
@@ -1173,11 +1748,30 @@ class _FloatingScoreAnimationState extends State<_FloatingScoreAnimation>
           letterSpacing: Get.locale?.languageCode == 'km' ? 0 : 2,
           shadows: [
             // Multiple dark shadows create a thick outline/stroke effect
-            Shadow(color: Colors.black.withValues(alpha: 0.8), blurRadius: 0, offset: const Offset(1, 1)),
-            Shadow(color: Colors.black.withValues(alpha: 0.8), blurRadius: 0, offset: const Offset(-1, -1)),
-            Shadow(color: Colors.black.withValues(alpha: 0.8), blurRadius: 0, offset: const Offset(1, -1)),
-            Shadow(color: Colors.black.withValues(alpha: 0.8), blurRadius: 0, offset: const Offset(-1, 1)),
-            Shadow(color: GameColors.gold.withValues(alpha: 0.7), blurRadius: 12),
+            Shadow(
+              color: Colors.black.withValues(alpha: 0.8),
+              blurRadius: 0,
+              offset: const Offset(1, 1),
+            ),
+            Shadow(
+              color: Colors.black.withValues(alpha: 0.8),
+              blurRadius: 0,
+              offset: const Offset(-1, -1),
+            ),
+            Shadow(
+              color: Colors.black.withValues(alpha: 0.8),
+              blurRadius: 0,
+              offset: const Offset(1, -1),
+            ),
+            Shadow(
+              color: Colors.black.withValues(alpha: 0.8),
+              blurRadius: 0,
+              offset: const Offset(-1, 1),
+            ),
+            Shadow(
+              color: GameColors.gold.withValues(alpha: 0.7),
+              blurRadius: 12,
+            ),
           ],
         ),
       ),

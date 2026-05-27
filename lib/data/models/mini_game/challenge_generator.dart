@@ -1089,7 +1089,7 @@ class ChallengeGenerator {
       case MiniGameDifficulty.medium:
         return 6;
       case MiniGameDifficulty.hard:
-        return 8;
+        return 9;
     }
   }
 

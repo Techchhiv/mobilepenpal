@@ -468,12 +468,12 @@ class ShopPage extends StatelessWidget {
       child: avatar.assetPath != null
           ? ClipOval(
               child: Padding(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(2),
                 child: Opacity(
                   opacity: isLocked ? 0.5 : 1.0,
                   child: Image.asset(
                     avatar.assetPath!,
-                    fit: BoxFit.contain,
+                    fit: BoxFit.cover,
                     errorBuilder: (ctx, err, stack) {
                       debugPrint(
                         'ShopPage: Failed to load asset: ${avatar.assetPath} - Error: $err',
@@ -749,7 +749,6 @@ class ShopPage extends StatelessWidget {
           ),
         ),
       ),
-      barrierDismissible: true,
     );
   }
 
@@ -758,339 +757,350 @@ class ShopPage extends StatelessWidget {
     final displayName = _getAvatarDisplayName(avatar);
 
     Get.dialog(
-      Center(
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 380),
-          width: MediaQuery.of(context).size.width * 0.85,
-          child: ScaleTransitionWidget(
-            child: Material(
-              borderRadius: BorderRadius.circular(28),
-              color: Colors.white,
-              elevation: 10,
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(28),
-                  border: Border.all(
-                    color: avatar.color.withValues(alpha: 0.35),
-                    width: 4.5,
+      Obx(() => PopScope(
+        canPop: !controller.isPurchasing.value,
+        child: Center(
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 380),
+            width: MediaQuery.of(context).size.width * 0.85,
+            child: ScaleTransitionWidget(
+              child: Material(
+                borderRadius: BorderRadius.circular(28),
+                color: Colors.white,
+                elevation: 10,
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(28),
+                    border: Border.all(
+                      color: avatar.color.withValues(alpha: 0.35),
+                      width: 4.5,
+                    ),
                   ),
-                ),
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    Positioned(
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      height: 120,
-                      child: ClipRRect(
-                        borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(23),
-                        ),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                avatar.color.withValues(alpha: 0.15),
-                                avatar.color.withValues(alpha: 0.05),
-                              ],
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Positioned(
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        height: 120,
+                        child: ClipRRect(
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(23),
+                          ),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  avatar.color.withValues(alpha: 0.15),
+                                  avatar.color.withValues(alpha: 0.05),
+                                ],
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                    Positioned(
-                      top: -25,
-                      left: -15,
-                      child: const Text(
-                        '🎈',
-                        style: TextStyle(fontSize: 36, decoration: TextDecoration.none),
+                      Positioned(
+                        top: -25,
+                        left: -15,
+                        child: const Text(
+                          '🎈',
+                          style: TextStyle(fontSize: 36, decoration: TextDecoration.none),
+                        ),
                       ),
-                    ),
-                    Positioned(
-                      top: -15,
-                      right: -15,
-                      child: const Text(
-                        '✨',
-                        style: TextStyle(fontSize: 28, decoration: TextDecoration.none),
+                      Positioned(
+                        top: -15,
+                        right: -15,
+                        child: const Text(
+                          '✨',
+                          style: TextStyle(fontSize: 28, decoration: TextDecoration.none),
+                        ),
                       ),
-                    ),
-                    Positioned(
-                      bottom: -15,
-                      right: 15,
-                      child: const Text(
-                        '⭐',
-                        style: TextStyle(fontSize: 24, decoration: TextDecoration.none),
+                      Positioned(
+                        bottom: -15,
+                        right: 15,
+                        child: const Text(
+                          '⭐',
+                          style: TextStyle(fontSize: 24, decoration: TextDecoration.none),
+                        ),
                       ),
-                    ),
-                    Positioned(
-                      bottom: -10,
-                      left: 15,
-                      child: const Text(
-                        '🎨',
-                        style: TextStyle(fontSize: 24, decoration: TextDecoration.none),
+                      Positioned(
+                        bottom: -10,
+                        left: 15,
+                        child: const Text(
+                          '🎨',
+                          style: TextStyle(fontSize: 24, decoration: TextDecoration.none),
+                        ),
                       ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
-                      child: SizedBox(
-                        width: double.infinity,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            SizedBox(
-                              width: 140,
-                              height: 140,
-                              child: Stack(
-                                alignment: Alignment.center,
-                                children: [
-                                  const SunburstWidget(size: 140),
-                                  _buildAvatarCircle(
-                                    avatar,
-                                    size: 90,
-                                    showBorder: true,
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 20),
-                            Text(
-                              displayName,
-                              style: const TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.w900,
-                                color: Color(0xFF3A3A5C),
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            if (!hasEnough) ...[
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 14,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.orange.shade50,
-                                  borderRadius: BorderRadius.circular(18),
-                                  border: Border.all(
-                                    color: Colors.orange.shade100,
-                                    width: 1.5,
-                                  ),
-                                ),
-                                child: Column(
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              SizedBox(
+                                width: 140,
+                                height: 140,
+                                child: Stack(
+                                  alignment: Alignment.center,
                                   children: [
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          Icons.lock_rounded,
-                                          color: Colors.orange.shade700,
-                                          size: 20,
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          'not_enough_points'.tr,
-                                          style: TextStyle(
-                                            fontSize: 15,
-                                            color: Colors.orange.shade800,
-                                            fontWeight: FontWeight.w900,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 10),
-                                    Text(
-                                      'need_more_points'.trParams({
-                                        'amount': '${avatar.price - controller.totalPoints.value}',
-                                      }),
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.orange.shade800,
-                                        fontWeight: FontWeight.w800,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      'shop_earn_more'.tr,
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.orange.shade600,
-                                        fontWeight: FontWeight.w600,
-                                        height: 1.4,
-                                      ),
-                                      textAlign: TextAlign.center,
+                                    const SunburstWidget(size: 140),
+                                    _buildAvatarCircle(
+                                      avatar,
+                                      size: 90,
+                                      showBorder: true,
                                     ),
                                   ],
                                 ),
                               ),
-                              const SizedBox(height: 24),
-                              Playful3DButton(
-                                label: 'ok'.tr.toUpperCase(),
-                                color: Colors.grey.shade500,
-                                onTap: () => Navigator.of(context).pop(),
-                              ),
-                            ] else ...[
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 20,
-                                  vertical: 14,
-                                ),
-                                margin: const EdgeInsets.symmetric(horizontal: 8),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFFFFDF0),
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(
-                                    color: Colors.amber.shade200,
-                                    width: 2.0,
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.amber.shade100.withValues(alpha: 0.5),
-                                      blurRadius: 6,
-                                      offset: const Offset(0, 3),
-                                    ),
-                                  ],
-                                ),
-                                child: Column(
-                                  children: [
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
-                                          'price'.tr,
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            color: Colors.grey.shade600,
-                                            fontWeight: FontWeight.w800,
-                                          ),
-                                        ),
-                                        Row(
-                                          children: [
-                                            const Icon(
-                                              Icons.stars_rounded,
-                                              color: Colors.amber,
-                                              size: 20,
-                                            ),
-                                            const SizedBox(width: 4),
-                                            Text(
-                                              'points_count'.trParams({
-                                                'count': '${avatar.price}',
-                                              }),
-                                              style: const TextStyle(
-                                                fontSize: 15,
-                                                fontWeight: FontWeight.w900,
-                                                color: Colors.amber,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 8.0,
-                                      ),
-                                      child: Divider(
-                                        height: 1,
-                                        thickness: 1.5,
-                                        color: Colors.amber.shade100,
-                                      ),
-                                    ),
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
-                                          'your_coins'.tr,
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            color: Colors.grey.shade600,
-                                            fontWeight: FontWeight.w800,
-                                          ),
-                                        ),
-                                        Row(
-                                          children: [
-                                            const Icon(
-                                              Icons.stars_rounded,
-                                              color: Colors.amber,
-                                              size: 20,
-                                            ),
-                                            const SizedBox(width: 4),
-                                            Text(
-                                              'points_count'.trParams({
-                                                'count': '${controller.totalPoints.value}',
-                                              }),
-                                              style: const TextStyle(
-                                                fontSize: 15,
-                                                fontWeight: FontWeight.w900,
-                                                color: Colors.amber,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ],
+                              const SizedBox(height: 20),
+                              Text(
+                                displayName,
+                                style: const TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w900,
+                                  color: Color(0xFF3A3A5C),
                                 ),
                               ),
                               const SizedBox(height: 16),
-                              Text(
-                                'buy_avatar_confirm'.tr,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey.shade600,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                              const SizedBox(height: 20),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                children: [
-                                  BouncyGestureDetector(
-                                    onTap: () => Navigator.of(context).pop(),
-                                    child: Text(
-                                      'cancel'.tr,
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w800,
-                                        color: Colors.grey.shade500,
-                                      ),
+                              if (!hasEnough) ...[
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 14,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.orange.shade50,
+                                    borderRadius: BorderRadius.circular(18),
+                                    border: Border.all(
+                                      color: Colors.orange.shade100,
+                                      width: 1.5,
                                     ),
                                   ),
-                                  Playful3DButton(
-                                    label: 'buy_for'.trParams({
-                                      'price': '${avatar.price}',
-                                    }),
-                                    icon: Icons.shopping_cart_rounded,
-                                    color: Colors.green.shade600,
-                                    onTap: () async {
-                                      final success = await controller
-                                          .purchaseAvatar(avatar.id);
-                                      if (context.mounted) {
-                                        Navigator.of(context).pop();
-                                        if (success) {
-                                          _showCelebrationDialog(context, avatar);
-                                        }
-                                      }
-                                    },
+                                  child: Column(
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            Icons.lock_rounded,
+                                            color: Colors.orange.shade700,
+                                            size: 20,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            'not_enough_points'.tr,
+                                            style: TextStyle(
+                                              fontSize: 15,
+                                              color: Colors.orange.shade800,
+                                              fontWeight: FontWeight.w900,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 10),
+                                      Text(
+                                        'need_more_points'.trParams({
+                                          'amount': '${avatar.price - controller.totalPoints.value}',
+                                        }),
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.orange.shade800,
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        'shop_earn_more'.tr,
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.orange.shade600,
+                                          fontWeight: FontWeight.w600,
+                                          height: 1.4,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ],
                                   ),
-                                ],
-                              ),
+                                ),
+                                const SizedBox(height: 24),
+                                Playful3DButton(
+                                  label: 'ok'.tr.toUpperCase(),
+                                  color: Colors.grey.shade500,
+                                  onTap: () => Navigator.of(context).pop(),
+                                ),
+                              ] else ...[
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 20,
+                                    vertical: 14,
+                                  ),
+                                  margin: const EdgeInsets.symmetric(horizontal: 8),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFFFDF0),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: Colors.amber.shade200,
+                                      width: 2.0,
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.amber.shade100.withValues(alpha: 0.5),
+                                        blurRadius: 6,
+                                        offset: const Offset(0, 3),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Column(
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            'price'.tr,
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              color: Colors.grey.shade600,
+                                              fontWeight: FontWeight.w800,
+                                            ),
+                                          ),
+                                          Row(
+                                            children: [
+                                              const Icon(
+                                                Icons.stars_rounded,
+                                                color: Colors.amber,
+                                                size: 20,
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                'points_count'.trParams({
+                                                  'count': '${avatar.price}',
+                                                }),
+                                                style: const TextStyle(
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.w900,
+                                                  color: Colors.amber,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 8.0,
+                                        ),
+                                        child: Divider(
+                                          height: 1,
+                                          thickness: 1.5,
+                                          color: Colors.amber.shade100,
+                                        ),
+                                      ),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            'your_coins'.tr,
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              color: Colors.grey.shade600,
+                                              fontWeight: FontWeight.w800,
+                                            ),
+                                          ),
+                                          Row(
+                                            children: [
+                                              const Icon(
+                                                Icons.stars_rounded,
+                                                color: Colors.amber,
+                                                size: 20,
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                'points_count'.trParams({
+                                                  'count': '${controller.totalPoints.value}',
+                                                }),
+                                                style: const TextStyle(
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.w900,
+                                                  color: Colors.amber,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'buy_avatar_confirm'.tr,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey.shade600,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 20),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                  children: [
+                                    if (!controller.isPurchasing.value)
+                                      BouncyGestureDetector(
+                                        onTap: () => Navigator.of(context).pop(),
+                                        child: Text(
+                                          'cancel'.tr,
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w800,
+                                            color: Colors.grey.shade500,
+                                          ),
+                                        ),
+                                      ),
+                                    Playful3DButton(
+                                      label: controller.isPurchasing.value
+                                          ? 'loading'.tr
+                                          : 'buy_for'.trParams({
+                                              'price': '${avatar.price}',
+                                            }),
+                                      icon: controller.isPurchasing.value
+                                          ? null
+                                          : Icons.shopping_cart_rounded,
+                                      color: controller.isPurchasing.value
+                                          ? Colors.green.shade400
+                                          : Colors.green.shade600,
+                                      isLoading: controller.isPurchasing.value,
+                                      onTap: () async {
+                                        final success = await controller
+                                            .purchaseAvatar(avatar.id);
+                                        if (context.mounted) {
+                                          Navigator.of(context).pop();
+                                          if (success) {
+                                            _showCelebrationDialog(context, avatar);
+                                          }
+                                        }
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ],
                             ],
-                          ],
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
         ),
-      ),
+      )),
       barrierDismissible: true,
     );
   }
@@ -1364,11 +1374,83 @@ class StarburstPainter extends CustomPainter {
       oldDelegate.color != color || oldDelegate.rayCount != rayCount;
 }
 
+class PlayfulButtonLoader extends StatefulWidget {
+  final Color color;
+  const PlayfulButtonLoader({super.key, this.color = Colors.white});
+
+  @override
+  State<PlayfulButtonLoader> createState() => _PlayfulButtonLoaderState();
+}
+
+class _PlayfulButtonLoaderState extends State<PlayfulButtonLoader>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        RotationTransition(
+          turns: _controller,
+          child: Icon(
+            Icons.stars_rounded,
+            color: widget.color,
+            size: 22,
+          ),
+        ),
+        const SizedBox(width: 10),
+        ...List.generate(3, (index) {
+          return AnimatedBuilder(
+            animation: _controller,
+            builder: (context, child) {
+              final delay = index * 0.2;
+              double value = (_controller.value - delay) % 1.0;
+              double bounce = math.sin(value * math.pi);
+              if (bounce < 0) bounce = 0;
+
+              return Transform.translate(
+                offset: Offset(0, -bounce * 6),
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 2),
+                  width: 6,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: widget.color,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              );
+            },
+          );
+        }),
+      ],
+    );
+  }
+}
+
 class Playful3DButton extends StatelessWidget {
   final String label;
   final IconData? icon;
   final Color color;
   final VoidCallback onTap;
+  final bool isLoading;
 
   const Playful3DButton({
     super.key,
@@ -1376,18 +1458,22 @@ class Playful3DButton extends StatelessWidget {
     required this.onTap,
     required this.color,
     this.icon,
+    this.isLoading = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final shadowColor = Color.lerp(color, Colors.black, 0.28) ?? Colors.black;
+    final activeColor = isLoading ? Color.lerp(color, Colors.white, 0.2) ?? color : color;
+    final shadowColor = Color.lerp(activeColor, Colors.black, 0.28) ?? Colors.black;
 
     return BouncyGestureDetector(
-      onTap: onTap,
-      child: Container(
+      onTap: isLoading ? () {} : onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
         margin: const EdgeInsets.only(bottom: 6),
         decoration: BoxDecoration(
-          color: color,
+          color: activeColor,
           borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
@@ -1398,24 +1484,45 @@ class Playful3DButton extends StatelessWidget {
           ],
         ),
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            if (icon != null) ...[
-              Icon(icon, color: Colors.white, size: 20),
-              const SizedBox(width: 8),
-            ],
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w900,
-                color: Colors.white,
-                letterSpacing: 0.5,
-              ),
-            ),
-          ],
+        child: AnimatedSize(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 250),
+            transitionBuilder: (Widget child, Animation<double> animation) {
+              return ScaleTransition(
+                scale: animation,
+                child: FadeTransition(
+                  opacity: animation,
+                  child: child,
+                ),
+              );
+            },
+            child: isLoading
+                ? const PlayfulButtonLoader(
+                    key: ValueKey('loading'),
+                  )
+                : Row(
+                    key: const ValueKey('normal'),
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      if (icon != null) ...[
+                        Icon(icon, color: Colors.white, size: 20),
+                        const SizedBox(width: 8),
+                      ],
+                      Text(
+                        label,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
         ),
       ),
     );

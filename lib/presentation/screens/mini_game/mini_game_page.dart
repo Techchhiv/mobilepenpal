@@ -192,8 +192,8 @@ class _MiniGamePageState extends State<MiniGamePage>
       if (shopAvatar != null && shopAvatar.id != 'default') {
         if (shopAvatar.assetPath != null) {
           avatarContent = Padding(
-            padding: const EdgeInsets.all(6),
-            child: Image.asset(shopAvatar.assetPath!, fit: BoxFit.contain),
+            padding: const EdgeInsets.all(2),
+            child: Image.asset(shopAvatar.assetPath!, fit: BoxFit.cover),
           );
         } else {
           avatarContent = Icon(
@@ -729,12 +729,65 @@ class _MiniGamePageState extends State<MiniGamePage>
     );
   }
 
-  Widget _buildFallbackIcon() {
+  Widget _buildFallbackIcon({double size = 40}) {
     return Icon(
       Icons.sports_esports_rounded,
       color: Colors.grey.shade400,
-      size: 40,
+      size: size,
     );
+  }
+
+  Widget _buildGameIcon(MiniGameModel game, {double fallbackSize = 40}) {
+    if (game.coverImageUrl != null && game.coverImageUrl!.isNotEmpty) {
+      return Image.network(
+        Env.backendUrl + game.coverImageUrl!,
+        fit: BoxFit.contain,
+        errorBuilder: (_, __, ___) => _buildLocalOrFallbackIcon(game, fallbackSize: fallbackSize),
+      );
+    }
+    return _buildLocalOrFallbackIcon(game, fallbackSize: fallbackSize);
+  }
+
+  Widget _buildLocalOrFallbackIcon(MiniGameModel game, {double fallbackSize = 40}) {
+    String? assetPath;
+    switch (game.id) {
+      case 1: // Consonant Sprint
+        assetPath = 'assets/images/minigames/consonants.png';
+        break;
+      case 2: // Digit Sprint
+        assetPath = 'assets/images/minigames/digits.png';
+        break;
+      case 3: // Independent Vowel Sprint
+        assetPath = 'assets/images/minigames/independent_vowels.png';
+        break;
+      case 4: // Dependent Vowel Sprint
+        assetPath = 'assets/images/minigames/dependent_vowels.png';
+        break;
+      case 5: // Counting Fun
+        assetPath = 'assets/images/minigames/object_count.png';
+        break;
+      case 6: // Fill the Word
+        assetPath = 'assets/images/minigames/missing_character.png';
+        break;
+      case 7: // Math Challenge
+        assetPath = 'assets/images/minigames/math_equation.png';
+        break;
+      case 8: // Question Time
+        assetPath = 'assets/images/minigames/question.png';
+        break;
+    }
+
+    if (assetPath != null) {
+      return Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Image.asset(
+          assetPath,
+          fit: BoxFit.contain,
+          errorBuilder: (_, __, ___) => _buildFallbackIcon(size: fallbackSize),
+        ),
+      );
+    }
+    return _buildFallbackIcon(size: fallbackSize);
   }
 
   Widget _buildCompactGridView(MiniGameHubController hubCtrl) {
@@ -801,19 +854,7 @@ class _MiniGamePageState extends State<MiniGamePage>
                           child: CircleAvatar(
                             radius: 40,
                             backgroundColor: Colors.white,
-                            child:
-                                game.coverImageUrl != null &&
-                                    game.coverImageUrl!.isNotEmpty
-                                ? Padding(
-                                    padding: const EdgeInsets.all(8),
-                                    child: Image.network(
-                                      Env.backendUrl + game.coverImageUrl!,
-                                      fit: BoxFit.contain,
-                                      errorBuilder: (_, __, ___) =>
-                                          _buildFallbackIcon(),
-                                    ),
-                                  )
-                                : _buildFallbackIcon(),
+                            child: _buildGameIcon(game, fallbackSize: 40),
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -906,19 +947,7 @@ class _MiniGamePageState extends State<MiniGamePage>
                         color: Colors.grey.shade50,
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child:
-                          game.coverImageUrl != null &&
-                              game.coverImageUrl!.isNotEmpty
-                          ? Padding(
-                              padding: const EdgeInsets.all(6),
-                              child: Image.network(
-                                Env.backendUrl + game.coverImageUrl!,
-                                fit: BoxFit.contain,
-                                errorBuilder: (_, __, ___) =>
-                                    _buildFallbackIcon(),
-                              ),
-                            )
-                          : _buildFallbackIcon(),
+                      child: _buildGameIcon(game, fallbackSize: 32),
                     ),
                     const SizedBox(width: 16),
 

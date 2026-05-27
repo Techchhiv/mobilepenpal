@@ -48,6 +48,7 @@ class ShopController extends GetxController {
   final selectedAvatarId = 'default'.obs;
 
   final allAvatars = <ShopAvatar>[].obs;
+  final isPurchasing = false.obs;
 
   static const List<ShopAvatar> defaultAvatars = [
     ShopAvatar(
@@ -262,6 +263,7 @@ class ShopController extends GetxController {
 
     if (totalPoints.value < avatar.price) return false;
 
+    isPurchasing.value = true;
     try {
       final response = await _shopService.purchaseAvatar(
         avatarName: avatar.id,
@@ -289,6 +291,8 @@ class ShopController extends GetxController {
     } catch (e) {
       debugPrint('ShopController: Error during purchase: $e');
       return false;
+    } finally {
+      isPurchasing.value = false;
     }
   }
 

@@ -109,7 +109,7 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
                     const SizedBox(height: 12),
 
                     // ── DISPLAY MODULE (top half) ──
-                    Obx(() => _buildDisplayModule()),
+                    Flexible(flex: 0, child: Obx(() => _buildDisplayModule())),
                     const SizedBox(height: 12),
 
                     // ── INPUT MODULE (bottom half) ──
@@ -159,7 +159,7 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
         return Transform.translate(offset: Offset(0, dy), child: child);
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         decoration: BoxDecoration(
           color: GameColors.card,
           borderRadius: BorderRadius.circular(24),
@@ -168,97 +168,104 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
             BoxShadow(color: GameColors.textDark.withValues(alpha: 0.05), blurRadius: 12, spreadRadius: 2, offset: const Offset(0, 4)),
           ],
         ),
-        child: Column(
-          children: [
-            InstructionBadge(inputType: controller.currentInputType.value),
-            const SizedBox(height: 12),
-            Obx(() {
-              final alwaysShow = displayType == 'math_equation' || displayType == 'image';
-              final diff = controller.difficulty.value;
-              final isVis = controller.isPromptVisible.value;
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              InstructionBadge(inputType: controller.currentInputType.value),
+              const SizedBox(height: 8),
+              Obx(() {
+                final alwaysShow = displayType == 'math_equation' || displayType == 'image';
+                final diff = controller.difficulty.value;
+                final isVis = controller.isPromptVisible.value;
 
-              final bool promptVisible;
-              if (alwaysShow) {
-                promptVisible = true;
-              } else if (diff == MiniGameDifficulty.easy) {
-                promptVisible = true;
-              } else if (diff == MiniGameDifficulty.hard) {
-                promptVisible = false;
-              } else {
-                promptVisible = isVis;
-              }
+                final bool promptVisible;
+                if (alwaysShow) {
+                  promptVisible = true;
+                } else if (diff == MiniGameDifficulty.easy) {
+                  promptVisible = true;
+                } else if (diff == MiniGameDifficulty.hard) {
+                  promptVisible = false;
+                } else {
+                  promptVisible = isVis;
+                }
 
-              return Column(
-                children: [
-                  if (diff == MiniGameDifficulty.medium && promptVisible)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8, bottom: 8),
-                      child: AnimatedBuilder(
-                        animation: controller.mediumTimerCtrl,
-                        builder: (context, child) {
-                          return LinearProgressIndicator(
-                            value: controller.mediumTimerCtrl.value,
-                            backgroundColor: Colors.white.withValues(alpha: 0.1),
-                            valueColor: const AlwaysStoppedAnimation<Color>(Colors.orangeAccent),
-                            minHeight: 4,
-                            borderRadius: BorderRadius.circular(2),
-                          );
-                        },
+                return Column(
+                  children: [
+                    if (diff == MiniGameDifficulty.medium && promptVisible)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8, bottom: 8),
+                        child: AnimatedBuilder(
+                          animation: controller.mediumTimerCtrl,
+                          builder: (context, child) {
+                            return SizedBox(
+                              width: 200,
+                              child: LinearProgressIndicator(
+                                value: controller.mediumTimerCtrl.value,
+                                backgroundColor: Colors.white.withValues(alpha: 0.1),
+                                valueColor: const AlwaysStoppedAnimation<Color>(Colors.orangeAccent),
+                                minHeight: 4,
+                                borderRadius: BorderRadius.circular(2),
+                              ),
+                            );
+                          },
+                        ),
                       ),
-                    ),
-                  AnimatedCrossFade(
-                    duration: const Duration(milliseconds: 400),
-                    crossFadeState: promptVisible
-                        ? CrossFadeState.showFirst
-                        : CrossFadeState.showSecond,
-                    firstChild: Text(
-                      challenge.display,
-                      style: const TextStyle(
-                        color: GameColors.textDark,
-                        fontSize: 64,
-                        fontWeight: FontWeight.w900,
-                        height: 1.2,
+                    AnimatedCrossFade(
+                      duration: const Duration(milliseconds: 400),
+                      crossFadeState: promptVisible
+                          ? CrossFadeState.showFirst
+                          : CrossFadeState.showSecond,
+                      firstChild: Text(
+                        challenge.display,
+                        style: const TextStyle(
+                          color: GameColors.textDark,
+                          fontSize: 56,
+                          fontWeight: FontWeight.w900,
+                          height: 1.2,
+                        ),
                       ),
-                    ),
-                    secondChild: diff == MiniGameDifficulty.medium
-                        ? const Text(
-                            '?',
-                            style: TextStyle(
-                              color: GameColors.textMuted,
-                              fontSize: 64,
-                              fontWeight: FontWeight.w900,
-                              height: 1.2,
-                            ),
-                          )
-                        : GestureDetector(
-                            onTap: controller.replayPromptAudio,
-                            behavior: HitTestBehavior.opaque,
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.volume_up_rounded,
-                                  color: GameColors.teal,
-                                  size: 36,
-                                ),
-                                const SizedBox(width: 12),
-                                Text(
-                                  'tap_to_listen_again'.tr,
-                                  style: const TextStyle(
+                      secondChild: diff == MiniGameDifficulty.medium
+                          ? const Text(
+                              '?',
+                              style: TextStyle(
+                                color: GameColors.textMuted,
+                                fontSize: 56,
+                                fontWeight: FontWeight.w900,
+                                height: 1.2,
+                              ),
+                            )
+                          : GestureDetector(
+                              onTap: controller.replayPromptAudio,
+                              behavior: HitTestBehavior.opaque,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.volume_up_rounded,
                                     color: GameColors.teal,
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w700,
-                                    fontStyle: FontStyle.italic,
+                                    size: 36,
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(width: 12),
+                                  Text(
+                                    'tap_to_listen_again'.tr,
+                                    style: const TextStyle(
+                                      color: GameColors.teal,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w700,
+                                      fontStyle: FontStyle.italic,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                  ),
-                ],
-              );
-            }),
-          ],
+                    ),
+                  ],
+                );
+              }),
+            ],
+          ),
         ),
       ),
     );
@@ -291,10 +298,14 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
             children: [
               InstructionBadge(inputType: controller.currentInputType.value),
               const SizedBox(height: 12),
-              AnimatedOpacity(
-                opacity: (layout == 'memory' && !memoryVisible) ? 0.0 : 1.0,
-                duration: const Duration(milliseconds: 600),
-                child: layout == 'scattered'
+              if (layout == 'memory')
+                MemoryObjectsDisplay(
+                  emojis: emojis,
+                  memoryVisible: memoryVisible,
+                  duration: const Duration(seconds: 3),
+                )
+              else
+                layout == 'scattered'
                     ? _buildScatteredEmojis(emojis)
                     : Wrap(
                         spacing: 6,
@@ -304,20 +315,6 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
                             .map((e) => Text(e, style: const TextStyle(fontSize: 36)))
                             .toList(),
                       ),
-              ),
-              if (layout == 'memory' && !memoryVisible)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Text(
-                    'how_many_were_there'.tr,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.6),
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-                ),
             ],
           ),
         ),
@@ -326,26 +323,71 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
   }
 
   Widget _buildScatteredEmojis(List<String> emojis) {
-    // Build a small container with randomly placed emojis
-    final rng = math.Random(emojis.length); // seeded so positions are stable
-    return SizedBox(
-      height: 80,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: emojis.asMap().entries.map((e) {
-          final dx = rng.nextDouble() * 200 - 100;
-          final dy = rng.nextDouble() * 40 - 10;
-          final rotation = (rng.nextDouble() - 0.5) * 0.4;
-          return Positioned(
-            left: 80 + dx,
-            top: 10 + dy,
-            child: Transform.rotate(
-              angle: rotation,
-              child: Text(e.value, style: const TextStyle(fontSize: 32)),
-            ),
-          );
-        }).toList(),
-      ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        // Padding around edges so emojis aren't cut off
+        const padding = 32.0;
+        final minX = padding;
+        final maxX = math.max(minX + 10.0, width - padding - 32.0);
+        const minY = 5.0;
+        final maxY = math.max(minY + 10.0, 80.0 - 5.0 - 32.0);
+
+        final rng = math.Random(emojis.length);
+        final positions = <Offset>[];
+        const minDistance = 30.0; // Distance between emoji centers to prevent overlap
+
+        for (int i = 0; i < emojis.length; i++) {
+          double x = 0;
+          double y = 0;
+          bool overlap = true;
+          int attempts = 0;
+          double currentMinDist = minDistance;
+
+          while (overlap && attempts < 100) {
+            attempts++;
+            // Generate candidate position
+            x = minX + rng.nextDouble() * (maxX - minX);
+            y = minY + rng.nextDouble() * (maxY - minY);
+
+            overlap = false;
+            for (final pos in positions) {
+              final dist = (Offset(x, y) - pos).distance;
+              if (dist < currentMinDist) {
+                overlap = true;
+                break;
+              }
+            }
+
+            // Gradually decrease minimum distance if it's hard to find a free space
+            if (attempts % 10 == 0) {
+              currentMinDist = (currentMinDist - 2.0).clamp(10.0, minDistance);
+            }
+          }
+          positions.add(Offset(x, y));
+        }
+
+        return SizedBox(
+          height: 80,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: emojis.asMap().entries.map((e) {
+              final idx = e.key;
+              final emoji = e.value;
+              final pos = positions[idx];
+              final rotation = (rng.nextDouble() - 0.5) * 0.4;
+              return Positioned(
+                left: pos.dx,
+                top: pos.dy,
+                child: Transform.rotate(
+                  angle: rotation,
+                  child: Text(emoji, style: const TextStyle(fontSize: 32)),
+                ),
+              );
+            }).toList(),
+          ),
+        );
+      },
     );
   }
 
@@ -363,7 +405,7 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
           return Transform.translate(offset: Offset(0, dy), child: child);
         },
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           decoration: BoxDecoration(
             color: GameColors.card,
             borderRadius: BorderRadius.circular(24),
@@ -372,88 +414,92 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
               BoxShadow(color: GameColors.textDark.withValues(alpha: 0.05), blurRadius: 12, spreadRadius: 2, offset: const Offset(0, 4)),
             ],
           ),
-          child: Column(
-            children: [
-              InstructionBadge(inputType: controller.currentInputType.value),
-              const SizedBox(height: 12),
-              if (hint == 'audio')
-                // Hard: audio only
-                GestureDetector(
-                  onTap: controller.replayPromptAudio,
-                  behavior: HitTestBehavior.opaque,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.volume_up_rounded,
-                        color: Colors.white.withValues(alpha: 0.6),
-                        size: 36,
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                        'tap_to_listen'.tr,
-                        style: TextStyle(
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                InstructionBadge(inputType: controller.currentInputType.value),
+                const SizedBox(height: 8),
+                if (hint == 'audio')
+                  // Hard: audio only
+                  GestureDetector(
+                    onTap: controller.replayPromptAudio,
+                    behavior: HitTestBehavior.opaque,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.volume_up_rounded,
                           color: Colors.white.withValues(alpha: 0.6),
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                          fontStyle: FontStyle.italic,
+                          size: 36,
                         ),
-                      ),
-                    ],
-                  ),
-                )
-              else ...
-                [
-                  // If there's an image or text hint, show it first (above the word)
-                  if (hint == 'with_image') ...
-                    [
-                      controller.currentChallenge.value?.imagePath != null
-                          ? Container(
-                              margin: const EdgeInsets.only(bottom: 24),
-                              padding: const EdgeInsets.all(24),
-                              decoration: BoxDecoration(
-                                color: GameColors.teal.withValues(alpha: 0.15),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Image.asset(
-                                controller.currentChallenge.value!.imagePath!,
-                                height: 90, // Reduced size based on feedback
-                                fit: BoxFit.contain,
-                              ),
-                            )
-                          : Container(
-                              margin: const EdgeInsets.only(bottom: 24),
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF4ECDC4).withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              child: Text(
-                                'hint_text'.trParams({'word': fullWord}),
-                                style: const TextStyle(
-                                  color: Color(0xFF4ECDC4),
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w800,
+                        const SizedBox(width: 12),
+                        Text(
+                          'tap_to_listen'.tr,
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.6),
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                else ...
+                  [
+                    // If there's an image or text hint, show it first (above the word)
+                    if (hint == 'with_image') ...
+                      [
+                        controller.currentChallenge.value?.imagePath != null
+                            ? Container(
+                                margin: const EdgeInsets.only(bottom: 12),
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: GameColors.teal.withValues(alpha: 0.15),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Image.asset(
+                                  controller.currentChallenge.value!.imagePath!,
+                                  height: 70,
+                                  fit: BoxFit.contain,
+                                ),
+                              )
+                            : Container(
+                                margin: const EdgeInsets.only(bottom: 12),
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF4ECDC4).withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: Text(
+                                  'hint_text'.trParams({'word': fullWord}),
+                                  style: const TextStyle(
+                                    color: Color(0xFF4ECDC4),
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w800,
+                                  ),
                                 ),
                               ),
-                            ),
-                    ],
+                      ],
 
-                  // Easy & Medium: show word with blank below the image
-                  RichText(
-                    textAlign: TextAlign.center,
-                    text: TextSpan(
-                      style: const TextStyle(
-                        color: GameColors.textDark,
-                        fontSize: 64, // Slightly larger font for children
-                        fontWeight: FontWeight.w900,
-                        height: 1.2,
+                    // Easy & Medium: show word with blank below the image
+                    RichText(
+                      textAlign: TextAlign.center,
+                      text: TextSpan(
+                        style: const TextStyle(
+                          color: GameColors.textDark,
+                          fontSize: 56,
+                          fontWeight: FontWeight.w900,
+                          height: 1.2,
+                        ),
+                        children: _buildBlankWordSpans(blank),
                       ),
-                      children: _buildBlankWordSpans(blank),
                     ),
-                  ),
-                ],
-            ],
+                  ],
+              ],
+            ),
           ),
         ),
       );
@@ -767,64 +813,71 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
       final options = controller.currentOptions;
       if (options.isEmpty) return const SizedBox();
 
-      final screenHeight = MediaQuery.of(context).size.height;
-      final isTallScreen = screenHeight > 800;
+      final screenWidth = MediaQuery.of(context).size.width;
 
-      // Adapt grid layout based on option count and screen height
+      // Determine columns based on option count
       final int crossAxisCount;
-      final double aspectRatio;
-
       if (options.length <= 4) {
         crossAxisCount = 2;
-        aspectRatio = 1.15;
       } else if (options.length <= 6) {
-        if (isTallScreen) {
-          crossAxisCount = 2; // Renders 3 rows
-          aspectRatio = 1.2;
-        } else {
-          crossAxisCount = 3; // Renders 2 rows
-          aspectRatio = 1.0;
-        }
+        crossAxisCount = screenWidth > 400 ? 3 : 2;
+      } else if (options.length == 9) {
+        crossAxisCount = 3;
       } else {
-        // More than 6 options (typically 8)
-        if (isTallScreen) {
-          crossAxisCount = 2; // Renders 4 rows (large cards)
-          aspectRatio = 1.4;
-        } else {
-          crossAxisCount = 3; // Renders 3 rows (3, 3, 2)
-          aspectRatio = 1.0;
-        }
+        crossAxisCount = screenWidth > 400 ? 3 : 2;
       }
 
-      final spacing = isTallScreen ? 18.0 : 16.0;
+      const spacing = 12.0;
+      final rowCount = (options.length / crossAxisCount).ceil();
 
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: crossAxisCount,
-              crossAxisSpacing: spacing,
-              mainAxisSpacing: spacing,
-              childAspectRatio: aspectRatio,
+      // Use LayoutBuilder to compute card height from actual available space
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          final availableHeight = constraints.maxHeight;
+          final availableWidth = constraints.maxWidth - 32; // horizontal padding
+
+          // Total vertical spacing between rows
+          final totalVerticalSpacing = spacing * (rowCount - 1);
+          // Height per card = (available - spacing) / rows
+          final cardHeight = ((availableHeight - totalVerticalSpacing) / rowCount)
+              .clamp(36.0, 120.0);
+
+          // Width per card
+          final totalHorizontalSpacing = spacing * (crossAxisCount - 1);
+          final cardWidth = (availableWidth - totalHorizontalSpacing) / crossAxisCount;
+
+          // Aspect ratio derived from actual available space
+          final aspectRatio = cardWidth / cardHeight;
+
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: crossAxisCount,
+                  crossAxisSpacing: spacing,
+                  mainAxisSpacing: spacing,
+                  childAspectRatio: aspectRatio,
+                ),
+                itemCount: options.length,
+                itemBuilder: (context, index) {
+                  final option = options[index];
+                  return Obx(() {
+                    final isWrong = controller.hasRetried.value && option == controller.lastWrongAnswer.value;
+                    return ChoiceCard(
+                      option: option,
+                      colorIndex: index,
+                      onTap: () => controller.submitMultipleChoice(option),
+                      isWrong: isWrong,
+                    );
+                  });
+                },
+              ),
             ),
-            itemCount: options.length,
-            itemBuilder: (context, index) {
-              final option = options[index];
-              return Obx(() {
-                final isWrong = controller.hasRetried.value && option == controller.lastWrongAnswer.value;
-                return ChoiceCard(
-                  option: option,
-                  colorIndex: index,
-                  onTap: () => controller.submitMultipleChoice(option),
-                  isWrong: isWrong,
-                );
-              });
-            },
-          ),
-        ),
+          );
+        },
       );
     });
   }
@@ -879,20 +932,25 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
                   Expanded(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: validSources.map((pair) {
+                      children: validSources.asMap().entries.map((entry) {
+                        final index = entry.key;
+                        final pair = entry.value;
                         final isMatched = pair.matched;
                         final isSelected = selectedSrc == pair.source;
                         final state = isMatched ? 'matched' : (isSelected ? 'selected' : 'normal');
 
                         final card = MatchCard(
+                          key: ValueKey('match_card_source_${pair.id}'),
                           content: pair.source,
                           state: state,
                           scale: cardScale,
+                          colorIndex: index,
                           onTap: () => controller.selectDragSource(pair.source),
                         );
 
                         if (isMatched) {
                           return Flexible(
+                            key: ValueKey('source_flex_matched_${pair.id}'),
                             child: Padding(
                               padding: const EdgeInsets.symmetric(vertical: 4),
                               child: card,
@@ -901,9 +959,11 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
                         }
 
                         return Flexible(
+                          key: ValueKey('source_flex_draggable_${pair.id}'),
                           child: Padding(
                             padding: const EdgeInsets.symmetric(vertical: 4),
                             child: LongPressDraggable<String>(
+                              key: ValueKey('draggable_source_${pair.id}'),
                               data: pair.source,
                               delay: const Duration(milliseconds: 100),
                               feedback: Material(
@@ -913,6 +973,7 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
                                   child: SizedBox(
                                     width: MediaQuery.of(context).size.width * 0.4,
                                     child: MatchCard(
+                                      key: ValueKey('match_card_feedback_${pair.id}'),
                                       content: pair.source,
                                       state: 'selected',
                                       scale: cardScale,
@@ -951,15 +1012,19 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
                   Expanded(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: targets.map((pair) {
+                      children: targets.asMap().entries.map((entry) {
+                        final index = entry.key;
+                        final pair = entry.value;
                         final isMatched = pair.matched;
                         final isWrong = wrongTarget == pair.target;
                         final state = isMatched ? 'matched' : (isWrong ? 'wrong' : 'normal');
 
                         return Flexible(
+                          key: ValueKey('target_flex_${pair.id}'),
                           child: Padding(
                             padding: const EdgeInsets.symmetric(vertical: 4),
                             child: DragTarget<String>(
+                              key: ValueKey('drag_target_${pair.id}'),
                               onWillAcceptWithDetails: (details) => !isMatched,
                               onAcceptWithDetails: (details) {
                                 controller.submitDragDrop(details.data, pair);
@@ -968,18 +1033,20 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
                                 final isHovering = candidateData.isNotEmpty;
                                 return AnimatedContainer(
                                   duration: const Duration(milliseconds: 200),
-                                  decoration: isHovering && !isMatched
-                                      ? BoxDecoration(
-                                          borderRadius: BorderRadius.circular(20),
-                                          boxShadow: [
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(20),
+                                    boxShadow: isHovering && !isMatched
+                                        ? [
                                             BoxShadow(color: GameColors.teal.withValues(alpha: 0.4), blurRadius: 12, spreadRadius: 2),
-                                          ],
-                                        )
-                                      : null,
+                                          ]
+                                        : const [],
+                                  ),
                                   child: MatchCard(
+                                    key: ValueKey('match_card_target_${pair.id}'),
                                     content: pair.target,
                                     state: isHovering && !isMatched ? 'selected' : state,
                                     scale: cardScale,
+                                    colorIndex: index + 5,
                                     onTap: () => controller.selectDragTarget(pair),
                                   ),
                                 );
@@ -1329,3 +1396,116 @@ class _PauseDialog extends StatelessWidget {
     return GamePauseDialog(onResume: onResume, onQuit: onQuit);
   }
 }
+
+// ── Memory Objects Display ────────────────────────────────────────────
+class MemoryObjectsDisplay extends StatefulWidget {
+  const MemoryObjectsDisplay({
+    super.key,
+    required this.emojis,
+    required this.memoryVisible,
+    required this.duration,
+  });
+
+  final List<String> emojis;
+  final bool memoryVisible;
+  final Duration duration;
+
+  @override
+  State<MemoryObjectsDisplay> createState() => _MemoryObjectsDisplayState();
+}
+
+class _MemoryObjectsDisplayState extends State<MemoryObjectsDisplay>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _timerCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _timerCtrl = AnimationController(
+      vsync: this,
+      duration: widget.duration,
+    );
+    if (widget.memoryVisible) {
+      _timerCtrl.forward(from: 0.0);
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant MemoryObjectsDisplay oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.memoryVisible && !oldWidget.memoryVisible) {
+      _timerCtrl.forward(from: 0.0);
+    } else if (!widget.memoryVisible) {
+      _timerCtrl.stop();
+    }
+  }
+
+  @override
+  void dispose() {
+    _timerCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!widget.memoryVisible) {
+      return const SizedBox(height: 80);
+    }
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        const SizedBox(height: 8),
+        Center(
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            alignment: WrapAlignment.center,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: widget.emojis
+                .map((e) => Text(
+                      e,
+                      style: const TextStyle(fontSize: 48),
+                    ))
+                .toList(),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Container(
+          width: 180,
+          height: 8,
+          decoration: BoxDecoration(
+            color: GameColors.cardBorder,
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: AnimatedBuilder(
+            animation: _timerCtrl,
+            builder: (context, _) {
+              final progress = 1.0 - _timerCtrl.value;
+              Color barColor = GameColors.teal;
+              if (progress < 0.3) {
+                barColor = GameColors.softRed;
+              } else if (progress < 0.6) {
+                barColor = GameColors.orange;
+              }
+              return FractionallySizedBox(
+                alignment: Alignment.centerLeft,
+                widthFactor: progress,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: barColor,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 8),
+      ],
+    );
+  }
+}
+

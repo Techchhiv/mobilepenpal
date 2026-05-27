@@ -352,8 +352,8 @@ class HomePage extends StatelessWidget {
     if (shopAvatar != null && shopAvatar.id != 'default') {
       if (shopAvatar.assetPath != null) {
         return Padding(
-          padding: const EdgeInsets.all(8),
-          child: Image.asset(shopAvatar.assetPath!, fit: BoxFit.contain),
+          padding: const EdgeInsets.all(2),
+          child: Image.asset(shopAvatar.assetPath!, fit: BoxFit.cover),
         );
       }
       return Icon(

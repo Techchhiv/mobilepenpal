@@ -17,6 +17,9 @@ import 'package:mobilepenpal/data/models/mini_game/challenge_generator.dart';
 import 'package:mobilepenpal/data/models/api_response.dart';
 import 'package:mobilepenpal/data/models/mini_game/mini_game_model.dart';
 import 'package:mobilepenpal/data/services/drawing_evaluation_service.dart';
+import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
+import 'package:mobilepenpal/data/controllers/shop/shop_controller.dart';
+import 'package:mobilepenpal/data/models/student/student.dart';
 import 'package:mobilepenpal/data/services/world_service.dart';
 
 /// A floating "+N" popup that animates from a spawn position up to the score bar.
@@ -388,6 +391,30 @@ class DynamicMiniGameController extends GetxController
     // Submit progress to backend (coins accumulated during gameplay)
     final coins = earnedCoins.value;
     if (coins > 0 || score.value > 0) {
+      // Sync coins locally first so they update immediately in the UI / Shop
+      if (coins > 0 && Get.isRegistered<HomeController>()) {
+        try {
+          final homeController = Get.find<HomeController>();
+          final currentStudent = homeController.student.value;
+          if (currentStudent != null) {
+            final newCoin = currentStudent.coin + coins;
+            final updatedStudent = Student.fromJson({
+              ...currentStudent.toJson(),
+              'coin': newCoin,
+            });
+            homeController.student.value = updatedStudent;
+            _box.write('student', updatedStudent.toJson());
+
+            if (Get.isRegistered<ShopController>()) {
+              Get.find<ShopController>().totalPoints.value = newCoin;
+              _box.write('adventure_points', newCoin);
+            }
+          }
+        } catch (e) {
+          dev.log('Failed to update local coins: $e', name: 'DynamicMiniGameController');
+        }
+      }
+
       _worldService.submitExerciseBatch(
         [], // No specific exercise attempts for endless minigames
         coinsEarned: coins,
@@ -583,7 +610,7 @@ class DynamicMiniGameController extends GetxController
 
       // For Hard (memory mode): show objects briefly, then fade
       if (challenge.display == 'memory') {
-        _memoryFadeTimer = Timer(const Duration(seconds: 2), () {
+        _memoryFadeTimer = Timer(const Duration(seconds: 3), () {
           objectCountMemoryVisible.value = false;
         });
       }
