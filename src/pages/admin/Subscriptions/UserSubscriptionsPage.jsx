@@ -44,7 +44,39 @@ export default function UserSubscriptionsPage() {
 
     useEffect(() => {
         load();
+        loadSettings();
     }, []);
+
+    const getDefaultAmount = (currentPlan, currentSettings) => {
+        const price = parseFloat(currentSettings.price) || 0;
+        const discount = parseFloat(currentSettings.discount) || 0;
+        const discountedPrice = price * (1 - discount / 100);
+
+        if (currentSettings.billing_cycle === "year") {
+            if (currentPlan === "yearly") {
+                return discountedPrice.toFixed(2);
+            } else {
+                return (discountedPrice / 12).toFixed(2);
+            }
+        } else {
+            if (currentPlan === "monthly") {
+                return discountedPrice.toFixed(2);
+            } else {
+                return (discountedPrice * 12).toFixed(2);
+            }
+        }
+    };
+
+    const openModal = (type, student) => {
+        const defaultPlan = settings.billing_cycle === "year" ? "yearly" : "monthly";
+        setPlan(defaultPlan);
+        setAmount(getDefaultAmount(defaultPlan, settings));
+        setModal({
+            type,
+            studentId: student.id,
+            studentName: fullName(student),
+        });
+    };
 
     const flash = (text, isError = false) => {
         (isError ? setErr : setMsg)(text);
@@ -214,13 +246,7 @@ export default function UserSubscriptionsPage() {
                                                                 type="button"
                                                                 className="btn btn-sm btn-success-600 d-inline-flex align-items-center gap-1"
                                                                 disabled={actionLoading === s.id}
-                                                                onClick={() =>
-                                                                    setModal({
-                                                                        type: "activate",
-                                                                        studentId: s.id,
-                                                                        studentName: fullName(s),
-                                                                    })
-                                                                }
+                                                                onClick={() => openModal("activate", s)}
                                                             >
                                                                 <Icon icon="mdi:power" />
                                                                 Activate
@@ -230,13 +256,7 @@ export default function UserSubscriptionsPage() {
                                                                 type="button"
                                                                 className="btn btn-sm btn-primary-600 d-inline-flex align-items-center gap-1"
                                                                 disabled={actionLoading === s.id}
-                                                                onClick={() =>
-                                                                    setModal({
-                                                                        type: "renew",
-                                                                        studentId: s.id,
-                                                                        studentName: fullName(s),
-                                                                    })
-                                                                }
+                                                                onClick={() => openModal("renew", s)}
                                                             >
                                                                 <Icon icon="mdi:autorenew" />
                                                                 Renew
@@ -290,7 +310,11 @@ export default function UserSubscriptionsPage() {
                                         <select
                                             className="form-select"
                                             value={plan}
-                                            onChange={(e) => setPlan(e.target.value)}
+                                            onChange={(e) => {
+                                                const newPlan = e.target.value;
+                                                setPlan(newPlan);
+                                                setAmount(getDefaultAmount(newPlan, settings));
+                                            }}
                                         >
                                             <option value="monthly">Monthly</option>
                                             <option value="yearly">Yearly</option>
