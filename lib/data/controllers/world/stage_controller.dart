@@ -1036,7 +1036,7 @@ class StageController extends GetxController {
 
   List<String> get characterVowelFormsList {
     final ex = currentExercise;
-    if (ex == null) return const [];
+    if (ex == null || isMathCurrent) return const [];
 
     final type = (ex.characterType ?? '').trim().toLowerCase();
     final char = ex.character.trim();

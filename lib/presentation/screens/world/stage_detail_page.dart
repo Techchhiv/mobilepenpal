@@ -835,6 +835,7 @@ class StageDetailPage extends GetView<StageController> {
 
   Widget _buildCharacterOptions() {
     return Obx(() {
+      if (controller.isMathCurrent) return const SizedBox.shrink();
       final forms = controller.characterVowelFormsList;
       if (forms.isEmpty) return const SizedBox.shrink();
 
