@@ -124,6 +124,7 @@ final Map<String, String> enUS = {
   'age': 'Age',
   'update_information': 'Update Information',
   'personal_information': 'Personal Information',
+  'password_information': 'Password Information',
   'parent_information': 'Parent Information',
   'additional_information': 'Additional Information',
   'enter_first_name': 'Enter first name',

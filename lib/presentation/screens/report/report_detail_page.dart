@@ -3,13 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobilepenpal/core/utils/number_format_utils.dart';
 import 'package:mobilepenpal/core/utils/report_format.dart';
-import 'package:shimmer/shimmer.dart';
-
-import 'package:mobilepenpal/core/theme/app_colors.dart';
 import 'package:mobilepenpal/data/controllers/report/report_controller.dart';
+import 'package:shimmer/shimmer.dart';
 
 class ReportDetailPage extends StatelessWidget {
   const ReportDetailPage({super.key});
+
+  static const Color _brand = Color(0xFF00897B);
 
   String _d(String s) => NumberFormatUtils.digitsByLocale(s);
 
@@ -27,6 +27,7 @@ class ReportDetailPage extends StatelessWidget {
 
             Expanded(
               child: RefreshIndicator(
+                color: _brand,
                 onRefresh: () => c.fetchMonthly(force: true),
                 child: ListView(
                   physics: const AlwaysScrollableScrollPhysics(),
@@ -51,19 +52,46 @@ class ReportDetailPage extends StatelessWidget {
   }
 
   Widget _buildHeader(ReportController c) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+    return Container(
+      padding: const EdgeInsets.fromLTRB(8, 10, 16, 0),
       child: Row(
         children: [
-          IconButton(
-            onPressed: () => Get.back(),
-            icon: Icon(Icons.arrow_back_ios_new_rounded),
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => Get.back(),
+              borderRadius: BorderRadius.circular(14),
+              child: Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  size: 18,
+                  color: Color(0xFF1A1A2E),
+                ),
+              ),
+            ),
           ),
-          SizedBox(width: 6),
+          const SizedBox(width: 12),
           Expanded(
             child: Text(
               'report_detail_title'.tr,
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF1A1A2E),
+              ),
             ),
           ),
           _MonthSwitcher(
@@ -84,7 +112,7 @@ class ReportDetailPage extends StatelessWidget {
         final m = c.monthly.value;
 
         if (loading) {
-          final base = Colors.grey.shade300;
+          final base = Colors.grey.shade200;
           final highlight = Colors.grey.shade100;
 
           Widget box({double h = 86, double r = 18}) => Shimmer.fromColors(
@@ -107,19 +135,19 @@ class ReportDetailPage extends StatelessWidget {
               Row(
                 children: [
                   Expanded(child: box()),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 10),
                   Expanded(child: box()),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
               Row(
                 children: [
                   Expanded(child: box()),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 10),
                   Expanded(child: box()),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
               box(h: 56),
             ],
           );
@@ -136,9 +164,13 @@ class ReportDetailPage extends StatelessWidget {
           children: [
             Text(
               'monthly_summary'.tr,
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF1A1A2E),
+              ),
             ),
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
@@ -146,10 +178,10 @@ class ReportDetailPage extends StatelessWidget {
                     title: 'total_exercises'.tr,
                     value: _d('$attempts'),
                     icon: Icons.menu_book_rounded,
-                    tint: const Color(0xFF00897B),
+                    tint: _brand,
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 10),
                 Expanded(
                   child: _MetricCard(
                     title: 'stars'.tr,
@@ -160,7 +192,7 @@ class ReportDetailPage extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             Row(
               children: [
                 Expanded(
@@ -171,7 +203,7 @@ class ReportDetailPage extends StatelessWidget {
                     tint: const Color(0xFF22C55E),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 10),
                 Expanded(
                   child: _MetricCard(
                     title: 'accuracy'.tr,
@@ -183,14 +215,15 @@ class ReportDetailPage extends StatelessWidget {
                       child: LinearProgressIndicator(
                         value: accuracy.clamp(0.0, 1.0),
                         minHeight: 6,
-                        backgroundColor: Colors.black.withValues(alpha: 0.06),
+                        backgroundColor: const Color(0xFF3B82F6).withValues(alpha: 0.12),
+                        color: const Color(0xFF3B82F6),
                       ),
                     ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             _WideCard(
               title: 'total_study_time'.tr,
               value: _d(time),
@@ -223,23 +256,24 @@ class ReportDetailPage extends StatelessWidget {
               Row(
                 children: [
                   _CardIcon(icon: Icons.bar_chart_rounded),
-                  SizedBox(width: 10),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       'weekly_exercises_in_month'.tr,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontWeight: FontWeight.w800,
                         fontSize: 16,
+                        color: Color(0xFF1A1A2E),
                       ),
                     ),
                   ),
                 ],
               ),
-              SizedBox(height: 24),
+              const SizedBox(height: 24),
 
               if (loading)
                 Shimmer.fromColors(
-                  baseColor: Colors.grey.shade300,
+                  baseColor: Colors.grey.shade200,
                   highlightColor: Colors.grey.shade100,
                   child: Container(
                     height: 190,
@@ -250,7 +284,7 @@ class ReportDetailPage extends StatelessWidget {
                   ),
                 )
               else if (weekly.isEmpty)
-                SizedBox.shrink()
+                const SizedBox.shrink()
               else
                 SizedBox(
                   height: 190,
@@ -312,6 +346,7 @@ class ReportDetailPage extends StatelessWidget {
                       style: const TextStyle(
                         fontWeight: FontWeight.w800,
                         fontSize: 16,
+                        color: Color(0xFF1A1A2E),
                       ),
                     ),
                   ),
@@ -320,6 +355,10 @@ class ReportDetailPage extends StatelessWidget {
                   PopupMenuButton<CharacterTypeFilter>(
                     initialValue: c.charFilter.value,
                     onSelected: c.setCharFilter,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    elevation: 8,
                     itemBuilder: (_) =>
                         [
                               CharacterTypeFilter.all,
@@ -327,33 +366,64 @@ class ReportDetailPage extends StatelessWidget {
                               CharacterTypeFilter.vowelIndependent,
                               CharacterTypeFilter.vowelDependent,
                               CharacterTypeFilter.digit,
-                              CharacterTypeFilter.math,
+                              // CharacterTypeFilter.math, // TODO: re-enable when math is added
                             ]
                             .map(
                               (v) => PopupMenuItem(
                                 value: v,
-                                child: Text(c.charFilterLabel(v)),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 6,
+                                      height: 6,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: c.charFilter.value == v
+                                            ? _brand
+                                            : Colors.transparent,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      c.charFilterLabel(v),
+                                      style: TextStyle(
+                                        fontWeight: c.charFilter.value == v
+                                            ? FontWeight.w800
+                                            : FontWeight.w500,
+                                        color: c.charFilter.value == v
+                                            ? _brand
+                                            : const Color(0xFF1A1A2E),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             )
                             .toList(),
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
+                        horizontal: 12,
                         vertical: 8,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.03),
+                        gradient: LinearGradient(
+                          colors: [
+                            _brand.withValues(alpha: 0.08),
+                            _brand.withValues(alpha: 0.04),
+                          ],
+                        ),
                         borderRadius: BorderRadius.circular(999),
                         border: Border.all(
-                          color: Colors.black.withValues(alpha: 0.06),
+                          color: _brand.withValues(alpha: 0.15),
                         ),
                       ),
                       child: Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
                             Icons.filter_list_rounded,
-                            size: 18,
-                            color: Colors.grey[800],
+                            size: 16,
+                            color: _brand,
                           ),
                           const SizedBox(width: 6),
                           Text(
@@ -362,8 +432,9 @@ class ReportDetailPage extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             softWrap: false,
                             style: TextStyle(
-                              fontWeight: FontWeight.w800,
+                              fontWeight: FontWeight.w700,
                               fontSize: 12,
+                              color: _brand,
                             ),
                           ),
                         ],
@@ -373,33 +444,47 @@ class ReportDetailPage extends StatelessWidget {
 
                   const SizedBox(width: 8),
 
-                  InkWell(
-                    onTap: c.toggleAccuracySort,
-                    borderRadius: BorderRadius.circular(999),
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: desc
-                            ? Colors.black.withValues(alpha: 0.06)
-                            : Colors.black.withValues(alpha: 0.03),
-                        borderRadius: BorderRadius.circular(999),
-                        border: Border.all(
-                          color: Colors.black.withValues(alpha: 0.06),
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: c.toggleAccuracySort,
+                      borderRadius: BorderRadius.circular(999),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: desc
+                                ? [
+                                    _brand.withValues(alpha: 0.12),
+                                    _brand.withValues(alpha: 0.06),
+                                  ]
+                                : [
+                                    Colors.black.withValues(alpha: 0.05),
+                                    Colors.black.withValues(alpha: 0.03),
+                                  ],
+                          ),
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(
+                            color: desc
+                                ? _brand.withValues(alpha: 0.18)
+                                : Colors.black.withValues(alpha: 0.06),
+                          ),
                         ),
-                      ),
-                      child: Icon(
-                        desc
-                            ? Icons.arrow_downward_rounded
-                            : Icons.arrow_upward_rounded,
-                        size: 18,
-                        color: Colors.grey[800],
+                        child: Icon(
+                          desc
+                              ? Icons.arrow_downward_rounded
+                              : Icons.arrow_upward_rounded,
+                          size: 16,
+                          color: desc ? _brand : Colors.grey[600],
+                        ),
                       ),
                     ),
                   ),
                 ],
               ),
 
-              const SizedBox(height: 12),
+              const SizedBox(height: 14),
 
               if (loading) ...[
                 ReportDetailPage._shimmerLine(),
@@ -412,26 +497,47 @@ class ReportDetailPage extends StatelessWidget {
                   SizedBox(
                     height: 120,
                     child: Center(
-                      child: Text(
-                        'no_character_data'.tr,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.grey[700],
-                          fontWeight: FontWeight.w700,
-                        ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.search_off_rounded,
+                            size: 36,
+                            color: Colors.grey[300],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'no_character_data'.tr,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.grey[500],
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   )
                 else
                   SizedBox(
-                    height: visibleCount * 60.0,
+                    height: visibleCount * 68.0,
                     child: ListView.separated(
                       physics: const BouncingScrollPhysics(),
                       itemCount: filtered.length,
-                      separatorBuilder: (_, __) => Divider(
+                      separatorBuilder: (_, __) => Container(
                         height: 1,
-                        thickness: 1,
-                        color: Colors.black.withValues(alpha: 0.06),
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.transparent,
+                              Colors.grey.withValues(alpha: 0.12),
+                              Colors.grey.withValues(alpha: 0.12),
+                              Colors.transparent,
+                            ],
+                            stops: const [0.0, 0.15, 0.85, 1.0],
+                          ),
+                        ),
                       ),
                       itemBuilder: (_, i) {
                         final e = filtered[i];
@@ -447,48 +553,86 @@ class ReportDetailPage extends StatelessWidget {
                         final attempts = (e['attempts'] as num?)?.toInt() ?? 0;
                         final pct = (accuracy * 100).round();
 
+                        // Color based on accuracy
+                        final accColor = accuracy >= 0.8
+                            ? const Color(0xFF16A34A)
+                            : accuracy >= 0.5
+                                ? const Color(0xFFF59E0B)
+                                : const Color(0xFFEF4444);
+
                         return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
                           child: Row(
                             children: [
+                              // Character avatar
                               Container(
-                                width: 36,
-                                height: 36,
+                                width: 40,
+                                height: 40,
                                 alignment: Alignment.center,
                                 decoration: BoxDecoration(
-                                  color: const Color(
-                                    0xFF00897B,
-                                  ).withValues(alpha: 0.10),
-                                  borderRadius: BorderRadius.circular(12),
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      _brand.withValues(alpha: 0.12),
+                                      _brand.withValues(alpha: 0.05),
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(
+                                    color: _brand.withValues(alpha: 0.12),
+                                  ),
                                 ),
                                 child: Text(
                                   char,
                                   style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w900,
+                                    color: Color(0xFF1A1A2E),
                                   ),
                                 ),
                               ),
                               const SizedBox(width: 12),
+                              // Info
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      _d('$pct%  •  $attempts ') + 'times'.tr,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w800,
-                                        fontSize: 13,
-                                      ),
+                                    Row(
+                                      children: [
+                                        Text(
+                                          _d('$pct%'),
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w900,
+                                            fontSize: 14,
+                                            color: accColor,
+                                          ),
+                                        ),
+                                        Text(
+                                          '  •  ',
+                                          style: TextStyle(
+                                            color: Colors.grey[300],
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                        Text(
+                                          _d('$attempts ') + 'times'.tr,
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 12,
+                                            color: Colors.grey[500],
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                    const SizedBox(height: 6),
+                                    const SizedBox(height: 8),
                                     ClipRRect(
                                       borderRadius: BorderRadius.circular(99),
                                       child: LinearProgressIndicator(
                                         value: accuracy,
-                                        minHeight: 6,
-                                        backgroundColor: Colors.black
-                                            .withValues(alpha: 0.06),
+                                        minHeight: 5,
+                                        backgroundColor: accColor.withValues(alpha: 0.10),
+                                        color: accColor,
                                       ),
                                     ),
                                   ],
@@ -510,7 +654,7 @@ class ReportDetailPage extends StatelessWidget {
 
   static Widget _shimmerLine() {
     return Shimmer.fromColors(
-      baseColor: Colors.grey.shade300,
+      baseColor: Colors.grey.shade200,
       highlightColor: Colors.grey.shade100,
       child: Container(
         height: 62,
@@ -534,6 +678,8 @@ class _MonthSwitcher extends StatelessWidget {
   final VoidCallback onPrev;
   final VoidCallback onNext;
 
+  static const Color _brand = Color(0xFF00897B);
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -543,9 +689,14 @@ class _MonthSwitcher extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 10,
+            color: _brand.withValues(alpha: 0.08),
+            blurRadius: 12,
             offset: const Offset(0, 4),
+          ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 4,
+            offset: const Offset(0, 1),
           ),
         ],
         border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
@@ -558,7 +709,11 @@ class _MonthSwitcher extends StatelessWidget {
           Obx(
             () => Text(
               label().toMonthLabelByLocale(),
-              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
+              style: const TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 12,
+                color: Color(0xFF1A1A2E),
+              ),
             ),
           ),
           const SizedBox(width: 6),
@@ -582,9 +737,13 @@ class _TinyIconButton extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
-        child: Padding(
+        child: Container(
           padding: const EdgeInsets.all(4),
-          child: Icon(icon, size: 18),
+          decoration: BoxDecoration(
+            color: const Color(0xFF00897B).withValues(alpha: 0.06),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, size: 18, color: const Color(0xFF1A1A2E)),
         ),
       ),
     );
@@ -595,24 +754,52 @@ class _CardShell extends StatelessWidget {
   const _CardShell({required this.child});
   final Widget child;
 
+  static const Color _brand = Color(0xFF00897B);
+
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
+            color: _brand.withValues(alpha: 0.06),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
           ),
         ],
-        border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
       ),
-      child: child,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: Column(
+          children: [
+            // Gradient accent bar at top
+            Container(
+              height: 3,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Color(0xFF00897B),
+                    Color(0xFF26A69A),
+                    Color(0xFF4DB6AC),
+                  ],
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
+              child: child,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -623,15 +810,28 @@ class _CardIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const brand = Color(0xFF00897B);
     return Container(
-      width: 34,
-      height: 34,
+      width: 40,
+      height: 40,
       decoration: BoxDecoration(
-        color: brand.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(12),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF00897B),
+            Color(0xFF26A69A),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF00897B).withValues(alpha: 0.25),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
-      child: const Icon(Icons.bar_chart_rounded, color: brand, size: 18),
+      child: Icon(icon, color: Colors.white, size: 20),
     );
   }
 }
@@ -656,24 +856,47 @@ class _MetricCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: tint.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: tint.withValues(alpha: 0.14)),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            tint.withValues(alpha: 0.07),
+            tint.withValues(alpha: 0.03),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: tint.withValues(alpha: 0.12)),
+        boxShadow: [
+          BoxShadow(
+            color: tint.withValues(alpha: 0.06),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(icon, size: 18, color: tint),
+              Container(
+                width: 30,
+                height: 30,
+                decoration: BoxDecoration(
+                  color: tint.withValues(alpha: 0.14),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, size: 16, color: tint),
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   title,
                   style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.black.withValues(alpha: 0.65),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black.withValues(alpha: 0.50),
+                    letterSpacing: 0.2,
                   ),
                 ),
               ),
@@ -682,10 +905,11 @@ class _MetricCard extends StatelessWidget {
           const SizedBox(height: 10),
           Text(
             value,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w900,
-              color: Colors.black.withValues(alpha: 0.88),
+              color: Color(0xFF1A1A2E),
+              letterSpacing: -0.5,
             ),
           ),
           const SizedBox(height: 10),
@@ -707,33 +931,60 @@ class _WideCard extends StatelessWidget {
   final String value;
   final IconData icon;
 
+  static const Color _brand = Color(0xFF00897B);
+
   @override
   Widget build(BuildContext context) {
-    const brand = Color(0xFF00897B);
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: brand.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: brand.withValues(alpha: 0.12)),
+        gradient: LinearGradient(
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+          colors: [
+            _brand.withValues(alpha: 0.08),
+            _brand.withValues(alpha: 0.03),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: _brand.withValues(alpha: 0.12)),
+        boxShadow: [
+          BoxShadow(
+            color: _brand.withValues(alpha: 0.06),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         children: [
-          Icon(icon, color: brand),
-          const SizedBox(width: 10),
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: _brand.withValues(alpha: 0.14),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: _brand, size: 18),
+          ),
+          const SizedBox(width: 12),
           Expanded(
             child: Text(
               title,
               style: TextStyle(
                 fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: Colors.black.withValues(alpha: 0.7),
+                fontWeight: FontWeight.w600,
+                color: Colors.black.withValues(alpha: 0.55),
               ),
             ),
           ),
           Text(
             NumberFormatUtils.digitsByLocale(value),
-            style: const TextStyle(fontWeight: FontWeight.w900),
+            style: const TextStyle(
+              fontWeight: FontWeight.w900,
+              fontSize: 16,
+              color: Color(0xFF1A1A2E),
+            ),
           ),
         ],
       ),
@@ -756,9 +1007,16 @@ class _WeeklyAttemptsBarChart extends StatelessWidget {
         barRods: [
           BarChartRodData(
             toY: attempts,
-            width: 18,
+            width: 20,
             borderRadius: BorderRadius.circular(8),
-            color: AppColors.buttonPrimary,
+            gradient: const LinearGradient(
+              begin: Alignment.bottomCenter,
+              end: Alignment.topCenter,
+              colors: [
+                Color(0xFF00897B),
+                Color(0xFF26A69A),
+              ],
+            ),
           ),
         ],
       );
@@ -772,7 +1030,15 @@ class _WeeklyAttemptsBarChart extends StatelessWidget {
       BarChartData(
         maxY: maxY <= 0 ? 1 : maxY * 1.2,
         barGroups: groups,
-        gridData: const FlGridData(show: false),
+        gridData: FlGridData(
+          show: true,
+          drawVerticalLine: false,
+          horizontalInterval: maxY <= 5 ? 1 : null,
+          getDrawingHorizontalLine: (value) => FlLine(
+            color: Colors.grey.withValues(alpha: 0.08),
+            strokeWidth: 1,
+          ),
+        ),
         borderData: FlBorderData(show: false),
         titlesData: FlTitlesData(
           topTitles: const AxisTitles(
@@ -784,11 +1050,16 @@ class _WeeklyAttemptsBarChart extends StatelessWidget {
           leftTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
+              maxIncluded: false,
               reservedSize: 32,
               interval: maxY <= 5 ? 1 : null,
               getTitlesWidget: (value, meta) => Text(
                 NumberFormatUtils.digitsByLocale(value.toInt().toString()),
-                style: TextStyle(fontSize: 10, color: Colors.grey[700]),
+                style: TextStyle(
+                  fontSize: 10,
+                  color: Colors.grey[400],
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ),
@@ -805,7 +1076,7 @@ class _WeeklyAttemptsBarChart extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
-                      color: Colors.grey[700],
+                      color: Colors.grey[500],
                     ),
                   ),
                 );
@@ -816,10 +1087,11 @@ class _WeeklyAttemptsBarChart extends StatelessWidget {
         barTouchData: BarTouchData(
           enabled: true,
           touchTooltipData: BarTouchTooltipData(
+            tooltipBorderRadius: BorderRadius.circular(12),
             getTooltipItem: (group, groupIndex, rod, rodIndex) {
               return BarTooltipItem(
                 NumberFormatUtils.digitsByLocale('${'week'.tr} ${group.x}\n'),
-                TextStyle(fontWeight: FontWeight.w800, color: Colors.white),
+                const TextStyle(fontWeight: FontWeight.w800, color: Colors.white),
                 children: [
                   TextSpan(
                     text: NumberFormatUtils.digitsByLocale(

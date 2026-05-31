@@ -124,6 +124,7 @@ final Map<String, String> kmKH = {
   'age': 'អាយុ',
   'update_information': 'អាប់ដេតព័ត៌មាន',
   'personal_information': 'ព័ត៌មានផ្ទាល់ខ្លួន',
+  'password_information': 'ព័ត៌មានពាក្យសម្ងាត់',
   'parent_information': 'ព័ត៌មានអាណាព្យាបាល',
   'additional_information': 'ព័ត៌មានបន្ថែម',
   'enter_first_name': 'បញ្ចូលគោត្តនាម',

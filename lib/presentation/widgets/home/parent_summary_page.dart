@@ -12,6 +12,7 @@ class ParentSummaryCard extends StatelessWidget {
   const ParentSummaryCard({super.key, required this.homeController});
 
   static const Color _brand = Color(0xFF00897B);
+  static const Color _brandDark = Color(0xFF00695C);
   static const double _metricBottomHeight = 6;
   static const double _metricBottomSpacing = 10;
   String _d(String s) => NumberFormatUtils.digitsByLocale(s);
@@ -25,7 +26,7 @@ class ParentSummaryCard extends StatelessWidget {
           "summary".tr,
           style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
         ),
-        SizedBox(height: 24),
+        SizedBox(height: 12),
         Obx(() {
           final showDaily =
               homeController.summaryView.value == SummaryView.daily;
@@ -54,7 +55,7 @@ class ParentSummaryCard extends StatelessWidget {
                         ),
                   isBusy: showDaily ? dailyLoading : weeklyLoading,
                 ),
-                SizedBox(height: 14),
+                SizedBox(height: 18),
                 _buildAnimatedBody(
                   showDaily: showDaily,
                   showShimmer: showShimmer,
@@ -72,20 +73,47 @@ class ParentSummaryCard extends StatelessWidget {
   Widget _cardShell({required Widget child}) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: Offset(0, 3),
+            color: _brand.withValues(alpha: 0.08),
+            blurRadius: 24,
+            offset: Offset(0, 8),
+            spreadRadius: 0,
+          ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 6,
+            offset: Offset(0, 2),
           ),
         ],
-        border: Border.all(color: Colors.black.withValues(alpha: 0.04)),
       ),
-      child: child,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: Column(
+          children: [
+            // Gradient accent bar at top
+            Container(
+              height: 4,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    _brand,
+                    Color(0xFF26A69A),
+                    Color(0xFF4DB6AC),
+                  ],
+                ),
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.fromLTRB(18, 16, 18, 18),
+              child: child,
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -97,14 +125,29 @@ class ParentSummaryCard extends StatelessWidget {
   }) {
     return Row(
       children: [
+        // Icon container with gradient
         Container(
-          width: 34,
-          height: 34,
+          width: 42,
+          height: 42,
           decoration: BoxDecoration(
-            color: _brand.withValues(alpha: 0.10),
-            borderRadius: BorderRadius.circular(12),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                _brand,
+                Color(0xFF26A69A),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(14),
+            boxShadow: [
+              BoxShadow(
+                color: _brand.withValues(alpha: 0.25),
+                blurRadius: 8,
+                offset: Offset(0, 3),
+              ),
+            ],
           ),
-          child: Icon(Icons.bar_chart_rounded, color: _brand, size: 18),
+          child: Icon(Icons.bar_chart_rounded, color: Colors.white, size: 20),
         ),
         SizedBox(width: 12),
 
@@ -114,12 +157,20 @@ class ParentSummaryCard extends StatelessWidget {
             children: [
               Text(
                 showDaily ? 'summary_daily'.tr : 'summary_weekly'.tr,
-                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 16,
+                  color: Color(0xFF1A1A2E),
+                ),
               ),
-              SizedBox(height: 2),
+              SizedBox(height: 3),
               Text(
                 showDaily ? dailyDate : weeklyRange,
-                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[500],
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ],
           ),
@@ -152,12 +203,24 @@ class ParentSummaryCard extends StatelessWidget {
           child: AnimatedContainer(
             duration: Duration(milliseconds: 200),
             curve: Curves.easeOut,
-            width: 40,
-            height: 40,
+            width: 42,
+            height: 42,
             decoration: BoxDecoration(
-              color: _brand.withValues(alpha: isDaily ? 0.10 : 0.08),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: isDaily
+                    ? [
+                        _brand.withValues(alpha: 0.12),
+                        _brand.withValues(alpha: 0.06),
+                      ]
+                    : [
+                        Color(0xFF26A69A).withValues(alpha: 0.12),
+                        Color(0xFF26A69A).withValues(alpha: 0.06),
+                      ],
+              ),
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: _brand.withValues(alpha: 0.15)),
+              border: Border.all(color: _brand.withValues(alpha: 0.18)),
             ),
             child: Center(
               child: isBusy
@@ -283,7 +346,7 @@ class ParentSummaryCard extends StatelessWidget {
                       child: LinearProgressIndicator(
                         value: daily.accuracy.clamp(0.0, 1.0),
                         minHeight: _metricBottomHeight,
-                        backgroundColor: Colors.grey[200],
+                        backgroundColor: Color(0xFF3B82F6).withValues(alpha: 0.12),
                         color: Color(0xFF3B82F6),
                       ),
                     ),
@@ -291,9 +354,9 @@ class ParentSummaryCard extends StatelessWidget {
           ],
         ),
 
-        SizedBox(height: 14),
-        Divider(color: Colors.black.withValues(alpha: 0.06)),
-        SizedBox(height: 10),
+        SizedBox(height: 16),
+        _buildDivider(),
+        SizedBox(height: 12),
 
         _buildInsightRow(
           left: _buildInsightChip(
@@ -368,7 +431,7 @@ class ParentSummaryCard extends StatelessWidget {
                       child: LinearProgressIndicator(
                         value: weekly.accuracy.clamp(0.0, 1.0),
                         minHeight: _metricBottomHeight,
-                        backgroundColor: Colors.grey[200],
+                        backgroundColor: Color(0xFF3B82F6).withValues(alpha: 0.12),
                         color: Color(0xFF3B82F6),
                       ),
                     ),
@@ -376,9 +439,9 @@ class ParentSummaryCard extends StatelessWidget {
           ],
         ),
 
-        SizedBox(height: 14),
-        Divider(color: Colors.black.withValues(alpha: 0.06)),
-        SizedBox(height: 10),
+        SizedBox(height: 16),
+        _buildDivider(),
+        SizedBox(height: 12),
 
         _buildInsightRow(
           left: _buildInsightChip(
@@ -395,6 +458,23 @@ class ParentSummaryCard extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildDivider() {
+    return Container(
+      height: 1,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Colors.transparent,
+            Colors.grey.withValues(alpha: 0.15),
+            Colors.grey.withValues(alpha: 0.15),
+            Colors.transparent,
+          ],
+          stops: [0.0, 0.2, 0.8, 1.0],
+        ),
+      ),
     );
   }
 
@@ -418,15 +498,15 @@ class ParentSummaryCard extends StatelessWidget {
         Row(
           children: [
             Expanded(child: children[0]),
-            SizedBox(width: 12),
+            SizedBox(width: 10),
             Expanded(child: children[1]),
           ],
         ),
-        SizedBox(height: 12),
+        SizedBox(height: 10),
         Row(
           children: [
             Expanded(child: children[2]),
-            SizedBox(width: 12),
+            SizedBox(width: 10),
             Expanded(child: children[3]),
           ],
         ),
@@ -444,24 +524,41 @@ class ParentSummaryCard extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: tint.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: tint.withValues(alpha: 0.15)),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            tint.withValues(alpha: 0.07),
+            tint.withValues(alpha: 0.03),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: tint.withValues(alpha: 0.12)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(icon, color: tint, size: 18),
+              // Circular icon container
+              Container(
+                width: 30,
+                height: 30,
+                decoration: BoxDecoration(
+                  color: tint.withValues(alpha: 0.14),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: tint, size: 16),
+              ),
               SizedBox(width: 8),
               Expanded(
                 child: Text(
                   title,
                   style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.black.withValues(alpha: 0.65),
+                    fontSize: 11,
+                    color: Colors.black.withValues(alpha: 0.50),
                     fontWeight: FontWeight.w600,
+                    letterSpacing: 0.2,
                   ),
                 ),
               ),
@@ -473,7 +570,8 @@ class ParentSummaryCard extends StatelessWidget {
             style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w900,
-              color: Colors.black.withValues(alpha: 0.88),
+              color: Color(0xFF1A1A2E),
+              letterSpacing: -0.5,
             ),
           ),
           SizedBox(height: _metricBottomSpacing),
@@ -490,7 +588,7 @@ class ParentSummaryCard extends StatelessWidget {
     return Row(
       children: [
         Expanded(child: left),
-        SizedBox(width: 12),
+        SizedBox(width: 10),
         Expanded(child: right),
       ],
     );
@@ -503,43 +601,65 @@ class ParentSummaryCard extends StatelessWidget {
     required Color color,
   }) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: color.withValues(alpha: 0.04),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
+        border: Border.all(color: color.withValues(alpha: 0.10)),
       ),
-      child: Row(
-        children: [
-          Container(
-            width: 30,
-            height: 30,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: color, size: 18),
-          ),
-          SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(fontSize: 12, color: Colors.grey[700]),
-                ),
-                SizedBox(height: 2),
-                Text(
-                  value,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontWeight: FontWeight.w800),
-                ),
-              ],
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          decoration: BoxDecoration(
+            border: Border(
+              left: BorderSide(
+                color: color.withValues(alpha: 0.6),
+                width: 3,
+              ),
             ),
           ),
-        ],
+          child: Row(
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: color, size: 16),
+              ),
+              SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey[500],
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                    SizedBox(height: 3),
+                    Text(
+                      value,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 13,
+                        color: Color(0xFF1A1A2E),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -569,8 +689,8 @@ class _SummaryShimmer extends StatelessWidget {
       return Container(
         padding: EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: Colors.grey.withValues(alpha: 0.06),
-          borderRadius: BorderRadius.circular(16),
+          color: Colors.grey.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(18),
           border: Border.all(color: Colors.black.withValues(alpha: 0.04)),
         ),
         child: Column(
@@ -578,7 +698,7 @@ class _SummaryShimmer extends StatelessWidget {
           children: [
             Row(
               children: [
-                box(w: 18, h: 18, r: 6),
+                box(w: 30, h: 30, r: 99),
                 SizedBox(width: 8),
                 Expanded(child: box(h: 12, r: 8)),
               ],
@@ -596,13 +716,13 @@ class _SummaryShimmer extends StatelessWidget {
       return Container(
         padding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Colors.grey.withValues(alpha: 0.04),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
+          border: Border.all(color: Colors.black.withValues(alpha: 0.04)),
         ),
         child: Row(
           children: [
-            box(w: 30, h: 30, r: 12),
+            box(w: 32, h: 32, r: 99),
             SizedBox(width: 10),
             Expanded(
               child: Column(
@@ -624,25 +744,28 @@ class _SummaryShimmer extends StatelessWidget {
         Row(
           children: [
             Expanded(child: metricTile()),
-            SizedBox(width: 12),
+            SizedBox(width: 10),
             Expanded(child: metricTile()),
           ],
+        ),
+        SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(child: metricTile()),
+            SizedBox(width: 10),
+            Expanded(child: metricTile()),
+          ],
+        ),
+        SizedBox(height: 16),
+        Container(
+          height: 1,
+          color: Colors.grey.withValues(alpha: 0.08),
         ),
         SizedBox(height: 12),
         Row(
           children: [
-            Expanded(child: metricTile()),
-            SizedBox(width: 12),
-            Expanded(child: metricTile()),
-          ],
-        ),
-        SizedBox(height: 14),
-        Divider(color: Colors.black.withValues(alpha: 0.06)),
-        SizedBox(height: 10),
-        Row(
-          children: [
             Expanded(child: chip()),
-            SizedBox(width: 12),
+            SizedBox(width: 10),
             Expanded(child: chip()),
           ],
         ),

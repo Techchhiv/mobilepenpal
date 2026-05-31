@@ -1045,12 +1045,14 @@ class StageController extends GetxController {
       return KhmerCharUtils.getVowelForms(char);
     }
 
+    final isKhmer = Get.locale?.languageCode == 'km';
+
     if (type == 'digits') {
-      return ['លេខ $char'];
+      return [isKhmer ? 'លេខ $char' : 'Number $char'];
     }
 
     if (type == 'dependent_vowels' || type == 'independent_vowels') {
-      return ['ស្រៈ $char'];
+      return [isKhmer ? 'ស្រៈ $char' : 'Vowel $char'];
     }
 
     return [char];

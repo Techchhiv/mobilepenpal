@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobilepenpal/core/network/route_builder.dart';
 import 'package:mobilepenpal/data/controllers/world/level_controller.dart';
@@ -5,11 +6,13 @@ import 'package:mobilepenpal/data/controllers/world/stage_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/world_controller.dart';
 import 'package:mobilepenpal/presentation/routes/app_routes.dart';
 
-class StageSummaryController extends GetxController {
+class StageSummaryController extends GetxController
+    with GetTickerProviderStateMixin {
   late final int worldId;
   late final int levelId;
   late final int stageId;
 
+  static const int maxStars = 3;
   late final int starsEarned;
   late final int correctAnswers;
   late final int totalQuestions;
@@ -17,6 +20,7 @@ class StageSummaryController extends GetxController {
   late final bool isLast;
 
   final isContinuing = false.obs;
+  late final List<AnimationController> starControllers;
 
   @override
   void onInit() {
@@ -42,6 +46,39 @@ class StageSummaryController extends GetxController {
       nextStageId = int.tryParse(rawNext);
     } else {
       nextStageId = null;
+    }
+
+    starControllers = List.generate(
+      maxStars,
+      (_) => AnimationController(
+        vsync: this,
+        duration: const Duration(milliseconds: 700),
+      ),
+    );
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _startStarAnimations();
+    });
+  }
+
+  @override
+  void onClose() {
+    for (final c in starControllers) {
+      c.dispose();
+    }
+    super.onClose();
+  }
+
+  Future<void> _startStarAnimations() async {
+    if (starsEarned <= 0) return;
+
+    await Future.delayed(const Duration(milliseconds: 400));
+
+    for (var i = 0; i < starsEarned && i < maxStars; i++) {
+      final c = starControllers[i];
+      c.reset();
+      c.forward();
+      await Future.delayed(const Duration(milliseconds: 350));
     }
   }
 

@@ -45,12 +45,14 @@ class LoadingOverlay extends StatelessWidget {
                       offset: const Offset(0, -64),
                       child: Text(
                         "loading".tr,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 18,
                           color: Colors.white,
                           fontWeight: FontWeight.w900,
                           decoration: TextDecoration.none,
                           height: 1.0,
+                          fontFamily: Theme.of(context).textTheme.bodyMedium?.fontFamily,
+                          fontFamilyFallback: Theme.of(context).textTheme.bodyMedium?.fontFamilyFallback,
                         ),
                       ),
                     ),

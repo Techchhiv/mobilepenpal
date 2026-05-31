@@ -8,7 +8,7 @@ import 'package:mobilepenpal/presentation/widgets/home/parent_summary_page.dart'
 import 'package:mobilepenpal/presentation/widgets/home/subscribe_modal.dart';
 import 'package:mobilepenpal/presentation/widgets/input_modal.dart';
 import 'package:mobilepenpal/core/utils/report_format.dart';
-import 'package:mobilepenpal/presentation/widgets/home/subscribe_modal.dart';
+// import 'package:mobilepenpal/presentation/widgets/home/subscribe_modal.dart';
 import 'package:shimmer/shimmer.dart';
 
 class ParentHome extends StatelessWidget {
@@ -67,8 +67,8 @@ class ParentHome extends StatelessWidget {
                           ],
                         );
                       }),
-                      _buildSubscriptionSection(),
-                      const SizedBox(height: 12),
+                      // _buildSubscriptionSection(),
+                      // const SizedBox(height: 12),
                       ParentSummaryCard(homeController: homeController),
                       const SizedBox(height: 24),
                     ],
@@ -169,6 +169,7 @@ class ParentHome extends StatelessWidget {
     });
   }
 
+  /*
   Widget _buildSubscriptionSection() {
     return Obx(() {
       final student = homeController.student.value;
@@ -276,9 +277,9 @@ class ParentHome extends StatelessWidget {
                             Text(
                               'upgrade_for_more'.tr,
                               style: TextStyle(
-                                fontSize: 13,
-                                color: Colors.grey[600],
-                                fontWeight: FontWeight.w500,
+                                  fontSize: 13,
+                                  color: Colors.grey[600],
+                                  fontWeight: FontWeight.w500,
                               ),
                             ),
                         ],
@@ -299,6 +300,7 @@ class ParentHome extends StatelessWidget {
       );
     });
   }
+  */
 
   Widget _buildEmptyClassroomCard() {
     return Container(

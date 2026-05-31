@@ -59,7 +59,7 @@ class AppTheme {
     if (languageCode == 'km') {
       return GoogleFonts.battambangTextTheme();
     } else {
-      TextTheme baseTheme = GoogleFonts.robotoTextTheme();
+      TextTheme baseTheme = GoogleFonts.nunitoTextTheme();
       return baseTheme;
     }
   }
@@ -77,7 +77,7 @@ class AppTheme {
         color: color,
       );
     } else {
-      return GoogleFonts.roboto(
+      return GoogleFonts.nunito(
         fontSize: fontSize,
         fontWeight: fontWeight,
         color: color,

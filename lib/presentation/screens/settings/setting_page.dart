@@ -1,61 +1,382 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:mobilepenpal/core/theme/app_colors.dart';
 import 'package:mobilepenpal/data/controllers/home/pin_controller.dart';
 import 'package:mobilepenpal/data/controllers/settings/setting_controller.dart';
 import 'package:mobilepenpal/presentation/screens/settings/change_password_page.dart';
 import 'package:mobilepenpal/presentation/screens/settings/update_profile_page.dart';
 import 'package:mobilepenpal/presentation/widgets/home/pin_entry_widget.dart';
-import 'package:mobilepenpal/data/controllers/shop/shop_controller.dart';
 
 class SettingPage extends StatelessWidget {
   SettingPage({super.key});
 
   final settingController = Get.find<SettingController>();
 
+  static const Color _brand = Color(0xFF00897B);
+  static const Color _brandLight = Color(0xFF26A69A);
+  static const Color _dark = Color(0xFF1A1A2E);
+
   bool get _isParentMode => settingController.currentMode.value == 'parent';
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: _buildAppBar(),
+      backgroundColor: const Color(0xFFF5F6FA),
       body: Obx(
-        () => Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-          child: ListView(
-            children: [
-              _buildProfileHeader(),
-              const SizedBox(height: 30),
+        () => Column(
+          children: [
+            _buildHeader(context),
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+                  child: Column(
+                    children: [
+                      _buildProfileCard(),
+                      const SizedBox(height: 24),
+                      if (_isParentMode) ...[
+                      _buildSectionLabel('profile'.tr),
+                      const SizedBox(height: 10),
+                      _SettingsCard(
+                        children: [
+                          _SettingsTile(
+                            icon: Icons.person_outline_rounded,
+                            iconColor: _brand,
+                            title: 'update_information'.tr,
+                            onTap: () =>
+                                Get.to(() => UpdateProfilePage()),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      _buildSectionLabel('protection'.tr),
+                      const SizedBox(height: 10),
+                    ],
 
-              if (_isParentMode) ...[
-                _buildSectionTitle('profile'.tr),
-                const SizedBox(height: 15),
-                _buildProfileSection(),
-                const SizedBox(height: 24),
-                _buildSectionTitle('protection'.tr),
-                const SizedBox(height: 15),
+                    if (!_isParentMode) ...[
+                      const SizedBox(height: 0),
+                    ],
+
+                    _SettingsCard(
+                      children: [
+                        if (_isParentMode) ...[
+                          _SettingsTile(
+                            icon: Icons.pin_outlined,
+                            iconColor: const Color(0xFF5C6BC0),
+                            title: 'change_parent_pin'.tr,
+                            onTap: () {
+                              Get.to(
+                                () => PinWidget(
+                                  mode:
+                                      settingController.parentPin.isEmpty
+                                          ? PinMode.create
+                                          : PinMode.update,
+                                  title: 'update_parent_pin'.tr,
+                                  returnToSettings: true,
+                                ),
+                              );
+                            },
+                          ),
+                          const _TileDivider(),
+                          _SettingsTile(
+                            icon: Icons.lock_outline_rounded,
+                            iconColor: const Color(0xFFEF6C00),
+                            title: 'change_password'.tr,
+                            onTap: () =>
+                                Get.to(() => ChangePasswordPage()),
+                          ),
+                          const _TileDivider(),
+                          Obx(
+                            () => _SettingsTile(
+                              icon: Icons.shield_outlined,
+                              iconColor: const Color(0xFF43A047),
+                              title: 'require_parent_pin'.tr,
+                              trailing: _BrandSwitch(
+                                value: settingController
+                                    .isParentPinRequired.value,
+                                onChanged: (val) {
+                                  settingController
+                                      .setParentPinRequired(val);
+                                },
+                              ),
+                              onTap: () {
+                                final current = settingController
+                                    .isParentPinRequired.value;
+                                settingController
+                                    .setParentPinRequired(!current);
+                              },
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+
+                    const SizedBox(height: 24),
+                    _buildSectionLabel('settings'.tr),
+                    const SizedBox(height: 10),
+                    _SettingsCard(
+                      children: [
+                        GetBuilder<SettingController>(
+                          id: 'lang',
+                          builder: (_) {
+                            final current =
+                                Get.locale ?? const Locale('en', 'US');
+                            final isKh =
+                                current.languageCode.toLowerCase() ==
+                                    'km';
+
+                            return _SettingsTile(
+                              icon: Icons.language_rounded,
+                              iconColor: const Color(0xFF1E88E5),
+                              title: 'language'.tr,
+                              trailing: _LanguageBadge(isKh: isKh),
+                              onTap: () {
+                                final next = isKh
+                                    ? const Locale('en', 'US')
+                                    : const Locale('km', 'KH');
+
+                                settingController.localeController
+                                    .changeLocale(next);
+                                settingController.update(['lang']);
+                              },
+                            );
+                          },
+                        ),
+                        const _TileDivider(),
+                        _SettingsTile(
+                          icon: Icons.logout_rounded,
+                          iconColor: const Color(0xFFE53935),
+                          title: 'logout_acc'.tr,
+                          onTap: () => settingController.logout(),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+  // ─── Header Widget ────────────────────────────────────────────────
+  Widget _buildHeader(BuildContext context) {
+    final double statusBarHeight = MediaQuery.of(context).padding.top;
+    final double headerHeight = 56 + statusBarHeight;
+
+    return Stack(
+      children: [
+        // Background gradient
+        Container(
+          height: headerHeight,
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color(0xFF00897B),
+                Color(0xFF00695C),
               ],
-              _buildProtectionSection(),
-              const SizedBox(height: 24),
-
-              _buildSectionTitle('settings'.tr),
-              const SizedBox(height: 15),
-              _buildGeneralSection(),
+            ),
+          ),
+          child: Stack(
+            children: [
+              // Subtle decorative circles
+              Positioned(
+                top: -20,
+                right: -20,
+                child: Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withValues(alpha: 0.06),
+                  ),
+                ),
+              ),
+              Positioned(
+                bottom: 5,
+                left: -30,
+                child: Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withValues(alpha: 0.04),
+                  ),
+                ),
+              ),
             ],
+          ),
+        ),
+
+        // Title (Centered)
+        Positioned(
+          top: statusBarHeight,
+          bottom: 0,
+          left: 56,
+          right: 56,
+          child: Align(
+            alignment: Alignment.center,
+            child: Text(
+              'settings'.tr,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+                letterSpacing: -0.3,
+              ),
+            ),
+          ),
+        ),
+
+        // Back Button
+        Positioned(
+          top: statusBarHeight + 4,
+          left: 8,
+          child: _BackButton(),
+        ),
+      ],
+    );
+  }
+
+  // ─── Profile Card ─────────────────────────────────────────────────
+  Widget _buildProfileCard() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: _brand.withValues(alpha: 0.10),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
+          ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          // Avatar with gradient ring
+          Container(
+            padding: const EdgeInsets.all(3),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFF00897B), Color(0xFF26A69A)],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: _brand.withValues(alpha: 0.25),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: CircleAvatar(
+              radius: 36,
+              backgroundColor: const Color(0xFFE0F2F1),
+              child: Icon(
+                Icons.person_rounded,
+                size: 36,
+                color: _brand.withValues(alpha: 0.7),
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Obx(
+              () => Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _isParentMode
+                        ? settingController.parentName
+                        : settingController.fullName,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      color: _dark,
+                      letterSpacing: -0.3,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          _brand.withValues(alpha: 0.12),
+                          _brandLight.withValues(alpha: 0.08),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      _isParentMode ? 'parent'.tr : 'student'.tr,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: _brand,
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─── Section Label ────────────────────────────────────────────────
+  Widget _buildSectionLabel(String title) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Padding(
+        padding: const EdgeInsets.only(left: 4),
+        child: Text(
+          title.toUpperCase(),
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w800,
+            color: Colors.black.withValues(alpha: 0.35),
+            letterSpacing: 1.2,
           ),
         ),
       ),
     );
   }
+}
 
-  AppBar _buildAppBar() {
-    return AppBar(
-      backgroundColor: AppColors.primary,
-      elevation: 0,
-      automaticallyImplyLeading: false,
-      title: InkWell(
-        onTap: () {
+// ═══════════════════════════════════════════════════════════════════════
+//  Reusable Widgets
+// ═══════════════════════════════════════════════════════════════════════
+
+class _BackButton extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4),
+      child: IconButton(
+        onPressed: () {
           final canPop = Get.key.currentState?.canPop() ?? false;
           if (canPop) {
             Get.back();
@@ -63,267 +384,217 @@ class SettingPage extends StatelessWidget {
             Get.offAllNamed('/home');
           }
         },
-
-        borderRadius: BorderRadius.circular(8),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              Icons.arrow_back_ios_new_rounded,
-              color: Colors.white,
-              size: 20,
-            ),
-            const SizedBox(width: 6),
-            Text(
-              'back'.tr,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
-              ),
-            ),
-          ],
+        icon: Container(
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: Colors.white,
+            size: 18,
+          ),
         ),
       ),
     );
   }
+}
 
-  Widget _buildSectionTitle(String title) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Text(
-        title,
-        style: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-          color: Colors.black87,
-        ),
-      ),
-    );
-  }
+/// A card that groups multiple [_SettingsTile] items together.
+class _SettingsCard extends StatelessWidget {
+  const _SettingsCard({required this.children});
+  final List<Widget> children;
 
-  Widget _buildProfileHeader() {
-    return Row(
-      children: [
-        Obx(
-          () {
-            final shopController = Get.find<ShopController>();
-            final avatar = shopController.currentAvatar;
+  static const Color _brand = Color(0xFF00897B);
 
-            return CircleAvatar(
-              radius: 50,
-              backgroundColor: avatar.color.withValues(alpha: 0.2),
-              child: avatar.assetPath != null
-                  ? ClipOval(
-                      child: Image.asset(
-                        avatar.assetPath!,
-                        fit: BoxFit.cover,
-                        width: 100,
-                        height: 100,
-                      ),
-                    )
-                  : Icon(
-                      avatar.icon ?? Icons.person,
-                      size: 50,
-                      color: avatar.color,
-                    ),
-            );
-          },
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Obx(
-            () => Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _isParentMode
-                      ? settingController.parentName
-                      : settingController.fullName,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  _isParentMode ? 'parent'.tr : 'student'.tr,
-                  style: const TextStyle(fontSize: 16, color: Colors.grey),
-                ),
-              ],
-            ),
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: _brand.withValues(alpha: 0.06),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
           ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildProfileSection() {
-    return _buildSettingTile(
-      icon: Icons.person_outline,
-      title: 'update_information'.tr,
-      trailing: const Icon(
-        Icons.arrow_forward_ios,
-        size: 16,
-        color: Colors.black,
-      ),
-      onTap: () {
-        Get.to(() => UpdateProfilePage());
-      },
-    );
-  }
-
-  Widget _buildProtectionSection() {
-    return Column(
-      children: [
-        if (_isParentMode) ...[
-          _buildSettingTile(
-            icon: Icons.pin_outlined,
-            title: 'change_parent_pin'.tr,
-            trailing: const Icon(
-              Icons.arrow_forward_ios,
-              size: 16,
-              color: Colors.black,
-            ),
-            onTap: () {
-              Get.to(
-                () => PinWidget(
-                  mode: settingController.parentPin.isEmpty
-                      ? PinMode.create
-                      : PinMode.update,
-                  title: 'update_parent_pin'.tr,
-                  returnToSettings: true,
-                ),
-              );
-            },
-          ),
-          const SizedBox(height: 15),
-          _buildSettingTile(
-            icon: Icons.lock,
-            title: 'change_password'.tr,
-            trailing: const Icon(
-              Icons.arrow_forward_ios,
-              size: 16,
-              color: Colors.black,
-            ),
-            onTap: () {
-              Get.to(() => ChangePasswordPage());
-            },
-          ),
-          const SizedBox(height: 15),
-          Obx(
-            () => _buildSettingTile(
-              icon: Icons.shield_outlined,
-              title: 'require_parent_pin'.tr,
-              trailing: SizedBox(
-                height: double.minPositive,
-                child: Transform.scale(
-                  scale: 0.75,
-                  child: Switch(
-                    value: settingController.isParentPinRequired.value,
-                    onChanged: (val) {
-                      settingController.setParentPinRequired(val);
-                    },
-                  ),
-                ),
-              ),
-              onTap: () {
-                final current = settingController.isParentPinRequired.value;
-                settingController.setParentPinRequired(!current);
-              },
-            ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 4,
+            offset: const Offset(0, 1),
           ),
         ],
-      ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Column(
+          children: [
+            // Gradient accent bar
+            Container(
+              height: 3,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Color(0xFF00897B),
+                    Color(0xFF26A69A),
+                    Color(0xFF4DB6AC),
+                  ],
+                ),
+              ),
+            ),
+            ...children,
+          ],
+        ),
+      ),
     );
   }
+}
 
-  Widget _buildGeneralSection() {
-    return Column(
-      children: [
-        GetBuilder<SettingController>(
-          id: 'lang',
-          builder: (_) {
-            final current = Get.locale ?? const Locale('en', 'US');
-            final isKh = current.languageCode.toLowerCase() == 'km';
+/// A single settings row with icon, label, and optional trailing widget.
+class _SettingsTile extends StatelessWidget {
+  const _SettingsTile({
+    required this.icon,
+    required this.iconColor,
+    required this.title,
+    this.trailing,
+    this.onTap,
+  });
 
-            return _buildSettingTile(
-              icon: Icons.language_rounded,
-              title: 'language'.tr,
-              trailing: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
+  final IconData icon;
+  final Color iconColor;
+  final String title;
+  final Widget? trailing;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          child: Row(
+            children: [
+              // Gradient-tinted icon container
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: iconColor.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(14),
                 ),
-
+                child: Icon(icon, size: 20, color: iconColor),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
                 child: Text(
-                  isKh ? "KH" : "EN",
+                  title,
                   style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w900,
-                    color: Colors.black87,
-                    letterSpacing: 0.4,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF1A1A2E),
+                    letterSpacing: -0.1,
                   ),
                 ),
               ),
-              onTap: () {
-                final next = isKh
-                    ? const Locale('en', 'US')
-                    : const Locale('km', 'KH');
-
-                settingController.localeController.changeLocale(next);
-                settingController.update(['lang']);
-              },
-            );
-          },
-        ),
-
-        const SizedBox(height: 15),
-
-        _buildSettingTile(
-          icon: Icons.logout,
-          title: 'logout_acc'.tr,
-          trailing: const Icon(
-            Icons.arrow_forward_ios,
-            size: 16,
-            color: Colors.black,
+              if (trailing != null)
+                trailing!
+              else
+                Icon(
+                  Icons.chevron_right_rounded,
+                  size: 22,
+                  color: Colors.black.withValues(alpha: 0.25),
+                ),
+            ],
           ),
-          onTap: () => settingController.logout(),
         ),
-      ],
+      ),
     );
   }
+}
 
-  Widget _buildSettingTile({
-    required IconData icon,
-    required String title,
-    Color backgroundColor = const Color(0xFFF2F2F7),
-    Widget? trailing,
-    VoidCallback? onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
+/// A thin fading gradient divider between tiles.
+class _TileDivider extends StatelessWidget {
+  const _TileDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Container(
+        height: 1,
         decoration: BoxDecoration(
-          color: backgroundColor,
-          borderRadius: const BorderRadius.all(Radius.circular(8)),
+          gradient: LinearGradient(
+            colors: [
+              Colors.transparent,
+              Colors.black.withValues(alpha: 0.06),
+              Colors.transparent,
+            ],
+          ),
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        child: Row(
-          children: [
-            Icon(icon, size: 24, color: Colors.grey[700]),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Text(
-                title,
-                style: const TextStyle(fontSize: 16, color: Colors.black87),
-              ),
-            ),
-            if (trailing != null) trailing,
+      ),
+    );
+  }
+}
+
+/// A small language badge showing "EN" or "KH".
+class _LanguageBadge extends StatelessWidget {
+  const _LanguageBadge({required this.isKh});
+  final bool isKh;
+
+  static const Color _brand = Color(0xFF00897B);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            _brand.withValues(alpha: 0.12),
+            _brand.withValues(alpha: 0.06),
           ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: _brand.withValues(alpha: 0.15)),
+      ),
+      child: Text(
+        isKh ? "KH" : "EN",
+        style: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w900,
+          color: _brand,
+          letterSpacing: 0.6,
+        ),
+      ),
+    );
+  }
+}
+
+/// A brand-colored switch widget.
+class _BrandSwitch extends StatelessWidget {
+  const _BrandSwitch({required this.value, required this.onChanged});
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  static const Color _brand = Color(0xFF00897B);
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 28,
+      child: FittedBox(
+        fit: BoxFit.contain,
+        child: Switch(
+          value: value,
+          onChanged: onChanged,
+          activeThumbColor: _brand,
+          activeTrackColor: _brand.withValues(alpha: 0.30),
+          inactiveThumbColor: Colors.grey[400],
+          inactiveTrackColor: Colors.grey[300],
         ),
       ),
     );
