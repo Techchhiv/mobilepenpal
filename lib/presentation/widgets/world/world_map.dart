@@ -622,30 +622,77 @@ class LevelCircle extends StatelessWidget {
                             mainAxisAlignment: MainAxisAlignment.center,
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text(
-                                '${level.orderIndex}',
-                                style: const TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w900,
-                                  color: Color(0xFF056E6D),
-                                  shadows: [
-                                    Shadow(color: Colors.white, offset: Offset(-1.5, -1.5), blurRadius: 2),
-                                    Shadow(color: Colors.white, offset: Offset(1.5, -1.5), blurRadius: 2),
-                                    Shadow(color: Colors.white, offset: Offset(-1.5, 1.5), blurRadius: 2),
-                                    Shadow(color: Colors.white, offset: Offset(1.5, 1.5), blurRadius: 2),
-                                  ],
-                                ),
+                              Stack(
+                                alignment: Alignment.center,
+                                clipBehavior: Clip.none,
+                                children: [
+                                  Text(
+                                    '${level.orderIndex}',
+                                    style: TextStyle(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.w900,
+                                      foreground: Paint()
+                                        ..style = PaintingStyle.stroke
+                                        ..strokeWidth = 3.5
+                                        ..color = Colors.white,
+                                    ),
+                                  ),
+                                  Text(
+                                    '${level.orderIndex}',
+                                    style: const TextStyle(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.w900,
+                                      color: Color(0xFF056E6D),
+                                    ),
+                                  ),
+                                ],
                               ),
                               const SizedBox(height: 1),
-                              const Icon(
-                                Icons.play_arrow_rounded,
-                                color: Color(0xFF056E6D),
-                                size: 18,
-                                shadows: [
-                                  Shadow(color: Colors.white, offset: Offset(-1, -1), blurRadius: 1),
-                                  Shadow(color: Colors.white, offset: Offset(1, -1), blurRadius: 1),
-                                  Shadow(color: Colors.white, offset: Offset(-1, 1), blurRadius: 1),
-                                  Shadow(color: Colors.white, offset: Offset(1, 1), blurRadius: 1),
+                              Stack(
+                                alignment: Alignment.center,
+                                clipBehavior: Clip.none,
+                                children: [
+                                  const Positioned(
+                                    left: -1,
+                                    top: -1,
+                                    child: Icon(
+                                      Icons.play_arrow_rounded,
+                                      color: Colors.white,
+                                      size: 18,
+                                    ),
+                                  ),
+                                  const Positioned(
+                                    right: -1,
+                                    top: -1,
+                                    child: Icon(
+                                      Icons.play_arrow_rounded,
+                                      color: Colors.white,
+                                      size: 18,
+                                    ),
+                                  ),
+                                  const Positioned(
+                                    left: -1,
+                                    bottom: -1,
+                                    child: Icon(
+                                      Icons.play_arrow_rounded,
+                                      color: Colors.white,
+                                      size: 18,
+                                    ),
+                                  ),
+                                  const Positioned(
+                                    right: -1,
+                                    bottom: -1,
+                                    child: Icon(
+                                      Icons.play_arrow_rounded,
+                                      color: Colors.white,
+                                      size: 18,
+                                    ),
+                                  ),
+                                  const Icon(
+                                    Icons.play_arrow_rounded,
+                                    color: Color(0xFF056E6D),
+                                    size: 18,
+                                  ),
                                 ],
                               ),
                             ],
