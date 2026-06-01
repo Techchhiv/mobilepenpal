@@ -194,7 +194,7 @@ class UpdateProfilePage extends StatelessWidget {
                         iconColor: const Color(0xFFE53935),
                         label: 'age'.tr,
                         hintText: 'enter_age'.tr,
-                        initialValue: controller.age.value,
+                        controller: controller.ageTextController,
                         onChanged: (v) => controller.age.value = v,
                         validator: controller.validateAge,
                         keyboardType: TextInputType.number,
@@ -487,7 +487,8 @@ class UpdateProfilePage extends StatelessWidget {
     required Color iconColor,
     required String label,
     required String hintText,
-    required String initialValue,
+    String? initialValue,
+    TextEditingController? controller,
     required Function(String) onChanged,
     String? Function(String?)? validator,
     TextInputType keyboardType = TextInputType.text,
@@ -521,7 +522,8 @@ class UpdateProfilePage extends StatelessWidget {
         ),
         const SizedBox(height: 6),
         TextFormField(
-          initialValue: initialValue,
+          controller: controller,
+          initialValue: controller == null ? initialValue : null,
           onChanged: onChanged,
           keyboardType: keyboardType,
           style: const TextStyle(

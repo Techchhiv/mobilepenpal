@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
@@ -24,6 +25,8 @@ class UpdateProfileController extends GetxController {
   final parentFirstName = ''.obs;
   final parentLastName = ''.obs;
   final address = ''.obs;
+
+  final ageTextController = TextEditingController();
 
   @override
   void onInit() {
@@ -54,6 +57,7 @@ class UpdateProfileController extends GetxController {
     lastName.value = currentStudent.lastName ?? '';
     nickname.value = currentStudent.nickname ?? '';
     age.value = currentStudent.age?.toString() ?? '';
+    ageTextController.text = age.value;
     gender.value = currentStudent.gender ?? '';
 
     dateOfBirth.value = _formatDate(currentStudent.dateOfBirth ?? '');
@@ -160,6 +164,18 @@ class UpdateProfileController extends GetxController {
     final formattedDate =
         "${pickedDate.year}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}";
     dateOfBirth.value = formattedDate;
+
+    final today = DateTime.now();
+    int calculatedAge = today.year - pickedDate.year;
+    if (today.month < pickedDate.month ||
+        (today.month == pickedDate.month && today.day < pickedDate.day)) {
+      calculatedAge--;
+    }
+
+    if (calculatedAge >= 0) {
+      age.value = calculatedAge.toString();
+      ageTextController.text = calculatedAge.toString();
+    }
   }
 
   void clearError() {
@@ -207,5 +223,11 @@ class UpdateProfileController extends GetxController {
       }
     }
     return null;
+  }
+
+  @override
+  void onClose() {
+    ageTextController.dispose();
+    super.onClose();
   }
 }
