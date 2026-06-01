@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\School;
 use App\Models\Student;
 use App\Models\StudentDailyStat;
+use App\Models\Subscription;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -86,6 +87,23 @@ class StudentSeeder extends Seeder
                 'updated_at' => now(),
             ]);
             $student->save();
+
+            if ($student->first_name === 'Julian') {
+                $end = Carbon::yesterday();
+                $start = $end->copy()->subMonth();
+                Subscription::updateOrCreate(
+                    [
+                        'student_id' => $student->id,
+                    ],
+                    [
+                        'plan' => 'monthly',
+                        'amount' => 5.0,
+                        'start_date' => $start,
+                        'end_date' => $end,
+                        'active' => true,
+                    ]
+                );
+            }
 
             $this->seedDailyStreak(
                 student: $student,

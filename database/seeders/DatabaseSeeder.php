@@ -19,13 +19,13 @@ class DatabaseSeeder extends Seeder
             RbacSeeder::class,
             SchoolSeeder::class,
             ExerciseSeeder::class,
-                // WorldLevelStageSeeder::class ,
-            ProductionWorldSeeder::class,
+            WorldLevelStageSeeder::class,
+            // ProductionWorldSeeder::class,
             StudentSeeder::class,
             MiniGameSeeder::class,
-                // SubscriptionSeeder::class,
-                // TeacherRolesSeeder::class
-            StudentExerciseAttemptSeeder::class,
+            // SubscriptionSeeder::class,
+            // TeacherRolesSeeder::class
+            // StudentExerciseAttemptSeeder::class,
             SystemSettingSeeder::class,
         ]);
 

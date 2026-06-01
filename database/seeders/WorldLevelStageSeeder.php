@@ -120,7 +120,7 @@ class WorldLevelStageSeeder extends Seeder
                     'chunk' => 5,
                     'is_unlocked_by_default' => true,
                     'is_premium' => false,
-                    'premium_after_level' => 2,
+                    // 'premium_after_level' => 2,
                 ],
                 [
                     'key' => 'public_digits',
@@ -133,7 +133,7 @@ class WorldLevelStageSeeder extends Seeder
                     'chars' => $digits,
                     'character_type' => 'digits',
                     'chunk' => 5,
-                    'is_unlocked_by_default' => true,
+                    'is_unlocked_by_default' => false,
                     'is_premium' => false,
                 ],
                 [
@@ -148,7 +148,7 @@ class WorldLevelStageSeeder extends Seeder
                     'character_type' => 'dependent_vowels',
                     'chunk' => 5,
                     'is_unlocked_by_default' => false,
-                    'is_premium' => true,
+                    'is_premium' => false,
                 ],
                 [
                     'key' => 'public_independent_vowels',
@@ -162,21 +162,21 @@ class WorldLevelStageSeeder extends Seeder
                     'character_type' => 'independent_vowels',
                     'chunk' => 5,
                     'is_unlocked_by_default' => false,
-                    'is_premium' => true,
+                    'is_premium' => false,
                 ],
-                [
-                    'key' => 'public_math',
-                    'audience' => 'public',
-                    'order_index' => 5,
-                    'name_km' => 'គណិតវិទ្យា',
-                    'name_en' => 'Math',
-                    'desc_km' => 'រៀនគណិតវិទ្យា',
-                    'desc_en' => 'Learn Math',
-                    'chars' => [],
-                    'character_type' => 'math',
-                    'chunk' => 1,
-                    'is_premium' => true,
-                ],
+                // [
+                //     'key' => 'public_math',
+                //     'audience' => 'public',
+                //     'order_index' => 5,
+                //     'name_km' => 'គណិតវិទ្យា',
+                //     'name_en' => 'Math',
+                //     'desc_km' => 'រៀនគណិតវិទ្យា',
+                //     'desc_en' => 'Learn Math',
+                //     'chars' => [],
+                //     'character_type' => 'math',
+                //     'chunk' => 1,
+                //     'is_premium' => true,
+                // ],
 
                 // ===== SCHOOL WORLDS (for school accounts) =====
                 [
@@ -231,19 +231,19 @@ class WorldLevelStageSeeder extends Seeder
                     'chunk' => 5,
                     'is_premium' => true,
                 ],
-                [
-                    'key' => 'schools_math',
-                    'audience' => 'schools',
-                    'order_index' => 10,
-                    'name_km' => 'គណិតវិទ្យា',
-                    'name_en' => 'Math',
-                    'desc_km' => 'រៀនគណិតវិទ្យា',
-                    'desc_en' => 'Learn Math',
-                    'chars' => [],
-                    'character_type' => 'math',
-                    'chunk' => 1,
-                    'is_premium' => true,
-                ],
+                // [
+                //     'key' => 'schools_math',
+                //     'audience' => 'schools',
+                //     'order_index' => 10,
+                //     'name_km' => 'គណិតវិទ្យា',
+                //     'name_en' => 'Math',
+                //     'desc_km' => 'រៀនគណិតវិទ្យា',
+                //     'desc_en' => 'Learn Math',
+                //     'chars' => [],
+                //     'character_type' => 'math',
+                //     'chunk' => 1,
+                //     'is_premium' => true,
+                // ],
             ];
 
             foreach ($worldDefs as $def) {
@@ -519,5 +519,4 @@ class WorldLevelStageSeeder extends Seeder
             default => ["រៀន {$ch}", "Practice {$ch}"],
         };
     }
-
 }

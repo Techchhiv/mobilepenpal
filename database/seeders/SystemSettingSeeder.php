@@ -22,7 +22,7 @@ class SystemSettingSeeder extends Seeder
                     'discount' => 50,
                     'billing_cycle' => 'month',
                     'contact_phone' => '+855 935 248 60',
-                    'contact_email' => 'nginkimlong@gmail.com',
+                    'contact_email' => 'contact@khmerpenpal.com',
                 ]),
                 'created_at' => now(),
                 'updated_at' => now(),
