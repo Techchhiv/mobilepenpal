@@ -586,17 +586,19 @@ class LevelCircle extends StatelessWidget {
                         ),
 
                         if (isSubLocked)
-                          const Text(
+                          Text(
                             '👑',
                             style: TextStyle(
                               fontSize: 30,
-                              shadows: [
-                                Shadow(
-                                  color: Color(0xFFB45309),
-                                  offset: Offset(0, 2),
-                                  blurRadius: 4,
-                                ),
-                              ],
+                              shadows: level.orderIndex == 1
+                                  ? null
+                                  : const [
+                                      Shadow(
+                                        color: Color(0xFFB45309),
+                                        offset: Offset(0, 2),
+                                        blurRadius: 4,
+                                      ),
+                                    ],
                             ),
                           )
                         else if (isCompleted)
