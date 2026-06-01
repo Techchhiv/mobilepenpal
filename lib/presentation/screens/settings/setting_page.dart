@@ -223,11 +223,11 @@ class SettingPage extends StatelessWidget {
             alignment: Alignment.center,
             child: Text(
               'settings'.tr,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
                 color: Colors.white,
-                letterSpacing: -0.3,
+                letterSpacing: Get.locale?.languageCode == 'km' ? 0.0 : -0.3,
               ),
             ),
           ),
@@ -303,11 +303,11 @@ class SettingPage extends StatelessWidget {
                     _isParentMode
                         ? settingController.parentName
                         : settingController.fullName,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w800,
                       color: _dark,
-                      letterSpacing: -0.3,
+                      letterSpacing: Get.locale?.languageCode == 'km' ? 0.0 : -0.3,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -333,7 +333,7 @@ class SettingPage extends StatelessWidget {
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
                         color: _brand,
-                        letterSpacing: 0.3,
+                        letterSpacing: Get.locale?.languageCode == 'km' ? 0.0 : 0.3,
                       ),
                     ),
                   ),
@@ -348,6 +348,7 @@ class SettingPage extends StatelessWidget {
 
   // ─── Section Label ────────────────────────────────────────────────
   Widget _buildSectionLabel(String title) {
+    final bool isKhmer = Get.locale?.languageCode == 'km';
     return Align(
       alignment: Alignment.centerLeft,
       child: Padding(
@@ -355,10 +356,10 @@ class SettingPage extends StatelessWidget {
         child: Text(
           title.toUpperCase(),
           style: TextStyle(
-            fontSize: 12,
+            fontSize: isKhmer ? 14 : 12,
             fontWeight: FontWeight.w800,
             color: Colors.black.withValues(alpha: 0.35),
-            letterSpacing: 1.2,
+            letterSpacing: isKhmer ? 0.0 : 1.2,
           ),
         ),
       ),
@@ -492,11 +493,11 @@ class _SettingsTile extends StatelessWidget {
               Expanded(
                 child: Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF1A1A2E),
-                    letterSpacing: -0.1,
+                    color: const Color(0xFF1A1A2E),
+                    letterSpacing: Get.locale?.languageCode == 'km' ? 0.0 : -0.1,
                   ),
                 ),
               ),
