@@ -711,13 +711,6 @@ class LevelCircle extends StatelessWidget {
                             Icons.lock_rounded,
                             color: Colors.white,
                             size: 26,
-                            shadows: [
-                              Shadow(
-                                color: Color(0xFF9CA3AF),
-                                offset: Offset(0, 1.5),
-                                blurRadius: 2,
-                              ),
-                            ],
                           ),
                       ],
                     ),

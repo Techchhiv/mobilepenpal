@@ -10,6 +10,8 @@ import 'package:mobilepenpal/core/utils/number_format_utils.dart';
 import 'package:mobilepenpal/data/controllers/world/level_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_animation_controller.dart';
+import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
+import 'package:mobilepenpal/data/controllers/shop/shop_controller.dart';
 import 'package:mobilepenpal/presentation/routes/app_routes.dart';
 import 'package:mobilepenpal/presentation/widgets/app_snackbar.dart';
 import 'package:mobilepenpal/presentation/widgets/loading_overly.dart';
@@ -135,15 +137,45 @@ class StageDetailPage extends GetView<StageController> {
             width: 50,
             height: 50,
             decoration: BoxDecoration(
-              // color: Colors.orange.shade300,
+              color: Colors.white.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(25),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.25),
+                width: 2,
+              ),
             ),
-            // child: const Icon(Icons.person, color: Colors.white, size: 30),
             clipBehavior: Clip.antiAlias,
-            child: Image.asset(
-              'assets/images/illustrations/pencil.png',
-              fit: BoxFit.contain,
-            ),
+            child: Obx(() {
+              Widget avatarContent = Image.asset(
+                'assets/images/illustrations/pencil.png',
+                fit: BoxFit.contain,
+              );
+
+              if (Get.isRegistered<HomeController>()) {
+                final homeController = Get.find<HomeController>();
+                final shopAvatar = homeController.currentShopAvatar;
+
+                if (shopAvatar != null && shopAvatar.id != 'default') {
+                  if (shopAvatar.assetPath != null) {
+                    avatarContent = Padding(
+                      padding: const EdgeInsets.all(2),
+                      child: Image.asset(
+                        shopAvatar.assetPath!,
+                        fit: BoxFit.cover,
+                      ),
+                    );
+                  } else {
+                    avatarContent = Icon(
+                      shopAvatar.icon ?? Icons.person,
+                      size: 28,
+                      color: Colors.white,
+                    );
+                  }
+                }
+              }
+
+              return avatarContent;
+            }),
           ),
           const SizedBox(width: 12),
           Expanded(

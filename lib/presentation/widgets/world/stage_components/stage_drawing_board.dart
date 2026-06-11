@@ -244,6 +244,8 @@ class StageDrawingBoard extends StatelessWidget {
                   onPointerMove: (e) => onPointerMove(e, boardIndex),
                   onPointerUp: (e) => onPointerUp(e, boardIndex),
                   child: DrawingBoard(
+                    boardPanEnabled: false,
+                    boardScaleEnabled: false,
                     controller: drawingControllers[boardIndex],
                     background: SizedBox(
                       width: width,
