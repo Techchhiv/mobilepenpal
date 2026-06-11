@@ -199,6 +199,7 @@ class AdventureStageController extends GetxController
   bool _ownsAudio = false;
 
   ui.Image? _currentStampImage;
+  ui.Image? get currentStampImage => _currentStampImage;
 
   @override
   void onInit() {
@@ -720,6 +721,7 @@ class AdventureStageController extends GetxController
     }
 
     anim.restartGuideFromStart();
+    anim.resetMorph();
   }
 
   // ── AI check ──
@@ -877,14 +879,33 @@ class AdventureStageController extends GetxController
     // Play correct SFX
     audio.playCorrectSfx();
 
+    final bool hasGuide = showShadowGuide && strokeStrokesNorm.isNotEmpty;
+    if (hasGuide && _rawStrokesList[0].isNotEmpty) {
+      final userOffsets = _rawStrokesList[0]
+          .map((stroke) => stroke
+              .map((p) => Offset(
+                    (p['x'] as num).toDouble(),
+                    (p['y'] as num).toDouble(),
+                  ))
+              .toList())
+          .toList();
+
+      unawaited(anim.startMorph(
+        userStrokes: userOffsets,
+        templateStrokes: List<List<Offset>>.from(strokeStrokesNorm),
+      ));
+    }
+
     // Show correct animation
     anim.showCorrect(starIndex: 0);
 
     // Next character after a brief delay
-    Future.delayed(const Duration(milliseconds: 600), () {
+    final delayMs = hasGuide ? 1000 : 600;
+    Future.delayed(Duration(milliseconds: delayMs), () {
       if (!isGameActive.value || isGameOver.value) return;
       anim.feedback.value = DrawFeedback.none;
       anim.clearPraise();
+      anim.resetMorph();
 
       // Update difficulty based on correct streak
       _correctStreakForDifficulty++;

@@ -783,6 +783,7 @@ class DynamicMiniGameController extends GetxController
     if (dt != 'math_equation' && dt != 'question') {
       anim.restartGuideFromStart();
     }
+    anim.resetMorph();
   }
 
   // ── Submit / AI check ──
@@ -1252,6 +1253,24 @@ class DynamicMiniGameController extends GetxController
     feedbackTrigger.value++;
 
     audio.playCorrectSfx();
+
+    final bool hasGuide = showShadowGuide && strokeStrokesNorm.isNotEmpty;
+    if (hasGuide && _rawStrokes.isNotEmpty) {
+      final userOffsets = _rawStrokes
+          .map((stroke) => stroke
+              .map((p) => Offset(
+                    (p['x'] as num).toDouble(),
+                    (p['y'] as num).toDouble(),
+                  ))
+              .toList())
+          .toList();
+
+      unawaited(anim.startMorph(
+        userStrokes: userOffsets,
+        templateStrokes: List<List<Offset>>.from(strokeStrokesNorm),
+      ));
+    }
+
     anim.showCorrect(starIndex: 0);
 
     // ── Spawn a floating score popup on alternating sides ──
@@ -1279,10 +1298,12 @@ class DynamicMiniGameController extends GetxController
     });
 
     // Next challenge after a brief delay
-    Future.delayed(const Duration(milliseconds: 600), () {
+    final delayMs = hasGuide ? 1000 : 600;
+    Future.delayed(Duration(milliseconds: delayMs), () {
       if (!isGameActive.value || isGameOver.value) return;
       anim.feedback.value = DrawFeedback.none;
       anim.clearPraise();
+      anim.resetMorph();
       _pickNextChallenge();
     });
   }

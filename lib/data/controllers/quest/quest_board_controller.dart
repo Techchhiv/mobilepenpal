@@ -77,6 +77,7 @@ class QuestBoardController extends GetxController {
   static Map<String, dynamic>? _strokesDbCache;
 
   ui.Image? _currentStampImage;
+  ui.Image? get currentStampImage => _currentStampImage;
 
   late final StageAnimationController anim;
   late final StageAudioController audio;
@@ -423,6 +424,7 @@ class QuestBoardController extends GetxController {
     }
 
     anim.restartGuideFromStart();
+    anim.resetMorph();
   }
 
   void onPointerDown() {
@@ -675,8 +677,26 @@ class QuestBoardController extends GetxController {
       return;
     }
 
+    if (hasGuide && _rawStrokesList[0].isNotEmpty) {
+      unawaited(audio.playCorrectSfx());
+      final userOffsets = _rawStrokesList[0]
+          .map((stroke) => stroke
+              .map((p) => Offset(
+                    (p['x'] as num).toDouble(),
+                    (p['y'] as num).toDouble(),
+                  ))
+              .toList())
+          .toList();
+
+      await anim.startMorph(
+        userStrokes: userOffsets,
+        templateStrokes: List<List<Offset>>.from(strokeStrokesNorm),
+      );
+    } else {
+      unawaited(audio.playCorrectSfx());
+    }
+
     anim.showCorrect(starIndex: currentExerciseIndex.value);
-    unawaited(audio.playCorrectSfx());
 
     attempts.add({
       'exercise_id': exercise.id,
@@ -687,9 +707,10 @@ class QuestBoardController extends GetxController {
     });
     _updateProgressUI();
 
-    await Future.delayed(const Duration(milliseconds: 800));
+    await Future.delayed(const Duration(milliseconds: 1000));
     anim.feedback.value = DrawFeedback.none;
     anim.clearPraise();
+    anim.resetMorph();
 
     if (_isLastExercise) {
       await _finishQuest();

@@ -804,6 +804,10 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
         showGuiding: displayType != 'math_equation' && displayType != 'question' && showGuide,
         activeBoardCount: 1,
         useExpanded: false,
+        showMorph: controller.anim.showMorph.value,
+        morphProgress: controller.anim.morphProgress.value,
+        userMorphStrokes: controller.anim.userMorphStrokes,
+        templateMorphStrokes: controller.anim.templateMorphStrokes,
       );
     });
   }

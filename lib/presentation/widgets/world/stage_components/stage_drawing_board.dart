@@ -1,9 +1,11 @@
+import 'dart:ui' as ui;
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_drawing_board/flutter_drawing_board.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_animation_controller.dart';
 import 'package:mobilepenpal/presentation/widgets/world/board_grid_painter.dart';
 import 'package:mobilepenpal/presentation/widgets/world/letter_painter.dart';
+import 'package:mobilepenpal/presentation/widgets/world/morph_painter.dart';
 import 'package:mobilepenpal/presentation/widgets/world/stage_components/stage_attempts_indicator.dart';
 
 typedef BoardPointerDown = void Function(PointerDownEvent e, int boardIndex);
@@ -39,6 +41,11 @@ class StageDrawingBoard extends StatelessWidget {
     this.activeBoardCount = 1,
     this.topLeadingOverlay,
     this.useExpanded = true,
+    this.showMorph = false,
+    this.morphProgress = 0.0,
+    this.userMorphStrokes = const [],
+    this.templateMorphStrokes = const [],
+    this.stampImage,
   });
 
   final double boardWidth;
@@ -66,6 +73,13 @@ class StageDrawingBoard extends StatelessWidget {
   final int activeBoardCount;
   final Widget? topLeadingOverlay;
   final bool useExpanded;
+
+  // Morph parameters
+  final bool showMorph;
+  final double morphProgress;
+  final List<List<Offset>> userMorphStrokes;
+  final List<List<Offset>> templateMorphStrokes;
+  final ui.Image? stampImage;
 
   @override
   Widget build(BuildContext context) {
@@ -217,68 +231,121 @@ class StageDrawingBoard extends StatelessWidget {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20),
-        child: Listener(
-          behavior: HitTestBehavior.opaque,
-          onPointerDown: (e) => onPointerDown(e, boardIndex),
-          onPointerMove: (e) => onPointerMove(e, boardIndex),
-          onPointerUp: (e) => onPointerUp(e, boardIndex),
-          child: DrawingBoard(
-            controller: drawingControllers[boardIndex],
-            background: SizedBox(
-              width: width,
-              height: height,
-              child: Stack(
-                children: [
-                  Positioned.fill(
-                    child: IgnorePointer(
-                      child: CustomPaint(painter: BoardGridPainter()),
-                    ),
-                  ),
-                  if (showGuiding &&
-                      letterSubpathsNorm.isNotEmpty &&
-                      boardIndex == 0)
-                    Positioned.fill(
-                      child: IgnorePointer(
-                        child: CustomPaint(
-                          painter: LetterPointsPainter(
-                            letterSubpathsNorm: letterSubpathsNorm,
-                            toBoardPx: (o) => o,
-                            fillEnabled: true,
-                            strokeEnabled: true,
-                            fillOpacity: 0.15,
-                            strokeOpacity: 0.25,
-                            strokeWidth: 2.0,
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: AnimatedOpacity(
+                opacity: showMorph ? 0.0 : 1.0,
+                duration: const Duration(milliseconds: 350),
+                curve: Curves.easeOut,
+                child: Listener(
+                  behavior: HitTestBehavior.opaque,
+                  onPointerDown: (e) => onPointerDown(e, boardIndex),
+                  onPointerMove: (e) => onPointerMove(e, boardIndex),
+                  onPointerUp: (e) => onPointerUp(e, boardIndex),
+                  child: DrawingBoard(
+                    controller: drawingControllers[boardIndex],
+                    background: SizedBox(
+                      width: width,
+                      height: height,
+                      child: Stack(
+                        children: [
+                          Positioned.fill(
+                            child: IgnorePointer(
+                              child: CustomPaint(painter: BoardGridPainter()),
+                            ),
                           ),
-                        ),
+                          if (showGuiding &&
+                              letterSubpathsNorm.isNotEmpty &&
+                              boardIndex == 0)
+                            Positioned.fill(
+                              child: IgnorePointer(
+                                child: CustomPaint(
+                                  painter: LetterPointsPainter(
+                                    letterSubpathsNorm: letterSubpathsNorm,
+                                    toBoardPx: (o) => o,
+                                    fillEnabled: true,
+                                    strokeEnabled: true,
+                                    fillOpacity: 0.15,
+                                    strokeOpacity: 0.25,
+                                    strokeWidth: 2.0,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          if (showGuiding &&
+                              isGuiding &&
+                              guideCirclePx != null &&
+                              boardIndex == 0)
+                            Positioned(
+                              left: guideCirclePx!.dx - r,
+                              top: guideCirclePx!.dy - r,
+                              child: IgnorePointer(
+                                child: Container(
+                                  width: r * 2,
+                                  height: r * 2,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      width: 4 * s,
+                                      color: Colors.orange,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                     ),
-                  if (showGuiding &&
-                      isGuiding &&
-                      guideCirclePx != null &&
-                      boardIndex == 0)
-                    Positioned(
-                      left: guideCirclePx!.dx - r,
-                      top: guideCirclePx!.dy - r,
-                      child: IgnorePointer(
-                        child: Container(
-                          width: r * 2,
-                          height: r * 2,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              width: 4 * s,
-                              color: Colors.orange,
+                    showDefaultActions: false,
+                    showDefaultTools: false,
+                  ),
+                ),
+              ),
+            ),
+            if (boardIndex == 0)
+              Positioned.fill(
+                child: Visibility(
+                  visible: showMorph,
+                  child: IgnorePointer(
+                    child: Stack(
+                      children: [
+                        Positioned.fill(
+                          child: CustomPaint(painter: BoardGridPainter()),
+                        ),
+                        if (showGuiding && letterSubpathsNorm.isNotEmpty)
+                          Positioned.fill(
+                            child: CustomPaint(
+                              painter: LetterPointsPainter(
+                                letterSubpathsNorm: letterSubpathsNorm,
+                                toBoardPx: (o) => o,
+                                fillEnabled: true,
+                                strokeEnabled: true,
+                                fillOpacity: 0.15,
+                                strokeOpacity: 0.25,
+                                strokeWidth: 2.0,
+                              ),
+                            ),
+                          ),
+                        Positioned.fill(
+                          child: CustomPaint(
+                            painter: MorphPainter(
+                              userStrokes: userMorphStrokes,
+                              templateStrokes: templateMorphStrokes,
+                              progress: morphProgress,
+                              strokeWidth: 6.0 * s,
+                              stampImage: stampImage,
+                              stampSize: 24.0 * s,
+                              spacing: 16.0 * s,
                             ),
                           ),
                         ),
-                      ),
+                      ],
                     ),
-                ],
+                  ),
+                ),
               ),
-            ),
-            showDefaultActions: false,
-            showDefaultTools: false,
-          ),
+          ],
         ),
       ),
     );

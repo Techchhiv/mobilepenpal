@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:mobilepenpal/core/utils/number_format_utils.dart';
+import 'package:mobilepenpal/presentation/widgets/world/morph_painter.dart';
 
 enum DrawFeedback { none, correct, wrong }
 
@@ -61,6 +62,13 @@ class StageAnimationController extends GetxController
 
   final starStates = <StarState>[].obs;
 
+  // ── Morph animation state ──────────────────────────────────────────
+  final showMorph = false.obs;
+  final morphProgress = 0.0.obs;
+  final userMorphStrokes = <List<Offset>>[].obs;
+  final templateMorphStrokes = <List<Offset>>[].obs;
+  late final AnimationController morphController;
+
   @override
   void onInit() {
     super.onInit();
@@ -108,6 +116,13 @@ class StageAnimationController extends GetxController
               guideController.forward(from: 0);
             });
           });
+
+    morphController = AnimationController(
+      vsync: this,
+      duration: MorphPainter.defaultDuration,
+    )..addListener(() {
+        morphProgress.value = morphController.value;
+      });
   }
 
   @override
@@ -118,6 +133,7 @@ class StageAnimationController extends GetxController
     _shakeController.dispose();
     confettiController.dispose();
     guideController.dispose();
+    morphController.dispose();
     super.onClose();
   }
 
@@ -452,6 +468,93 @@ class StageAnimationController extends GetxController
       return minStrokeDurationMs.value;
     }
     return _durationMsByStroke[idx];
+  }
+
+  // ── Morph helpers ──────────────────────────────────────────────────
+
+  /// Resample a polyline to exactly [count] evenly-spaced points.
+  static List<Offset> resampleStroke(List<Offset> pts, int count) {
+    if (pts.length < 2 || count < 2) return List.filled(count, pts.isEmpty ? Offset.zero : pts.first);
+
+    // Build cumulative lengths.
+    final cumLen = <double>[0.0];
+    for (int i = 1; i < pts.length; i++) {
+      cumLen.add(cumLen.last + (pts[i] - pts[i - 1]).distance);
+    }
+    final totalLen = cumLen.last;
+    if (totalLen <= 0) return List.filled(count, pts.first);
+
+    final out = <Offset>[];
+    for (int i = 0; i < count; i++) {
+      final target = totalLen * i / (count - 1);
+
+      // Binary search for the segment containing target.
+      int lo = 0, hi = cumLen.length - 1;
+      while (lo < hi) {
+        final mid = (lo + hi) >> 1;
+        if (cumLen[mid] >= target) {
+          hi = mid;
+        } else {
+          lo = mid + 1;
+        }
+      }
+
+      final idx = lo;
+      if (idx <= 0) {
+        out.add(pts.first);
+        continue;
+      }
+      final segLen = cumLen[idx] - cumLen[idx - 1];
+      if (segLen <= 0) {
+        out.add(pts[idx]);
+        continue;
+      }
+      final t = (target - cumLen[idx - 1]) / segLen;
+      final a = pts[idx - 1];
+      final b = pts[idx];
+      out.add(Offset(a.dx + (b.dx - a.dx) * t, a.dy + (b.dy - a.dy) * t));
+    }
+    return out;
+  }
+
+  /// Start the morph animation.
+  /// [userStrokes] – the user's raw drawing converted to Offset lists.
+  /// [templateStrokes] – the guide/shadow template strokes.
+  Future<void> startMorph({
+    required List<List<Offset>> userStrokes,
+    required List<List<Offset>> templateStrokes,
+  }) async {
+    const int resampleCount = 120;
+
+    // Match stroke counts: pad the shorter list with the last stroke duplicated.
+    final maxLen = max(userStrokes.length, templateStrokes.length).clamp(1, 99);
+    final uPadded = List<List<Offset>>.from(userStrokes);
+    final tPadded = List<List<Offset>>.from(templateStrokes);
+    while (uPadded.length < maxLen) uPadded.add(uPadded.last);
+    while (tPadded.length < maxLen) tPadded.add(tPadded.last);
+
+    // Resample every stroke to the same number of points.
+    userMorphStrokes.assignAll(
+      uPadded.map((s) => resampleStroke(s, resampleCount)).toList(),
+    );
+    templateMorphStrokes.assignAll(
+      tPadded.map((s) => resampleStroke(s, resampleCount)).toList(),
+    );
+
+    morphProgress.value = 0.0;
+    showMorph.value = true;
+
+    morphController.reset();
+    await morphController.forward();
+  }
+
+  /// Reset morph state (call after transitioning to the next exercise).
+  void resetMorph() {
+    showMorph.value = false;
+    morphProgress.value = 0.0;
+    morphController.reset();
+    userMorphStrokes.clear();
+    templateMorphStrokes.clear();
   }
 
   void resetStars({int? total}) {

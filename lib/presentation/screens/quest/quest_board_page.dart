@@ -171,6 +171,11 @@ class QuestBoardPage extends GetView<QuestBoardController> {
                                   guideCirclePx:
                                       controller.anim.guideCirclePx.value,
                                   isGuiding: controller.anim.isGuiding.value,
+                                  showMorph: controller.anim.showMorph.value,
+                                  morphProgress: controller.anim.morphProgress.value,
+                                  userMorphStrokes: controller.anim.userMorphStrokes,
+                                  templateMorphStrokes: controller.anim.templateMorphStrokes,
+                                  stampImage: controller.currentStampImage,
                                   showGuiding: true,
                                   activeBoardCount: controller.activeBoardCount,
                                 ),

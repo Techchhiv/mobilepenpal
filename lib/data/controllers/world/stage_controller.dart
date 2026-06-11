@@ -105,6 +105,7 @@ class StageController extends GetxController {
   static Map<String, dynamic>? _strokesDbCache;
 
   ui.Image? _currentStampImage;
+  ui.Image? get currentStampImage => _currentStampImage;
 
   late final StageAnimationController anim;
   bool _ownsAnim = false;
@@ -515,6 +516,8 @@ class StageController extends GetxController {
       anim.stopGuide();
       anim.setGuideFromPx(strokesPx: const []);
     }
+
+    anim.resetMorph();
   }
 
   void onPointerDown() {
@@ -810,8 +813,29 @@ class StageController extends GetxController {
       return;
     }
 
-    anim.showCorrect(starIndex: currentExerciseIndex.value);
+    // ── CORRECT ANSWER ────────────────────────────────────────────────
     unawaited(audio.playCorrectSfx());
+
+    // If there is a visible guide, morph user drawing into it.
+    if (hasGuide && strokeStrokesNorm.isNotEmpty) {
+      // Convert raw strokes to Offset lists for the morph painter.
+      final userOffsets = _rawStrokesList[0]
+          .map((stroke) => stroke
+              .map((p) => Offset(
+                    (p['x'] as num).toDouble(),
+                    (p['y'] as num).toDouble(),
+                  ))
+              .toList())
+          .toList();
+
+      await anim.startMorph(
+        userStrokes: userOffsets,
+        templateStrokes: List<List<Offset>>.from(strokeStrokesNorm),
+      );
+    }
+
+    // Show confetti, star pop, and praise after morph completes.
+    anim.showCorrect(starIndex: currentExerciseIndex.value);
 
     final label = isMathCurrent
         ? (mathExpected.value?.toString() ?? '')
@@ -827,9 +851,10 @@ class StageController extends GetxController {
     });
     _updateProgressUI();
 
-    await Future.delayed(const Duration(milliseconds: 800));
+    await Future.delayed(const Duration(milliseconds: 1000));
     anim.feedback.value = DrawFeedback.none;
     anim.clearPraise();
+    anim.resetMorph();
 
     if (_isLastExercise) {
       await _finishStageIfLast();
