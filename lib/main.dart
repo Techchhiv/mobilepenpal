@@ -3,11 +3,14 @@ import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
-// import 'package:firebase_core/firebase_core.dart';
+
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
+import 'firebase_options.dart';
+
 import 'package:mobilepenpal/core/bindings/app_binding.dart';
 import 'package:mobilepenpal/core/config/env.dart';
 import 'package:mobilepenpal/core/localization/locale_controller.dart';
-
 import 'package:mobilepenpal/core/theme/app_theme.dart';
 import 'package:mobilepenpal/core/theme/theme_controller.dart';
 import 'package:mobilepenpal/data/services/onnx_inference_service.dart';
@@ -18,7 +21,8 @@ import 'core/localization/app_translations.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // await Firebase.initializeApp();
+
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
@@ -32,6 +36,7 @@ void main() async {
   final isLoggedIn = token != null && token.trim().isNotEmpty;
 
   await GetStorage().write('is_logged_in', isLoggedIn);
+
   OnnxInferenceService.instance.init();
 
   runApp(MyApp(initialRoute: isLoggedIn ? AppRoutes.home : AppRoutes.splash));
@@ -45,14 +50,19 @@ class MyApp extends StatelessWidget {
   final ThemeController themeController = Get.put(ThemeController());
   final LocaleController localeController = Get.put(LocaleController());
 
+  static final FirebaseAnalytics analytics = FirebaseAnalytics.instance;
+
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
 
+      // ========= Analytics ==========
+      navigatorObservers: [FirebaseAnalyticsObserver(analytics: analytics)],
+
       // ========= Transition ==========
       defaultTransition: Transition.cupertino,
-      transitionDuration: Duration(milliseconds: 250),
+      transitionDuration: const Duration(milliseconds: 250),
 
       // ====== Message ======
       scaffoldMessengerKey: AppSnackbar.messengerKey,
