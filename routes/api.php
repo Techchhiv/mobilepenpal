@@ -26,6 +26,7 @@ use App\Http\Controllers\{
 use App\Http\Controllers\Admin\V01\ExerciseController;
 use App\Http\Controllers\Admin\V01\StageController;
 use App\Http\Controllers\Admin\V01\StageExerciseController;
+use App\Http\Controllers\Admin\V01\QuestionTemplateController;
 
 /* -------------------------------
    Public Routes
@@ -154,6 +155,14 @@ Route::middleware('auth:api')->group(function () {
             Route::put('/{id}', [StageExerciseController::class, 'update']);
             Route::put('/{id}/toggle', [StageExerciseController::class, 'toggle']);
             Route::put('/{id}/reorder', [StageExerciseController::class, 'reorder']);
+        });
+
+        Route::prefix('question-templates')->group(function () {
+            Route::get('', [QuestionTemplateController::class, 'index']);
+            Route::post('', [QuestionTemplateController::class, 'store']);
+            Route::get('/{id}', [QuestionTemplateController::class, 'show']);
+            Route::put('/{id}', [QuestionTemplateController::class, 'update']);
+            Route::delete('/{id}', [QuestionTemplateController::class, 'destroy']);
         });
     });
 

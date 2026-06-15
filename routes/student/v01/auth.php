@@ -3,6 +3,7 @@
 use App\Http\Controllers\Student\V01\AuthController;
 use App\Http\Controllers\Student\V01\ClassroomController;
 use App\Http\Controllers\Student\V01\MiniGameController;
+use App\Http\Controllers\Student\V01\QuestionTemplateController;
 use App\Http\Controllers\Student\V01\UserController;
 use App\Http\Controllers\Student\V01\WorldController;
 use App\Http\Controllers\Student\V01\ShopController;
@@ -50,6 +51,8 @@ Route::prefix('classrooms')->group(function () {
 Route::prefix('minigames')->group(function () {
     Route::get('', [MiniGameController::class, 'index']);
     Route::post('', [MiniGameController::class, 'store']);
+    Route::get('/question-templates', [QuestionTemplateController::class, 'index']);
+
     Route::get('{miniGame}', [MiniGameController::class, 'show']);
     Route::put('{miniGame}', [MiniGameController::class, 'update']);
     Route::patch('{miniGame}', [MiniGameController::class, 'update']);

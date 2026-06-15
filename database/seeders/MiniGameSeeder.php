@@ -249,13 +249,7 @@ class MiniGameSeeder extends Seeder
                 'input_type' => 'drawing_board,multiple_choice',
                 'is_active' => true,
                 'cover_image_url' => null,
-                'config' => [
-                    'pool' => [
-                        'I have % {fruit} and {action} %. How many do I have left?',
-                        'There are % {fruit} in the basket. We {action} %. What is the total now?',
-                        'Anna had % {fruit} and then {action} %. How many {fruit} does she have?',
-                    ],
-                ],
+                'config' => [],
             ]
         );
     }

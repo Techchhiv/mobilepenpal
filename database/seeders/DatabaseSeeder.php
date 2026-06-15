@@ -27,6 +27,7 @@ class DatabaseSeeder extends Seeder
             // TeacherRolesSeeder::class
             // StudentExerciseAttemptSeeder::class,
             SystemSettingSeeder::class,
+            QuestionTemplateSeeder::class,
         ]);
 
         // \App\Models\User::factory(10)->create();
