@@ -13,14 +13,16 @@ import 'package:mobilepenpal/core/utils/stroke_feedback_util.dart';
 import 'package:mobilepenpal/core/utils/stroke_transform_util.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_animation_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_audio_controller.dart';
-import 'package:mobilepenpal/data/models/mini_game/challenge_generator.dart';
+import 'package:mobilepenpal/core/utils/challenge_generator.dart';
 import 'package:mobilepenpal/data/models/api_response.dart';
 import 'package:mobilepenpal/data/models/mini_game/mini_game_model.dart';
+import 'package:mobilepenpal/data/models/mini_game/question_template_model.dart';
 import 'package:mobilepenpal/data/services/drawing_evaluation_service.dart';
 import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
 import 'package:mobilepenpal/data/controllers/shop/shop_controller.dart';
 import 'package:mobilepenpal/data/models/student/student.dart';
 import 'package:mobilepenpal/data/services/world_service.dart';
+import 'package:mobilepenpal/data/services/mini_game_service.dart';
 import 'package:mobilepenpal/presentation/widgets/app_snackbar.dart';
 
 /// A floating "+N" popup that animates from a spawn position up to the score bar.
@@ -327,10 +329,86 @@ class DynamicMiniGameController extends GetxController
       if (needsDrawing) {
         await _loadStrokeDb();
       }
+
+      // Fetch question templates if any game uses the 'question' display type
+      final hasQuestionGame = miniGames.any(
+        (g) => g.displayType == 'question',
+      );
+      if (hasQuestionGame) {
+        bool loadedFromCache = false;
+        try {
+          final List<dynamic>? cached = _box.read('cached_question_templates');
+          if (cached != null && cached.isNotEmpty) {
+            final cachedTemplates = cached
+                .map((e) => QuestionTemplateModel.fromJson(Map<String, dynamic>.from(e)))
+                .toList();
+            ChallengeGenerator.setQuestionTemplates(cachedTemplates);
+            loadedFromCache = true;
+            dev.log(
+              'Loaded ${cachedTemplates.length} question templates from cache.',
+              name: 'DynamicMiniGameController',
+            );
+          }
+        } catch (e) {
+          dev.log(
+            'Failed to read cached templates: $e',
+            name: 'DynamicMiniGameController',
+          );
+        }
+
+        if (loadedFromCache) {
+          // If loaded from cache, we can start the game immediately
+          isLoading.value = false;
+          // Trigger background update silently
+          _fetchQuestionTemplatesInBackground();
+        } else {
+          // Blocking fetch if not cached
+          await _fetchQuestionTemplatesForeground();
+        }
+      }
     } finally {
       isLoading.value = false;
     }
   }
+
+  Future<void> _fetchQuestionTemplatesForeground() async {
+    try {
+      final service = MiniGameService();
+      final response = await service.getQuestionTemplates();
+      if (response.data != null && response.data!.isNotEmpty) {
+        ChallengeGenerator.setQuestionTemplates(response.data!);
+        final templatesJson = response.data!.map((t) => t.toJson()).toList();
+        await _box.write('cached_question_templates', templatesJson);
+      }
+    } catch (e) {
+      dev.log(
+        'Failed to fetch question templates in foreground: $e',
+        name: 'DynamicMiniGameController',
+      );
+    }
+  }
+
+  Future<void> _fetchQuestionTemplatesInBackground() async {
+    try {
+      final service = MiniGameService();
+      final response = await service.getQuestionTemplates();
+      if (response.data != null && response.data!.isNotEmpty) {
+        ChallengeGenerator.setQuestionTemplates(response.data!);
+        final templatesJson = response.data!.map((t) => t.toJson()).toList();
+        await _box.write('cached_question_templates', templatesJson);
+        dev.log(
+          'Background sync completed. Cached ${response.data!.length} templates.',
+          name: 'DynamicMiniGameController',
+        );
+      }
+    } catch (e) {
+      dev.log(
+        'Failed to sync question templates in background: $e',
+        name: 'DynamicMiniGameController',
+      );
+    }
+  }
+
 
   // ── Game lifecycle ──
 
@@ -499,9 +577,14 @@ class DynamicMiniGameController extends GetxController
       currentInputType.value = 'drawing_board';
     }
 
+    // Derive the current locale for bilingual question text
+    final currentLocale = Get.locale ?? Get.deviceLocale;
+    final locale = currentLocale?.languageCode == 'km' ? 'kh' : 'en';
+
     final challenge = ChallengeGenerator.generate(
       game,
       difficulty: difficulty.value,
+      locale: locale,
     );
     currentChallenge.value = challenge;
 

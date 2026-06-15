@@ -15,6 +15,8 @@ import 'package:mobilepenpal/presentation/widgets/app_snackbar.dart';
 import 'package:mobilepenpal/presentation/widgets/confirm_modal.dart';
 import 'package:mobilepenpal/presentation/widgets/home/pin_entry_widget.dart';
 import 'package:mobilepenpal/data/controllers/shop/shop_controller.dart';
+import 'package:mobilepenpal/data/services/mini_game_service.dart';
+import 'dart:developer' as dev;
 
 enum SummaryView { daily, weekly }
 
@@ -103,6 +105,27 @@ class HomeController extends GetxController {
 
     fetchStudentProfile();
     fetchSubscriptionSettings();
+    fetchQuestionTemplatesInBackground();
+  }
+
+  Future<void> fetchQuestionTemplatesInBackground() async {
+    try {
+      final service = MiniGameService();
+      final response = await service.getQuestionTemplates();
+      if (response.code == 200 && response.data != null && response.data!.isNotEmpty) {
+        final templatesJson = response.data!.map((t) => t.toJson()).toList();
+        await _box.write('cached_question_templates', templatesJson);
+        dev.log(
+          'HomeController: Background sync completed. Cached ${response.data!.length} templates.',
+          name: 'HomeController',
+        );
+      }
+    } catch (e) {
+      dev.log(
+        'HomeController: Failed to fetch question templates in background: $e',
+        name: 'HomeController',
+      );
+    }
   }
 
   Future<void> fetchStudentProfile() async {

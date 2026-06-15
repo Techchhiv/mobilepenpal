@@ -1,6 +1,7 @@
 import 'dart:math';
-
+import 'package:mobilepenpal/core/utils/number_format_utils.dart';
 import 'package:mobilepenpal/data/models/mini_game/mini_game_model.dart';
+import 'package:mobilepenpal/data/models/mini_game/question_template_model.dart';
 
 /// Represents a single challenge presented to the user.
 class Challenge {
@@ -76,17 +77,28 @@ class DragMatchPair {
 class ChallengeGenerator {
   static final Random _rng = Random();
 
+  // ── Question templates fetched from the backend ──────────────────
+  static List<QuestionTemplateModel> _questionTemplates = [];
+
+  /// Sets the bilingual question templates used by `_generateQuestionChallenge`.
+  /// Should be called once during game initialization.
+  static void setQuestionTemplates(List<QuestionTemplateModel> templates) {
+    _questionTemplates = templates;
+  }
+
   /// Generate a random challenge from the given mini-game config.
   /// [difficulty] controls the complexity of the generated challenge.
+  /// [locale] controls the language for question text ('en' or 'kh').
   static Challenge generate(
     MiniGameModel game, {
     MiniGameDifficulty difficulty = MiniGameDifficulty.easy,
+    String locale = 'en',
   }) {
     switch (game.displayType) {
       case 'math_equation':
         return _generateMathChallenge(game.config, difficulty);
       case 'question':
-        return _generateQuestionChallenge(game.config, difficulty);
+        return _generateQuestionChallenge(game.config, difficulty, locale);
       case 'object_count':
         return _generateObjectCountChallenge(game.config, difficulty);
       case 'missing_character':
@@ -313,160 +325,156 @@ class ChallengeGenerator {
     }
   }
 
-  // ── Question Challenge (Dynamic text templates) ─────────────────
-  static const _fruitNames = [
+  // ── Question Challenge (Dynamic bilingual templates) ─────────────
+
+  /// Fruit names and their localized variants for placeholder substitution.
+  static const _fruitData = [
     {
-      'name': 'apple',
-      'plural': 'apples',
+      'en': 'apples',
+      'kh': 'ផ្លែប៉ោម',
       'image': 'assets/images/fruits/apple.png',
     },
     {
-      'name': 'orange',
-      'plural': 'oranges',
+      'en': 'oranges',
+      'kh': 'ផ្លែក្រូច',
       'image': 'assets/images/fruits/orange.png',
     },
     {
-      'name': 'banana',
-      'plural': 'bananas',
+      'en': 'bananas',
+      'kh': 'ផ្លែចេក',
       'image': 'assets/images/fruits/banana.png',
     },
     {
-      'name': 'strawberry',
-      'plural': 'strawberries',
+      'en': 'strawberries',
+      'kh': 'ផ្លែស្ត្របឺរី',
       'image': 'assets/images/fruits/strawberry.png',
     },
     {
-      'name': 'grape',
-      'plural': 'grapes',
+      'en': 'grapes',
+      'kh': 'ផ្លែទំពាំងបាយជូរ',
       'image': 'assets/images/fruits/grape.png',
     },
   ];
 
+  /// Maps operation codes from the DB to difficulty-aware number ranges.
+  static Map<String, int> _operandsForOperation(String operation) {
+    switch (operation) {
+      case 'add':
+        final a = 1 + _rng.nextInt(5); // 1..5
+        final b = 1 + _rng.nextInt(9 - a); // sum <= 9
+        return {'a': a, 'b': b, 'answer': a + b};
+      case 'sub':
+        final a = 2 + _rng.nextInt(8); // 2..9
+        final b = 1 + _rng.nextInt(a - 1); // a-b >= 1
+        return {'a': a, 'b': b, 'answer': a - b};
+      case 'mul':
+        final a = 1 + _rng.nextInt(3); // 1..3
+        final b = 1 + _rng.nextInt(4); // 1..4
+        return {'a': a, 'b': b, 'answer': a * b};
+      case 'div':
+        final answer = 1 + _rng.nextInt(4);
+        final b = 2 + _rng.nextInt(3);
+        return {'a': answer * b, 'b': b, 'answer': answer};
+      default:
+        return {'a': 1, 'b': 1, 'answer': 2};
+    }
+  }
+
   static Challenge _generateQuestionChallenge(
     Map<String, dynamic>? config,
     MiniGameDifficulty difficulty,
+    String locale,
   ) {
-    // 1. Get pool templates
-    final pool =
-        (config?['pool'] as List<dynamic>?)
-            ?.map((e) => e.toString())
-            .toList() ??
-        [];
+    // 1. Filter templates by difficulty
+    final difficultyStr = difficulty == MiniGameDifficulty.easy
+        ? 'easy'
+        : difficulty == MiniGameDifficulty.medium
+            ? 'medium'
+            : 'hard';
+
+    List<QuestionTemplateModel> pool = _questionTemplates
+        .where((t) => t.difficulty == difficultyStr)
+        .toList();
+
+    // Fallback: if no templates for this difficulty, use all templates
+    if (pool.isEmpty) pool = List.from(_questionTemplates);
+
+    // Ultimate fallback: if no templates at all, use legacy hardcoded logic
     if (pool.isEmpty) {
-      pool.add('I had % {fruit} and {action} %. How many do I have?');
+      return _legacyQuestionFallback(config, difficulty);
     }
 
-    // 2. Select random template and fruit
+    // 2. Pick a random template
     final template = pool[_rng.nextInt(pool.length)];
-    final fruitInfo = _fruitNames[_rng.nextInt(_fruitNames.length)];
-    final fruitPlural = fruitInfo['plural']!;
-    final fruitImg = fruitInfo['image']!;
 
-    // 3. Determine operation based on difficulty
-    String op = '+';
-    if (difficulty == MiniGameDifficulty.easy) {
-      op = _rng.nextBool() ? '+' : '-';
-    } else {
-      // Medium and Hard use all 4 operations
-      const ops = ['+', '-', '×', '÷'];
-      op = ops[_rng.nextInt(ops.length)];
+    // 3. Generate random numbers for the operation
+    final operands = _operandsForOperation(template.operation);
+    final a = operands['a']!;
+    final b = operands['b']!;
+    final answer = operands['answer']!;
+
+    // 4. Pick a random fruit
+    final fruit = _fruitData[_rng.nextInt(_fruitData.length)];
+    final fruitName = locale == 'kh' ? fruit['kh']! : fruit['en']!;
+    final fruitImg = fruit['image']!;
+
+    // 5. Choose template text based on locale
+    final rawText = locale == 'kh' ? template.questionKh : template.questionEn;
+
+    // 6. Substitute placeholders
+    final aStr = locale == 'kh' ? NumberFormatUtils.digitsByLocale(a.toString(), forceKhmer: true) : a.toString();
+    final bStr = locale == 'kh' ? NumberFormatUtils.digitsByLocale(b.toString(), forceKhmer: true) : b.toString();
+    final questionText = rawText
+        .replaceAll('{a}', aStr)
+        .replaceAll('{b}', bStr)
+        .replaceAll('{fruit}', fruitName);
+
+    // 7. Determine the context-appropriate illustration
+    String problemImage = fruitImg;
+    final englishTextLower = template.questionEn.toLowerCase();
+    final khmerTextLower = template.questionKh;
+
+    if (englishTextLower.contains('bird') || khmerTextLower.contains('បក្សី')) {
+      problemImage = 'assets/images/illustrations/bird.png';
+    } else if (englishTextLower.contains('sticker') || khmerTextLower.contains('ស្ទីកឃ័រ')) {
+      problemImage = 'assets/images/illustrations/sticker.png';
+    } else if (englishTextLower.contains('balloon') || khmerTextLower.contains('បាឡុង')) {
+      problemImage = 'assets/images/illustrations/balloon.png';
+    } else if (englishTextLower.contains('egg') || khmerTextLower.contains('ស៊ុត')) {
+      problemImage = 'assets/images/illustrations/egg.png';
+    } else if (englishTextLower.contains('cookie') || khmerTextLower.contains('នំ')) {
+      problemImage = 'assets/images/illustrations/cookie.png';
+    } else if (englishTextLower.contains('jar') || khmerTextLower.contains('ក្រឡ')) {
+      problemImage = 'assets/images/illustrations/jar.png';
+    } else if (englishTextLower.contains('box') || khmerTextLower.contains('ប្រអប់')) {
+      problemImage = 'assets/images/illustrations/box.png';
+    } else if (englishTextLower.contains('pencil') || khmerTextLower.contains('ខ្មៅដៃ')) {
+      problemImage = 'assets/images/illustrations/pencil.png';
     }
 
-    // 4. Generate numbers and answer
-    int a = 0, b = 0, answer = 0;
-    switch (op) {
-      case '+':
-        a = 1 + _rng.nextInt(5);
-        b = 1 + _rng.nextInt(9 - a); // sum <= 9
-        answer = a + b;
-        break;
-      case '-':
-        a = 2 + _rng.nextInt(8); // 2..9
-        b = 1 + _rng.nextInt(a - 1); // a - b >= 1
-        answer = a - b;
-        break;
-      case '×':
-        a = 1 + _rng.nextInt(3);
-        b = 1 + _rng.nextInt(4); // 1..4
-        answer = a * b; // <= 12
-        break;
-      case '÷':
-        answer = 1 + _rng.nextInt(4);
-        b = 2 + _rng.nextInt(3);
-        a = answer * b;
-        break;
-    }
+    return Challenge(
+      display: questionText,
+      target: answer.toString(),
+      wordProblemText: questionText,
+      wordProblemFruitImage: problemImage,
+    );
+  }
 
-    // Hard difficulty missing value overrides
-    bool missingFirst = false;
-    if (difficulty == MiniGameDifficulty.hard) {
-      missingFirst = _rng.nextBool();
-      // For missing value problems, the answer is one of the operands
-      if (missingFirst) {
-        answer = a;
-        a = answer; // Keep a for text generation if needed, but it's the missing one
-      } else {
-        answer = b;
-        b = answer; // Keep b for text generation if needed, but it's the missing one
-      }
-    }
+  /// Fallback for when no templates have been fetched from the backend.
+  static Challenge _legacyQuestionFallback(
+    Map<String, dynamic>? config,
+    MiniGameDifficulty difficulty,
+  ) {
+    final fruit = _fruitData[_rng.nextInt(_fruitData.length)];
+    final fruitName = fruit['en']!;
+    final fruitImg = fruit['image']!;
 
-    // 5. Replace placeholders
-    // Action verb based on operation
-    String actionWord = '';
-    switch (op) {
-      case '+':
-        actionWord = 'got';
-        break;
-      case '-':
-        actionWord = 'ate';
-        break;
-      case '×':
-        actionWord = 'got a multiplier of';
-        break;
-      case '÷':
-        actionWord = 'shared them equally with';
-        break;
-    }
+    final a = 1 + _rng.nextInt(5);
+    final b = 1 + _rng.nextInt(9 - a);
+    final answer = a + b;
 
-    String questionText = template
-        .replaceAll('{fruit}', fruitPlural)
-        .replaceAll('{action}', actionWord);
-
-    // Replace first % and second %
-    // If missing value, replace one % with '?'
-    int percentCount = 0;
-    questionText = questionText.replaceAllMapped('%', (match) {
-      percentCount++;
-      if (difficulty == MiniGameDifficulty.hard) {
-        if (percentCount == 1) return missingFirst ? '?' : a.toString();
-        if (percentCount == 2) return !missingFirst ? '?' : b.toString();
-      }
-      if (percentCount == 1) return a.toString();
-      if (percentCount == 2) return b.toString();
-      return '%';
-    });
-
-    // If hard mode, we need to append the result to the sentence so it's solvable
-    // Since the generic template might not have a spot for the final result
-    if (difficulty == MiniGameDifficulty.hard) {
-      int resultVal = 0;
-      switch (op) {
-        case '+':
-          resultVal = a + b;
-          break;
-        case '-':
-          resultVal = a - b;
-          break;
-        case '×':
-          resultVal = a * b;
-          break;
-        case '÷':
-          resultVal = a ~/ b;
-          break;
-      }
-      questionText += ' The result is $resultVal.';
-    }
+    final questionText =
+        'I have $a $fruitName and get $b more. How many do I have now?';
 
     return Challenge(
       display: questionText,
