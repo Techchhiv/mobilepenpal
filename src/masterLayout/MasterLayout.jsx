@@ -34,7 +34,8 @@ const MasterLayout = ({ children }) => {
       p.startsWith("/admin/worlds") ||
       p.startsWith("/admin/levels") ||
       p.startsWith("/admin/stages") ||
-      p.startsWith("/admin/exercises")
+      p.startsWith("/admin/exercises") ||
+      p.startsWith("/admin/question-templates")
     ) {
       setOpenDropdownKey("world");
     } else if (p.startsWith("/admin/subscriptions")) {
@@ -214,6 +215,16 @@ const MasterLayout = ({ children }) => {
                     >
                       <i className="ri-circle-fill circle-icon text-success-main w-auto" />
                       Manage Exercises
+                    </NavLink>
+                  </li>
+
+                  <li>
+                    <NavLink
+                      to="/admin/question-templates"
+                      className={({ isActive }) => (isActive ? "active-page" : "")}
+                    >
+                      <i className="ri-circle-fill circle-icon text-info-main w-auto" />
+                      Manage Questions
                     </NavLink>
                   </li>
                 </ul>

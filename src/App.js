@@ -64,6 +64,9 @@ import SchoolLevelList from "./pages/school/page/Level/SchoolLevelList";
 import SchoolLevelEdit from "./pages/school/page/Level/SchoolLevelEdit";
 import SchoolLevelView from "./pages/school/page/Level/SchoolLevelView";
 import AdminSchoolReportsPage from "./pages/admin/AdminSchoolReportsPage";
+import QuestionTemplateList from "./pages/admin/QuestionTemplate/QuestionTemplateList";
+import QuestionTemplateCreate from "./pages/admin/QuestionTemplate/QuestionTemplateCreate";
+import QuestionTemplateEdit from "./pages/admin/QuestionTemplate/QuestionTemplateEdit";
 
 export default function App() {
   return (
@@ -171,6 +174,22 @@ export default function App() {
           <Route path="/admin/exercises/create" element={<ExerciseCreate />} />
           <Route path="/admin/exercises/:id" element={<ExerciseView />} />
           <Route path="/admin/exercises/:id/edit" element={<ExerciseEdit />} />
+        </Route>
+
+        <Route
+          element={
+            <Gate
+              anyPerm={[
+                "question_templates.view",
+                "question_templates.create",
+                "question_templates.update",
+              ]}
+            />
+          }
+        >
+          <Route path="/admin/question-templates" element={<QuestionTemplateList />} />
+          <Route path="/admin/question-templates/create" element={<QuestionTemplateCreate />} />
+          <Route path="/admin/question-templates/:id/edit" element={<QuestionTemplateEdit />} />
         </Route>
 
         <Route
