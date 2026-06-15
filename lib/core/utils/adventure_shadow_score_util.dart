@@ -44,7 +44,7 @@ class AdventureShadowScoreUtil {
     final isPerfect = iou >= _perfectIouThreshold;
     final xp = isPerfect
         ? 100
-        : ((iou * 100).round().clamp(0, 100) as int);
+        : (iou * 100).round().clamp(0, 100);
 
     return AdventureShadowScore(iou: iou, xp: xp, isPerfect: isPerfect);
   }
@@ -206,9 +206,9 @@ class AdventureShadowScoreUtil {
     final clampedX = point.dx.clamp(0.0, boardWidth).toDouble();
     final clampedY = point.dy.clamp(0.0, boardHeight).toDouble();
 
-    final centerCol = (clampedX / cellWidth).floor().clamp(0, cols - 1) as int;
+    final centerCol = (clampedX / cellWidth).floor().clamp(0, cols - 1);
     final centerRow =
-        (clampedY / cellHeight).floor().clamp(0, rows - 1) as int;
+        (clampedY / cellHeight).floor().clamp(0, rows - 1);
 
     final radiusCols = max(1, (radiusPx / cellWidth).ceil()).toInt();
     final radiusRows = max(1, (radiusPx / cellHeight).ceil()).toInt();

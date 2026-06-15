@@ -726,14 +726,16 @@ class AdventureStagePage extends GetView<AdventureStageController> {
         child: AnimatedBuilder(
           animation: controller.feedbackAnimCtrl,
           builder: (_, __) {
-            if (controller.feedbackAnimCtrl.value == 0)
+            if (controller.feedbackAnimCtrl.value == 0) {
               return const SizedBox.shrink();
+            }
 
             return Obx(() {
               final text = controller.lastRatingText.value;
               final rating = controller.lastRating.value;
-              if (text.isEmpty || rating == null)
+              if (text.isEmpty || rating == null) {
                 return const SizedBox.shrink();
+              }
 
               final color = _ratingColor(rating);
               final opacity = (1.0 - controller.feedbackAnimCtrl.value).clamp(

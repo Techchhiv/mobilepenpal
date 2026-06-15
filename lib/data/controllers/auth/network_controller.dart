@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
@@ -18,12 +19,8 @@ class NetworkController extends GetxController {
 
   static const Duration _offlineGrace = Duration(seconds: 5);
 
-  DateTime? _lastRouteChangeAt;
-  static const Duration _routeCooldown = Duration(seconds: 2);
-
   static const int _failStreakToOffline = 2;
-
-  bool get _isAuthed => box.read('is_logged_in') == true;
+  bool _isDialogOpen = false;
 
   late final InternetConnection _connection = InternetConnection.createInstance(
     customCheckOptions: [
@@ -115,23 +112,53 @@ class NetworkController extends GetxController {
   void _handleHardBlockRouting() {
     final route = Get.currentRoute;
 
-    final now = DateTime.now();
-    if (_lastRouteChangeAt != null &&
-        now.difference(_lastRouteChangeAt!) < _routeCooldown) {
-      return;
-    }
-
     if (!isOnline.value) {
-      if (route != AppRoutes.offline && route != AppRoutes.splash) {
-        _lastRouteChangeAt = now;
-        Get.offAllNamed(AppRoutes.offline);
+      if (route != AppRoutes.splash && !_isDialogOpen) {
+        _isDialogOpen = true;
+        Get.dialog(
+          PopScope(
+            canPop: false,
+            child: Dialog(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.wifi_off_rounded, size: 64, color: Colors.redAccent),
+                    const SizedBox(height: 16),
+                    Text(
+                      'no_internet_title'.tr == 'no_internet_title' ? 'No Internet Connection' : 'no_internet_title'.tr,
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'no_internet_msg'.tr == 'no_internet_msg' ? 'Please check your connection and try again.' : 'no_internet_msg'.tr,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: Colors.grey),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          barrierDismissible: false,
+          barrierColor: Colors.black54,
+        );
       }
       return;
     }
 
-    if (route == AppRoutes.offline) {
-      _lastRouteChangeAt = now;
-      Get.offAllNamed(_isAuthed ? AppRoutes.home : AppRoutes.login);
+    if (isOnline.value && _isDialogOpen) {
+      _isDialogOpen = false;
+      if (Get.isDialogOpen == true) {
+        Get.back();
+      }
     }
   }
 

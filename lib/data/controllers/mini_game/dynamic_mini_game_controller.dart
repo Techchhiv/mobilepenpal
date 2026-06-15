@@ -21,6 +21,7 @@ import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
 import 'package:mobilepenpal/data/controllers/shop/shop_controller.dart';
 import 'package:mobilepenpal/data/models/student/student.dart';
 import 'package:mobilepenpal/data/services/world_service.dart';
+import 'package:mobilepenpal/presentation/widgets/app_snackbar.dart';
 
 /// A floating "+N" popup that animates from a spawn position up to the score bar.
 class FloatingScoreEvent {
@@ -994,7 +995,12 @@ class DynamicMiniGameController extends GetxController
       if (CancelToken.isCancel(e)) return;
     } catch (e) {
       dev.log('Predict failed: $e', name: 'DynamicMiniGameController');
-      isCorrect = (Random().nextDouble() <= 0.9);
+      isCorrect = false;
+      AppSnackbar.show(
+        'Failed to evaluate drawing. Please try again.',
+        title: 'Error',
+        backgroundColor: Colors.red,
+      );
     } finally {
       if (myReqId == _reqId) _cancelToken = null;
     }

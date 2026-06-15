@@ -137,7 +137,7 @@ class QuestPage extends GetView<QuestController> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '🗡️  ' + 'daily_quests'.tr,
+                  '🗡️  ${'daily_quests'.tr}',
                   style: const TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w900,

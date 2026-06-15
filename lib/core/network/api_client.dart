@@ -105,9 +105,9 @@ class ApiClient {
 
       return ApiResponse.fromJson(response.data, fromData ?? (d) => d as T);
     } on DioException catch (e) {
-      if (e.response != null && e.response!.data != null) {
+      if (e.response != null && e.response!.data != null && e.response!.data is Map<String, dynamic>) {
         return ApiResponse.fromJson(
-          e.response!.data,
+          e.response!.data as Map<String, dynamic>,
           fromData ?? (d) => d as T,
         );
       } else {

@@ -13,7 +13,6 @@ class StageAudioController extends GetxController {
   final audioSpeed = 0.5.obs;
   final isPlaying = false.obs;
 
-  bool _voiceBusy = false;
   int _voiceToken = 0;
   DateTime? _lastAutoPlayAt;
 
@@ -50,8 +49,6 @@ class StageAudioController extends GetxController {
     if (relPath.trim().isEmpty) return;
 
     final token = ++_voiceToken;
-    if (_voiceBusy) return;
-    _voiceBusy = true;
 
     try {
       await _voicePlayer.stop();
@@ -68,12 +65,14 @@ class StageAudioController extends GetxController {
       }
 
       final byteData = await rootBundle.load(path);
+      if (token != _voiceToken) return;
+
       final bytes = byteData.buffer.asUint8List();
+      if (token != _voiceToken) return;
+
       await _voicePlayer.play(BytesSource(bytes));
     } catch (e) {
       debugPrint('[StageAudio] Failed to play voice "$relPath": $e');
-    } finally {
-      _voiceBusy = false;
     }
   }
 

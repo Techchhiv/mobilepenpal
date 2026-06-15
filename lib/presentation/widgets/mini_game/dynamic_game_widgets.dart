@@ -789,8 +789,9 @@ class FeedbackOverlay extends StatelessWidget {
         child: AnimatedBuilder(
           animation: controller.feedbackAnimCtrl,
           builder: (_, __) {
-            if (controller.feedbackAnimCtrl.value == 0)
+            if (controller.feedbackAnimCtrl.value == 0) {
               return const SizedBox.shrink();
+            }
             return Obx(() {
               final text = controller.feedbackText.value;
               if (text.isEmpty) return const SizedBox.shrink();

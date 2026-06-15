@@ -15,9 +15,6 @@ class WorldAnimationController extends GetxController
   late final AnimationController waveCtrl;
   late final AnimationController bounceCtrl;
 
-  bool _waveActive = false;
-  bool _bounceActive = false;
-
   @override
   void onInit() {
     super.onInit();
@@ -34,8 +31,6 @@ class WorldAnimationController extends GetxController
   }
 
   void setWaveActive(bool active) {
-    _waveActive = active;
-
     if (active) {
       waveCtrl.repeat();
     } else {
@@ -45,8 +40,6 @@ class WorldAnimationController extends GetxController
   }
 
   void setBounceActive(bool active) {
-    _bounceActive = active;
-
     if (active) {
       bounceCtrl.repeat(reverse: true);
     } else {

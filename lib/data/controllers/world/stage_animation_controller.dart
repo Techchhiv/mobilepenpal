@@ -41,8 +41,7 @@ class StageAnimationController extends GetxController
   final completedStarCount = 0.obs;
   final starScale = 1.0.obs;
 
-  double _boardW = 340;
-  double _boardH = 340;
+
 
   final guideStrokesPx = <List<Offset>>[].obs;
 
@@ -137,10 +136,7 @@ class StageAnimationController extends GetxController
     super.onClose();
   }
 
-  void setBoardSize({required double width, required double height}) {
-    _boardW = width;
-    _boardH = height;
-  }
+  void setBoardSize({required double width, required double height}) {}
 
   void setGuideFromPx({required List<List<Offset>> strokesPx}) {
     final cleaned = strokesPx.where((s) => s.length >= 2).toList();
@@ -530,8 +526,12 @@ class StageAnimationController extends GetxController
     final maxLen = max(userStrokes.length, templateStrokes.length).clamp(1, 99);
     final uPadded = List<List<Offset>>.from(userStrokes);
     final tPadded = List<List<Offset>>.from(templateStrokes);
-    while (uPadded.length < maxLen) uPadded.add(uPadded.last);
-    while (tPadded.length < maxLen) tPadded.add(tPadded.last);
+    while (uPadded.length < maxLen) {
+      uPadded.add(uPadded.last);
+    }
+    while (tPadded.length < maxLen) {
+      tPadded.add(tPadded.last);
+    }
 
     // Resample every stroke to the same number of points.
     userMorphStrokes.assignAll(

@@ -100,7 +100,7 @@ class StageController extends GetxController {
 
   final Map<String, MathQuestion> _mathCache = {};
 
-  final attempts = <Map<String, dynamic>>[].obs;
+  final attempts = <int, Map<String, dynamic>>{}.obs;
 
   static Map<String, dynamic>? _strokesDbCache;
 
@@ -175,7 +175,7 @@ class StageController extends GetxController {
   int get completedExercises => attempts.length.clamp(0, totalExercises);
 
   int get correctExercises {
-    return attempts.where((a) => a['is_correct'] == true).length;
+    return attempts.values.where((a) => a['is_correct'] == true).length;
   }
 
   int get starsEarnedByScore {
@@ -440,10 +440,11 @@ class StageController extends GetxController {
         ? 0.0
         : (completed / total).clamp(0.0, 1.0);
 
-    // Build per-exercise dot states from the attempts list.
+    // Build per-exercise dot states from the attempts map.
     final dots = List<StarState>.generate(total, (i) {
-      if (i < attempts.length) {
-        return attempts[i]['is_correct'] == true
+      final a = attempts[i];
+      if (a != null) {
+        return a['is_correct'] == true
             ? StarState.correct
             : StarState.wrong;
       }
@@ -729,7 +730,12 @@ class StageController extends GetxController {
       if (CancelToken.isCancel(e)) return;
     } catch (e) {
       lastError.value = 'Predict failed: $e';
-      isCorrect = isMathCurrent ? false : (Random().nextDouble() <= 0.9);
+      isCorrect = false;
+      AppSnackbar.show(
+        'Failed to evaluate drawing. Please try again.',
+        title: 'Error',
+        backgroundColor: Colors.red,
+      );
     } finally {
       if (myReqId == _redId) {
         _cancelToken = null;
@@ -787,14 +793,14 @@ class StageController extends GetxController {
           ? (mathExpected.value?.toString() ?? '')
           : exercise.character;
 
-      attempts.add({
+      attempts[currentExerciseIndex.value] = {
         'exercise_id': exercise.id,
         'user_answer': prediction,
         'label': label,
         'stroke': getXYStrokes(),
         'is_correct': false,
         if (isMathCurrent) 'math_op': currentMathOp.value,
-      });
+      };
 
       _updateProgressUI();
 
@@ -841,14 +847,14 @@ class StageController extends GetxController {
         ? (mathExpected.value?.toString() ?? '')
         : exercise.character;
 
-    attempts.add({
+    attempts[currentExerciseIndex.value] = {
       'exercise_id': exercise.id,
       'user_answer': prediction.isNotEmpty ? prediction : exercise.character,
       'label': label,
       'stroke': getXYStrokes(),
       'is_correct': true,
       if (isMathCurrent) 'math_op': currentMathOp.value,
-    });
+    };
     _updateProgressUI();
 
     await Future.delayed(const Duration(milliseconds: 1000));
@@ -878,14 +884,14 @@ class StageController extends GetxController {
           ? (mathExpected.value?.toString() ?? '')
           : exercise.character;
 
-      attempts.add({
+      attempts[currentExerciseIndex.value] = {
         'exercise_id': exercise.id,
         'user_answer': '',
         'label': label,
         'stroke': getAllXYStrokesCombined(),
         'is_correct': false,
         if (isMathCurrent) 'math_op': currentMathOp.value,
-      });
+      };
 
       _updateProgressUI();
 
@@ -914,7 +920,7 @@ class StageController extends GetxController {
 
   Future<void> _finishStageIfLast() async {
     final summary = await submitExerciseBatch(
-      List<Map<String, dynamic>>.from(attempts),
+      attempts.values.toList(),
       durationSeconds: _sessionDurationSeconds,
     );
 

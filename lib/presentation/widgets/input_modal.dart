@@ -127,7 +127,7 @@ class _InputModalState extends State<InputModal> {
                     width: 56,
                     height: 56,
                     decoration: BoxDecoration(
-                      color: pColor.withOpacity(0.12),
+                      color: pColor.withValues(alpha: 0.12),
                       shape: BoxShape.circle,
                     ),
                     alignment: Alignment.center,

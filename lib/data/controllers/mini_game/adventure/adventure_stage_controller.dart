@@ -23,6 +23,7 @@ import 'package:mobilepenpal/data/models/student/student.dart';
 import 'package:mobilepenpal/data/services/onnx_inference_service.dart';
 import 'package:mobilepenpal/data/services/world_service.dart';
 import 'package:mobilepenpal/presentation/widgets/world/image_stamp_content.dart';
+import 'package:mobilepenpal/presentation/widgets/app_snackbar.dart';
 
 /// Rating tiers based on drawing accuracy
 enum DrawRating { perfect, good, okay, miss }
@@ -785,8 +786,12 @@ class AdventureStageController extends GetxController
       if (CancelToken.isCancel(e)) return;
     } catch (e) {
       dev.log('Predict failed: $e', name: 'AdventureStageController');
-      // Random fallback for offline
-      isCorrect = (Random().nextDouble() <= 0.9);
+      isCorrect = false;
+      AppSnackbar.show(
+        'Failed to evaluate drawing. Please try again.',
+        title: 'Error',
+        backgroundColor: Colors.red,
+      );
     } finally {
       if (myReqId == _redId) _cancelToken = null;
     }

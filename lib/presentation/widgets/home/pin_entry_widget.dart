@@ -6,7 +6,7 @@ import 'package:mobilepenpal/data/controllers/home/pin_controller.dart';
 import 'package:mobilepenpal/data/services/home_service.dart';
 import 'package:mobilepenpal/presentation/widgets/loading_overly.dart';
 
-class PinWidget extends StatelessWidget {
+class PinWidget extends StatefulWidget {
   final PinMode mode;
   final HomeService? homeService;
   final String? title;
@@ -31,16 +31,35 @@ class PinWidget extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    final PinController controller = Get.put(
-      PinController(homeService: homeService),
-      tag: 'pin_${mode.name}',
+  State<PinWidget> createState() => _PinWidgetState();
+}
+
+class _PinWidgetState extends State<PinWidget> {
+  late final PinController controller;
+  late final String controllerTag;
+
+  @override
+  void initState() {
+    super.initState();
+    controllerTag = 'pin_${widget.mode.name}';
+    controller = Get.put(
+      PinController(homeService: widget.homeService),
+      tag: controllerTag,
     );
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      controller.initialize(mode, returnToSettings);
+      controller.initialize(widget.mode, widget.returnToSettings);
     });
+  }
 
+  @override
+  void dispose() {
+    Get.delete<PinController>(tag: controllerTag);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF0E6B63),
       body: LoadingOverlay(
@@ -99,7 +118,7 @@ class PinWidget extends StatelessWidget {
   }
 
   Widget _buildHeader(PinController controller) {
-    final headerTitle = controller.getTitle(mode, title, confirmTitle);
+    final headerTitle = controller.getTitle(widget.mode, widget.title, widget.confirmTitle);
 
     return Column(
       children: [
@@ -127,7 +146,7 @@ class PinWidget extends StatelessWidget {
   }
 
   Widget _buildDotField(PinController controller) {
-    final activeController = controller.getActiveController(mode);
+    final activeController = controller.getActiveController(widget.mode);
     final len = activeController.text.length;
 
     return Row(
@@ -190,7 +209,7 @@ class PinWidget extends StatelessWidget {
           fontWeight: FontWeight.bold,
         ),
       ),
-      onTap: () => controller.onNumberTap(n, mode),
+      onTap: () => controller.onNumberTap(n, widget.mode),
       id: '$n',
       controller: controller,
     );
@@ -226,7 +245,7 @@ class PinWidget extends StatelessWidget {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  onTap: () => controller.onClear(mode),
+                  onTap: () => controller.onClear(widget.mode),
                   id: 'clear',
                   showBorder: false,
                   controller: controller,
@@ -237,7 +256,7 @@ class PinWidget extends StatelessWidget {
                     Icons.backspace_outlined,
                     color: Colors.white,
                   ),
-                  onTap: () => controller.onBackspace(mode),
+                  onTap: () => controller.onBackspace(widget.mode),
                   id: 'backspace',
                   showBorder: false,
                   controller: controller,

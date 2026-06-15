@@ -123,7 +123,7 @@ class QuestBoardPage extends GetView<QuestBoardController> {
                                 transitionBuilder: (child, anim) =>
                                     SizeTransition(
                                       sizeFactor: anim,
-                                      axisAlignment: -1.0,
+                                      alignment: Alignment.topCenter,
                                       child: child,
                                     ),
                                 child: show

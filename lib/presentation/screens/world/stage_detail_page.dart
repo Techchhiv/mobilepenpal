@@ -1,6 +1,4 @@
-import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_drawing_board/flutter_drawing_board.dart';
 import 'package:get/get.dart';
 import 'package:lottie/lottie.dart';
 import 'package:mobilepenpal/core/config/env.dart';
@@ -11,13 +9,9 @@ import 'package:mobilepenpal/data/controllers/world/level_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_animation_controller.dart';
 import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
-import 'package:mobilepenpal/data/controllers/shop/shop_controller.dart';
 import 'package:mobilepenpal/presentation/routes/app_routes.dart';
 import 'package:mobilepenpal/presentation/widgets/app_snackbar.dart';
 import 'package:mobilepenpal/presentation/widgets/loading_overly.dart';
-import 'package:mobilepenpal/presentation/widgets/world/board_grid_painter.dart';
-import 'package:mobilepenpal/presentation/widgets/world/letter_painter.dart';
-import 'package:mobilepenpal/presentation/widgets/world/morph_painter.dart';
 import 'package:mobilepenpal/presentation/widgets/world/stage_components/stage_drawing_board.dart';
 
 class StageDetailPage extends GetView<StageController> {
@@ -88,7 +82,7 @@ class StageDetailPage extends GetView<StageController> {
                                 transitionBuilder: (child, anim) =>
                                     SizeTransition(
                                       sizeFactor: anim,
-                                      axisAlignment: -1.0,
+                                      alignment: Alignment.topCenter,
                                       child: child,
                                     ),
                                 child: show
@@ -425,7 +419,7 @@ class StageDetailPage extends GetView<StageController> {
                                 padding: EdgeInsets.symmetric(
                                   horizontal: spacing / 2,
                                 ),
-                                child: Container(
+                                child: SizedBox(
                                   width: itemSize,
                                   height: itemSize,
                                   child: ClipRRect(
@@ -457,7 +451,7 @@ class StageDetailPage extends GetView<StageController> {
                                   padding: EdgeInsets.symmetric(
                                     horizontal: spacing / 2,
                                   ),
-                                  child: Container(
+                                  child: SizedBox(
                                     width: itemSize,
                                     height: itemSize,
                                     child: ClipRRect(

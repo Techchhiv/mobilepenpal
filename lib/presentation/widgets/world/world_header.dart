@@ -21,12 +21,6 @@ class WorldHeader extends StatelessWidget {
               ? world.name
               : ((world.nameEn.isNotEmpty) ? world.nameEn : world.name);
 
-          final subtitle = lc.isKhmer
-              ? world.description
-              : ((world.descriptionEn.isNotEmpty)
-                    ? world.descriptionEn
-                    : world.description);
-
           return Positioned(
             top: MediaQuery.of(context).padding.top + 12,
             left: 16,

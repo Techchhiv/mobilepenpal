@@ -32,9 +32,9 @@ class MathFruitDisplay extends StatelessWidget {
         margin: const EdgeInsets.symmetric(horizontal: 20.0),
         padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
         decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.25),
+          color: Colors.black.withValues(alpha: 0.25),
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Colors.white.withOpacity(0.1), width: 1.5),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.1), width: 1.5),
         ),
         child: FittedBox(
           fit: BoxFit.scaleDown,

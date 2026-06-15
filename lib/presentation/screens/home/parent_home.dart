@@ -1,14 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobilepenpal/core/theme/app_colors.dart';
-import 'package:mobilepenpal/core/utils/report_format.dart';
 import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
 import 'package:mobilepenpal/presentation/screens/home/qr_scanner_page.dart';
 import 'package:mobilepenpal/presentation/widgets/home/parent_summary_page.dart';
-import 'package:mobilepenpal/presentation/widgets/home/subscribe_modal.dart';
 import 'package:mobilepenpal/presentation/widgets/input_modal.dart';
-import 'package:mobilepenpal/core/utils/report_format.dart';
-// import 'package:mobilepenpal/presentation/widgets/home/subscribe_modal.dart';
 import 'package:shimmer/shimmer.dart';
 
 class ParentHome extends StatelessWidget {

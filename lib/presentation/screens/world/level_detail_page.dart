@@ -468,11 +468,14 @@ class _StagesCarouselState extends State<_StagesCarousel> {
           final int currentPage = _pc.hasClients
               ? _pc.page?.round() ?? widget.initialIndex
               : widget.initialIndex;
-          _pc.dispose();
+          final oldPc = _pc;
           _pc = PageController(
             initialPage: currentPage,
             viewportFraction: _fraction,
           );
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            oldPc.dispose();
+          });
         }
 
         return PageView.builder(

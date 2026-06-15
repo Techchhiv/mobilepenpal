@@ -22,6 +22,7 @@ import 'package:mobilepenpal/data/services/world_service.dart';
 import 'package:mobilepenpal/data/services/drawing_evaluation_service.dart';
 import 'package:mobilepenpal/core/utils/stroke_transform_util.dart';
 import 'package:mobilepenpal/presentation/routes/app_routes.dart';
+import 'package:mobilepenpal/presentation/widgets/app_snackbar.dart';
 
 class QuestBoardController extends GetxController {
   final WorldService _worldService = WorldService();
@@ -73,7 +74,7 @@ class QuestBoardController extends GetxController {
   final currentExerciseIndex = 0.obs;
   final selectedCharacter = ''.obs;
 
-  final attempts = <Map<String, dynamic>>[].obs;
+  final attempts = <int, Map<String, dynamic>>{}.obs;
   static Map<String, dynamic>? _strokesDbCache;
 
   ui.Image? _currentStampImage;
@@ -133,7 +134,7 @@ class QuestBoardController extends GetxController {
   int get totalExercises => exercises.length;
   int get completedExercises => attempts.length.clamp(0, totalExercises);
   int get correctExercises =>
-      attempts.where((a) => a['is_correct'] == true).length;
+      attempts.values.where((a) => a['is_correct'] == true).length;
   int get starsEarnedByScore => remainingStars.value.clamp(0, 3);
 
   bool get canSkip =>
@@ -356,8 +357,9 @@ class QuestBoardController extends GetxController {
         : (completed / total).clamp(0.0, 1.0);
 
     final dots = List<StarState>.generate(total, (i) {
-      if (i < attempts.length) {
-        return attempts[i]['is_correct'] == true
+      final a = attempts[i];
+      if (a != null) {
+        return a['is_correct'] == true
             ? StarState.correct
             : StarState.wrong;
       }
@@ -598,7 +600,12 @@ class QuestBoardController extends GetxController {
       if (CancelToken.isCancel(e)) return;
     } catch (e) {
       lastError.value = 'Predict failed: $e';
-      isCorrect = isMathCurrent ? false : (Random().nextDouble() <= 0.9);
+      isCorrect = false;
+      AppSnackbar.show(
+        'Failed to evaluate drawing. Please try again.',
+        title: 'Error',
+        backgroundColor: Colors.red,
+      );
     } finally {
       if (myReqId == _reqId) {
         _cancelToken = null;
@@ -652,13 +659,13 @@ class QuestBoardController extends GetxController {
       anim.markWrong(currentExerciseIndex.value);
       unawaited(anim.playStarPop(currentExerciseIndex.value));
 
-      attempts.add({
+      attempts[currentExerciseIndex.value] = {
         'exercise_id': exercise.id,
         'user_answer': prediction,
         'label': exercise.character,
         'stroke': getXYStrokes(),
         'is_correct': false,
-      });
+      };
 
       _updateProgressUI();
 
@@ -698,13 +705,13 @@ class QuestBoardController extends GetxController {
 
     anim.showCorrect(starIndex: currentExerciseIndex.value);
 
-    attempts.add({
+    attempts[currentExerciseIndex.value] = {
       'exercise_id': exercise.id,
       'user_answer': prediction.isNotEmpty ? prediction : exercise.character,
       'label': exercise.character,
       'stroke': getXYStrokes(),
       'is_correct': true,
-    });
+    };
     _updateProgressUI();
 
     await Future.delayed(const Duration(milliseconds: 1000));
@@ -730,13 +737,13 @@ class QuestBoardController extends GetxController {
       final exercise = currentExercise;
       if (exercise == null) return;
 
-      attempts.add({
+      attempts[currentExerciseIndex.value] = {
         'exercise_id': exercise.id,
         'user_answer': '',
         'label': exercise.character,
         'stroke': getAllXYStrokesCombined(),
         'is_correct': false,
-      });
+      };
 
       _updateProgressUI();
 
@@ -767,7 +774,7 @@ class QuestBoardController extends GetxController {
     isSubmitting.value = true;
     try {
       final summaryRes = await _worldService.submitExerciseBatch(
-        List<Map<String, dynamic>>.from(attempts),
+        attempts.values.toList(),
         durationSeconds: _sessionDurationSeconds,
         isDailyChallenge: true, // Backend uses this as isStagelessSession
         coinsEarned: currentQuest.rewardCoins,

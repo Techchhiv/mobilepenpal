@@ -27,12 +27,23 @@ class WorldController extends GetxController {
           colorText: Colors.white,
         );
       }
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Failed to load worlds: $e',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     } finally {
       isLoading.value = false;
     }
   }
 
+  int? _lastRequestedWorldId;
+
   Future<void> fetchWorldById(int worldId) async {
+    if (_lastRequestedWorldId == worldId && isLoading.value) return;
+    _lastRequestedWorldId = worldId;
     isLoading.value = true;
     try {
       final response = await _worldService.getWorldById(worldId);
@@ -40,7 +51,21 @@ class WorldController extends GetxController {
       if (response.code == 200) {
         currentWorld.value = response.data;
         levelsList.assignAll(response.data?.levels ?? []);
+      } else {
+        Get.snackbar(
+          'Error',
+          response.message,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
       }
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Failed to load world details: $e',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     } finally {
       isLoading.value = false;
     }

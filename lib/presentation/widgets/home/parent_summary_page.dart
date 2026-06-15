@@ -12,7 +12,6 @@ class ParentSummaryCard extends StatelessWidget {
   const ParentSummaryCard({super.key, required this.homeController});
 
   static const Color _brand = Color(0xFF00897B);
-  static const Color _brandDark = Color(0xFF00695C);
   static const double _metricBottomHeight = 6;
   static const double _metricBottomSpacing = 10;
   String _d(String s) => NumberFormatUtils.digitsByLocale(s);

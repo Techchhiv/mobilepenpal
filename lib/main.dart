@@ -36,6 +36,7 @@ void main() async {
   final isLoggedIn = token != null && token.trim().isNotEmpty;
 
   await GetStorage().write('is_logged_in', isLoggedIn);
+  await GetStorage().write('has_token', isLoggedIn);
 
   OnnxInferenceService.instance.init();
 
