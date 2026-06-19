@@ -107,10 +107,10 @@ class StageController extends GetxController {
   ui.Image? _currentStampImage;
   ui.Image? get currentStampImage => _currentStampImage;
 
-  late final StageAnimationController anim;
+  late StageAnimationController anim;
   bool _ownsAnim = false;
 
-  late final StageAudioController audio;
+  late StageAudioController audio;
   bool _ownsAudio = false;
 
   final List<List<List<Map<String, dynamic>>>> _rawStrokesList = List.generate(

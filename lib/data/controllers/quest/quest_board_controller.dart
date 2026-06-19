@@ -80,8 +80,8 @@ class QuestBoardController extends GetxController {
   ui.Image? _currentStampImage;
   ui.Image? get currentStampImage => _currentStampImage;
 
-  late final StageAnimationController anim;
-  late final StageAudioController audio;
+  late StageAnimationController anim;
+  late StageAudioController audio;
 
   final List<List<List<Map<String, dynamic>>>> _rawStrokesList = List.generate(
     3,
@@ -188,7 +188,7 @@ class QuestBoardController extends GetxController {
       await loadStrokeDb();
 
       // 1. Fetch all exercises
-      final response = await _worldService.getExercises(learnedOnly: true);
+      final response = await _worldService.getExercises();
       if (response.code != 200) {
         lastError.value = response.message;
         return;
@@ -779,6 +779,15 @@ class QuestBoardController extends GetxController {
         isDailyChallenge: true, // Backend uses this as isStagelessSession
         coinsEarned: currentQuest.rewardCoins,
       );
+
+      if (summaryRes.code != 200 || summaryRes.data == null) {
+        AppSnackbar.show(
+          summaryRes.message.isNotEmpty ? summaryRes.message : 'Failed to submit quest results',
+          title: 'Error',
+          backgroundColor: Colors.redAccent,
+        );
+        return;
+      }
 
       final summary =
           summaryRes.data?['summary'] as Map<String, dynamic>? ?? {};

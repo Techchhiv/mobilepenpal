@@ -187,9 +187,9 @@ class DynamicMiniGameController extends GetxController
   static Map<String, dynamic>? _strokesDbCache;
 
   // Animation & Audio controllers
-  late final StageAnimationController anim;
+  late StageAnimationController anim;
   bool _ownsAnim = false;
-  late final StageAudioController audio;
+  late StageAudioController audio;
   bool _ownsAudio = false;
 
   // Storage key for high score (per game or custom mix)

@@ -194,9 +194,9 @@ class AdventureStageController extends GetxController
   final List<Exercise> _exercisePool = [];
 
   // Animation & Audio controllers
-  late final StageAnimationController anim;
+  late StageAnimationController anim;
   bool _ownsAnim = false;
-  late final StageAudioController audio;
+  late StageAudioController audio;
   bool _ownsAudio = false;
 
   ui.Image? _currentStampImage;
