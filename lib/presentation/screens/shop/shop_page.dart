@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobilepenpal/core/config/env.dart';
 import 'package:mobilepenpal/core/theme/app_colors.dart';
+import 'package:mobilepenpal/core/utils/number_format_utils.dart';
 import 'package:mobilepenpal/data/controllers/shop/shop_controller.dart';
 
 class ShopPage extends StatelessWidget {
@@ -190,7 +191,7 @@ class ShopPage extends StatelessWidget {
                     const SizedBox(height: 2),
                     Obx(
                       () => Text(
-                        '${controller.totalPoints.value}',
+                        NumberFormatUtils.intText(controller.totalPoints.value),
                         style: const TextStyle(
                           fontSize: 34,
                           fontWeight: FontWeight.w900,
@@ -402,7 +403,7 @@ class ShopPage extends StatelessWidget {
                     ),
                     const SizedBox(width: 3),
                     Text(
-                      '${avatar.price}',
+                      NumberFormatUtils.intText(avatar.price),
                       style: TextStyle(
                         fontSize: isTablet ? 13 : 11,
                         fontWeight: FontWeight.w900,
@@ -904,7 +905,7 @@ class ShopPage extends StatelessWidget {
                                       const SizedBox(height: 10),
                                       Text(
                                         'need_more_points'.trParams({
-                                          'amount': '${avatar.price - controller.totalPoints.value}',
+                                          'amount': NumberFormatUtils.intText(avatar.price - controller.totalPoints.value),
                                         }),
                                         style: TextStyle(
                                           fontSize: 14,
@@ -978,7 +979,7 @@ class ShopPage extends StatelessWidget {
                                               const SizedBox(width: 4),
                                               Text(
                                                 'points_count'.trParams({
-                                                  'count': '${avatar.price}',
+                                                  'count': NumberFormatUtils.intText(avatar.price),
                                                 }),
                                                 style: const TextStyle(
                                                   fontSize: 15,
@@ -1021,7 +1022,7 @@ class ShopPage extends StatelessWidget {
                                               const SizedBox(width: 4),
                                               Text(
                                                 'points_count'.trParams({
-                                                  'count': '${controller.totalPoints.value}',
+                                                  'count': NumberFormatUtils.intText(controller.totalPoints.value),
                                                 }),
                                                 style: const TextStyle(
                                                   fontSize: 15,
@@ -1066,7 +1067,7 @@ class ShopPage extends StatelessWidget {
                                       label: controller.isPurchasing.value
                                           ? 'loading'.tr
                                           : 'buy_for'.trParams({
-                                              'price': '${avatar.price}',
+                                              'price': NumberFormatUtils.intText(avatar.price),
                                             }),
                                       icon: controller.isPurchasing.value
                                           ? null

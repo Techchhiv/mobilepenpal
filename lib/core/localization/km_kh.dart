@@ -295,7 +295,7 @@ final Map<String, String> kmKH = {
   'premium': 'ពិសេស',
   'premium_content': 'មាតិកាពិសេស',
   'subscribe_to_unlock': 'ធ្វើការជាវដើម្បីដោះសោ',
-  'progress': 'វឌ្ឍនភាព',
+  'progress': 'ធ្វើបាន',
   'lessons': 'មេរៀន',
   'stars': 'ផ្កាយ',
   'remaining': 'នៅសល់',

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:mobilepenpal/core/utils/number_format_utils.dart';
 import 'package:mobilepenpal/data/models/quest/quest.dart';
 import 'package:mobilepenpal/data/models/quest/quest_type.dart';
 
@@ -14,14 +15,8 @@ class QuestCard extends StatelessWidget {
 
   const QuestCard({super.key, required this.quest, this.onStart});
 
-  // ── Color palette per quest type ────────────────────────────────
-  static const Map<QuestType, List<Color>> _gradients = {
-    QuestType.weakestCharacters: [Color(0xFFFF6B6B), Color(0xFFFF8E8E)],
-    QuestType.recentReview: [Color(0xFF4ECDC4), Color(0xFF6EE7DE)],
-    QuestType.randomReview: [Color(0xFF845EF7), Color(0xFFA78BFA)],
-    QuestType.masteryShowcase: [Color(0xFFFFB347), Color(0xFFFFD080)],
-    QuestType.deepMemory: [Color(0xFF5C6BC0), Color(0xFF7986CB)],
-  };
+  // ── Color palette ───────────────────────────────────────────────
+  static const List<Color> _cardGradient = [Color(0xFF0EA399), Color(0xFF007791)];
 
   static const Map<QuestType, IconData> _icons = {
     QuestType.weakestCharacters: Icons.whatshot_rounded,
@@ -31,8 +26,7 @@ class QuestCard extends StatelessWidget {
     QuestType.deepMemory: Icons.psychology_rounded,
   };
 
-  List<Color> get _gradient =>
-      _gradients[quest.type] ?? [Colors.blueGrey, Colors.blueGrey.shade300];
+  List<Color> get _gradient => _cardGradient;
   IconData get _icon => _icons[quest.type] ?? Icons.quiz_rounded;
   Color get _primary => _gradient.first;
 
@@ -78,7 +72,7 @@ class QuestCard extends StatelessWidget {
                     const SizedBox(height: 14),
                     _buildProgressSection(),
                     const SizedBox(height: 14),
-                    _buildFooter(),
+                    _buildFooter(context),
                   ],
                 ),
               ),
@@ -91,12 +85,17 @@ class QuestCard extends StatelessWidget {
 
   // ── Header with icon, title, subtitle ───────────────────────────
   Widget _buildHeader() {
+    final titleColor = quest.isCompleted ? Colors.blueGrey.shade800 : Colors.white;
+    final subtitleColor = quest.isCompleted ? Colors.blueGrey.shade600 : Colors.white.withValues(alpha: 0.85);
+    final iconColor = quest.isCompleted ? const Color(0xFF4CAF50) : Colors.white;
+    final iconBgColor = quest.isCompleted ? const Color(0xFFE8F5E9) : Colors.white.withValues(alpha: 0.28);
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: quest.isCompleted
-              ? [Colors.grey.shade300, Colors.grey.shade200]
+              ? [Colors.grey.shade100, Colors.grey.shade200]
               : _gradient,
         ),
       ),
@@ -107,12 +106,12 @@ class QuestCard extends StatelessWidget {
             width: 42,
             height: 42,
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.28),
+              color: iconBgColor,
               borderRadius: BorderRadius.circular(14),
             ),
             child: Icon(
               quest.isCompleted ? Icons.check_circle_rounded : _icon,
-              color: Colors.white,
+              color: iconColor,
               size: 24,
             ),
           ),
@@ -124,10 +123,10 @@ class QuestCard extends StatelessWidget {
               children: [
                 Text(
                   quest.title.tr,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
-                    color: Colors.white,
+                    color: titleColor,
                     height: 1.2,
                   ),
                 ),
@@ -137,7 +136,7 @@ class QuestCard extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: Colors.white.withValues(alpha: 0.85),
+                    color: subtitleColor,
                   ),
                 ),
               ],
@@ -152,27 +151,32 @@ class QuestCard extends StatelessWidget {
 
   // ── Coin reward badge ───────────────────────────────────────────
   Widget _buildRewardBadge() {
+    final badgeColor = quest.isCompleted ? Colors.blueGrey.shade700 : Colors.white;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.25),
+        color: quest.isCompleted
+            ? Colors.grey.shade300
+            : Colors.white.withValues(alpha: 0.25),
         borderRadius: BorderRadius.circular(999),
         border: Border.all(
-          color: Colors.white.withValues(alpha: 0.35),
+          color: quest.isCompleted
+              ? Colors.grey.shade400.withValues(alpha: 0.3)
+              : Colors.white.withValues(alpha: 0.35),
           width: 1,
         ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.monetization_on_rounded, size: 14, color: Colors.white),
+          Icon(Icons.monetization_on_rounded, size: 14, color: badgeColor),
           const SizedBox(width: 3),
           Text(
-            '+${quest.rewardCoins}',
-            style: const TextStyle(
+            '+${NumberFormatUtils.intText(quest.rewardCoins)}',
+            style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w800,
-              color: Colors.white,
+              color: badgeColor,
             ),
           ),
         ],
@@ -235,7 +239,7 @@ class QuestCard extends StatelessWidget {
               ),
             ),
             Text(
-              '${quest.progress}/${quest.total}',
+              NumberFormatUtils.fraction(quest.progress, quest.total),
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w800,
@@ -284,7 +288,7 @@ class QuestCard extends StatelessWidget {
   }
 
   // ── Start / completed button ────────────────────────────────────
-  Widget _buildFooter() {
+  Widget _buildFooter(BuildContext context) {
     if (quest.isCompleted) {
       return SizedBox(
         width: double.infinity,
@@ -300,7 +304,7 @@ class QuestCard extends StatelessWidget {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
-            textStyle: const TextStyle(
+            textStyle: Theme.of(context).textTheme.labelLarge?.copyWith(
               fontSize: 14,
               fontWeight: FontWeight.w800,
             ),
@@ -323,7 +327,7 @@ class QuestCard extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          textStyle: const TextStyle(
+          textStyle: Theme.of(context).textTheme.labelLarge?.copyWith(
             fontSize: 14,
             fontWeight: FontWeight.w800,
           ),

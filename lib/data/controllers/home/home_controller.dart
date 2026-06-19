@@ -438,6 +438,8 @@ class HomeController extends GetxController {
   Future<void> _syncParentPin(Student student) async {
     if (student.parentPin != null && student.parentPin!.isNotEmpty) {
       await _secure.write(key: 'parent_pin', value: student.parentPin!);
+    } else {
+      await _secure.delete(key: 'parent_pin');
     }
   }
 

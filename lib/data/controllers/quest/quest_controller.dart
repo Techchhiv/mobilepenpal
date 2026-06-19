@@ -177,7 +177,7 @@ class QuestController extends GetxController {
         previewCharacters: chars,
         progress: 0,
         total: chars.length,
-        rewardCoins: 15,
+        rewardCoins: chars.length * 5,
       );
     }
 
@@ -230,7 +230,7 @@ class QuestController extends GetxController {
         previewCharacters: chars,
         progress: 0,
         total: chars.length,
-        rewardCoins: 12,
+        rewardCoins: chars.length * 4,
       );
     }
 
@@ -245,7 +245,7 @@ class QuestController extends GetxController {
       previewCharacters: chars,
       progress: 0,
       total: chars.length,
-      rewardCoins: 12,
+      rewardCoins: chars.length * 4,
     );
   }
 
@@ -263,7 +263,7 @@ class QuestController extends GetxController {
       previewCharacters: chars,
       progress: 0,
       total: chars.length,
-      rewardCoins: 20,
+      rewardCoins: chars.length * 6,
     );
   }
 }

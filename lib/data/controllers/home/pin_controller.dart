@@ -4,6 +4,9 @@ import 'package:get_storage/get_storage.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:mobilepenpal/data/services/home_service.dart';
 import 'package:mobilepenpal/presentation/widgets/loading_status.dart';
+import 'package:mobilepenpal/data/models/student/student.dart';
+import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
+import 'package:mobilepenpal/data/controllers/settings/setting_controller.dart';
 
 enum PinMode { create, verify, update }
 
@@ -31,6 +34,7 @@ class PinController extends GetxController {
   String get pressedButton => _pressedButton.value;
   int get updateStep => _updateStep.value;
   bool get returnToSettings => _returnToSettings.value;
+  RxString get errorRx => _error;
 
   set isConfirmStep(bool value) => _isConfirmStep.value = value;
   set loading(bool value) => _loading.value = value;
@@ -134,42 +138,33 @@ class PinController extends GetxController {
   }
 
   Future<void> verifyPin() async {
-    loading = true;
     error = '';
 
     final entered = pinController.text;
     final stored = await _secure.read(key: 'parent_pin');
-
-    await Future.delayed(const Duration(milliseconds: 150));
 
     if (stored != null && stored == entered) {
       Get.key.currentState?.pop<bool>(true);
     } else {
       error = 'invalid_pin'.tr;
       pinController.clear();
-      loading = false;
     }
   }
 
   Future<void> verifyForUpdate() async {
-    loading = true;
     error = '';
 
     final entered = pinController.text;
     final stored = await _secure.read(key: 'parent_pin');
-
-    await Future.delayed(const Duration(milliseconds: 150));
 
     if (stored != null && stored == entered) {
       updateStep = 1;
       isConfirmStep = false;
       pinController.clear();
       confirmController.clear();
-      loading = false;
     } else {
       error = 'invalid_pin'.tr;
       pinController.clear();
-      loading = false;
     }
   }
 
@@ -194,6 +189,44 @@ class PinController extends GetxController {
 
       if (res.code == 200) {
         await _secure.write(key: 'parent_pin', value: pin);
+
+        // Synchronize PIN code changes to local caches instantly
+        final studentBox = GetStorage();
+        final raw = studentBox.read('student');
+        Student? updatedStudent;
+
+        if (raw is Map) {
+          final mergedJson = Map<String, dynamic>.from(raw);
+          mergedJson['parent_pin'] = pin;
+          updatedStudent = Student.fromJson(mergedJson);
+          await studentBox.write('student', mergedJson);
+        }
+
+        if (Get.isRegistered<HomeController>()) {
+          final dynamic homeController = Get.find<HomeController>();
+          final currentStudent = homeController.student.value;
+          if (currentStudent != null) {
+            final updatedJson = currentStudent.toJson();
+            updatedJson['parent_pin'] = pin;
+            final syncedStudent = Student.fromJson(updatedJson);
+            homeController.student.value = syncedStudent;
+            await studentBox.write('student', updatedJson);
+          } else if (updatedStudent != null) {
+            homeController.student.value = updatedStudent;
+          }
+        }
+
+        if (Get.isRegistered<SettingController>()) {
+          final dynamic settingController = Get.find<SettingController>();
+          final currentStudent = settingController.student.value;
+          if (currentStudent != null) {
+            final updatedJson = currentStudent.toJson();
+            updatedJson['parent_pin'] = pin;
+            settingController.student.value = Student.fromJson(updatedJson);
+          } else if (updatedStudent != null) {
+            settingController.student.value = updatedStudent;
+          }
+        }
 
         Get.offAll(
           () => LoadingStatus(

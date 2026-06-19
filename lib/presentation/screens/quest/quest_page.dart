@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobilepenpal/core/config/env.dart';
+import 'package:mobilepenpal/core/utils/number_format_utils.dart';
 import 'package:mobilepenpal/data/controllers/quest/quest_controller.dart';
 import 'package:mobilepenpal/presentation/widgets/quest/quest_card.dart';
 import 'package:mobilepenpal/presentation/widgets/loading_overly.dart';
@@ -61,7 +62,7 @@ class QuestPage extends GetView<QuestController> {
                       maxWidth: Env.globalMaxWidth,
                     ),
                     child: Obx(() {
-                      if (controller.isLoading.value) {
+                      if (controller.isLoading.value && controller.quests.isEmpty) {
                         return const Center(child: CircularProgressIndicator());
                       }
 
@@ -83,30 +84,35 @@ class QuestPage extends GetView<QuestController> {
 
   // ── Quest list with header ──────────────────────────────────────
   Widget _buildQuestList() {
-    return RefreshIndicator(
-      onRefresh: controller.refreshQuests,
-      color: const Color(0xFF845EF7),
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(18, 16, 18, 32),
-        physics: const AlwaysScrollableScrollPhysics(
-          parent: BouncingScrollPhysics(),
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(18, 16, 18, 0),
+          child: _buildHeader(),
         ),
-        children: [
-          _buildHeader(),
-          const SizedBox(height: 22),
-
-          // ── Quest cards ─────────────────────────────────────
-          ...controller.quests.map(
-            (q) => QuestCard(
-              quest: q,
-              onStart: q.isCompleted ? null : () => controller.startQuest(q.id),
+        const SizedBox(height: 16),
+        Expanded(
+          child: RefreshIndicator(
+            onRefresh: controller.refreshQuests,
+            color: const Color(0xFF845EF7),
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(18, 0, 18, 32),
+              physics: const AlwaysScrollableScrollPhysics(
+                parent: BouncingScrollPhysics(),
+              ),
+              children: [
+                ...controller.quests.map(
+                  (q) => QuestCard(
+                    quest: q,
+                    onStart: q.isCompleted ? null : () => controller.startQuest(q.id),
+                  ),
+                ),
+                const SizedBox(height: 24),
+              ],
             ),
           ),
-
-          // bottom breathing room
-          const SizedBox(height: 24),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -151,8 +157,8 @@ class QuestPage extends GetView<QuestController> {
                     controller.allCompleted
                         ? 'all_quests_completed'.tr
                         : 'quests_done_today'.trParams({
-                            'completed': controller.completedCount.toString(),
-                            'total': controller.totalQuests.toString(),
+                            'completed': NumberFormatUtils.intText(controller.completedCount),
+                            'total': NumberFormatUtils.intText(controller.totalQuests),
                           }),
                     style: TextStyle(
                       fontSize: 13,
@@ -168,7 +174,7 @@ class QuestPage extends GetView<QuestController> {
                     _miniPill(
                       icon: Icons.local_fire_department_rounded,
                       label: 'daily_streak_count'.trParams({
-                        'streak': controller.dailyStreak.toString(),
+                        'streak': NumberFormatUtils.intText(controller.dailyStreak),
                       }),
                       color: const Color(0xFFFF6B6B),
                     ),
@@ -176,7 +182,7 @@ class QuestPage extends GetView<QuestController> {
                     _miniPill(
                       icon: Icons.monetization_on_rounded,
                       label: 'coins_count'.trParams({
-                        'coins': controller.totalCoins.toString(),
+                        'coins': NumberFormatUtils.intText(controller.totalCoins),
                       }),
                       color: const Color(0xFFFFB347),
                     ),
@@ -236,7 +242,7 @@ class QuestPage extends GetView<QuestController> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  '$done/$total',
+                  NumberFormatUtils.fraction(done, total),
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w900,

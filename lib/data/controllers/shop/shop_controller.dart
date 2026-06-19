@@ -178,6 +178,8 @@ class ShopController extends GetxController {
       debugPrint('ShopController: Critical error loading avatars: $e');
     }
 
+    // Sort avatars by price in ascending order
+    avatars.sort((a, b) => a.price.compareTo(b.price));
     allAvatars.assignAll(avatars);
   }
 
