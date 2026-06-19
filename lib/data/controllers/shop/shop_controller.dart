@@ -71,6 +71,7 @@ class ShopController extends GetxController {
     await _loadAvatarsFromAssets();
     _loadFromStorage();
     _syncWithStudent();
+    _sortAvatars();
   }
 
   void _syncWithStudent() {
@@ -86,6 +87,7 @@ class ShopController extends GetxController {
         _ensureFreeAvatarsUnlocked();
         _saveUnlocked();
         _sanitizeSelectedAvatar();
+        _sortAvatars();
       }
 
       ever(homeController.student, (Student? s) {
@@ -96,6 +98,7 @@ class ShopController extends GetxController {
           _ensureFreeAvatarsUnlocked();
           _saveUnlocked();
           _sanitizeSelectedAvatar();
+          _sortAvatars();
         }
       });
     }
@@ -212,14 +215,11 @@ class ShopController extends GetxController {
     _sanitizeSelectedAvatar();
   }
 
-  bool isUnlocked(String avatarId) {
-    if (avatarId == 'default') return true;
-    final avatar = allAvatars.firstWhereOrNull((a) => a.id == avatarId);
-    if (avatar != null && avatar.price == 0) return true;
+  bool isAvatarUnlocked(ShopAvatar avatar) {
+    if (avatar.id == 'default' || avatar.price == 0) return true;
+    if (unlockedAvatarIds.contains(avatar.id)) return true;
 
-    if (unlockedAvatarIds.contains(avatarId)) return true;
-
-    final baseId = avatarId.split('_').first;
+    final baseId = avatar.id.split('_').first;
     for (final id in unlockedAvatarIds) {
       if (id.split('_').first == baseId) {
         return true;
@@ -227,6 +227,29 @@ class ShopController extends GetxController {
     }
 
     return false;
+  }
+
+  bool isUnlocked(String avatarId) {
+    final avatar = allAvatars.firstWhereOrNull((a) => a.id == avatarId);
+    if (avatar == null) return false;
+    return isAvatarUnlocked(avatar);
+  }
+
+  void _sortAvatars() {
+    final List<ShopAvatar> sorted = List.from(allAvatars);
+    sorted.sort((a, b) {
+      final aUnlocked = isAvatarUnlocked(a);
+      final bUnlocked = isAvatarUnlocked(b);
+
+      if (aUnlocked && !bUnlocked) {
+        return -1;
+      } else if (!aUnlocked && bUnlocked) {
+        return 1;
+      } else {
+        return a.price.compareTo(b.price);
+      }
+    });
+    allAvatars.assignAll(sorted);
   }
 
   bool isSelected(String avatarId) => selectedAvatarId.value == avatarId;
@@ -288,6 +311,7 @@ class ShopController extends GetxController {
 
       unlockedAvatarIds.assignAll(response.data!.unlockedAvatars);
       _saveUnlocked();
+      _sortAvatars();
 
       return true;
     } catch (e) {
