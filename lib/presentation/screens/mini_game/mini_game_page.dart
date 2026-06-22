@@ -3,12 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:mobilepenpal/core/config/env.dart';
-import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
 import 'package:mobilepenpal/data/controllers/mini_game/mini_game_hub_controller.dart';
-import 'package:mobilepenpal/data/controllers/shop/shop_controller.dart';
-import 'package:mobilepenpal/core/utils/number_format_utils.dart';
 import 'package:mobilepenpal/data/models/mini_game/mini_game_model.dart';
 import 'package:mobilepenpal/presentation/routes/app_routes.dart';
+import 'package:mobilepenpal/data/controllers/dashboard/navigation_controller.dart';
+import 'package:mobilepenpal/presentation/widgets/home/profile_header_card.dart';
 
 class MiniGamePage extends StatefulWidget {
   const MiniGamePage({super.key});
@@ -80,11 +79,25 @@ class _MiniGamePageState extends State<MiniGamePage>
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: Env.globalMaxWidth),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Column(
                     children: [
-                      const SizedBox(height: 16),
-                      _buildTopBar(),
+                      const SizedBox(height: 12),
+                      Obx(() {
+                        final navController = Get.find<NavigationController>();
+                        final isTabActive =
+                            navController.currentIndex.value == 1;
+                        return ProfileHeaderCard(
+                          heroTag: isTabActive
+                              ? 'hero_profile_header'
+                              : 'hero_profile_header_tab_1',
+                          gradientColors: const [
+                            Color(0xFFFF9F43),
+                            Color(0xFFFF793F),
+                          ],
+                          trailing: const SizedBox.shrink(),
+                        );
+                      }),
                       const Spacer(flex: 1),
                       Obx(() => _buildLevelSign()),
                       const Spacer(flex: 2),
@@ -123,133 +136,6 @@ class _MiniGamePageState extends State<MiniGamePage>
           size: 50,
         ),
       ],
-    );
-  }
-
-  Widget _buildTopBar() {
-    return Row(
-      children: [
-        Expanded(
-          child: Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(40),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                _buildAvatarCircle(),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Builder(
-                    builder: (_) {
-                      if (!Get.isRegistered<HomeController>()) {
-                        return const SizedBox.shrink();
-                      }
-                      final home = Get.find<HomeController>();
-                      return Obx(
-                        () => Text(
-                          home.fullName,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Color(0xFF4A4A4A),
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(width: 16),
-
-        _buildCoinChip(),
-      ],
-    );
-  }
-
-  Widget _buildAvatarCircle() {
-    Widget avatarContent = const Icon(
-      Icons.person,
-      size: 26,
-      color: Colors.white70,
-    );
-    if (Get.isRegistered<HomeController>()) {
-      final home = Get.find<HomeController>();
-      final shopAvatar = home.currentShopAvatar;
-      if (shopAvatar != null && shopAvatar.id != 'default') {
-        if (shopAvatar.assetPath != null) {
-          avatarContent = Padding(
-            padding: const EdgeInsets.all(2),
-            child: Image.asset(shopAvatar.assetPath!, fit: BoxFit.cover),
-          );
-        } else {
-          avatarContent = Icon(
-            shopAvatar.icon ?? Icons.person,
-            size: 26,
-            color: Colors.white,
-          );
-        }
-      }
-    }
-
-    return Container(
-      width: 44,
-      height: 44,
-      decoration: const BoxDecoration(
-        shape: BoxShape.circle,
-        color: Color(0xFF4ECDC4),
-      ),
-      child: ClipOval(child: avatarContent),
-    );
-  }
-
-  Widget _buildCoinChip() {
-    if (!Get.isRegistered<ShopController>()) return const SizedBox.shrink();
-    final shop = Get.find<ShopController>();
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(40),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.stars_rounded, color: Colors.orange.shade400, size: 24),
-          const SizedBox(width: 6),
-          Obx(
-            () => Text(
-              NumberFormatUtils.intText(shop.totalPoints.value),
-              style: const TextStyle(
-                color: Color(0xFFE67E22),
-                fontSize: 18,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -742,13 +628,17 @@ class _MiniGamePageState extends State<MiniGamePage>
       return Image.network(
         Env.backendUrl + game.coverImageUrl!,
         fit: BoxFit.contain,
-        errorBuilder: (_, __, ___) => _buildLocalOrFallbackIcon(game, fallbackSize: fallbackSize),
+        errorBuilder: (_, __, ___) =>
+            _buildLocalOrFallbackIcon(game, fallbackSize: fallbackSize),
       );
     }
     return _buildLocalOrFallbackIcon(game, fallbackSize: fallbackSize);
   }
 
-  Widget _buildLocalOrFallbackIcon(MiniGameModel game, {double fallbackSize = 40}) {
+  Widget _buildLocalOrFallbackIcon(
+    MiniGameModel game, {
+    double fallbackSize = 40,
+  }) {
     String? assetPath;
     switch (game.id) {
       case 1: // Consonant Sprint

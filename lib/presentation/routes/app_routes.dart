@@ -6,6 +6,7 @@ class AppRoutes {
   static const offline = '/offline';
 
   static const home = '/home';
+  static const dashboard = '/dashboard';
 
   static const world = '/world/:id';
   static const level = '/world/:worldId/level/:levelId';

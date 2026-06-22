@@ -1,134 +1,53 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'dart:math' as math;
-import 'package:get_storage/get_storage.dart';
-import 'package:lottie/lottie.dart';
 import 'package:mobilepenpal/core/config/env.dart';
 import 'package:mobilepenpal/core/theme/app_colors.dart';
-import 'package:mobilepenpal/data/controllers/auth/auth_controller.dart';
 import 'package:mobilepenpal/data/controllers/home/home_animation_controller.dart';
 import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
-import 'package:mobilepenpal/data/controllers/world/world_controller.dart';
-import 'package:mobilepenpal/data/models/student/student.dart';
-import 'package:mobilepenpal/presentation/screens/home/parent_home.dart';
-import 'package:mobilepenpal/presentation/screens/home/student_home.dart';
-import 'package:mobilepenpal/presentation/widgets/loading_overly.dart';
+import 'package:mobilepenpal/presentation/routes/app_routes.dart';
 import 'package:mobilepenpal/presentation/widgets/home/mode_switcher.dart';
-import 'package:shimmer/shimmer.dart';
-import 'package:mobilepenpal/data/controllers/home/navigation_controller.dart';
-import 'package:mobilepenpal/presentation/screens/mini_game/mini_game_page.dart';
-import 'package:mobilepenpal/presentation/screens/quest/quest_page.dart';
-import 'package:mobilepenpal/presentation/screens/shop/shop_page.dart';
-import 'package:mobilepenpal/data/controllers/shop/shop_controller.dart';
+import 'package:mobilepenpal/presentation/widgets/home/parent_summary_page.dart';
+import 'package:mobilepenpal/presentation/widgets/home/profile_header_card.dart';
+import 'package:mobilepenpal/presentation/screens/dashboard/parent_home.dart';
+import 'package:mobilepenpal/presentation/screens/ai_writing/ai_writing_page.dart';
+import 'dart:math' as math;
 
 class HomePage extends StatelessWidget {
   HomePage({super.key});
 
   final HomeController homeController = Get.find<HomeController>();
-  final AuthController authController = Get.find<AuthController>();
-  final WorldController worldController = Get.find<WorldController>();
   final HomeAnimationController anim = Get.find<HomeAnimationController>();
-  final NavigationController navController = Get.find<NavigationController>();
-
-  final box = GetStorage();
-
-  Student? get student {
-    final studentData = box.read('student');
-    if (studentData != null && studentData is Map<String, dynamic>) {
-      return Student.fromJson(studentData);
-    }
-    return null;
-  }
 
   @override
   Widget build(BuildContext context) {
-    return Obx(() {
-      final isLoading =
-          worldController.isLoading.value || homeController.isLoading.value;
+    return Scaffold(
+      body: Obx(() {
+        final isStudent = homeController.currentMode.value == 'student';
 
-      return LoadingOverlay(
-        isLoading: isLoading,
-        child: Scaffold(
-          body: IndexedStack(
-            index: navController.currentIndex.value,
-            children: [
-              _buildCourseTab(context, homeController, worldController, anim),
-              MiniGamePage(),
-              QuestPage(),
-              ShopPage(),
-            ],
-          ),
-          bottomNavigationBar: Container(
-            height: 52 + MediaQuery.of(context).padding.bottom,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, -5),
-                ),
-              ],
-            ),
-            child: SafeArea(
-              top: false,
-              child: Row(
-                children: [
-                  _buildNavItem(0, Icons.menu_book_rounded),
-                  _buildNavItem(1, Icons.sports_esports_rounded),
-                  _buildNavItem(2, Icons.bolt_rounded),
-                  _buildNavItem(3, Icons.storefront_rounded),
-                ],
-              ),
+        return AnimatedContainer(
+          width: double.infinity,
+          height: double.infinity,
+          duration: const Duration(milliseconds: 300),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: isStudent
+                  ? const [
+                      Color(0xFFF3FBFF),
+                      Color(0xFFF7F8FF),
+                      Color(0xFFFFF7F2),
+                    ]
+                  : const [
+                      AppColors.primary,
+                      Color(0xFF1e8c79),
+                      Color(0xFF49aa7c),
+                    ],
             ),
           ),
-        ),
-      );
-    });
-  }
-
-  Widget _buildCourseTab(
-    BuildContext context,
-    HomeController homeController,
-    WorldController worldController,
-    HomeAnimationController anim,
-  ) {
-    return Stack(
-      children: [
-        Obx(() {
-          final isStudent = homeController.currentMode.value == 'student';
-
-          return AnimatedSwitcher(
-            duration: const Duration(milliseconds: 240),
-            switchInCurve: Curves.easeOut,
-            switchOutCurve: Curves.easeIn,
-            child: Container(
-              key: ValueKey<bool>(isStudent),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: isStudent
-                      ? const [
-                          Color(0xFFF3FBFF),
-                          Color(0xFFF7F8FF),
-                          Color(0xFFFFF7F2),
-                        ]
-                      : const [
-                          AppColors.primary,
-                          Color(0xFF1e8c79),
-                          Color(0xFF49aa7c),
-                        ],
-                ),
-              ),
-            ),
-          );
-        }),
-
-        SafeArea(
-          bottom: false,
           child: Stack(
             children: [
+              // Rotating square animations from dashboard
               _buildDecorRotatedSquareAnimated(
                 anim: anim,
                 left: -80,
@@ -148,281 +67,344 @@ class HomePage extends StatelessWidget {
                 phase: 0.10,
               ),
 
-              Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(
-                    maxWidth: Env.globalMaxWidth,
-                  ),
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 12),
-
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Obx(
-                          () => _buildHeroHeader(context, homeController),
-                        ),
+              SafeArea(
+                child: SingleChildScrollView(
+                  physics: const ClampingScrollPhysics(),
+                  padding: EdgeInsets
+                      .zero, // Zero out parent padding to control individual element margins exactly
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(
+                        maxWidth: Env.globalMaxWidth,
                       ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const SizedBox(
+                            height: 12,
+                          ), // Exact match to top margin of DashboardPage
+                          // User Info Card (copied from Dashboard Hero Header with sparkles)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: const ProfileHeaderCard(),
+                          ),
+                          const SizedBox(height: 20),
 
-                      const SizedBox(height: 12),
+                          // Mode Switcher
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: _buildModeCard(),
+                          ),
+                          const SizedBox(height: 20),
 
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: _buildModeCard(homeController),
-                      ),
-
-                      const SizedBox(height: 12),
-
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: Obx(() {
-                            final isStudent =
-                                homeController.currentMode.value == 'student';
-
-                            return IndexedStack(
-                              index: isStudent ? 0 : 1,
-                              children: [
-                                StudentHome(homeController: homeController),
-                                ParentHome(homeController: homeController),
-                              ],
-                            );
-                          }),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildHeroHeader(BuildContext context, HomeController homeController) {
-    final isStudent = homeController.currentMode.value == 'student';
-
-    final isLoadingProfile =
-        homeController.isProfileLoading.value &&
-        homeController.student.value == null;
-
-    final name = isStudent
-        ? homeController.fullName
-        : homeController.parentName;
-
-    Widget shimmerBlock({
-      required double width,
-      required double height,
-      double radius = 12,
-    }) {
-      return Shimmer.fromColors(
-        baseColor: Colors.white.withValues(alpha: 0.22),
-        highlightColor: Colors.white.withValues(alpha: 0.38),
-        child: Container(
-          width: width,
-          height: height,
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.24),
-            borderRadius: BorderRadius.circular(radius),
-          ),
-        ),
-      );
-    }
-
-    Widget shimmerCircle(double size) {
-      return Shimmer.fromColors(
-        baseColor: Colors.white.withValues(alpha: 0.18),
-        highlightColor: Colors.white.withValues(alpha: 0.34),
-        child: Container(
-          width: size,
-          height: size,
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            shape: BoxShape.circle,
-          ),
-        ),
-      );
-    }
-
-    return Stack(
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24),
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [AppColors.primary, AppColors.secondary],
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.08),
-                blurRadius: 18,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Container(
-                width: 58,
-                height: 58,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white.withValues(alpha: 0.22),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.35),
-                    width: 2,
-                  ),
-                ),
-                child: ClipOval(
-                  child: isLoadingProfile
-                      ? Center(child: shimmerCircle(46))
-                      : _buildAvatarContent(homeController),
-                ),
-              ),
-
-              const SizedBox(width: 12),
-
-              // Text area
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      isStudent ? "👋 ${'welcome'.tr}" : "✨ ${'welcome'.tr}",
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
+                          // Content based on mode (Student shows stats & navigation, Parent shows embedded dashboard)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Obx(() {
+                              final isStudent =
+                                  homeController.currentMode.value == 'student';
+                              if (isStudent) {
+                                return Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    _buildExtraInfoSection(context),
+                                    const SizedBox(height: 24),
+                                    _buildNavigationSection(context),
+                                    const SizedBox(height: 20),
+                                  ],
+                                );
+                              } else {
+                                return ParentHome(
+                                  homeController: homeController,
+                                  isNested: true,
+                                );
+                              }
+                            }),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 6),
-
-                    if (isLoadingProfile)
-                      shimmerBlock(width: 170, height: 18, radius: 10)
-                    else
-                      Text(
-                        name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.white,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-
-              Padding(
-                padding: const EdgeInsets.only(right: 8.0),
-                child: RepaintBoundary(
-                  child: Lottie.asset(
-                    'assets/animated/cat.json',
-                    width: 72,
-                    height: 72,
-                    repeat: true,
-                    animate: true,
-                    fit: BoxFit.cover,
                   ),
                 ),
               ),
             ],
           ),
-        ),
-
-        const Positioned.fill(
-          child: IgnorePointer(
-            child: RepaintBoundary(child: _SparklesOverlay()),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildAvatarContent(HomeController homeController) {
-    final ShopAvatar? shopAvatar = homeController.currentShopAvatar;
-
-    if (shopAvatar != null && shopAvatar.id != 'default') {
-      if (shopAvatar.assetPath != null) {
-        return Padding(
-          padding: const EdgeInsets.all(2),
-          child: Image.asset(shopAvatar.assetPath!, fit: BoxFit.cover),
         );
-      }
-      return Icon(
-        shopAvatar.icon ?? Icons.person,
-        size: 34,
-        color: Colors.white,
-      );
-    }
-
-    return const Icon(Icons.person, size: 34, color: Colors.white);
-  }
-
-  Widget _buildNavItem(int index, IconData icon) {
-    return Expanded(
-      child: InkWell(
-        onTap: () => navController.changePage(index),
-        splashColor: AppColors.primary.withValues(alpha: 0.1),
-        highlightColor: Colors.transparent,
-        child: Obx(() {
-          final isSelected = navController.currentIndex.value == index;
-          return Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                icon,
-                color: isSelected ? AppColors.primary : Colors.grey.shade400,
-                size: 28,
-              ),
-              if (isSelected)
-                Container(
-                  margin: const EdgeInsets.only(top: 4),
-                  width: 4,
-                  height: 4,
-                  decoration: const BoxDecoration(
-                    color: AppColors.primary,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-            ],
-          );
-        }),
-      ),
+      }),
     );
   }
 
-  Widget _buildModeCard(HomeController homeController) {
+
+
+  Widget _buildModeCard() {
     return Container(
-      margin: EdgeInsets.symmetric(vertical: 10),
-      // padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        // color: Colors.white.withValues(alpha: 0.85),
         color: Colors.white,
-        borderRadius: BorderRadius.circular(25),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 14,
-            offset: const Offset(0, 8),
+            offset: const Offset(0, 6),
           ),
         ],
-        // border: Border.all(
-        //   color: Colors.white.withValues(alpha: 0.9),
-        //   width: 1,
-        // ),
       ),
       child: ModeSwitcher(
         currentMode: homeController.currentMode,
         onModeChanged: (mode) => homeController.requestModeChange(mode),
       ),
+    );
+  }
+
+  Widget _buildExtraInfoSection(BuildContext context) {
+    final isStudent = homeController.currentMode.value == 'student';
+
+    if (isStudent) {
+      return _buildStudentStats();
+    } else {
+      return _buildParentSummarySection();
+    }
+  }
+
+  Widget _buildStudentStats() {
+    final student = homeController.student.value;
+    final coinsVal = student?.coin ?? 0;
+    final streakVal = student?.streak ?? 0;
+
+    Widget statItem({
+      required String title,
+      required String value,
+      required IconData icon,
+      required Color color,
+      required List<Color> gradientColors,
+    }) {
+      return Expanded(
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 8),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: color.withValues(alpha: 0.15), width: 1),
+            boxShadow: [
+              BoxShadow(
+                color: color.withValues(alpha: 0.04),
+                blurRadius: 12,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    colors: gradientColors,
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+                child: Icon(icon, color: Colors.white, size: 22),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                  color: Color(0xFF1E293B),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.grey.shade500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 12),
+          child: Text(
+            'statistics'.tr,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w900,
+              color: Color(0xFF1E293B),
+            ),
+          ),
+        ),
+        Row(
+          children: [
+            statItem(
+              title: 'streak'.tr,
+              value: '$streakVal',
+              icon: Icons.local_fire_department_rounded,
+              color: Colors.orange,
+              gradientColors: [Colors.orange, Colors.redAccent],
+            ),
+            const SizedBox(width: 12),
+            statItem(
+              title: 'coins'.tr,
+              value: '$coinsVal',
+              icon: Icons.monetization_on_rounded,
+              color: Colors.amber.shade700,
+              gradientColors: [Colors.amber, Colors.orangeAccent],
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildParentSummarySection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 4),
+        ParentSummaryCard(homeController: homeController),
+      ],
+    );
+  }
+
+  Widget _buildNavigationSection(BuildContext context) {
+    final isStudent = homeController.currentMode.value == 'student';
+
+    Widget navButton({
+      required String title,
+      required String subtitle,
+      required IconData icon,
+      required Color primaryColor,
+      required Color secondaryColor,
+      required VoidCallback onTap,
+    }) {
+      return Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [primaryColor, secondaryColor],
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: primaryColor.withValues(alpha: 0.15),
+              blurRadius: 16,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(24),
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.all(22),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: Icon(icon, color: Colors.white, size: 28),
+                  ),
+                  const SizedBox(width: 18),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          subtitle,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white.withValues(alpha: 0.8),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 12),
+          child: Text(
+            'activities'.tr,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w900,
+              color: isStudent ? const Color(0xFF1E293B) : Colors.white,
+            ),
+          ),
+        ),
+        navButton(
+          title: 'my_lesson'.tr,
+          subtitle: isStudent
+              ? 'my_lesson_student_desc'.tr
+              : 'my_lesson_parent_desc'.tr,
+          icon: Icons.menu_book_rounded,
+          primaryColor: isStudent
+              ? const Color(0xFF0D9488)
+              : const Color(0xFF006D5B),
+          secondaryColor: isStudent
+              ? const Color(0xFF0F766E)
+              : const Color(0xFF0F4C43),
+          onTap: () => Get.toNamed(AppRoutes.dashboard),
+        ),
+        navButton(
+          title: 'my_writing'.tr,
+          subtitle: isStudent
+              ? 'my_writing_student_desc'.tr
+              : 'my_writing_parent_desc'.tr,
+          icon: Icons.draw_rounded,
+          primaryColor: isStudent
+              ? const Color(0xFF2563EB)
+              : const Color(0xFF1D4ED8),
+          secondaryColor: isStudent
+              ? const Color(0xFF1D4ED8)
+              : const Color(0xFF1E3A8A),
+          onTap: () => Get.to(() => const AiWritingPage()),
+        ),
+      ],
     );
   }
 
@@ -495,49 +477,3 @@ class HomePage extends StatelessWidget {
   }
 }
 
-class _SparklesOverlay extends StatelessWidget {
-  const _SparklesOverlay();
-
-  @override
-  Widget build(BuildContext context) {
-    final HomeAnimationController anim = Get.find<HomeAnimationController>();
-
-    return AnimatedBuilder(
-      animation: anim.bubbleController,
-      builder: (_, __) {
-        return CustomPaint(
-          painter: _BubblesPainter(anim, anim.bubbleController.value),
-        );
-      },
-    );
-  }
-}
-
-class _BubblesPainter extends CustomPainter {
-  final HomeAnimationController anim;
-  final double t;
-
-  _BubblesPainter(this.anim, this.t);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    for (final b in anim.bubbles) {
-      final u = anim.bubbleU(b);
-      final a = anim.bubbleAlphaFromU(u);
-
-      final dx = b.x * size.width;
-      final dy = (b.y * size.height) + anim.bubbleYOffsetFromU(u);
-
-      final paint = Paint()
-        ..color = Colors.white.withValues(alpha: a)
-        ..style = PaintingStyle.fill;
-
-      canvas.drawCircle(Offset(dx, dy), b.r, paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _BubblesPainter oldDelegate) {
-    return oldDelegate.t != t;
-  }
-}

@@ -506,6 +506,7 @@ final Map<String, String> enUS = {
 
   // ===== Quest & Challenge =====
   'daily_quests': 'Daily Quests',
+  'my_quest': 'My Quest',
   'all_quests_completed': 'All quests completed!',
   'quests_done_today': '@completed/@total quests done today',
   'daily_streak_count': '@streak streak',
@@ -553,4 +554,13 @@ final Map<String, String> enUS = {
   'your_coins': 'Your Coins',
   'buy_avatar_confirm': 'Unlock this new friend?',
   'avatar_equipped_compliment': 'You look amazing with this avatar!',
+  'my_lesson': 'My Lesson',
+  'my_writing': 'My Writing',
+  'writing_coming_soon': 'Khmer Handwriting Practice feature is coming soon!',
+  'statistics': 'Statistics',
+  'activities': 'Activities',
+  'my_lesson_student_desc': 'Learn Khmer letters & levels',
+  'my_lesson_parent_desc': 'Review children courses & progress',
+  'my_writing_student_desc': 'Practice tracing & drawing',
+  'my_writing_parent_desc': 'View child writing submissions',
 };

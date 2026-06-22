@@ -175,12 +175,61 @@ class ParentSummaryCard extends StatelessWidget {
           ),
         ),
 
+        _buildRefreshIcon(
+          isBusy: isBusy,
+          onTap: () async {
+            if (showDaily) {
+              await homeController.fetchDailySummary();
+            } else {
+              await homeController.fetchWeeklySummary();
+            }
+          },
+        ),
+        const SizedBox(width: 8),
         _buildToggleIcon(
           isDaily: showDaily,
           isBusy: isBusy,
           onTap: () async => _toggleAndFetch(showDaily),
         ),
       ],
+    );
+  }
+
+  Widget _buildRefreshIcon({
+    required bool isBusy,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: isBusy ? null : onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          width: 42,
+          height: 42,
+          decoration: BoxDecoration(
+            color: _brand.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: _brand.withValues(alpha: 0.18)),
+          ),
+          child: Center(
+            child: isBusy
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: _brand,
+                    ),
+                  )
+                : const Icon(
+                    Icons.refresh_rounded,
+                    color: _brand,
+                    size: 20,
+                  ),
+          ),
+        ),
+      ),
     );
   }
 

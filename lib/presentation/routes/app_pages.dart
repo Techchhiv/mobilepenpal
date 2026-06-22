@@ -18,6 +18,7 @@ import 'package:mobilepenpal/presentation/screens/auth/register_page.dart';
 import 'package:mobilepenpal/presentation/screens/auth/splash_page.dart';
 import 'package:mobilepenpal/presentation/screens/classroom/classroom_page.dart';
 import 'package:mobilepenpal/presentation/screens/home/home_page.dart';
+import 'package:mobilepenpal/presentation/screens/dashboard/dashboard_page.dart';
 import 'package:mobilepenpal/presentation/screens/report/report_detail_page.dart';
 import 'package:mobilepenpal/presentation/screens/settings/setting_page.dart';
 import 'package:mobilepenpal/presentation/screens/world/world_detail_page.dart';
@@ -62,6 +63,14 @@ class AppPages {
       page: () => HomePage(),
       binding: HomeBinding(),
       middlewares: [AuthMiddleware()],
+      transition: Transition.fade,
+    ),
+    GetPage(
+      name: AppRoutes.dashboard,
+      page: () => DashboardPage(),
+      binding: HomeBinding(),
+      middlewares: [AuthMiddleware()],
+      transition: Transition.fade,
     ),
 
     GetPage(

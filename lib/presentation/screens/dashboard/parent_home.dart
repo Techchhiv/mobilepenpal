@@ -2,15 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobilepenpal/core/theme/app_colors.dart';
 import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
-import 'package:mobilepenpal/presentation/screens/home/qr_scanner_page.dart';
+import 'package:mobilepenpal/presentation/screens/dashboard/qr_scanner_page.dart';
 import 'package:mobilepenpal/presentation/widgets/home/parent_summary_page.dart';
 import 'package:mobilepenpal/presentation/widgets/input_modal.dart';
 import 'package:shimmer/shimmer.dart';
 
 class ParentHome extends StatelessWidget {
   final HomeController homeController;
+  final bool isNested;
 
-  const ParentHome({super.key, required this.homeController});
+  const ParentHome({
+    super.key,
+    required this.homeController,
+    this.isNested = false,
+  });
 
   static const Color _brand = Color(0xFF00897B);
 
@@ -33,6 +38,30 @@ class ParentHome extends StatelessWidget {
         });
       },
       builder: (_) {
+        if (isNested) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 12),
+              _buildTopActionsRow(),
+              const SizedBox(height: 16),
+              Obx(() {
+                final c = Get.find<HomeController>();
+                if (!c.hasSchool) return const SizedBox.shrink();
+
+                return Column(
+                  children: [
+                    _buildClassroomSection(),
+                    const SizedBox(height: 16),
+                  ],
+                );
+              }),
+              ParentSummaryCard(homeController: homeController),
+              const SizedBox(height: 24),
+            ],
+          );
+        }
+
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -40,18 +69,13 @@ class ParentHome extends StatelessWidget {
             _buildTopActionsRow(),
             const SizedBox(height: 16),
             Expanded(
-              child: RefreshIndicator(
-                color: _brand,
-                onRefresh: () async {
-                  await homeController.refreshHome();
-                },
-                child: SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(
-                    parent: BouncingScrollPhysics(),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(
+                  parent: BouncingScrollPhysics(),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                       Obx(() {
                         final c = Get.find<HomeController>();
                         if (!c.hasSchool) return const SizedBox.shrink();
@@ -71,7 +95,6 @@ class ParentHome extends StatelessWidget {
                   ),
                 ),
               ),
-            ),
           ],
         );
       },

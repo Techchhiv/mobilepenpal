@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobilepenpal/core/config/env.dart';
-import 'package:mobilepenpal/core/utils/number_format_utils.dart';
 import 'package:mobilepenpal/data/controllers/quest/quest_controller.dart';
 import 'package:mobilepenpal/presentation/widgets/quest/quest_card.dart';
 import 'package:mobilepenpal/presentation/widgets/loading_overly.dart';
+import 'package:mobilepenpal/data/controllers/dashboard/navigation_controller.dart';
+import 'package:mobilepenpal/presentation/widgets/home/profile_header_card.dart';
 
 /// The main Quest screen that replaces the old Daily Challenge page.
 ///
@@ -61,17 +62,98 @@ class QuestPage extends GetView<QuestController> {
                     constraints: const BoxConstraints(
                       maxWidth: Env.globalMaxWidth,
                     ),
-                    child: Obx(() {
-                      if (controller.isLoading.value && controller.quests.isEmpty) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 12),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Obx(() {
+                            final navController =
+                                Get.find<NavigationController>();
+                            final isTabActive =
+                                navController.currentIndex.value == 2;
+                            final total = controller.totalQuests;
+                            final done = controller.completedCount;
 
-                      if (controller.quests.isEmpty) {
-                        return _buildEmptyState();
-                      }
+                            return ProfileHeaderCard(
+                              heroTag: isTabActive
+                                  ? 'hero_profile_header'
+                                  : 'hero_profile_header_tab_2',
+                              gradientColors: const [
+                                Color(0xFF845EF7),
+                                Color(0xFF6C3CE1),
+                              ],
+                              // subtitle: 'my_quest'.tr,
+                              trailing: SizedBox(
+                                width: 56,
+                                height: 56,
+                                child: Stack(
+                                  alignment: Alignment.center,
+                                  children: [
+                                    // Track
+                                    const SizedBox(
+                                      width: 56,
+                                      height: 56,
+                                      child: CircularProgressIndicator(
+                                        value: 1.0,
+                                        strokeWidth: 5,
+                                        color: Colors.white24,
+                                        strokeCap: StrokeCap.round,
+                                      ),
+                                    ),
+                                    // Fill
+                                    SizedBox(
+                                      width: 56,
+                                      height: 56,
+                                      child: CircularProgressIndicator(
+                                        value: total > 0 ? done / total : 0.0,
+                                        strokeWidth: 5,
+                                        color: Colors.white,
+                                        backgroundColor: Colors.transparent,
+                                        strokeCap: StrokeCap.round,
+                                      ),
+                                    ),
+                                    // Label
+                                    Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          '$done/$total',
+                                          style: const TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w900,
+                                            color: Colors.white,
+                                            height: 1.0,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }),
+                        ),
+                        Expanded(
+                          child: Obx(() {
+                            if (controller.isLoading.value &&
+                                controller.quests.isEmpty) {
+                              return const Center(
+                                child: CircularProgressIndicator(),
+                              );
+                            }
 
-                      return _buildQuestList();
-                    }),
+                            if (controller.quests.isEmpty) {
+                              return _buildEmptyState();
+                            }
+
+                            return _buildQuestList();
+                          }),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -86,11 +168,7 @@ class QuestPage extends GetView<QuestController> {
   Widget _buildQuestList() {
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(18, 16, 18, 0),
-          child: _buildHeader(),
-        ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
         Expanded(
           child: RefreshIndicator(
             onRefresh: controller.refreshQuests,
@@ -104,7 +182,9 @@ class QuestPage extends GetView<QuestController> {
                 ...controller.quests.map(
                   (q) => QuestCard(
                     quest: q,
-                    onStart: q.isCompleted ? null : () => controller.startQuest(q.id),
+                    onStart: q.isCompleted
+                        ? null
+                        : () => controller.startQuest(q.id),
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -113,187 +193,6 @@ class QuestPage extends GetView<QuestController> {
           ),
         ),
       ],
-    );
-  }
-
-  // ── Top header card ─────────────────────────────────────────────
-  Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF845EF7), Color(0xFF6C3CE1)],
-        ),
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF845EF7).withValues(alpha: 0.30),
-            blurRadius: 22,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          // Left section — title + subtitle
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '🗡️  ${'daily_quests'.tr}',
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w900,
-                    color: Colors.white,
-                    height: 1.2,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Obx(
-                  () => Text(
-                    controller.allCompleted
-                        ? 'all_quests_completed'.tr
-                        : 'quests_done_today'.trParams({
-                            'completed': NumberFormatUtils.intText(controller.completedCount),
-                            'total': NumberFormatUtils.intText(controller.totalQuests),
-                          }),
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white.withValues(alpha: 0.85),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                // Streak + XP pills
-                Row(
-                  children: [
-                    _miniPill(
-                      icon: Icons.local_fire_department_rounded,
-                      label: 'daily_streak_count'.trParams({
-                        'streak': NumberFormatUtils.intText(controller.dailyStreak),
-                      }),
-                      color: const Color(0xFFFF6B6B),
-                    ),
-                    const SizedBox(width: 8),
-                    _miniPill(
-                      icon: Icons.monetization_on_rounded,
-                      label: 'coins_count'.trParams({
-                        'coins': NumberFormatUtils.intText(controller.totalCoins),
-                      }),
-                      color: const Color(0xFFFFB347),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(width: 12),
-
-          // Right section — circular progress
-          _buildProgressRing(),
-        ],
-      ),
-    );
-  }
-
-  // ── Circular progress ring ──────────────────────────────────────
-  Widget _buildProgressRing() {
-    return Obx(() {
-      final total = controller.totalQuests;
-      final done = controller.completedCount;
-      final pct = total > 0 ? done / total : 0.0;
-
-      return SizedBox(
-        width: 72,
-        height: 72,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            // Track
-            SizedBox(
-              width: 72,
-              height: 72,
-              child: CircularProgressIndicator(
-                value: 1.0,
-                strokeWidth: 7,
-                color: Colors.white.withValues(alpha: 0.18),
-                strokeCap: StrokeCap.round,
-              ),
-            ),
-            // Fill
-            SizedBox(
-              width: 72,
-              height: 72,
-              child: CircularProgressIndicator(
-                value: pct,
-                strokeWidth: 7,
-                color: Colors.white,
-                backgroundColor: Colors.transparent,
-                strokeCap: StrokeCap.round,
-              ),
-            ),
-            // Label
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  NumberFormatUtils.fraction(done, total),
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w900,
-                    color: Colors.white,
-                    height: 1,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'done'.tr.toLowerCase(),
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white.withValues(alpha: 0.7),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      );
-    });
-  }
-
-  // ── Small info pill widget ──────────────────────────────────────
-  Widget _miniPill({
-    required IconData icon,
-    required String label,
-    required Color color,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.18),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: color),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
-            ),
-          ),
-        ],
-      ),
     );
   }
 

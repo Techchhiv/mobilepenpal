@@ -501,6 +501,7 @@ final Map<String, String> kmKH = {
 
   // ===== Quest & Challenge =====
   'daily_quests': 'បេសកកម្មប្រចាំថ្ងៃ',
+  'my_quest': 'បេសកកម្មរបស់ខ្ញុំ',
   'all_quests_completed': 'បានបញ្ចប់បេសកកម្មទាំងអស់!',
   'quests_done_today': 'បានបញ្ចប់បេសកកម្ម @completed/@total ថ្ងៃនេះ',
   'daily_streak_count': 'ដំណើរបន្ត @streak ថ្ងៃ',
@@ -549,4 +550,13 @@ final Map<String, String> kmKH = {
   'your_coins': 'កាក់របស់អ្នក',
   'buy_avatar_confirm': 'តើអ្នកចង់ដោះសោមិត្តភក្តិថ្មីនេះទេ?',
   'avatar_equipped_compliment': 'អ្នកមើលទៅគួរឱ្យស្រឡាញ់ណាស់ជាមួយរូបនេះ!',
+  'my_lesson': 'មេរៀនរបស់ខ្ញុំ',
+  'my_writing': 'ការសរសេររបស់ខ្ញុំ',
+  'writing_coming_soon': 'មុខងារហ្វឹកហាត់សរសេរអក្សរខ្មែរនឹងមកដល់ឆាប់ៗនេះ!',
+  'statistics': 'ស្ថិតិ',
+  'activities': 'សកម្មភាព',
+  'my_lesson_student_desc': 'រៀនតួអក្សរខ្មែរ និងកម្រិតសិក្សា',
+  'my_lesson_parent_desc': 'ពិនិត្យមើលវគ្គសិក្សា និងការវិវឌ្ឍរបស់កូន',
+  'my_writing_student_desc': 'ហ្វឹកហាត់សរសេរតាម និងគូររូប',
+  'my_writing_parent_desc': 'មើលស្នាដៃសរសេររបស់កូន',
 };

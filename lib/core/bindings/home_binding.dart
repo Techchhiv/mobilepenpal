@@ -2,7 +2,7 @@ import 'package:get/get.dart';
 import 'package:mobilepenpal/data/controllers/auth/auth_controller.dart';
 import 'package:mobilepenpal/data/controllers/home/home_animation_controller.dart';
 import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
-import 'package:mobilepenpal/data/controllers/home/navigation_controller.dart';
+import 'package:mobilepenpal/data/controllers/dashboard/navigation_controller.dart';
 import 'package:mobilepenpal/data/controllers/mini_game/adventure/adventure_controller.dart';
 import 'package:mobilepenpal/data/controllers/mini_game/mini_game_hub_controller.dart';
 import 'package:mobilepenpal/data/controllers/quest/quest_controller.dart';

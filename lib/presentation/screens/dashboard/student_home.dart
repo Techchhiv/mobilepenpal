@@ -17,8 +17,8 @@ class StudentHome extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final loading = homeController.isProfileLoading.value;
       final list = homeController.studentProgress;
+      final loading = homeController.isProfileLoading.value && list.isEmpty;
 
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -28,21 +28,48 @@ class StudentHome extends StatelessWidget {
             child: Row(
               children: [
                 const Text("📚  "),
-                Text(
-                  'my_course'.tr,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w900,
+                Expanded(
+                  child: Text(
+                    'my_course'.tr,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                 ),
+                Obx(() {
+                  final isBusy = homeController.isProfileLoading.value;
+                  return IconButton(
+                    onPressed: isBusy
+                        ? null
+                        : () async => await homeController.fetchStudentProfile(),
+                    icon: isBusy
+                        ? SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Theme.of(context).primaryColor,
+                            ),
+                          )
+                        : Icon(
+                            Icons.refresh_rounded,
+                            color: Theme.of(context).primaryColor,
+                            size: 20,
+                          ),
+                    style: IconButton.styleFrom(
+                      padding: const EdgeInsets.all(8),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                  );
+                }),
               ],
             ),
           ),
 
           Expanded(
-            child: RefreshIndicator(
-              onRefresh: () async => await homeController.refreshHome(),
-              child: loading
+            child: loading
                   ? ListView.builder(
                       physics: const AlwaysScrollableScrollPhysics(),
                       padding: EdgeInsets.zero,
@@ -160,7 +187,6 @@ class StudentHome extends StatelessWidget {
                             },
                           )),
             ),
-          ),
         ],
       );
     });

@@ -5,6 +5,8 @@ import 'package:mobilepenpal/core/config/env.dart';
 import 'package:mobilepenpal/core/theme/app_colors.dart';
 import 'package:mobilepenpal/core/utils/number_format_utils.dart';
 import 'package:mobilepenpal/data/controllers/shop/shop_controller.dart';
+import 'package:mobilepenpal/data/controllers/dashboard/navigation_controller.dart';
+import 'package:mobilepenpal/presentation/widgets/home/profile_header_card.dart';
 
 class ShopPage extends StatelessWidget {
   final ShopController controller = Get.find<ShopController>();
@@ -55,7 +57,20 @@ class ShopPage extends StatelessWidget {
                   ),
                   child: Column(
                     children: [
-                      _buildPointsHeader(),
+                      const SizedBox(height: 12),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Obx(() {
+                          final navController = Get.find<NavigationController>();
+                          final isTabActive = navController.currentIndex.value == 3;
+                          return ProfileHeaderCard(
+                            heroTag: isTabActive ? 'hero_profile_header' : 'hero_profile_header_tab_3',
+                            showCoin: true,
+                            gradientColors: const [Color(0xFFFFB74D), Color(0xFFF57C00)],
+                          );
+                        }),
+                      ),
+                      const SizedBox(height: 12),
                       Expanded(child: _buildAvatarGrid(context)),
                     ],
                   ),
@@ -103,141 +118,7 @@ class ShopPage extends StatelessWidget {
     );
   }
 
-  Widget _buildPointsHeader() {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(18, 16, 18, 8),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [
-            Color(0xFFFFB74D), // warm orange
-            Color(0xFFF57C00), // golden orange
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFFF57C00).withValues(alpha: 0.35),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Stack(
-        children: [
-          Positioned(
-            right: -20,
-            top: -20,
-            child: Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: 0.1),
-              ),
-            ),
-          ),
-          Positioned(
-            left: 30,
-            bottom: -35,
-            child: Container(
-              width: 70,
-              height: 70,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: 0.08),
-              ),
-            ),
-          ),
 
-          Row(
-            children: [
-              Container(
-                width: 54,
-                height: 54,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.15),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.stars_rounded,
-                  color: Colors.amber,
-                  size: 42,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'your_points'.tr,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Obx(
-                      () => Text(
-                        NumberFormatUtils.intText(controller.totalPoints.value),
-                        style: const TextStyle(
-                          fontSize: 34,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.white,
-                          height: 1.1,
-                          shadows: [
-                            Shadow(
-                              color: Colors.black12,
-                              offset: Offset(0, 2),
-                              blurRadius: 4,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              Obx(() {
-                final avatar = controller.currentAvatar;
-                return Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 3.5),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.12),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  child: _buildAvatarCircle(
-                    avatar,
-                    size: 56,
-                    showBorder: false,
-                  ),
-                );
-              }),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildAvatarGrid(BuildContext context) {
     final isTablet = MediaQuery.of(context).size.width >= 600;
