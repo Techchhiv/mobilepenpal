@@ -314,8 +314,8 @@ final Map<String, String> kmKH = {
   'math_practice': 'លំហាត់គណិតវិទ្យា',
   'consonants': 'ព្យញ្ជនៈ',
   'digits': 'លេខ',
-  'independent_vowels': 'ស្រៈពេញតួរ',
-  'dependent_vowels': 'ស្រៈនិស័្សយ',
+  'independent_vowels': 'ស្រៈពេញតួ',
+  'dependent_vowels': 'ស្រៈនិស្ស័យ',
 
   // ===== Home & Dashboard =====
   'achievements': 'សមិទ្ធផល',
@@ -559,4 +559,20 @@ final Map<String, String> kmKH = {
   'my_lesson_parent_desc': 'ពិនិត្យមើលវគ្គសិក្សា និងការវិវឌ្ឍរបស់កូន',
   'my_writing_student_desc': 'ហ្វឹកហាត់សរសេរតាម និងគូររូប',
   'my_writing_parent_desc': 'មើលស្នាដៃសរសេររបស់កូន',
+
+  // AI Writing Practice
+  'start_practice': 'ចាប់ផ្តើមសរសេរ',
+  'character': 'តួអក្សរ',
+  'repetition': 'ការសរសេរ',
+  'finish': 'រួចរាល់',
+  'leave_practice': 'ចាកចេញ?',
+  'leave_practice_desc': 'ការរីកចម្រើនបច្ចុប្បន្នរបស់អ្នកនឹងមិនត្រូវបានរក្សាទុកទេ។',
+  'leave': 'ចាកចេញ',
+  'numbers': 'លេខ',
+  'selected_count': 'បានជ្រើសរើស @count',
+  'repeat_count_label': 'ចំនួនដង៖',
+  'hint': 'ជំនួយ',
+  'hint_coming_soon': 'មុខងារជំនួយនឹងមកដល់ឆាប់ៗនេះ!',
+  'writing_practice_instruction': 'មើលគំរូអក្សរ រួចសរសេរខាងក្រោម!',
+  'draw_carefully': 'សរសេរតាមលំដាប់លំដោយ។',
 };

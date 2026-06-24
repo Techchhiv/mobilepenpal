@@ -563,4 +563,20 @@ final Map<String, String> enUS = {
   'my_lesson_parent_desc': 'Review children courses & progress',
   'my_writing_student_desc': 'Practice tracing & drawing',
   'my_writing_parent_desc': 'View child writing submissions',
+
+  // AI Writing Practice
+  'start_practice': 'Start Practice',
+  'character': 'Character',
+  'repetition': 'Writing',
+  'finish': 'Finish',
+  'leave_practice': 'Leave Practice?',
+  'leave_practice_desc': 'Your current progress will not be saved.',
+  'leave': 'Leave',
+  'numbers': 'Numbers',
+  'selected_count': '@count selected',
+  'repeat_count_label': 'Repeat count:',
+  'hint': 'Hint',
+  'hint_coming_soon': 'Hint feature is coming soon!',
+  'writing_practice_instruction': 'Look at the guide and write below!',
+  'draw_carefully': 'Follow the strokes pattern.',
 };
