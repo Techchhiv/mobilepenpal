@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobilepenpal/core/localization/locale_controller.dart';
+import 'package:mobilepenpal/core/theme/app_colors.dart';
 import 'package:mobilepenpal/core/network/route_builder.dart';
 import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/world_controller.dart';
@@ -42,7 +43,8 @@ class StudentHome extends StatelessWidget {
                   return IconButton(
                     onPressed: isBusy
                         ? null
-                        : () async => await homeController.fetchStudentProfile(),
+                        : () async =>
+                              await homeController.fetchStudentProfile(),
                     icon: isBusy
                         ? SizedBox(
                             width: 16,
@@ -70,123 +72,127 @@ class StudentHome extends StatelessWidget {
 
           Expanded(
             child: loading
-                  ? ListView.builder(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      padding: EdgeInsets.zero,
-                      itemCount: 2,
-                      itemBuilder: (_, __) => const Padding(
-                        padding: EdgeInsets.only(bottom: 14),
-                        child: CourseCard(isLoading: true),
-                      ),
-                    )
-                  : (list.isEmpty
-                        ? ListView(
-                            physics: const AlwaysScrollableScrollPhysics(),
-                            padding: EdgeInsets.zero,
-                            children: [
-                              SizedBox(height: 140),
-                              Icon(
-                                Icons.menu_book_outlined,
-                                size: 56,
-                                color: Colors.grey,
-                              ),
-                              SizedBox(height: 12),
-                              Center(
-                                child: Text(
-                                  "no_course_available".tr,
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    color: Colors.black54,
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w800,
-                                  ),
+                ? ListView.builder(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: EdgeInsets.zero,
+                    itemCount: 2,
+                    itemBuilder: (_, __) => const Padding(
+                      padding: EdgeInsets.only(bottom: 14),
+                      child: CourseCard(isLoading: true),
+                    ),
+                  )
+                : (list.isEmpty
+                      ? ListView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: EdgeInsets.zero,
+                          children: [
+                            SizedBox(height: 140),
+                            Icon(
+                              Icons.menu_book_outlined,
+                              size: 56,
+                              color: Colors.grey,
+                            ),
+                            SizedBox(height: 12),
+                            Center(
+                              child: Text(
+                                "no_course_available".tr,
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: Colors.black54,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w800,
                                 ),
                               ),
-                              SizedBox(height: 6),
-                              Center(
-                                child: Text(
-                                  "pull_down_to_refresh".tr,
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    color: Colors.grey,
-                                    fontSize: 11.5,
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                            ),
+                            SizedBox(height: 6),
+                            Center(
+                              child: Text(
+                                "pull_down_to_refresh".tr,
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
-                            ],
-                          )
-                        : ListView.builder(
-                            physics: const AlwaysScrollableScrollPhysics(),
-                            padding: EdgeInsets.zero,
-                            itemCount: list.length,
-                            itemBuilder: (_, index) {
-                              final progress = list[index];
-                              final unlocked = progress.isUnlocked == true;
-                              final isSubLocked =
-                                  progress.isLockedBySubscription;
-                              final locale = Get.find<LocaleController>();
-                              final title = locale.isKhmer
-                                  ? (progress.name)
-                                  : (progress.nameEn);
-                              final subtitle = locale.isKhmer
-                                  ? (progress.description)
-                                  : (progress.descriptionEn);
+                            ),
+                          ],
+                        )
+                      : ListView.builder(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: EdgeInsets.zero,
+                          itemCount: list.length,
+                          itemBuilder: (_, index) {
+                            final progress = list[index];
+                            final unlocked = progress.isUnlocked == true;
+                            final isSubLocked = progress.isLockedBySubscription;
+                            final locale = Get.find<LocaleController>();
+                            final title = locale.isKhmer
+                                ? (progress.name)
+                                : (progress.nameEn);
+                            final subtitle = locale.isKhmer
+                                ? (progress.description)
+                                : (progress.descriptionEn);
 
-                              final Color primaryColor = isSubLocked
-                                  ? const Color(0xFFB8860B)
-                                  : _getColorByIndex(index);
+                            final Color primaryColor = isSubLocked
+                                ? const Color(0xFFB8860B)
+                                : _getColorByIndex(index);
 
-                              String buttonLabel;
-                              if (isSubLocked) {
-                                buttonLabel = 'subscribe'.tr;
-                              } else if (!unlocked) {
-                                buttonLabel = 'locked'.tr;
-                              } else if (progress.levelsCompleted > 0) {
-                                buttonLabel = 'continue'.tr;
-                              } else {
-                                buttonLabel = 'start'.tr;
-                              }
+                            String buttonLabel;
+                            if (isSubLocked) {
+                              buttonLabel = 'subscribe'.tr;
+                            } else if (!unlocked) {
+                              buttonLabel = 'locked'.tr;
+                            } else if (progress.levelsCompleted > 0) {
+                              buttonLabel = 'continue'.tr;
+                            } else {
+                              buttonLabel = 'start'.tr;
+                            }
 
-                              if (isSubLocked) {
-                                return Padding(
-                                  padding: const EdgeInsets.only(bottom: 14),
-                                  child: PremiumCourseCard(
-                                    courseTitle: title,
-                                    courseSubtitle: subtitle,
-                                    badgeText: 'premium'.tr,
-                                    completedLessons: progress.levelsCompleted,
-                                    totalLessons: progress.levelsTotal,
-                                    buttonText: buttonLabel,
-                                    onTap: () => _showSubscriptionPrompt(),
-                                  ),
-                                );
-                              }
-
+                            if (isSubLocked) {
                               return Padding(
-                                padding: const EdgeInsets.only(bottom: 14),
-                                child: CourseCard(
+                                padding: const EdgeInsets.only(bottom: 24),
+                                child: PremiumCourseCard(
                                   courseTitle: title,
                                   courseSubtitle: subtitle,
-                                  badgeText: progress.isCompleted
-                                      ? 'completed'.tr
-                                      : 'in_progress'.tr,
+                                  badgeText: 'premium'.tr,
                                   completedLessons: progress.levelsCompleted,
                                   totalLessons: progress.levelsTotal,
                                   buttonText: buttonLabel,
-                                  primaryColor: primaryColor,
-                                  badgeColor: progress.isCompleted
-                                      ? Colors.green
-                                      : const Color(0xFFFF9800),
-                                  onTap: unlocked
-                                      ? () => _openWorld(progress.id)
-                                      : null,
-                                  isLocked: !unlocked && !isSubLocked,
+                                  onTap: () => _showSubscriptionPrompt(),
                                 ),
                               );
-                            },
-                          )),
-            ),
+                            }
+
+                            final cardBgColor =
+                                AppColors.courseCardBgColors[index %
+                                    AppColors.courseCardBgColors.length];
+
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 24),
+                              child: CourseCard(
+                                courseTitle: title,
+                                courseSubtitle: subtitle,
+                                badgeText: progress.isCompleted
+                                    ? 'completed'.tr
+                                    : 'in_progress'.tr,
+                                completedLessons: progress.levelsCompleted,
+                                totalLessons: progress.levelsTotal,
+                                buttonText: buttonLabel,
+                                primaryColor: primaryColor,
+                                bgColor: cardBgColor,
+                                badgeColor: progress.isCompleted
+                                    ? Colors.green
+                                    : const Color(0xFFFF9800),
+                                onTap: unlocked
+                                    ? () => _openWorld(progress.id)
+                                    : null,
+                                isLocked: !unlocked && !isSubLocked,
+                              ),
+                            );
+                          },
+                        )),
+          ),
         ],
       );
     });

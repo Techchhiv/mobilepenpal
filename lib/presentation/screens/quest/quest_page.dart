@@ -6,6 +6,7 @@ import 'package:mobilepenpal/presentation/widgets/quest/quest_card.dart';
 import 'package:mobilepenpal/presentation/widgets/loading_overly.dart';
 import 'package:mobilepenpal/data/controllers/dashboard/navigation_controller.dart';
 import 'package:mobilepenpal/presentation/widgets/home/profile_header_card.dart';
+import 'package:mobilepenpal/presentation/widgets/home/randomly_floating_asset.dart';
 
 /// The main Quest screen that replaces the old Daily Challenge page.
 ///
@@ -28,31 +29,48 @@ class QuestPage extends GetView<QuestController> {
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                Color(0xFFF0F4FF), // soft blue-white
-                Color(0xFFFFF8F0), // warm peach-white
+                Color(0xFFE0F7FA), // Soft cartoon sky cyan
+                Color(0xFFFFF9C4), // Soft cartoon sky yellow
               ],
             ),
           ),
           child: Stack(
             children: [
-              // Decorative background bubbles
-              _bubble(
-                top: -40,
-                right: -30,
-                size: 130,
-                color: const Color(0x22845EF7),
+              // Landscape cartoon background image overlay
+              Positioned.fill(
+                child: Opacity(
+                  opacity: 0.35,
+                  child: Image.asset(
+                    'assets/images/backgrounds/quest_cartoon_background.png',
+                    fit: BoxFit.cover,
+                  ),
+                ),
               ),
-              _bubble(
-                top: 240,
-                left: -20,
-                size: 90,
-                color: const Color(0x224ECDC4),
+
+              // Randomly floating cartoon decors
+              const RandomlyFloatingAsset(
+                assetPath: 'assets/images/illustrations/balloon.png',
+                width: 90,
+                minTop: 80,
+                maxTop: 450,
+                minLeft: -30,
+                maxLeft: 260,
               ),
-              _bubble(
-                bottom: 60,
-                right: -20,
-                size: 110,
-                color: const Color(0x22FF6B6B),
+              const RandomlyFloatingAsset(
+                assetPath: 'assets/images/decorations/cute_star_decor.png',
+                width: 48,
+                minTop: 120,
+                maxTop: 550,
+                minRight: -20,
+                maxRight: 240,
+              ),
+              const RandomlyFloatingAsset(
+                assetPath: 'assets/images/illustrations/bird.png',
+                width: 65,
+                minTop: 220,
+                maxTop: 650,
+                minLeft: -30,
+                maxLeft: 260,
               ),
 
               SafeArea(
@@ -136,6 +154,7 @@ class QuestPage extends GetView<QuestController> {
                             );
                           }),
                         ),
+                        SizedBox(height: 10),
                         Expanded(
                           child: Obx(() {
                             if (controller.isLoading.value &&
@@ -259,36 +278,6 @@ class QuestPage extends GetView<QuestController> {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  // ── Decorative bubble ───────────────────────────────────────────
-  Widget _bubble({
-    double? top,
-    double? right,
-    double? bottom,
-    double? left,
-    required double size,
-    required Color color,
-  }) {
-    return Positioned(
-      top: top,
-      right: right,
-      bottom: bottom,
-      left: left,
-      child: IgnorePointer(
-        child: Container(
-          width: size,
-          height: size,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: color,
-            boxShadow: [
-              BoxShadow(color: color, blurRadius: 26, spreadRadius: 10),
-            ],
-          ),
         ),
       ),
     );

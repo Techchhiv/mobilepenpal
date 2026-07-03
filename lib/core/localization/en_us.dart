@@ -579,4 +579,7 @@ final Map<String, String> enUS = {
   'hint_coming_soon': 'Hint feature is coming soon!',
   'writing_practice_instruction': 'Look at the guide and write below!',
   'draw_carefully': 'Follow the strokes pattern.',
+  'action_learn': 'Learn',
+  'action_draw': 'Draw',
+  'coins': 'Coins',
 };

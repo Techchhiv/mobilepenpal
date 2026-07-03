@@ -24,12 +24,19 @@ class PremiumCourseCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFF0F0F0),
-        borderRadius: BorderRadius.circular(26),
+        color: const Color(0xFFECEFF1),
+        borderRadius: BorderRadius.circular(28),
         border: Border.all(
-          color: Colors.grey.withValues(alpha: 0.3),
-          width: 1.5,
+          color: const Color(0xFF1E293B),
+          width: 3.5,
         ),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0xFF1E293B),
+            offset: Offset(0, 8),
+            blurRadius: 0,
+          ),
+        ],
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -62,7 +69,7 @@ class PremiumCourseCard extends StatelessWidget {
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w900,
-                            color: Colors.black54,
+                            color: Color(0xFF64748B),
                           ),
                         ),
                       ),
@@ -78,18 +85,22 @@ class PremiumCourseCard extends StatelessWidget {
 
         const SizedBox(height: 20),
 
-        SizedBox(
-          width: double.infinity,
-          height: 48,
-          child: ElevatedButton(
-            onPressed: onTap,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.grey.withValues(alpha: 0.45),
-              foregroundColor: Colors.black54,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(999),
-              ),
+        GestureDetector(
+          onTap: onTap,
+          child: Container(
+            width: double.infinity,
+            height: 48,
+            decoration: BoxDecoration(
+              color: const Color(0xFFD4AF37), // Golden metallic
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: const Color(0xFF1E293B), width: 2.5),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0xFF1E293B),
+                  offset: Offset(0, 4),
+                  blurRadius: 0,
+                ),
+              ],
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -101,6 +112,7 @@ class PremiumCourseCard extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w900,
+                    color: Colors.white,
                   ),
                 ),
               ],
@@ -121,14 +133,18 @@ class _IconBadge extends StatelessWidget {
       width: 56,
       height: 56,
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.6),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: Colors.grey.withValues(alpha: 0.3),
-          width: 1.5,
-        ),
+        border: Border.all(color: const Color(0xFF1E293B), width: 2.5),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0xFF1E293B),
+            offset: Offset(0, 4),
+            blurRadius: 0,
+          ),
+        ],
       ),
-      child: Center(child: Text("🔒", style: TextStyle(fontSize: 24))),
+      child: const Center(child: Text("🔒", style: TextStyle(fontSize: 24))),
     );
   }
 }
@@ -143,8 +159,9 @@ class _PillBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.grey.withValues(alpha: 0.6),
+        color: const Color(0xFFD4AF37),
         borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: const Color(0xFF1E293B), width: 2),
       ),
       child: Text(
         text,

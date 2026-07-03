@@ -15,9 +15,6 @@ class QuestCard extends StatelessWidget {
 
   const QuestCard({super.key, required this.quest, this.onStart});
 
-  // ── Color palette ───────────────────────────────────────────────
-  static const List<Color> _cardGradient = [Color(0xFF0EA399), Color(0xFF007791)];
-
   static const Map<QuestType, IconData> _icons = {
     QuestType.weakestCharacters: Icons.whatshot_rounded,
     QuestType.recentReview: Icons.history_rounded,
@@ -26,9 +23,7 @@ class QuestCard extends StatelessWidget {
     QuestType.deepMemory: Icons.psychology_rounded,
   };
 
-  List<Color> get _gradient => _cardGradient;
   IconData get _icon => _icons[quest.type] ?? Icons.quiz_rounded;
-  Color get _primary => _gradient.first;
 
   @override
   Widget build(BuildContext context) {
@@ -38,21 +33,17 @@ class QuestCard extends StatelessWidget {
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
+          color: quest.isCompleted ? const Color(0xFFF1F5F9) : const Color(0xFFF5F3FF),
+          borderRadius: BorderRadius.circular(28),
           border: Border.all(
-            color: quest.isCompleted
-                ? Colors.grey.shade200
-                : _primary.withValues(alpha: 0.18),
-            width: 1.5,
+            color: const Color(0xFF1E293B),
+            width: 3.5,
           ),
-          boxShadow: [
+          boxShadow: const [
             BoxShadow(
-              color: quest.isCompleted
-                  ? Colors.black.withValues(alpha: 0.03)
-                  : _primary.withValues(alpha: 0.10),
-              blurRadius: 18,
-              offset: const Offset(0, 8),
+              color: Color(0xFF1E293B),
+              offset: Offset(0, 8),
+              blurRadius: 0,
             ),
           ],
         ),
@@ -62,6 +53,11 @@ class QuestCard extends StatelessWidget {
             children: [
               // ── Header strip ──────────────────────────────────
               _buildHeader(),
+              // Divider border line
+              Container(
+                height: 2.5,
+                color: const Color(0xFF1E293B),
+              ),
               // ── Body ──────────────────────────────────────────
               Padding(
                 padding: const EdgeInsets.fromLTRB(18, 14, 18, 18),
@@ -85,20 +81,12 @@ class QuestCard extends StatelessWidget {
 
   // ── Header with icon, title, subtitle ───────────────────────────
   Widget _buildHeader() {
-    final titleColor = quest.isCompleted ? Colors.blueGrey.shade800 : Colors.white;
-    final subtitleColor = quest.isCompleted ? Colors.blueGrey.shade600 : Colors.white.withValues(alpha: 0.85);
-    final iconColor = quest.isCompleted ? const Color(0xFF4CAF50) : Colors.white;
-    final iconBgColor = quest.isCompleted ? const Color(0xFFE8F5E9) : Colors.white.withValues(alpha: 0.28);
+    final titleColor = const Color(0xFF1E293B);
+    final subtitleColor = const Color(0xFF64748B);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: quest.isCompleted
-              ? [Colors.grey.shade100, Colors.grey.shade200]
-              : _gradient,
-        ),
-      ),
+      color: quest.isCompleted ? const Color(0xFFE2E8F0) : const Color(0xFFDDD6FE),
       child: Row(
         children: [
           // Icon circle
@@ -106,12 +94,20 @@ class QuestCard extends StatelessWidget {
             width: 42,
             height: 42,
             decoration: BoxDecoration(
-              color: iconBgColor,
-              borderRadius: BorderRadius.circular(14),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFF1E293B), width: 2),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0xFF1E293B),
+                  offset: Offset(0, 2),
+                  blurRadius: 0,
+                ),
+              ],
             ),
             child: Icon(
               quest.isCompleted ? Icons.check_circle_rounded : _icon,
-              color: iconColor,
+              color: quest.isCompleted ? const Color(0xFF10B981) : const Color(0xFF845EF7),
               size: 24,
             ),
           ),
@@ -125,7 +121,7 @@ class QuestCard extends StatelessWidget {
                   quest.title.tr,
                   style: TextStyle(
                     fontSize: 16,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w900,
                     color: titleColor,
                     height: 1.2,
                   ),
@@ -135,7 +131,7 @@ class QuestCard extends StatelessWidget {
                   quest.subtitle.tr,
                   style: TextStyle(
                     fontSize: 12,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
                     color: subtitleColor,
                   ),
                 ),
@@ -151,19 +147,15 @@ class QuestCard extends StatelessWidget {
 
   // ── Coin reward badge ───────────────────────────────────────────
   Widget _buildRewardBadge() {
-    final badgeColor = quest.isCompleted ? Colors.blueGrey.shade700 : Colors.white;
+    final badgeColor = quest.isCompleted ? const Color(0xFF64748B) : const Color(0xFFD97706);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: quest.isCompleted
-            ? Colors.grey.shade300
-            : Colors.white.withValues(alpha: 0.25),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(999),
         border: Border.all(
-          color: quest.isCompleted
-              ? Colors.grey.shade400.withValues(alpha: 0.3)
-              : Colors.white.withValues(alpha: 0.35),
-          width: 1,
+          color: const Color(0xFF1E293B),
+          width: 2,
         ),
       ),
       child: Row(
@@ -175,7 +167,7 @@ class QuestCard extends StatelessWidget {
             '+${NumberFormatUtils.intText(quest.rewardCoins)}',
             style: TextStyle(
               fontSize: 12,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w900,
               color: badgeColor,
             ),
           ),
@@ -194,24 +186,27 @@ class QuestCard extends StatelessWidget {
           width: 52,
           height: 52,
           decoration: BoxDecoration(
-            color: quest.isCompleted
-                ? Colors.grey.shade100
-                : _primary.withValues(alpha: 0.08),
+            color: quest.isCompleted ? const Color(0xFFE2E8F0) : const Color(0xFFEDE9FE),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: quest.isCompleted
-                  ? Colors.grey.shade200
-                  : _primary.withValues(alpha: 0.18),
-              width: 1.2,
+              color: const Color(0xFF1E293B),
+              width: 2,
             ),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0xFF1E293B),
+                offset: Offset(0, 3),
+                blurRadius: 0,
+              ),
+            ],
           ),
           alignment: Alignment.center,
           child: Text(
             char,
             style: TextStyle(
               fontSize: 24,
-              fontWeight: FontWeight.w700,
-              color: quest.isCompleted ? Colors.grey.shade400 : _primary,
+              fontWeight: FontWeight.w900,
+              color: quest.isCompleted ? const Color(0xFF94A3B8) : const Color(0xFF1E293B),
             ),
           ),
         );
@@ -232,54 +227,52 @@ class QuestCard extends StatelessWidget {
               quest.isCompleted ? 'completed_exclamation'.tr : 'progress'.tr,
               style: TextStyle(
                 fontSize: 12,
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w900,
                 color: quest.isCompleted
-                    ? const Color(0xFF4CAF50)
-                    : Colors.grey.shade600,
+                    ? const Color(0xFF10B981)
+                    : const Color(0xFF64748B),
               ),
             ),
             Text(
               NumberFormatUtils.fraction(quest.progress, quest.total),
               style: TextStyle(
                 fontSize: 12,
-                fontWeight: FontWeight.w800,
-                color: quest.isCompleted ? const Color(0xFF4CAF50) : _primary,
+                fontWeight: FontWeight.w900,
+                color: quest.isCompleted ? const Color(0xFF10B981) : const Color(0xFF845EF7),
               ),
             ),
           ],
         ),
         const SizedBox(height: 8),
-        // Track
-        ClipRRect(
-          borderRadius: BorderRadius.circular(999),
-          child: SizedBox(
-            height: 10,
-            child: Stack(
-              children: [
-                // Background track
-                Container(
-                  decoration: BoxDecoration(
-                    color: quest.isCompleted
-                        ? Colors.green.shade50
-                        : _primary.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(999),
+        // Outlined Track
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: const Color(0xFF1E293B), width: 2),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: SizedBox(
+              height: 12,
+              child: Stack(
+                children: [
+                  // Background track
+                  Container(
+                    color: Colors.white,
                   ),
-                ),
-                // Filled portion
-                FractionallySizedBox(
-                  widthFactor: pct,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: quest.isCompleted
-                            ? [const Color(0xFF66BB6A), const Color(0xFF4CAF50)]
-                            : _gradient,
+                  // Filled portion
+                  FractionallySizedBox(
+                    widthFactor: pct,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: quest.isCompleted
+                            ? const Color(0xFF10B981)
+                            : const Color(0xFF845EF7),
                       ),
-                      borderRadius: BorderRadius.circular(999),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -290,47 +283,65 @@ class QuestCard extends StatelessWidget {
   // ── Start / completed button ────────────────────────────────────
   Widget _buildFooter(BuildContext context) {
     if (quest.isCompleted) {
-      return SizedBox(
+      return Container(
         width: double.infinity,
-        child: OutlinedButton.icon(
-          onPressed: null,
-          icon: const Icon(Icons.check_circle_rounded, size: 18),
-          label: Text('completed_exclamation'.tr),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: const Color(0xFF4CAF50),
-            disabledForegroundColor: const Color(0xFF4CAF50),
-            side: const BorderSide(color: Color(0xFF4CAF50), width: 1.2),
-            padding: const EdgeInsets.symmetric(vertical: 13),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            textStyle: Theme.of(context).textTheme.labelLarge?.copyWith(
-              fontSize: 14,
-              fontWeight: FontWeight.w800,
-            ),
+        height: 48,
+        decoration: BoxDecoration(
+          color: const Color(0xFFE2E8F0),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFF1E293B), width: 2.5),
+        ),
+        child: Center(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 18),
+              const SizedBox(width: 8),
+              Text(
+                'completed_exclamation'.tr,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w900,
+                  color: Color(0xFF64748B),
+                ),
+              ),
+            ],
           ),
         ),
       );
     }
 
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton.icon(
-        onPressed: onStart,
-        icon: const Icon(Icons.play_arrow_rounded, size: 20),
-        label: Text('start_quest'.tr),
-        style: ElevatedButton.styleFrom(
-          elevation: 0,
-          backgroundColor: _primary,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 13),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          textStyle: Theme.of(context).textTheme.labelLarge?.copyWith(
-            fontSize: 14,
-            fontWeight: FontWeight.w800,
-          ),
+    return GestureDetector(
+      onTap: onStart,
+      child: Container(
+        width: double.infinity,
+        height: 48,
+        decoration: BoxDecoration(
+          color: const Color(0xFF845EF7),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFF1E293B), width: 2.5),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0xFF1E293B),
+              offset: Offset(0, 4),
+              blurRadius: 0,
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 20),
+            const SizedBox(width: 8),
+            Text(
+              'start_quest'.tr,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w900,
+                color: Colors.white,
+              ),
+            ),
+          ],
         ),
       ),
     );

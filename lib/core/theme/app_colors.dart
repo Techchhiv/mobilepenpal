@@ -23,4 +23,21 @@ class AppColors {
   // Button Colors
   static const Color buttonPrimary = Color(0xFF378B8A);
   static const Color buttonSecondary = Color(0xFF1E8C79);
+
+  // Kid-Friendly Course Card Background Colors
+  static const Color cardBgGreen = Color(0xFFE8F5E9);  // Light Green
+  static const Color cardBgBlue = Color(0xFFE3F2FD);   // Light Blue
+  static const Color cardBgOrange = Color(0xFFFFF3E0); // Light Orange
+  static const Color cardBgPink = Color(0xFFFCE4EC);   // Light Pink
+  static const Color cardBgPurple = Color(0xFFF3E5F5); // Light Purple
+  static const Color cardBgCyan = Color(0xFFE0F7FA);   // Light Cyan
+
+  static const List<Color> courseCardBgColors = [
+    cardBgGreen,
+    cardBgBlue,
+    cardBgOrange,
+    cardBgPink,
+    cardBgPurple,
+    cardBgCyan,
+  ];
 }

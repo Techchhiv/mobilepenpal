@@ -76,22 +76,38 @@ class ProfileHeaderCard extends StatelessWidget {
         color: Colors.transparent,
         child: Stack(
           children: [
-            Container(
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(24),
+                border: isStudent
+                    ? Border.all(color: const Color(0xFF1E293B), width: 3.5)
+                    : null,
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: gradientColors ?? const [AppColors.primary, AppColors.secondary],
+                  colors: gradientColors ??
+                      (isStudent
+                          ? const [Color(0xFFFFA07A), Color(0xFFFF6347)]
+                          : const [AppColors.primary, AppColors.secondary]),
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.08),
-                    blurRadius: 18,
-                    offset: const Offset(0, 10),
-                  ),
-                ],
+                boxShadow: isStudent
+                    ? const [
+                        BoxShadow(
+                          color: Color(0xFF1E293B),
+                          offset: Offset(0, 6),
+                          blurRadius: 0,
+                        ),
+                      ]
+                    : [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.08),
+                          blurRadius: 18,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -208,8 +224,8 @@ class ProfileHeaderCard extends StatelessWidget {
                       child: RepaintBoundary(
                         child: Lottie.asset(
                           'assets/animated/cat.json',
-                          width: 72,
-                          height: 72,
+                          width: 58,
+                          height: 58,
                           repeat: true,
                           animate: true,
                           fit: BoxFit.cover,

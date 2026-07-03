@@ -319,7 +319,7 @@ final Map<String, String> kmKH = {
 
   // ===== Home & Dashboard =====
   'achievements': 'សមិទ្ធផល',
-  'streak': 'ដំណើរបន្ត',
+  'streak': 'ថ្ងៃជាប់គ្នា',
   'time_spent': 'ពេលវេលាបានប្រើ',
   'last_played': 'លេងចុងក្រោយ',
   'current_level': 'កម្រិតបច្ចុប្បន្ន',
@@ -575,4 +575,7 @@ final Map<String, String> kmKH = {
   'hint_coming_soon': 'មុខងារជំនួយនឹងមកដល់ឆាប់ៗនេះ!',
   'writing_practice_instruction': 'មើលគំរូអក្សរ រួចសរសេរខាងក្រោម!',
   'draw_carefully': 'សរសេរតាមលំដាប់លំដោយ។',
+  'action_learn': 'រៀន',
+  'action_draw': 'សរសេរ',
+  'coins': 'កាក់',
 };

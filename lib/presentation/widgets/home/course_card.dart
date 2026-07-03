@@ -11,6 +11,7 @@ class CourseCard extends StatelessWidget {
   final VoidCallback? onTap;
   final Color primaryColor;
   final Color badgeColor;
+  final Color? bgColor;
   final bool isLoading;
   final bool isLocked;
 
@@ -25,6 +26,7 @@ class CourseCard extends StatelessWidget {
     this.onTap,
     this.primaryColor = const Color(0xFFE91E63),
     this.badgeColor = const Color(0xFFFF9800),
+    this.bgColor,
     this.isLoading = false,
     this.isLocked = false,
   });
@@ -35,36 +37,29 @@ class CourseCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(26),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            primaryColor.withValues(alpha: 0.18),
-            Colors.white.withValues(alpha: 0.95),
-          ],
+        color: bgColor ?? Colors.white,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(
+          color: const Color(0xFF1E293B),
+          width: 3.5,
         ),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
-            color: primaryColor.withValues(alpha: 0.18),
-            blurRadius: 22,
-            offset: const Offset(0, 12),
+            color: Color(0xFF1E293B),
+            offset: Offset(0, 8),
+            blurRadius: 0,
           ),
         ],
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.9),
-          width: 1.5,
-        ),
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(26),
+        borderRadius: BorderRadius.circular(24),
         child: Stack(
           children: [
             Positioned(
               right: -40,
               top: -40,
               child: _Blob(
-                color: primaryColor.withValues(alpha: 0.22),
+                color: primaryColor.withValues(alpha: 0.12),
                 size: 120,
               ),
             ),
@@ -72,7 +67,7 @@ class CourseCard extends StatelessWidget {
               left: -30,
               bottom: -35,
               child: _Blob(
-                color: primaryColor.withValues(alpha: 0.16),
+                color: primaryColor.withValues(alpha: 0.08),
                 size: 110,
               ),
             ),
@@ -113,7 +108,7 @@ class CourseCard extends StatelessWidget {
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w900,
-                            color: Colors.black87,
+                            color: Color(0xFF1E293B),
                           ),
                         ),
                       ),
@@ -127,16 +122,20 @@ class CourseCard extends StatelessWidget {
                   Row(
                     children: [
                       Expanded(
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(999),
-                          child: LinearProgressIndicator(
-                            value: progress.clamp(0.0, 1.0),
-                            minHeight: 12,
-                            backgroundColor: Colors.white.withValues(
-                              alpha: 0.75,
-                            ),
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              primaryColor,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(999),
+                            border: Border.all(color: const Color(0xFF1E293B), width: 2),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(999),
+                            child: LinearProgressIndicator(
+                              value: progress.clamp(0.0, 1.0),
+                              minHeight: 12,
+                              backgroundColor: Colors.white,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                primaryColor,
+                              ),
                             ),
                           ),
                         ),
@@ -146,10 +145,10 @@ class CourseCard extends StatelessWidget {
 
                       Text(
                         "$completedLessons/$totalLessons",
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 12.5,
                           fontWeight: FontWeight.w900,
-                          color: Colors.black.withValues(alpha: 0.55),
+                          color: Color(0xFF64748B),
                         ),
                       ),
                     ],
@@ -162,20 +161,22 @@ class CourseCard extends StatelessWidget {
 
         const SizedBox(height: 20),
 
-        SizedBox(
-          width: double.infinity,
-          height: 48,
-          child: ElevatedButton(
-            onPressed: onTap,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: isLocked
-                  ? Colors.grey.withValues(alpha: 0.45)
-                  : primaryColor,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(999),
-              ),
+        GestureDetector(
+          onTap: onTap,
+          child: Container(
+            width: double.infinity,
+            height: 48,
+            decoration: BoxDecoration(
+              color: isLocked ? Colors.grey.shade400 : primaryColor,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: const Color(0xFF1E293B), width: 2.5),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0xFF1E293B),
+                  offset: Offset(0, 4),
+                  blurRadius: 0,
+                ),
+              ],
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -190,6 +191,7 @@ class CourseCard extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w900,
+                    color: Colors.white,
                   ),
                 ),
               ],
@@ -285,14 +287,14 @@ class _IconBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
-        boxShadow: [
+        border: Border.all(color: const Color(0xFF1E293B), width: 2.5),
+        boxShadow: const [
           BoxShadow(
-            color: color.withValues(alpha: 0.18),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
+            color: Color(0xFF1E293B),
+            offset: Offset(0, 4),
+            blurRadius: 0,
           ),
         ],
-        border: Border.all(color: color.withValues(alpha: 0.25), width: 1.5),
       ),
       child: Center(
         child: Text(locked ? "🔒" : "📘", style: const TextStyle(fontSize: 24)),
@@ -312,15 +314,9 @@ class _PillBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.95),
+        color: color,
         borderRadius: BorderRadius.circular(999),
-        boxShadow: [
-          BoxShadow(
-            color: color.withValues(alpha: 0.25),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
-          ),
-        ],
+        border: Border.all(color: const Color(0xFF1E293B), width: 2),
       ),
       child: Text(
         text,

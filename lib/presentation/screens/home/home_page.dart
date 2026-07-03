@@ -8,8 +8,10 @@ import 'package:mobilepenpal/presentation/routes/app_routes.dart';
 import 'package:mobilepenpal/presentation/widgets/home/mode_switcher.dart';
 import 'package:mobilepenpal/presentation/widgets/home/parent_summary_page.dart';
 import 'package:mobilepenpal/presentation/widgets/home/profile_header_card.dart';
+import 'package:mobilepenpal/presentation/widgets/home/randomly_floating_asset.dart';
 import 'package:mobilepenpal/presentation/screens/dashboard/parent_home.dart';
 import 'package:mobilepenpal/presentation/screens/ai_writing/ai_writing_page.dart';
+import 'package:lottie/lottie.dart';
 import 'dart:math' as math;
 
 class HomePage extends StatelessWidget {
@@ -34,9 +36,8 @@ class HomePage extends StatelessWidget {
               end: Alignment.bottomCenter,
               colors: isStudent
                   ? const [
-                      Color(0xFFF3FBFF),
-                      Color(0xFFF7F8FF),
-                      Color(0xFFFFF7F2),
+                      Color(0xFFE0F7FA), // Soft cartoon sky cyan
+                      Color(0xFFFFF9C4), // Soft cartoon sky yellow
                     ]
                   : const [
                       AppColors.primary,
@@ -47,31 +48,83 @@ class HomePage extends StatelessWidget {
           ),
           child: Stack(
             children: [
-              // Rotating square animations from dashboard
-              _buildDecorRotatedSquareAnimated(
-                anim: anim,
-                left: -80,
-                top: 75,
-                phase: 0.10,
+              // Playful Background for Student (fades smoothly in and out)
+              Positioned.fill(
+                child: AnimatedOpacity(
+                  opacity: isStudent ? 0.35 : 0.0,
+                  duration: const Duration(milliseconds: 400),
+                  curve: Curves.easeInOut,
+                  child: Image.asset(
+                    'assets/images/backgrounds/home_cartoon_background.png',
+                    fit: BoxFit.cover,
+                  ),
+                ),
               ),
-              _buildDecorRotatedSquareAnimated(
-                anim: anim,
-                right: -80,
-                top: 140,
-                phase: 0.10,
-              ),
-              _buildDecorRotatedSquareAnimated(
-                anim: anim,
-                right: -80,
-                bottom: 50,
-                phase: 0.10,
+
+              // Background decorations switcher (transitions floating cartoon assets to rotated squares)
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 400),
+                switchInCurve: Curves.easeOut,
+                switchOutCurve: Curves.easeIn,
+                child: isStudent
+                    ? const Stack(
+                        key: ValueKey('student_decor'),
+                        children: [
+                          RandomlyFloatingAsset(
+                            assetPath: 'assets/images/illustrations/balloon.png',
+                            width: 90,
+                            minTop: 80,
+                            maxTop: 450,
+                            minLeft: -30,
+                            maxLeft: 260,
+                          ),
+                          RandomlyFloatingAsset(
+                            assetPath: 'assets/images/decorations/cute_star_decor.png',
+                            width: 48,
+                            minTop: 120,
+                            maxTop: 550,
+                            minRight: -20,
+                            maxRight: 240,
+                          ),
+                          RandomlyFloatingAsset(
+                            assetPath: 'assets/images/illustrations/bird.png',
+                            width: 65,
+                            minTop: 220,
+                            maxTop: 650,
+                            minLeft: -30,
+                            maxLeft: 260,
+                          ),
+                        ],
+                      )
+                    : Stack(
+                        key: const ValueKey('parent_decor'),
+                        children: [
+                          _buildDecorRotatedSquareAnimated(
+                            anim: anim,
+                            left: -80,
+                            top: 75,
+                            phase: 0.10,
+                          ),
+                          _buildDecorRotatedSquareAnimated(
+                            anim: anim,
+                            right: -80,
+                            top: 140,
+                            phase: 0.10,
+                          ),
+                          _buildDecorRotatedSquareAnimated(
+                            anim: anim,
+                            right: -80,
+                            bottom: 50,
+                            phase: 0.10,
+                          ),
+                        ],
+                      ),
               ),
 
               SafeArea(
                 child: SingleChildScrollView(
                   physics: const ClampingScrollPhysics(),
-                  padding: EdgeInsets
-                      .zero, // Zero out parent padding to control individual element margins exactly
+                  padding: EdgeInsets.zero,
                   child: Center(
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(
@@ -80,10 +133,8 @@ class HomePage extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          const SizedBox(
-                            height: 12,
-                          ), // Exact match to top margin of DashboardPage
-                          // User Info Card (copied from Dashboard Hero Header with sparkles)
+                          const SizedBox(height: 12),
+                          // User Info Card
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 16),
                             child: const ProfileHeaderCard(),
@@ -97,29 +148,56 @@ class HomePage extends StatelessWidget {
                           ),
                           const SizedBox(height: 20),
 
-                          // Content based on mode (Student shows stats & navigation, Parent shows embedded dashboard)
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 16),
                             child: Obx(() {
                               final isStudent =
                                   homeController.currentMode.value == 'student';
-                              if (isStudent) {
-                                return Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.stretch,
-                                  children: [
-                                    _buildExtraInfoSection(context),
-                                    const SizedBox(height: 24),
-                                    _buildNavigationSection(context),
-                                    const SizedBox(height: 20),
-                                  ],
-                                );
-                              } else {
-                                return ParentHome(
-                                  homeController: homeController,
-                                  isNested: true,
-                                );
-                              }
+                              return AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 250),
+                                switchInCurve: Curves.easeOutBack,
+                                switchOutCurve: Curves.easeIn,
+                                layoutBuilder:
+                                    (currentChild, previousChildren) {
+                                      return Stack(
+                                        alignment: Alignment.topCenter,
+                                        children: [
+                                          ...previousChildren,
+                                          if (currentChild != null)
+                                            currentChild,
+                                        ],
+                                      );
+                                    },
+                                transitionBuilder: (child, animation) {
+                                  return FadeTransition(
+                                    opacity: animation,
+                                    child: SlideTransition(
+                                      position: Tween<Offset>(
+                                        begin: const Offset(0.0, 0.06),
+                                        end: Offset.zero,
+                                      ).animate(animation),
+                                      child: child,
+                                    ),
+                                  );
+                                },
+                                child: isStudent
+                                    ? Column(
+                                        key: const ValueKey('student_content'),
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.stretch,
+                                        children: [
+                                          _buildExtraInfoSection(context),
+                                          const SizedBox(height: 24),
+                                          _buildNavigationSection(context),
+                                          const SizedBox(height: 24),
+                                        ],
+                                      )
+                                    : ParentHome(
+                                        key: const ValueKey('parent_content'),
+                                        homeController: homeController,
+                                        isNested: true,
+                                      ),
+                              );
                             }),
                           ),
                         ],
@@ -135,20 +213,30 @@ class HomePage extends StatelessWidget {
     );
   }
 
-
-
   Widget _buildModeCard() {
+    final isStudent = homeController.currentMode.value == 'student';
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(28),
+        border: isStudent
+            ? Border.all(color: const Color(0xFF1E293B), width: 3)
+            : null,
+        boxShadow: isStudent
+            ? const [
+                BoxShadow(
+                  color: Color(0xFF1E293B),
+                  offset: Offset(0, 6),
+                  blurRadius: 0,
+                ),
+              ]
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 14,
+                  offset: const Offset(0, 6),
+                ),
+              ],
       ),
       child: ModeSwitcher(
         currentMode: homeController.currentMode,
@@ -171,59 +259,69 @@ class HomePage extends StatelessWidget {
     final student = homeController.student.value;
     final coinsVal = student?.coin ?? 0;
     final streakVal = student?.streak ?? 0;
+    final darkBorderColor = const Color(0xFF1E293B);
 
     Widget statItem({
       required String title,
       required String value,
       required IconData icon,
-      required Color color,
-      required List<Color> gradientColors,
+      required Color bgColor,
+      required Color accentColor,
     }) {
       return Expanded(
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 8),
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: color.withValues(alpha: 0.15), width: 1),
+            color: bgColor,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: darkBorderColor, width: 3),
             boxShadow: [
               BoxShadow(
-                color: color.withValues(alpha: 0.04),
-                blurRadius: 12,
+                color: darkBorderColor,
                 offset: const Offset(0, 6),
+                blurRadius: 0,
               ),
             ],
           ),
-          child: Column(
+          child: Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
+                  color: Colors.white,
                   shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    colors: gradientColors,
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+                  border: Border.all(color: darkBorderColor, width: 2),
                 ),
-                child: Icon(icon, color: Colors.white, size: 22),
+                child: Icon(icon, color: accentColor, size: 22),
               ),
-              const SizedBox(height: 12),
-              Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w900,
-                  color: Color(0xFF1E293B),
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.grey.shade500,
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      value,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                        color: Color(0xFF1E293B),
+                        height: 1.1,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      title.toUpperCase(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF64748B),
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -252,16 +350,16 @@ class HomePage extends StatelessWidget {
               title: 'streak'.tr,
               value: '$streakVal',
               icon: Icons.local_fire_department_rounded,
-              color: Colors.orange,
-              gradientColors: [Colors.orange, Colors.redAccent],
+              bgColor: const Color(0xFFFFF3E0), // Playful peach
+              accentColor: Colors.orange.shade700,
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 16),
             statItem(
               title: 'coins'.tr,
               value: '$coinsVal',
-              icon: Icons.monetization_on_rounded,
-              color: Colors.amber.shade700,
-              gradientColors: [Colors.amber, Colors.orangeAccent],
+              icon: Icons.stars_rounded,
+              bgColor: const Color(0xFFFFFDE7), // Playful yellow
+              accentColor: Colors.amber.shade700,
             ),
           ],
         ),
@@ -280,87 +378,7 @@ class HomePage extends StatelessWidget {
   }
 
   Widget _buildNavigationSection(BuildContext context) {
-    final isStudent = homeController.currentMode.value == 'student';
-
-    Widget navButton({
-      required String title,
-      required String subtitle,
-      required IconData icon,
-      required Color primaryColor,
-      required Color secondaryColor,
-      required VoidCallback onTap,
-    }) {
-      return Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(24),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [primaryColor, secondaryColor],
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: primaryColor.withValues(alpha: 0.15),
-              blurRadius: 16,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(24),
-            onTap: onTap,
-            child: Padding(
-              padding: const EdgeInsets.all(22),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                    child: Icon(icon, color: Colors.white, size: 28),
-                  ),
-                  const SizedBox(width: 18),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          title,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          subtitle,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white.withValues(alpha: 0.8),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Icon(
-                    Icons.arrow_forward_ios_rounded,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      );
-    }
+    final darkBorderColor = const Color(0xFF1E293B);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -369,42 +387,165 @@ class HomePage extends StatelessWidget {
           padding: const EdgeInsets.only(left: 4, bottom: 12),
           child: Text(
             'activities'.tr,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w900,
-              color: isStudent ? const Color(0xFF1E293B) : Colors.white,
+              color: Color(0xFF1E293B),
             ),
           ),
         ),
-        navButton(
-          title: 'my_lesson'.tr,
-          subtitle: isStudent
-              ? 'my_lesson_student_desc'.tr
-              : 'my_lesson_parent_desc'.tr,
-          icon: Icons.menu_book_rounded,
-          primaryColor: isStudent
-              ? const Color(0xFF0D9488)
-              : const Color(0xFF006D5B),
-          secondaryColor: isStudent
-              ? const Color(0xFF0F766E)
-              : const Color(0xFF0F4C43),
-          onTap: () => Get.toNamed(AppRoutes.dashboard),
-        ),
-        navButton(
-          title: 'my_writing'.tr,
-          subtitle: isStudent
-              ? 'my_writing_student_desc'.tr
-              : 'my_writing_parent_desc'.tr,
-          icon: Icons.draw_rounded,
-          primaryColor: isStudent
-              ? const Color(0xFF2563EB)
-              : const Color(0xFF1D4ED8),
-          secondaryColor: isStudent
-              ? const Color(0xFF1D4ED8)
-              : const Color(0xFF1E3A8A),
-          onTap: () => Get.to(() => const AiWritingPage()),
+        Row(
+          children: [
+            _buildActivityCard(
+              title: 'my_lesson'.tr,
+              subtitle: 'my_lesson_student_desc'.tr,
+              actionText: 'action_learn'.tr,
+              bgColor: const Color(0xFFE0F2F1), // Soft teal
+              buttonColor: const Color(0xFF009688), // Solid teal
+              darkBorderColor: darkBorderColor,
+              onTap: () => Get.toNamed(AppRoutes.dashboard),
+              illustration: Lottie.asset(
+                'assets/animated/pencil.json',
+                height: 75,
+                repeat: true,
+              ),
+            ),
+            const SizedBox(width: 16),
+            _buildActivityCard(
+              title: 'my_writing'.tr,
+              subtitle: 'my_writing_student_desc'.tr,
+              actionText: 'action_draw'.tr,
+              bgColor: const Color(0xFFFFF3E0), // Soft orange
+              buttonColor: const Color(0xFFFF9800), // Solid orange
+              darkBorderColor: darkBorderColor,
+              onTap: () => Get.to(() => const AiWritingPage()),
+              illustration: Lottie.asset(
+                'assets/animated/star.json',
+                height: 75,
+                repeat: true,
+              ),
+            ),
+          ],
         ),
       ],
+    );
+  }
+
+  Widget _buildActivityCard({
+    required String title,
+    required String subtitle,
+    required String actionText,
+    required Color bgColor,
+    required Color buttonColor,
+    required Color darkBorderColor,
+    required VoidCallback onTap,
+    Widget? illustration,
+  }) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          height: 195,
+          decoration: BoxDecoration(
+            color: bgColor,
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(color: darkBorderColor, width: 3),
+            boxShadow: [
+              BoxShadow(
+                color: darkBorderColor,
+                offset: const Offset(0, 6),
+                blurRadius: 0,
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(24),
+            child: Stack(
+              children: [
+                Positioned(
+                  right: -10,
+                  bottom: -10,
+                  child: Opacity(
+                    opacity: 0.08,
+                    child: Icon(
+                      Icons.school_rounded,
+                      size: 90,
+                      color: darkBorderColor,
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 14,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(
+                        child: Center(
+                          child: illustration ?? const SizedBox.shrink(),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          title,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w900,
+                            color: Color(0xFF1E293B),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle,
+                        textAlign: TextAlign.center,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF64748B),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Container(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        decoration: BoxDecoration(
+                          color: buttonColor,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: darkBorderColor, width: 2),
+                          boxShadow: [
+                            BoxShadow(
+                              color: darkBorderColor,
+                              offset: const Offset(0, 3),
+                              blurRadius: 0,
+                            ),
+                          ],
+                        ),
+                        child: Center(
+                          child: Text(
+                            actionText,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -476,4 +617,3 @@ class HomePage extends StatelessWidget {
     );
   }
 }
-
