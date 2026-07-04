@@ -120,7 +120,7 @@ class StudentHome extends StatelessWidget {
                         )
                       : ListView.builder(
                           physics: const AlwaysScrollableScrollPhysics(),
-                          padding: EdgeInsets.zero,
+                          padding: const EdgeInsets.only(bottom: 110),
                           itemCount: list.length,
                           itemBuilder: (_, index) {
                             final progress = list[index];

@@ -41,6 +41,12 @@ class DashboardPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Instantiate pages once here so they aren't recreated during state updates
+    final page0 = _buildCourseTab(context, homeController, worldController, anim);
+    final page1 = MiniGamePage();
+    final page2 = QuestPage();
+    final page3 = ShopPage();
+
     return Obx(() {
       final isLoading =
           worldController.isLoading.value || homeController.isLoading.value;
@@ -48,47 +54,113 @@ class DashboardPage extends StatelessWidget {
       return LoadingOverlay(
         isLoading: isLoading,
         child: Scaffold(
-          body: IndexedStack(
-            index: navController.currentIndex.value,
+          extendBody: true,
+          body: Stack(
             children: [
-              _buildCourseTab(context, homeController, worldController, anim),
-              MiniGamePage(),
-              QuestPage(),
-              ShopPage(),
+              AnimatedOpacity(
+                opacity: navController.currentIndex.value == 0 ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeInOut,
+                child: IgnorePointer(
+                  ignoring: navController.currentIndex.value != 0,
+                  child: page0,
+                ),
+              ),
+              AnimatedOpacity(
+                opacity: navController.currentIndex.value == 1 ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeInOut,
+                child: IgnorePointer(
+                  ignoring: navController.currentIndex.value != 1,
+                  child: page1,
+                ),
+              ),
+              AnimatedOpacity(
+                opacity: navController.currentIndex.value == 2 ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeInOut,
+                child: IgnorePointer(
+                  ignoring: navController.currentIndex.value != 2,
+                  child: page2,
+                ),
+              ),
+              AnimatedOpacity(
+                opacity: navController.currentIndex.value == 3 ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeInOut,
+                child: IgnorePointer(
+                  ignoring: navController.currentIndex.value != 3,
+                  child: page3,
+                ),
+              ),
             ],
           ),
           bottomNavigationBar: Obx(() {
             final isStudent = homeController.currentMode.value == 'student';
-            return Container(
-              height:
-                  (isStudent ? 58 : 52) + MediaQuery.of(context).padding.bottom,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                border: isStudent
-                    ? const Border(
-                        top: BorderSide(color: Color(0xFF1E293B), width: 3.5),
-                      )
-                    : null,
-                boxShadow: isStudent
-                    ? null
-                    : [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.05),
-                          blurRadius: 10,
-                          offset: const Offset(0, -5),
-                        ),
-                      ],
-              ),
-              child: SafeArea(
-                top: false,
-                child: Row(
-                  children: [
-                    _buildNavItem(0, Icons.menu_book_rounded),
-                    _buildNavItem(1, Icons.sports_esports_rounded),
-                    _buildNavItem(2, Icons.bolt_rounded),
-                    _buildNavItem(3, Icons.storefront_rounded),
+            if (!isStudent) {
+              return Container(
+                height: 52 + MediaQuery.of(context).padding.bottom,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, -5),
+                    ),
                   ],
                 ),
+                child: SafeArea(
+                  top: false,
+                  child: Row(
+                    children: [
+                      _buildNavItem(0, Icons.menu_book_rounded, 'nav_lessons'),
+                      _buildNavItem(1, Icons.sports_esports_rounded, 'nav_games'),
+                      _buildNavItem(2, Icons.bolt_rounded, 'nav_quests'),
+                      _buildNavItem(3, Icons.storefront_rounded, 'nav_shop'),
+                    ],
+                  ),
+                ),
+              );
+            }
+
+            final List<Color> navColors = [
+              const Color(0xFFFF6347), // Lessons (tomato red)
+              const Color(0xFFFF793F), // Games (dark orange)
+              const Color(0xFF845EF7), // Quests (purple)
+              const Color(0xFFF57C00), // Shop (amber)
+            ];
+            final activeColor = navColors[navController.currentIndex.value];
+
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+              margin: EdgeInsets.only(
+                left: 18,
+                right: 18,
+                bottom: 12 + MediaQuery.of(context).padding.bottom,
+              ),
+              height: 64,
+              decoration: BoxDecoration(
+                color: activeColor,
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(color: const Color(0xFF1E293B), width: 3),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0xFF1E293B),
+                    offset: Offset(0, 5),
+                    blurRadius: 0,
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildNavItem(0, Icons.menu_book_rounded, 'nav_lessons'),
+                  _buildNavItem(1, Icons.sports_esports_rounded, 'nav_games'),
+                  _buildNavItem(2, Icons.bolt_rounded, 'nav_quests'),
+                  _buildNavItem(3, Icons.storefront_rounded, 'nav_shop'),
+                ],
               ),
             );
           }),
@@ -303,43 +375,98 @@ class DashboardPage extends StatelessWidget {
     );
   }
 
-  Widget _buildNavItem(int index, IconData icon) {
-    return Expanded(
-      child: InkWell(
+  Widget _buildNavItem(int index, IconData icon, String labelKey) {
+    final List<Color> navColors = [
+      const Color(0xFFFF6347), // Lessons (tomato red)
+      const Color(0xFFFF793F), // Games (dark orange)
+      const Color(0xFF845EF7), // Quests (purple)
+      const Color(0xFFF57C00), // Shop (amber)
+    ];
+
+    return Obx(() {
+      final isSelected = navController.currentIndex.value == index;
+      final isStudent = homeController.currentMode.value == 'student';
+
+      if (!isStudent) {
+        final iconColor = isSelected ? AppColors.primary : const Color(0xFF94A3B8);
+        return Expanded(
+          child: InkWell(
+            onTap: () => navController.changePage(index),
+            splashColor: AppColors.primary.withValues(alpha: 0.1),
+            highlightColor: Colors.transparent,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, color: iconColor, size: 24),
+                if (isSelected)
+                  Container(
+                    margin: const EdgeInsets.only(top: 4),
+                    width: 4,
+                    height: 4,
+                    decoration: const BoxDecoration(
+                      color: AppColors.primary,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      }
+
+      // Student Mode: Expanding capsule floating navigation item
+      final activeColor = navColors[navController.currentIndex.value];
+
+      return GestureDetector(
         onTap: () => navController.changePage(index),
-        splashColor: AppColors.primary.withValues(alpha: 0.1),
-        highlightColor: Colors.transparent,
-        child: Obx(() {
-          final isSelected = navController.currentIndex.value == index;
-          final isStudent = homeController.currentMode.value == 'student';
-          return Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+        behavior: HitTestBehavior.opaque,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeInOut,
+          padding: isSelected
+              ? const EdgeInsets.symmetric(horizontal: 12, vertical: 6)
+              : const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          decoration: isSelected
+              ? BoxDecoration(
+                  color: Colors.white, // Clean white capsule
+                  borderRadius: BorderRadius.circular(999),
+                )
+              : null,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                icon,
-                color: isSelected
-                    ? (isStudent ? const Color(0xFF009688) : AppColors.primary)
-                    : Colors.grey.shade400,
-                size: isSelected && isStudent ? 30 : 28,
+              // Circular icon container
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: isSelected ? activeColor : Colors.white.withValues(alpha: 0.22),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  icon,
+                  color: Colors.white,
+                  size: 20,
+                ),
               ),
-              if (isSelected)
-                Container(
-                  margin: const EdgeInsets.only(top: 4),
-                  width: isStudent ? 12 : 4,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: isStudent
-                        ? const Color(0xFFFF9800)
-                        : AppColors.primary,
-                    borderRadius: isStudent ? BorderRadius.circular(2) : null,
-                    shape: isStudent ? BoxShape.rectangle : BoxShape.circle,
+              if (isSelected) ...[
+                const SizedBox(width: 8),
+                Text(
+                  labelKey.tr,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                    color: activeColor, // Text matches active header/nav theme color
                   ),
                 ),
+              ],
             ],
-          );
-        }),
-      ),
-    );
+          ),
+        ),
+      );
+    });
   }
 
   Widget _buildDecorRotatedSquareAnimated({

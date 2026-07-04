@@ -193,7 +193,7 @@ class QuestPage extends GetView<QuestController> {
             onRefresh: controller.refreshQuests,
             color: const Color(0xFF845EF7),
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(18, 0, 18, 32),
+              padding: const EdgeInsets.fromLTRB(18, 0, 18, 110),
               physics: const AlwaysScrollableScrollPhysics(
                 parent: BouncingScrollPhysics(),
               ),

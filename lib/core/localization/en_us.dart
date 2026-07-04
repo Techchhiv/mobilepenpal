@@ -582,4 +582,8 @@ final Map<String, String> enUS = {
   'action_learn': 'Learn',
   'action_draw': 'Draw',
   'coins': 'Coins',
+  'nav_lessons': 'Lessons',
+  'nav_games': 'Games',
+  'nav_quests': 'Quests',
+  'nav_shop': 'Shop',
 };

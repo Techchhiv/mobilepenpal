@@ -128,7 +128,7 @@ class ShopPage extends StatelessWidget {
       controller.selectedAvatarId.value;
 
       return GridView.builder(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 110),
         physics: const BouncingScrollPhysics(),
         gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
           maxCrossAxisExtent: isTablet ? 190 : 140,
