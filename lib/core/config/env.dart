@@ -1,3 +1,5 @@
+import 'package:mobilepenpal/core/config/app_constants.dart';
+
 class Env {
   static const String apiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
@@ -13,7 +15,7 @@ class Env {
   static const String backendUrl = String.fromEnvironment(
     'BACKEND_URL',
     // defaultValue: 'https://api.dev.khmerpenpal.com',
-    defaultValue: 'http://192.168.0.158:8000',
+    defaultValue: 'http://192.168.0.157:8000',
   );
 
   static const String environment = String.fromEnvironment(
@@ -25,7 +27,7 @@ class Env {
 
   static const String apiVersion = 'v1';
 
-  static const double globalMaxWidth = 600.0;
+  static const double globalMaxWidth = AppConstants.globalMaxWidth;
 
   static const String accessToken = 'student_token';
 }

@@ -43,7 +43,7 @@ class _WorldMapState extends State<WorldMap> with TickerProviderStateMixin {
   static const double _bottomInsetDesign = 150.0;
 
   /// Extra padding at the very top so last level isn't glued to edge.
-  static const double _topInsetDesign = 250.0;
+  static const double _topInsetDesign = 300.0;
 
   /// Cap scaling so tablets don't get oversized spacing / zoomed background.
   static const double _maxScaleWidth = 500.0;
@@ -170,17 +170,18 @@ class _WorldMapState extends State<WorldMap> with TickerProviderStateMixin {
       if (levels.isEmpty) return;
 
       final screenW = MediaQuery.of(context).size.width;
+      final mapWidth = min(screenW, _maxScaleWidth);
 
       final neededH = _requiredContentHeight(
         levelCount: levels.length,
-        screenWidth: screenW,
+        screenWidth: mapWidth,
       );
 
       final viewportH = MediaQuery.of(context).size.height;
       final contentH = max(neededH, viewportH);
 
-      final spacing = _scaled(_levelSpacingDesign, screenW);
-      final bottomInset = _scaled(_bottomInsetDesign, screenW);
+      final spacing = _scaled(_levelSpacingDesign, mapWidth);
+      final bottomInset = _scaled(_bottomInsetDesign, mapWidth);
 
       final idx = _findCurrentLevelIndex(levels);
       final targetY = _levelCenterY(
@@ -257,11 +258,12 @@ class _WorldMapState extends State<WorldMap> with TickerProviderStateMixin {
     final levels = widget.world.levels;
 
     final screenW = MediaQuery.of(context).size.width;
-    final tileH = _tileHeight(screenW);
+    final mapWidth = min(screenW, _maxScaleWidth);
+    final tileH = _tileHeight(mapWidth);
 
     final neededH = _requiredContentHeight(
       levelCount: levels.length,
-      screenWidth: screenW,
+      screenWidth: mapWidth,
     );
 
     final viewportH = MediaQuery.of(context).size.height;
@@ -280,17 +282,25 @@ class _WorldMapState extends State<WorldMap> with TickerProviderStateMixin {
         height: contentH,
         child: Stack(
           children: [
+            // Background covers full screen width
             _buildTiledBackground(
               width: screenW,
               tileHeight: tileH,
               tileCount: tileCount,
               contentHeight: contentH,
             ),
-            _buildLevelsContinuous(
-              levels: levels,
-              width: screenW,
-              contentHeight: contentH,
-              screenWidth: screenW,
+            // Game levels path stays centered in mapWidth
+            Positioned(
+              left: (screenW - mapWidth) / 2,
+              top: 0,
+              bottom: 0,
+              width: mapWidth,
+              child: _buildLevelsContinuous(
+                levels: levels,
+                width: mapWidth,
+                contentHeight: contentH,
+                screenWidth: mapWidth,
+              ),
             ),
           ],
         ),
@@ -312,7 +322,7 @@ class _WorldMapState extends State<WorldMap> with TickerProviderStateMixin {
             ? Container(color: Colors.grey.shade200)
             : Image.asset(
                 asset,
-                fit: BoxFit.cover,
+                fit: BoxFit.fill,
                 alignment: Alignment.bottomCenter,
               ),
       );
@@ -331,7 +341,7 @@ class _WorldMapState extends State<WorldMap> with TickerProviderStateMixin {
             a,
             width: width,
             height: tileHeight,
-            fit: BoxFit.cover,
+            fit: BoxFit.fill,
             alignment: Alignment.bottomCenter,
             errorBuilder: (_, __, ___) =>
                 Container(color: Colors.grey.shade200),
@@ -711,6 +721,13 @@ class LevelCircle extends StatelessWidget {
                             Icons.lock_rounded,
                             color: Colors.white,
                             size: 26,
+                            shadows: [
+                              Shadow(
+                                color: Color(0xFF9CA3AF),
+                                offset: Offset(0, 1.5),
+                                blurRadius: 2,
+                              ),
+                            ],
                           ),
                       ],
                     ),
@@ -806,21 +823,25 @@ class _GlowHalo extends StatelessWidget {
     return AnimatedBuilder(
       animation: animation,
       builder: (context, child) {
-        final blur = 12.0 + 8.0 * animation.value;
-        final spread = 1.0 + 3.0 * animation.value;
+        final scale = 1.0 + 0.05 * animation.value;
+        final opacity = 0.50 * (1.0 - animation.value * 0.2);
 
-        return Container(
-          width: size,
-          height: size,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF2EC4B6).withValues(alpha: 0.40 * (1.0 - animation.value * 0.2)),
-                blurRadius: blur,
-                spreadRadius: spread,
+        return Transform.scale(
+          scale: scale,
+          child: Container(
+            width: size,
+            height: size,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(
+                colors: [
+                  const Color(0xFF2EC4B6).withValues(alpha: opacity),
+                  const Color(0xFF2EC4B6).withValues(alpha: opacity * 0.8),
+                  Colors.transparent,
+                ],
+                stops: const [0.70, 0.85, 1.0],
               ),
-            ],
+            ),
           ),
         );
       },

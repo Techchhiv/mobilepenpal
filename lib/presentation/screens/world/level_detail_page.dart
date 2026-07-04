@@ -178,7 +178,8 @@ class LevelDetailPage extends GetView<LevelController> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final bool isTablet = constraints.maxWidth > 500;
+        final mediaQuery = MediaQuery.of(context);
+        final bool isLandscape = mediaQuery.orientation == Orientation.landscape;
         return Column(
           children: [
             Expanded(
@@ -188,16 +189,12 @@ class LevelDetailPage extends GetView<LevelController> {
                   'assets/animated/pencil.json',
                   repeat: true,
                   animate: true,
-                  width: 80,
+                  width: isLandscape ? 60 : 80,
                 ),
-                // child: Image.asset(
-                //   'assets/images/illustrations/boy.png',
-                //   height: 100,
-                // ),
               ),
             ),
             Expanded(
-              flex: isTablet ? 2 : 1,
+              flex: isLandscape ? 2 : 1,
               child: _buildStagesCarousel(level.stages),
             ),
           ],
@@ -227,7 +224,7 @@ class LevelDetailPage extends GetView<LevelController> {
               ? stage.nameEn!
               : stage.name);
 
-    Widget cardContent = Container(
+    return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       child: Card(
         elevation: 8,
@@ -279,7 +276,7 @@ class LevelDetailPage extends GetView<LevelController> {
                       ),
                       const Spacer(),
                       _buildStarDisplay(stage.starsEarned, 3),
-                      const SizedBox(height: 40),
+                      const SizedBox(height: 20),
                     ],
                   ),
                 ),
@@ -328,26 +325,6 @@ class LevelDetailPage extends GetView<LevelController> {
         ),
       ),
     );
-
-    return Builder(
-      builder: (context) {
-        final screenWidth = MediaQuery.of(context).size.width;
-        final isTablet = screenWidth > 500;
-        
-        if (isTablet) {
-          return Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(
-                maxWidth: 420,
-                maxHeight: 480,
-              ),
-              child: cardContent,
-            ),
-          );
-        }
-        return cardContent;
-      },
-    );
   }
 
   Widget _buildStarDisplay(int starsEarned, int maxStars) {
@@ -372,6 +349,9 @@ class LevelDetailPage extends GetView<LevelController> {
                   : 'assets/animated/star_border.json',
               repeat: false,
               animate: isFilled,
+              width: 60,
+              height: 60,
+              fit: BoxFit.contain,
             ),
           );
         }),
@@ -460,22 +440,27 @@ class _StagesCarouselState extends State<_StagesCarousel> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
+        final mediaQuery = MediaQuery.of(context);
+        final bool isLandscape = mediaQuery.orientation == Orientation.landscape;
         final bool isTablet = constraints.maxWidth > 500;
-        final double newFraction = isTablet ? 0.45 : 1.0;
+
+        double newFraction = 1.0;
+        if (isTablet) {
+          newFraction = isLandscape ? 0.38 : 0.65;
+        } else {
+          newFraction = isLandscape ? 0.6 : 1.0;
+        }
 
         if (_fraction != newFraction) {
           _fraction = newFraction;
           final int currentPage = _pc.hasClients
               ? _pc.page?.round() ?? widget.initialIndex
               : widget.initialIndex;
-          final oldPc = _pc;
+          _pc.dispose();
           _pc = PageController(
             initialPage: currentPage,
             viewportFraction: _fraction,
           );
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            oldPc.dispose();
-          });
         }
 
         return PageView.builder(
@@ -490,9 +475,9 @@ class _StagesCarouselState extends State<_StagesCarousel> {
                 if (isTablet) {
                   if (_pc.hasClients && _pc.position.haveDimensions) {
                     value = _pc.page! - index;
-                    value = (1 - (value.abs() * 0.2)).clamp(0.8, 1.0);
+                    value = (1 - (value.abs() * 0.15)).clamp(0.85, 1.0);
                   } else {
-                    value = index == widget.initialIndex ? 1.0 : 0.8;
+                    value = index == widget.initialIndex ? 1.0 : 0.85;
                   }
                 }
                 return Transform.scale(

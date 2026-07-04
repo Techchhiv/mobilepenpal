@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lottie/lottie.dart';
 import 'package:mobilepenpal/core/utils/number_format_utils.dart';
-import 'package:mobilepenpal/core/config/env.dart';
+import 'package:mobilepenpal/core/config/app_constants.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_summary_controller.dart';
 import 'package:mobilepenpal/presentation/widgets/loading_overly.dart';
 
@@ -176,7 +176,7 @@ class StageSummaryPage extends GetView<StageSummaryController> {
   Widget _buildBottomButtons() {
     return Center(
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: Env.globalMaxWidth),
+        constraints: const BoxConstraints(maxWidth: AppConstants.globalMaxWidth),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16),
           child: Row(

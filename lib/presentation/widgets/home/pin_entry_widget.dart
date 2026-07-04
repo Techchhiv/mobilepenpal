@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:mobilepenpal/core/config/env.dart';
+import 'package:mobilepenpal/core/config/app_constants.dart';
+import 'package:mobilepenpal/core/theme/app_colors.dart';
 import 'package:mobilepenpal/data/controllers/home/pin_controller.dart';
 import 'package:mobilepenpal/data/services/home_service.dart';
 import 'package:mobilepenpal/presentation/widgets/loading_overly.dart';
 
-class PinWidget extends StatefulWidget {
+class PinWidget extends StatelessWidget {
   final PinMode mode;
   final HomeService? homeService;
   final String? title;
@@ -30,75 +31,22 @@ class PinWidget extends StatefulWidget {
   });
 
   @override
-  State<PinWidget> createState() => _PinWidgetState();
-}
-
-class _PinWidgetState extends State<PinWidget> with SingleTickerProviderStateMixin {
-  late final PinController controller;
-  late final String controllerTag;
-  late final AnimationController _shakeController;
-  late final Animation<double> _shakeAnimation;
-  Worker? _errorWorker;
-
-  @override
-  void initState() {
-    super.initState();
-    controllerTag = 'pin_${widget.mode.name}';
-    controller = Get.put(
-      PinController(homeService: widget.homeService),
-      tag: controllerTag,
+  Widget build(BuildContext context) {
+    final PinController controller = Get.put(
+      PinController(homeService: homeService),
+      tag: 'pin_${mode.name}',
     );
-
-    _shakeController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 400),
-    );
-    _shakeAnimation = TweenSequence<double>([
-      TweenSequenceItem(tween: Tween(begin: 0.0, end: 12.0), weight: 1),
-      TweenSequenceItem(tween: Tween(begin: 12.0, end: -12.0), weight: 2),
-      TweenSequenceItem(tween: Tween(begin: -12.0, end: 8.0), weight: 2),
-      TweenSequenceItem(tween: Tween(begin: 8.0, end: -8.0), weight: 2),
-      TweenSequenceItem(tween: Tween(begin: -8.0, end: 0.0), weight: 1),
-    ]).animate(CurvedAnimation(parent: _shakeController, curve: Curves.easeInOut));
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      controller.initialize(widget.mode, widget.returnToSettings);
-      
-      _errorWorker = ever(controller.errorRx, (String errMsg) {
-        if (errMsg.isNotEmpty) {
-          _shakeController.forward(from: 0.0);
-        }
-      });
+      controller.initialize(mode, returnToSettings);
     });
 
-    controller.pinController.addListener(_onTextChange);
-    controller.confirmController.addListener(_onTextChange);
-  }
-
-  void _onTextChange() {
-    if (mounted) {
-      setState(() {});
-    }
-  }
-
-  @override
-  void dispose() {
-    controller.pinController.removeListener(_onTextChange);
-    controller.confirmController.removeListener(_onTextChange);
-    _errorWorker?.dispose();
-    _shakeController.dispose();
-    Get.delete<PinController>(tag: controllerTag);
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF0E6B63),
-      body: Obx(
-        () => LoadingOverlay(
-          isLoading: controller.loading,
-          child: SafeArea(
+      body: LoadingOverlay(
+        isLoading: controller.loading,
+        child: Obx(
+          () => SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 32),
               child: Column(
@@ -137,12 +85,11 @@ class _PinWidgetState extends State<PinWidget> with SingleTickerProviderStateMix
   Widget _buildTopBar() {
     return Row(
       children: [
-        IconButton(
-          onPressed: () => Get.key.currentState?.pop<bool>(false),
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white70, size: 20),
-          style: IconButton.styleFrom(
-            backgroundColor: Colors.white.withValues(alpha: 0.12),
-            padding: const EdgeInsets.all(12),
+        InkWell(
+          onTap: () => Get.key.currentState?.pop<bool>(false),
+          child: Text(
+            "back".tr,
+            style: TextStyle(color: AppColors.textWhiteOff),
           ),
         ),
         const SizedBox(width: 8),
@@ -152,39 +99,27 @@ class _PinWidgetState extends State<PinWidget> with SingleTickerProviderStateMix
   }
 
   Widget _buildHeader(PinController controller) {
-    final headerTitle = controller.getTitle(widget.mode, widget.title, widget.confirmTitle);
+    final headerTitle = controller.getTitle(mode, title, confirmTitle);
 
     return Column(
       children: [
         Container(
-          width: 96,
-          height: 96,
+          width: 100,
+          height: 100,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            gradient: const LinearGradient(
-              colors: [Color(0xFF0EA399), Color(0xFF0E6B63)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.15),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
-            border: Border.all(color: Colors.white.withValues(alpha: 0.25), width: 3),
+            color: const Color(0xFF056E6D),
+            border: Border.all(color: const Color(0xFF2D8584), width: 3),
           ),
-          child: const Icon(Icons.lock_rounded, color: Colors.white, size: 48),
+          child: const Icon(Icons.lock, color: Colors.white70, size: 56),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
         Text(
           headerTitle,
           style: const TextStyle(
             color: Colors.white,
-            fontSize: 22,
-            fontWeight: FontWeight.w900,
-            letterSpacing: 0.5,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
           ),
         ),
       ],
@@ -192,47 +127,27 @@ class _PinWidgetState extends State<PinWidget> with SingleTickerProviderStateMix
   }
 
   Widget _buildDotField(PinController controller) {
-    final activeController = controller.getActiveController(widget.mode);
+    final activeController = controller.getActiveController(mode);
     final len = activeController.text.length;
 
-    return AnimatedBuilder(
-      animation: _shakeAnimation,
-      builder: (context, child) {
-        return Transform.translate(
-          offset: Offset(_shakeAnimation.value, 0.0),
-          child: child,
-        );
-      },
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: List.generate(4, (index) {
-          final filled = index < len;
-          return AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            curve: Curves.easeOut,
-            margin: const EdgeInsets.symmetric(horizontal: 10),
-            width: filled ? 20 : 16,
-            height: filled ? 20 : 16,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: filled ? Colors.white : Colors.transparent,
-              border: Border.all(
-                color: filled ? Colors.white : Colors.white.withValues(alpha: 0.5),
-                width: 2,
-              ),
-              boxShadow: filled
-                  ? [
-                      BoxShadow(
-                        color: Colors.white.withValues(alpha: 0.35),
-                        blurRadius: 8,
-                        spreadRadius: 1,
-                      )
-                    ]
-                  : [],
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(4, (index) {
+        final filled = index < len;
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 8),
+          width: 18,
+          height: 18,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: filled ? Colors.white : Colors.transparent,
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.6),
+              width: 2,
             ),
-          );
-        }),
-      ),
+          ),
+        );
+      }),
     );
   }
 
@@ -243,10 +158,25 @@ class _PinWidgetState extends State<PinWidget> with SingleTickerProviderStateMix
     bool showBorder = true,
     required PinController controller,
   }) {
-    return _NumpadButton(
+    final pressed = controller.pressedButton == id;
+    return GestureDetector(
       onTap: onTap,
-      showBorder: showBorder,
-      child: child,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 140),
+        width: 74,
+        height: 74,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: pressed
+              ? Colors.white.withValues(alpha: 0.28)
+              : Colors.transparent,
+          border: showBorder
+              ? Border.all(color: Colors.white54, width: 1.5)
+              : null,
+        ),
+        child: child,
+      ),
     );
   }
 
@@ -260,14 +190,14 @@ class _PinWidgetState extends State<PinWidget> with SingleTickerProviderStateMix
           fontWeight: FontWeight.bold,
         ),
       ),
-      onTap: () => controller.onNumberTap(n, widget.mode),
+      onTap: () => controller.onNumberTap(n, mode),
       id: '$n',
       controller: controller,
     );
 
     return Center(
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: Env.globalMaxWidth),
+        constraints: const BoxConstraints(maxWidth: AppConstants.globalMaxWidth),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -296,7 +226,7 @@ class _PinWidgetState extends State<PinWidget> with SingleTickerProviderStateMix
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  onTap: () => controller.onClear(widget.mode),
+                  onTap: () => controller.onClear(mode),
                   id: 'clear',
                   showBorder: false,
                   controller: controller,
@@ -307,7 +237,7 @@ class _PinWidgetState extends State<PinWidget> with SingleTickerProviderStateMix
                     Icons.backspace_outlined,
                     color: Colors.white,
                   ),
-                  onTap: () => controller.onBackspace(widget.mode),
+                  onTap: () => controller.onBackspace(mode),
                   id: 'backspace',
                   showBorder: false,
                   controller: controller,
@@ -316,53 +246,6 @@ class _PinWidgetState extends State<PinWidget> with SingleTickerProviderStateMix
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _NumpadButton extends StatefulWidget {
-  final Widget child;
-  final VoidCallback onTap;
-  final bool showBorder;
-
-  const _NumpadButton({
-    required this.child,
-    required this.onTap,
-    this.showBorder = true,
-  });
-
-  @override
-  State<_NumpadButton> createState() => _NumpadButtonState();
-}
-
-class _NumpadButtonState extends State<_NumpadButton> {
-  bool _isPressed = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _isPressed = true),
-      onTapUp: (_) {
-        setState(() => _isPressed = false);
-        widget.onTap();
-      },
-      onTapCancel: () => setState(() => _isPressed = false),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 60),
-        width: 74,
-        height: 74,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: _isPressed
-              ? Colors.white.withValues(alpha: 0.35)
-              : Colors.transparent,
-          border: widget.showBorder
-              ? Border.all(color: Colors.white.withValues(alpha: 0.4), width: 1.8)
-              : null,
-        ),
-        child: widget.child,
       ),
     );
   }

@@ -1,18 +1,20 @@
+import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_drawing_board/flutter_drawing_board.dart';
 import 'package:get/get.dart';
 import 'package:lottie/lottie.dart';
-import 'package:mobilepenpal/core/config/env.dart';
+import 'package:mobilepenpal/core/config/app_constants.dart';
 import 'package:mobilepenpal/core/network/route_builder.dart';
 import 'package:mobilepenpal/core/theme/app_colors.dart';
 import 'package:mobilepenpal/core/utils/number_format_utils.dart';
 import 'package:mobilepenpal/data/controllers/world/level_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_animation_controller.dart';
-import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
 import 'package:mobilepenpal/presentation/routes/app_routes.dart';
 import 'package:mobilepenpal/presentation/widgets/app_snackbar.dart';
 import 'package:mobilepenpal/presentation/widgets/loading_overly.dart';
-import 'package:mobilepenpal/presentation/widgets/world/stage_components/stage_drawing_board.dart';
+import 'package:mobilepenpal/presentation/widgets/world/board_grid_painter.dart';
+import 'package:mobilepenpal/presentation/widgets/world/letter_painter.dart';
 
 class StageDetailPage extends GetView<StageController> {
   const StageDetailPage({super.key});
@@ -62,7 +64,7 @@ class StageDetailPage extends GetView<StageController> {
                   child: Center(
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(
-                        maxWidth: Env.globalMaxWidth,
+                        maxWidth: AppConstants.globalMaxWidth,
                       ),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
@@ -82,7 +84,7 @@ class StageDetailPage extends GetView<StageController> {
                                 transitionBuilder: (child, anim) =>
                                     SizeTransition(
                                       sizeFactor: anim,
-                                      alignment: Alignment.topCenter,
+                                      axisAlignment: -1.0,
                                       child: child,
                                     ),
                                 child: show
@@ -131,45 +133,15 @@ class StageDetailPage extends GetView<StageController> {
             width: 50,
             height: 50,
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.15),
+              // color: Colors.orange.shade300,
               borderRadius: BorderRadius.circular(25),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.25),
-                width: 2,
-              ),
             ),
+            // child: const Icon(Icons.person, color: Colors.white, size: 30),
             clipBehavior: Clip.antiAlias,
-            child: Obx(() {
-              Widget avatarContent = Image.asset(
-                'assets/images/illustrations/pencil.png',
-                fit: BoxFit.contain,
-              );
-
-              if (Get.isRegistered<HomeController>()) {
-                final homeController = Get.find<HomeController>();
-                final shopAvatar = homeController.currentShopAvatar;
-
-                if (shopAvatar != null && shopAvatar.id != 'default') {
-                  if (shopAvatar.assetPath != null) {
-                    avatarContent = Padding(
-                      padding: const EdgeInsets.all(2),
-                      child: Image.asset(
-                        shopAvatar.assetPath!,
-                        fit: BoxFit.cover,
-                      ),
-                    );
-                  } else {
-                    avatarContent = Icon(
-                      shopAvatar.icon ?? Icons.person,
-                      size: 28,
-                      color: Colors.white,
-                    );
-                  }
-                }
-              }
-
-              return avatarContent;
-            }),
+            child: Image.asset(
+              'assets/images/illustrations/pencil.png',
+              fit: BoxFit.contain,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -419,7 +391,7 @@ class StageDetailPage extends GetView<StageController> {
                                 padding: EdgeInsets.symmetric(
                                   horizontal: spacing / 2,
                                 ),
-                                child: SizedBox(
+                                child: Container(
                                   width: itemSize,
                                   height: itemSize,
                                   child: ClipRRect(
@@ -451,7 +423,7 @@ class StageDetailPage extends GetView<StageController> {
                                   padding: EdgeInsets.symmetric(
                                     horizontal: spacing / 2,
                                   ),
-                                  child: SizedBox(
+                                  child: Container(
                                     width: itemSize,
                                     height: itemSize,
                                     child: ClipRRect(
@@ -542,37 +514,323 @@ class StageDetailPage extends GetView<StageController> {
     );
   }
 
-  Widget _buildDrawingBoard({bool showShadowGuide = true}) {
+  Widget _buildAttemptsIndicator() {
     return Obx(() {
-      final showGuide = showShadowGuide && !controller.isMathCurrent;
-      return StageDrawingBoard(
-        boardWidth: controller.boardWidth.value,
-        boardHeight: controller.boardHeight.value,
-        onUpdateBoardSize: controller.updateBoardSize,
-        drawingControllers: controller.drawingControllers,
-        letterSubpathsNorm: controller.letterSubpathsNorm,
-        scale: controller.scale,
-        onPointerDown: controller.onRawPointerDown,
-        onPointerMove: controller.onRawPointerMove,
-        onPointerUp: controller.onRawPointerUp,
-        attemptLeft: controller.attemptLeft.value,
-        maxAttempts: StageController.maxAttemptsPerExercise,
-        feedbackState: controller.anim.feedback.value,
-        praiseFeedbackState: controller.anim.praiseFeedback.value,
-        shakeOffset: controller.anim.shakeOffset.value,
-        praiseText: controller.anim.praiseText.value,
-        confettiController: controller.anim.confettiController,
-        guideCirclePx: controller.anim.guideCirclePx.value,
-        isGuiding: controller.anim.isGuiding.value && showGuide,
-        showGuiding: showGuide,
-        activeBoardCount: controller.activeBoardCount,
-        showMorph: controller.anim.showMorph.value,
-        morphProgress: controller.anim.morphProgress.value,
-        userMorphStrokes: controller.anim.userMorphStrokes,
-        templateMorphStrokes: controller.anim.templateMorphStrokes,
-        stampImage: controller.currentStampImage,
+      final left = controller.attemptLeft.value;
+      if (left >= StageController.maxAttemptsPerExercise) {
+        return const SizedBox.shrink();
+      }
+
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: List.generate(StageController.maxAttemptsPerExercise, (
+          index,
+        ) {
+          final isFilled = index < left;
+          return Padding(
+            padding: const EdgeInsets.only(left: 4.0),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                const Icon(
+                  Icons.favorite,
+                  color: Colors.white,
+                  size: 28,
+                ),
+                Icon(
+                  Icons.favorite,
+                  color: isFilled
+                      ? Colors.redAccent
+                      : Colors.grey.shade400,
+                  size: 24,
+                ),
+              ],
+            ),
+          );
+        }),
       );
     });
+  }
+
+  Widget _buildDrawingBoard({bool showShadowGuide = true}) {
+    return Expanded(
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Positioned.fill(
+            child: Obx(() {
+              final boardsNum = controller.activeBoardCount;
+              return LayoutBuilder(
+                builder: (context, constraints) {
+                  const maxFeedbackScale = 1.06;
+                  final gap = 0.0;
+                  final totalGap = (boardsNum > 1)
+                      ? gap * (boardsNum - 1)
+                      : 0.0;
+                  final maxBoardWidth =
+                      (constraints.maxWidth - totalGap) / boardsNum;
+                  final width = maxBoardWidth / maxFeedbackScale;
+                  final height = (boardsNum > 1)
+                      ? (constraints.maxHeight * 0.75 / maxFeedbackScale)
+                      : (width < constraints.maxHeight
+                            ? width
+                            : constraints.maxHeight);
+
+                  if (controller.boardWidth.value != width ||
+                      controller.boardHeight.value != height) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      controller.updateBoardSize(width, height: height);
+                    });
+                  }
+
+                  return Center(
+                    child: Obx(() {
+                      final feedbackState = controller.anim.feedback.value;
+                      final dx = feedbackState == DrawFeedback.wrong
+                          ? controller.anim.shakeOffset.value
+                          : 0.0;
+
+                      double scale;
+                      switch (feedbackState) {
+                        case DrawFeedback.correct:
+                          scale = 1.05;
+                          break;
+                        case DrawFeedback.wrong:
+                          scale = 1.06;
+                          break;
+                        default:
+                          scale = 1.0;
+                      }
+
+                      return Stack(
+                        alignment: Alignment.center,
+                        clipBehavior: Clip.none,
+                        children: [
+                          AnimatedScale(
+                            scale: scale,
+                            duration: const Duration(milliseconds: 150),
+                            curve: Curves.easeOut,
+                            child: Transform.translate(
+                              offset: Offset(dx, 0),
+                              child: Stack(
+                                alignment: Alignment.center,
+                                clipBehavior: Clip.none,
+                                children: [
+                                  Positioned(
+                                    top: -30,
+                                    right: 12,
+                                    child: IgnorePointer(child: _buildAttemptsIndicator()),
+                                  ),
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: List.generate(boardsNum, (index) {
+                                      return Padding(
+                                        padding: EdgeInsets.only(
+                                          right: index < boardsNum - 1 ? 6.0 : 0,
+                                        ),
+                                        child: _buildSingleBoard(
+                                          width,
+                                          height,
+                                          index,
+                                          showShadowGuide: showShadowGuide,
+                                        ),
+                                      );
+                                    }),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          Positioned.fill(
+                            child: Align(
+                              alignment: Alignment.center,
+                              child: ConfettiWidget(
+                                confettiController:
+                                    controller.anim.confettiController,
+                                blastDirectionality:
+                                    BlastDirectionality.explosive,
+                                emissionFrequency: 0.01,
+                                numberOfParticles: 25,
+                                maxBlastForce: 30,
+                                minBlastForce: 10,
+                                gravity: 0.25,
+                                shouldLoop: false,
+                              ),
+                            ),
+                          ),
+                          Obx(() {
+                            final praise = controller.anim.praiseText.value;
+                            final isWrong =
+                                feedbackState == DrawFeedback.wrong;
+                            final isVisible =
+                                feedbackState != DrawFeedback.none &&
+                                praise.isNotEmpty;
+
+                            return Positioned(
+                              top: 50,
+                              child: AnimatedScale(
+                                scale: isVisible ? 1.0 : 0.0,
+                                duration: const Duration(
+                                  milliseconds: 1000,
+                                ),
+                                curve: Curves.elasticOut,
+                                child: AnimatedOpacity(
+                                  opacity: isVisible ? 1.0 : 0.0,
+                                  duration: const Duration(
+                                    milliseconds: 500,
+                                  ),
+                                  child: Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 10,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: isWrong
+                                          ? Colors.redAccent
+                                          : Colors.yellow.shade700,
+                                      borderRadius: BorderRadius.circular(
+                                        16,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withValues(
+                                            alpha: 0.20,
+                                          ),
+                                          blurRadius: 6,
+                                          offset: const Offset(0, 3),
+                                        ),
+                                      ],
+                                      border: Border.all(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.8,
+                                        ),
+                                        width: 2,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          isWrong
+                                              ? Icons.info_outline
+                                              : Icons.star,
+                                          color: Colors.white,
+                                          size: 18,
+                                        ),
+                                        SizedBox(width: 6),
+                                        Text(
+                                          praise,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            );
+                          }),
+                        ],
+                      );
+                    }),
+                  );
+                },
+              );
+            }),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSingleBoard(double width, double height, int boardIndex, {bool showShadowGuide = true}) {
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.9),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Listener(
+          behavior: HitTestBehavior.opaque,
+          onPointerDown: (e) => controller.onRawPointerDown(e, boardIndex),
+          onPointerMove: (e) => controller.onRawPointerMove(e, boardIndex),
+          onPointerUp: (e) => controller.onRawPointerUp(e, boardIndex),
+          child: DrawingBoard(
+            controller: controller.drawingControllers[boardIndex],
+            background: Obx(() {
+              final letter = controller.letterSubpathsNorm;
+              final p = controller.anim.guideCirclePx.value;
+              final guiding = controller.anim.isGuiding.value;
+              final s = controller.scale;
+              final r = 11.0 * s;
+
+              return SizedBox(
+                width: width,
+                height: height,
+                child: Stack(
+                  children: [
+                    Positioned.fill(
+                      child: IgnorePointer(
+                        child: CustomPaint(painter: BoardGridPainter()),
+                      ),
+                    ),
+                    if (showShadowGuide && letter.isNotEmpty && boardIndex == 0)
+                      Positioned.fill(
+                        child: IgnorePointer(
+                          child: CustomPaint(
+                            painter: LetterPointsPainter(
+                              letterSubpathsNorm: letter,
+                              toBoardPx: (o) => o,
+                              fillEnabled: true,
+                              strokeEnabled: true,
+                              fillOpacity: 0.15,
+                              strokeOpacity: 0.25,
+                              strokeWidth: 2.0,
+                            ),
+                          ),
+                        ),
+                      ),
+                    if (showShadowGuide && guiding && p != null && boardIndex == 0)
+                      Positioned(
+                        left: p.dx - r,
+                        top: p.dy - r,
+                        child: IgnorePointer(
+                          child: Container(
+                            width: r * 2,
+                            height: r * 2,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                width: 4 * s,
+                                color: Colors.orange,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              );
+            }),
+            showDefaultTools: false,
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildCharacterOptions() {
