@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:mobilepenpal/core/config/env.dart';
+import 'package:mobilepenpal/core/config/app_constants.dart';
 import 'package:mobilepenpal/data/controllers/mini_game/dynamic_mini_game_controller.dart';
 import 'package:mobilepenpal/core/utils/challenge_generator.dart';
 import 'package:mobilepenpal/data/models/mini_game/mini_game_model.dart';
@@ -96,7 +96,7 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
         SafeArea(
           child: Center(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: Env.globalMaxWidth),
+              constraints: const BoxConstraints(maxWidth: AppConstants.globalMaxWidth),
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 child: Column(
@@ -1139,7 +1139,7 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
       child: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: Env.globalMaxWidth),
+            constraints: const BoxConstraints(maxWidth: AppConstants.globalMaxWidth),
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 28),
               child: Column(

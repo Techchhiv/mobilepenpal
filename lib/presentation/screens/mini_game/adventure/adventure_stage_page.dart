@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:mobilepenpal/core/config/env.dart';
+import 'package:mobilepenpal/core/config/app_constants.dart';
 import 'package:mobilepenpal/core/theme/app_colors.dart';
 import 'package:mobilepenpal/data/controllers/mini_game/adventure/adventure_stage_controller.dart';
 import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
@@ -156,7 +156,7 @@ class AdventureStagePage extends GetView<AdventureStageController> {
         SafeArea(
           child: Center(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: Env.globalMaxWidth),
+              constraints: const BoxConstraints(maxWidth: AppConstants.globalMaxWidth),
               child: Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,

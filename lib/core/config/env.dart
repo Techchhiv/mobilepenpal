@@ -1,4 +1,3 @@
-import 'package:mobilepenpal/core/config/app_constants.dart';
 
 class Env {
   static const String apiBaseUrl = String.fromEnvironment(
@@ -27,7 +26,6 @@ class Env {
 
   static const String apiVersion = 'v1';
 
-  static const double globalMaxWidth = AppConstants.globalMaxWidth;
 
   static const String accessToken = 'student_token';
 }

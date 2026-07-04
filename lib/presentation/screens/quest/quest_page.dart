@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:mobilepenpal/core/config/env.dart';
+import 'package:mobilepenpal/core/config/app_constants.dart';
 import 'package:mobilepenpal/data/controllers/quest/quest_controller.dart';
 import 'package:mobilepenpal/presentation/widgets/quest/quest_card.dart';
 import 'package:mobilepenpal/presentation/widgets/loading_overly.dart';
@@ -78,7 +78,7 @@ class QuestPage extends GetView<QuestController> {
                 child: Center(
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(
-                      maxWidth: Env.globalMaxWidth,
+                      maxWidth: AppConstants.globalMaxWidth,
                     ),
                     child: Column(
                       children: [

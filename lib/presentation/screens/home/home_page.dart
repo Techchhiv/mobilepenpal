@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:mobilepenpal/core/config/env.dart';
+import 'package:mobilepenpal/core/config/app_constants.dart';
 import 'package:mobilepenpal/core/theme/app_colors.dart';
 import 'package:mobilepenpal/data/controllers/home/home_animation_controller.dart';
 import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
@@ -128,7 +128,7 @@ class HomePage extends StatelessWidget {
                   child: Center(
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(
-                        maxWidth: Env.globalMaxWidth,
+                        maxWidth: AppConstants.globalMaxWidth,
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,

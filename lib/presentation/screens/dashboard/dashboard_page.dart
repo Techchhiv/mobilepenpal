@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'dart:math' as math;
 import 'package:get_storage/get_storage.dart';
-import 'package:mobilepenpal/core/config/env.dart';
+import 'package:mobilepenpal/core/config/app_constants.dart';
 import 'package:mobilepenpal/core/theme/app_colors.dart';
 import 'package:mobilepenpal/data/controllers/auth/auth_controller.dart';
 import 'package:mobilepenpal/data/controllers/home/home_animation_controller.dart';
@@ -253,7 +253,7 @@ class DashboardPage extends StatelessWidget {
               Center(
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(
-                    maxWidth: Env.globalMaxWidth,
+                    maxWidth: AppConstants.globalMaxWidth,
                   ),
                   child: Column(
                     children: [

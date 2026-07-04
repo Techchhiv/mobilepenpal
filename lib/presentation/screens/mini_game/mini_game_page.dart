@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:mobilepenpal/core/config/app_constants.dart';
 import 'package:mobilepenpal/core/config/env.dart';
 import 'package:mobilepenpal/data/controllers/mini_game/mini_game_hub_controller.dart';
 import 'package:mobilepenpal/data/models/mini_game/mini_game_model.dart';
@@ -77,7 +78,7 @@ class _MiniGamePageState extends State<MiniGamePage>
           SafeArea(
             child: Center(
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: Env.globalMaxWidth),
+                constraints: const BoxConstraints(maxWidth: AppConstants.globalMaxWidth),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Column(
