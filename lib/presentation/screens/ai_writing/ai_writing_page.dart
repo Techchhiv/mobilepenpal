@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:mobilepenpal/core/theme/app_colors.dart';
 import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
 import 'package:mobilepenpal/presentation/screens/ai_writing/ai_writing_practice_page.dart';
+import 'package:mobilepenpal/presentation/widgets/home/randomly_floating_asset.dart';
 
 enum _WritingCategory {
   consonants,
@@ -22,25 +22,95 @@ class _AiWritingPageState extends State<AiWritingPage>
     with SingleTickerProviderStateMixin {
   /// All Khmer character lists.
   static const List<String> _consonants = [
-    'ក', 'ខ', 'គ', 'ឃ', 'ង',
-    'ច', 'ឆ', 'ជ', 'ឈ', 'ញ',
-    'ដ', 'ឋ', 'ឌ', 'ឍ', 'ណ',
-    'ត', 'ថ', 'ទ', 'ធ', 'ន',
-    'ប', 'ផ', 'ព', 'ភ', 'ម',
-    'យ', 'រ', 'ល', 'វ', 'ស',
-    'ហ', 'ឡ', 'អ',
+    'ក',
+    'ខ',
+    'គ',
+    'ឃ',
+    'ង',
+    'ច',
+    'ឆ',
+    'ជ',
+    'ឈ',
+    'ញ',
+    'ដ',
+    'ឋ',
+    'ឌ',
+    'ឍ',
+    'ណ',
+    'ត',
+    'ថ',
+    'ទ',
+    'ធ',
+    'ន',
+    'ប',
+    'ផ',
+    'ព',
+    'ភ',
+    'ម',
+    'យ',
+    'រ',
+    'ល',
+    'វ',
+    'ស',
+    'ហ',
+    'ឡ',
+    'អ',
   ];
 
   static const List<String> _independentVowels = [
-    'ឥ', 'ឦ', 'ឧ', 'ឩ', 'ឪ', 'ឫ', 'ឬ', 'ឭ', 'ឮ', 'ឯ', 'ឰ', 'ឱ', 'ឳ',
+    'ឥ',
+    'ឦ',
+    'ឧ',
+    'ឩ',
+    'ឪ',
+    'ឫ',
+    'ឬ',
+    'ឭ',
+    'ឮ',
+    'ឯ',
+    'ឰ',
+    'ឱ',
+    'ឳ',
   ];
 
   static const List<String> _dependentVowels = [
-    'ា', 'ិ', 'ី', 'ឹ', 'ឺ', 'ុ', 'ូ', 'ួ', 'ើ', 'ឿ', 'ៀ', 'េ', 'ែ', 'ៃ', 'ោ', 'ៅ', 'ុំ', 'ំ', 'ាំ', 'ះ', 'ិះ', 'ុះ', 'េះ', 'ោះ',
+    'ា',
+    'ិ',
+    'ី',
+    'ឹ',
+    'ឺ',
+    'ុ',
+    'ូ',
+    'ួ',
+    'ើ',
+    'ឿ',
+    'ៀ',
+    'េ',
+    'ែ',
+    'ៃ',
+    'ោ',
+    'ៅ',
+    'ុំ',
+    'ំ',
+    'ាំ',
+    'ះ',
+    'ិះ',
+    'ុះ',
+    'េះ',
+    'ោះ',
   ];
 
   static const List<String> _numbers = [
-    '០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩',
+    '០',
+    '១',
+    '២',
+    '៣',
+    '៤',
+    '៥',
+    '៦',
+    '៧',
+    '៨',
+    '៩',
   ];
 
   /// Currently selected category.
@@ -52,23 +122,9 @@ class _AiWritingPageState extends State<AiWritingPage>
   /// Repetition count for drawing practice.
   int _repeatCount = 3;
 
-  late final AnimationController _fabAnimCtrl;
-  late final Animation<double> _fabScale;
-
   @override
   void initState() {
     super.initState();
-    _fabAnimCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 300),
-    );
-    _fabScale = CurvedAnimation(parent: _fabAnimCtrl, curve: Curves.elasticOut);
-  }
-
-  @override
-  void dispose() {
-    _fabAnimCtrl.dispose();
-    super.dispose();
   }
 
   List<String> _getCurrentList() {
@@ -91,37 +147,24 @@ class _AiWritingPageState extends State<AiWritingPage>
       } else {
         _selected.add(ch);
       }
-      if (_selected.isNotEmpty) {
-        _fabAnimCtrl.forward();
-      } else {
-        _fabAnimCtrl.reverse();
-      }
     });
   }
 
   void _selectAllCategory() {
     setState(() {
       _selected.addAll(_getCurrentList());
-      if (_selected.isNotEmpty) {
-        _fabAnimCtrl.forward();
-      }
     });
   }
 
   void _clearAllCategory() {
     setState(() {
       _selected.removeAll(_getCurrentList());
-      if (_selected.isNotEmpty) {
-        _fabAnimCtrl.forward();
-      } else {
-        _fabAnimCtrl.reverse();
-      }
     });
   }
 
   void _startPractice() {
     if (_selected.isEmpty) return;
-    
+
     // Sort selected characters to match logical order across all lists.
     final List<String> allOrdered = [
       ..._consonants,
@@ -130,421 +173,578 @@ class _AiWritingPageState extends State<AiWritingPage>
       ..._numbers,
     ];
     final ordered = allOrdered.where((c) => _selected.contains(c)).toList();
-    
+
     Get.to(
-      () => AiWritingPracticePage(
-        characters: ordered,
-        repeatCount: _repeatCount,
-      ),
+      () =>
+          AiWritingPracticePage(characters: ordered, repeatCount: _repeatCount),
     );
+  }
+
+  Color _getCategoryColor(_WritingCategory cat) {
+    switch (cat) {
+      case _WritingCategory.consonants:
+        return const Color(0xFF009688); // Teal
+      case _WritingCategory.dependentVowels:
+        return const Color(0xFF845EF7); // Purple
+      case _WritingCategory.independentVowels:
+        return const Color(0xFFE91E63); // Pink
+      case _WritingCategory.numbers:
+        return const Color(0xFFFF9F43); // Orange
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final HomeController homeController = Get.find<HomeController>();
     final bool isStudent = homeController.currentMode.value == 'student';
+    final activeThemeColor = _getCategoryColor(_currentCategory);
 
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: isStudent
-                ? const [
-                    Color(0xFFF3FBFF),
-                    Color(0xFFF7F8FF),
-                    Color(0xFFFFF7F2),
-                  ]
-                : const [
-                    AppColors.primary,
-                    Color(0xFF1e8c79),
-                    Color(0xFF49aa7c),
-                  ],
-          ),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              // ── Top bar ─────────────────────────────────────────────
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Row(
-                  children: [
-                    IconButton(
-                      onPressed: () => Get.back(),
-                      icon: Icon(
-                        Icons.arrow_back_ios_new_rounded,
-                        color: isStudent
-                            ? const Color(0xFF1E293B)
-                            : Colors.white,
-                      ),
-                      style: IconButton.styleFrom(
-                        backgroundColor: isStudent
-                            ? Colors.white
-                            : Colors.white.withValues(alpha: 0.15),
-                        padding: const EdgeInsets.all(12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      'my_writing'.tr,
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w900,
-                        color: isStudent
-                            ? const Color(0xFF1E293B)
-                            : Colors.white,
-                      ),
-                    ),
-                    const Spacer(),
-                    
-                    // Unified selection pill badge in header
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: isStudent
-                            ? AppColors.primary.withValues(alpha: 0.1)
-                            : Colors.white.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: isStudent
-                              ? AppColors.primary.withValues(alpha: 0.2)
-                              : Colors.white.withValues(alpha: 0.2),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.check_circle_rounded,
-                            size: 16,
-                            color: isStudent ? AppColors.primary : Colors.white,
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            'selected_count'.trParams(
-                                {'count': _selected.length.toString()}),
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w800,
-                              color: isStudent
-                                  ? AppColors.primary
-                                  : Colors.white,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+      body: Stack(
+        children: [
+          // ── Beautiful Sky/Cartoon Background ───────────────────────
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                image: const DecorationImage(
+                  image: AssetImage('assets/images/backgrounds/ai_writing_background.png'),
+                  fit: BoxFit.cover,
                 ),
               ),
+            ),
+          ),
 
-              const SizedBox(height: 8),
+          // ── Drifting Cartoon Decors (Student Mode) ──────────────────
+          if (isStudent) ...[
+            const RandomlyFloatingAsset(
+              assetPath: 'assets/images/illustrations/balloon.png',
+              width: 90,
+              minTop: 80,
+              maxTop: 450,
+              minLeft: -30,
+              maxLeft: 260,
+            ),
+            const RandomlyFloatingAsset(
+              assetPath: 'assets/images/decorations/cute_star_decor.png',
+              width: 48,
+              minTop: 120,
+              maxTop: 550,
+              minRight: -20,
+              maxRight: 240,
+            ),
+            const RandomlyFloatingAsset(
+              assetPath: 'assets/images/illustrations/bird.png',
+              width: 65,
+              minTop: 220,
+              maxTop: 650,
+              minLeft: -30,
+              maxLeft: 260,
+            ),
+          ],
 
-              // ── Main split view ─────────────────────────────────────
-              Expanded(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // Left-side category filter rail
-                    Container(
-                      width: 105,
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 12, horizontal: 6),
-                      decoration: BoxDecoration(
-                        color: isStudent
-                            ? Colors.white.withValues(alpha: 0.5)
-                            : Colors.black.withValues(alpha: 0.12),
-                        borderRadius: const BorderRadius.only(
-                          topRight: Radius.circular(24),
-                          bottomRight: Radius.circular(24),
+          // ── Scrollable content body ────────────────────────────────
+          SafeArea(
+            child: Column(
+              children: [
+                // ── Top header bar ─────────────────────────────────────
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  child: Row(
+                    children: [
+                      _BouncyGestureDetector(
+                        onTap: () => Get.back(),
+                        child: Container(
+                          width: 42,
+                          height: 42,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: const Color(0xFF1E293B),
+                              width: 3,
+                            ),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color(0xFF1E293B),
+                                offset: Offset(0, 4),
+                                blurRadius: 0,
+                              ),
+                            ],
+                          ),
+                          child: const Icon(
+                            Icons.arrow_back_ios_new_rounded,
+                            color: Color(0xFF1E293B),
+                            size: 20,
+                          ),
                         ),
                       ),
-                      child: SingleChildScrollView(
-                        physics: const BouncingScrollPhysics(),
-                        child: Column(
+                      const SizedBox(width: 14),
+                      Text(
+                        'my_writing'.tr,
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w900,
+                          color: isStudent
+                              ? const Color(0xFF1E293B)
+                              : Colors.white,
+                        ),
+                      ),
+                      const Spacer(),
+
+                      // Selected count badge
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(99),
+                          border: Border.all(
+                            color: const Color(0xFF1E293B),
+                            width: 3,
+                          ),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Color(0xFF1E293B),
+                              offset: Offset(0, 4),
+                              blurRadius: 0,
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            _CategoryTab(
-                              label: 'consonants'.tr,
-                              icon: Icons.abc_rounded,
-                              isSelected: _currentCategory ==
-                                  _WritingCategory.consonants,
-                              isStudent: isStudent,
-                              onTap: () => setState(() => _currentCategory =
-                                  _WritingCategory.consonants),
+                            Icon(
+                              Icons.edit_rounded,
+                              size: 16,
+                              color: activeThemeColor,
                             ),
-                            const SizedBox(height: 10),
-                            _CategoryTab(
-                              label: 'dependent_vowels'.tr,
-                              icon: Icons.font_download_outlined,
-                              isSelected: _currentCategory ==
-                                  _WritingCategory.dependentVowels,
-                              isStudent: isStudent,
-                              onTap: () => setState(() => _currentCategory =
-                                  _WritingCategory.dependentVowels),
-                            ),
-                            const SizedBox(height: 10),
-                            _CategoryTab(
-                              label: 'independent_vowels'.tr,
-                              icon: Icons.text_format_rounded,
-                              isSelected: _currentCategory ==
-                                  _WritingCategory.independentVowels,
-                              isStudent: isStudent,
-                              onTap: () => setState(() => _currentCategory =
-                                  _WritingCategory.independentVowels),
-                            ),
-                            const SizedBox(height: 10),
-                            _CategoryTab(
-                              label: 'numbers'.tr,
-                              icon: Icons.numbers_rounded,
-                              isSelected: _currentCategory ==
-                                  _WritingCategory.numbers,
-                              isStudent: isStudent,
-                              onTap: () => setState(() => _currentCategory =
-                                  _WritingCategory.numbers),
+                            const SizedBox(width: 6),
+                            Text(
+                              'selected_count'.trParams({
+                                'count': _selected.length.toString(),
+                              }),
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w900,
+                                color: Color(0xFF1E293B),
+                              ),
                             ),
                           ],
                         ),
                       ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+
+                // ── Horizontal category tabs ──────────────────────────
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  clipBehavior: Clip.none,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                    child: Row(
+                      children: [
+                        _CategoryTabRedesign(
+                          label: 'consonants'.tr,
+                          icon: Icons.abc_rounded,
+                          isSelected:
+                              _currentCategory == _WritingCategory.consonants,
+                          themeColor: _getCategoryColor(
+                            _WritingCategory.consonants,
+                          ),
+                          onTap: () => setState(
+                            () =>
+                                _currentCategory = _WritingCategory.consonants,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        _CategoryTabRedesign(
+                          label: 'dependent_vowels'.tr,
+                          icon: Icons.font_download_outlined,
+                          isSelected:
+                              _currentCategory ==
+                              _WritingCategory.dependentVowels,
+                          themeColor: _getCategoryColor(
+                            _WritingCategory.dependentVowels,
+                          ),
+                          onTap: () => setState(
+                            () => _currentCategory =
+                                _WritingCategory.dependentVowels,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        _CategoryTabRedesign(
+                          label: 'independent_vowels'.tr,
+                          icon: Icons.text_format_rounded,
+                          isSelected:
+                              _currentCategory ==
+                              _WritingCategory.independentVowels,
+                          themeColor: _getCategoryColor(
+                            _WritingCategory.independentVowels,
+                          ),
+                          onTap: () => setState(
+                            () => _currentCategory =
+                                _WritingCategory.independentVowels,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        _CategoryTabRedesign(
+                          label: 'numbers'.tr,
+                          icon: Icons.numbers_rounded,
+                          isSelected:
+                              _currentCategory == _WritingCategory.numbers,
+                          themeColor: _getCategoryColor(
+                            _WritingCategory.numbers,
+                          ),
+                          onTap: () => setState(
+                            () => _currentCategory = _WritingCategory.numbers,
+                          ),
+                        ),
+                      ],
                     ),
+                  ),
+                ),
 
-                    // Right-side grid and selectors
-                    Expanded(
-                      child: Column(
+                const SizedBox(height: 16),
+
+                // ── Character sticker grid board ──────────────────────
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: GridView.builder(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      physics: const BouncingScrollPhysics(),
+                      gridDelegate:
+                          const SliverGridDelegateWithMaxCrossAxisExtent(
+                            maxCrossAxisExtent: 82,
+                            mainAxisSpacing: 12,
+                            crossAxisSpacing: 12,
+                            childAspectRatio: 1.0,
+                          ),
+                      itemCount: _getCurrentList().length,
+                      itemBuilder: (context, i) {
+                        final ch = _getCurrentList()[i];
+                        final isSel = _selected.contains(ch);
+                        return _CharBlockTile(
+                          character: ch,
+                          isSelected: isSel,
+                          activeColor: activeThemeColor,
+                          onTap: () => _toggle(ch),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+
+                // ── Bottom play control board dock ─────────────────────────
+                Container(
+                  margin: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 18,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFFDF5), // Light warm vanilla board
+                    borderRadius: BorderRadius.circular(32),
+                    border: Border.all(
+                      color: const Color(0xFF1E293B),
+                      width: 3.5,
+                    ),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0xFF1E293B),
+                        offset: Offset(0, 8),
+                        blurRadius: 0,
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Select All / Clear Row + Practice Times
+                      Row(
                         children: [
-                          // Select All / Clear + Quick repetition picker
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // Repetition quick picker
-                                Text(
-                                  'repeat_count_label'.tr,
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w800,
-                                    color: isStudent
-                                        ? const Color(0xFF475569)
-                                        : Colors.white70,
+                          // Select All Button
+                          _BouncyGestureDetector(
+                            onTap: _selectAllCategory,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 8,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: const Color(0xFF1E293B),
+                                  width: 2.5,
+                                ),
+                                boxShadow: const [
+                                  BoxShadow(
+                                    color: Color(0xFF1E293B),
+                                    offset: Offset(0, 3),
+                                    blurRadius: 0,
                                   ),
-                                ),
-                                const SizedBox(height: 6),
-                                Row(
-                                  children: [
-                                    ...[1, 2, 3, 5, 10].map((count) {
-                                      final isSel = _repeatCount == count;
-                                      return Padding(
-                                        padding: const EdgeInsets.only(right: 6),
-                                        child: InkWell(
-                                          onTap: () => setState(
-                                              () => _repeatCount = count),
-                                          borderRadius:
-                                              BorderRadius.circular(10),
-                                          child: AnimatedContainer(
-                                            duration: const Duration(
-                                                milliseconds: 150),
-                                            padding: const EdgeInsets.symmetric(
-                                                horizontal: 12, vertical: 6),
-                                            decoration: BoxDecoration(
-                                              color: isSel
-                                                  ? (isStudent
-                                                      ? AppColors.primary
-                                                      : Colors.white)
-                                                  : (isStudent
-                                                      ? Colors.white
-                                                      : Colors.white.withValues(
-                                                          alpha: 0.1)),
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
-                                              border: Border.all(
-                                                color: isSel
-                                                    ? (isStudent
-                                                        ? AppColors.primary
-                                                        : Colors.white)
-                                                    : (isStudent
-                                                        ? Colors.grey.shade300
-                                                        : Colors.white
-                                                            .withValues(
-                                                                alpha: 0.15)),
-                                              ),
-                                            ),
-                                            child: Text(
-                                              '${count}x',
-                                              style: TextStyle(
-                                                fontSize: 13,
-                                                fontWeight: FontWeight.w900,
-                                                color: isSel
-                                                    ? (isStudent
-                                                        ? Colors.white
-                                                        : AppColors.primary)
-                                                    : (isStudent
-                                                        ? const Color(
-                                                            0xFF475569)
-                                                        : Colors.white),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      );
-                                    }),
-                                  ],
-                                ),
-
-                                const SizedBox(height: 12),
-
-                                // Select all / clear current category
-                                Row(
-                                  children: [
-                                    _ChipButton(
-                                      label: 'select_all'.tr,
-                                      icon: Icons.select_all_rounded,
-                                      isStudent: isStudent,
-                                      onTap: _selectAllCategory,
+                                ],
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.select_all_rounded,
+                                    size: 16,
+                                    color: activeThemeColor,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'select_all'.tr,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w900,
+                                      color: Color(0xFF1E293B),
                                     ),
-                                    const SizedBox(width: 8),
-                                    _ChipButton(
-                                      label: 'clear'.tr,
-                                      icon: Icons.deselect_rounded,
-                                      isStudent: isStudent,
-                                      onTap: _clearAllCategory,
-                                    ),
-                                  ],
-                                ),
-                              ],
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-
-                          // Active character grid
-                          Expanded(
-                            child: Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 12),
-                              child: GridView.builder(
-                                padding: const EdgeInsets.only(bottom: 90),
-                                physics: const BouncingScrollPhysics(),
-                                gridDelegate:
-                                    const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 4,
-                                  mainAxisSpacing: 8,
-                                  crossAxisSpacing: 8,
-                                  childAspectRatio: 1,
+                          const SizedBox(width: 8),
+                          // Clear Button
+                          _BouncyGestureDetector(
+                            onTap: _clearAllCategory,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 8,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: const Color(0xFF1E293B),
+                                  width: 2.5,
                                 ),
-                                itemCount: _getCurrentList().length,
-                                itemBuilder: (context, i) {
-                                  final ch = _getCurrentList()[i];
-                                  final on = _selected.contains(ch);
-                                  return _CharTile(
-                                    character: ch,
-                                    isSelected: on,
-                                    isStudent: isStudent,
-                                    onTap: () => _toggle(ch),
-                                  );
-                                },
+                                boxShadow: const [
+                                  BoxShadow(
+                                    color: Color(0xFF1E293B),
+                                    offset: Offset(0, 3),
+                                    blurRadius: 0,
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.deselect_rounded,
+                                    size: 16,
+                                    color: Colors.grey,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'clear'.tr,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w900,
+                                      color: Color(0xFF1E293B),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
                         ],
                       ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
 
-      // ── Floating start button ──────────────────────────────────────
-      floatingActionButton: ScaleTransition(
-        scale: _fabScale,
-        child: FloatingActionButton.extended(
-          onPressed: _startPractice,
-          backgroundColor: AppColors.primary,
-          icon: const Icon(Icons.draw_rounded, color: Colors.white),
-          label: Text(
-            '${'start_practice'.tr} (${_selected.length})',
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w700,
+                      const SizedBox(height: 16),
+
+                      // Repetition Count Bubble Row
+                      Row(
+                        children: [
+                          Text(
+                            'repeat_count_label'.tr,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w900,
+                              color: Color(0xFF1E293B),
+                            ),
+                          ),
+                          const Spacer(),
+                          ...[1, 2, 3, 5].map((count) {
+                            final isSel = _repeatCount == count;
+                            return Padding(
+                              padding: const EdgeInsets.only(left: 6),
+                              child: _BouncyGestureDetector(
+                                onTap: () =>
+                                    setState(() => _repeatCount = count),
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 150),
+                                  width: 38,
+                                  height: 38,
+                                  decoration: BoxDecoration(
+                                    color: isSel
+                                        ? activeThemeColor
+                                        : Colors.white,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: const Color(0xFF1E293B),
+                                      width: 2.5,
+                                    ),
+                                    boxShadow: const [
+                                      BoxShadow(
+                                        color: Color(0xFF1E293B),
+                                        offset: Offset(0, 3),
+                                        blurRadius: 0,
+                                      ),
+                                    ],
+                                  ),
+                                  alignment: Alignment.center,
+                                  child: Text(
+                                    '${count}x',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w900,
+                                      color: isSel
+                                          ? Colors.white
+                                          : const Color(0xFF1E293B),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            );
+                          }),
+                        ],
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // Playful neobrutalist Start Button
+                      _BouncyGestureDetector(
+                        onTap: _startPractice,
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 250),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          decoration: BoxDecoration(
+                            color: _selected.isNotEmpty
+                                ? const Color(0xFFFF7A00)
+                                : Colors.grey.shade400,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: const Color(0xFF1E293B),
+                              width: 3,
+                            ),
+                            boxShadow: _selected.isNotEmpty
+                                ? const [
+                                    BoxShadow(
+                                      color: Color(0xFF1E293B),
+                                      offset: Offset(0, 5),
+                                      blurRadius: 0,
+                                    ),
+                                  ]
+                                : null,
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(
+                                Icons.draw_rounded,
+                                color: Colors.white,
+                                size: 24,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                _selected.isEmpty
+                                    ? 'select_characters_tip'.tr
+                                    : '${'start_practice'.tr} (${_selected.length})',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
-        ),
+        ],
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-//  Private helper widgets
+//  Redesigned Helper Widgets
 // ═══════════════════════════════════════════════════════════════════════════
 
-class _CategoryTab extends StatelessWidget {
-  const _CategoryTab({
-    required this.label,
-    required this.icon,
-    required this.isSelected,
-    required this.isStudent,
-    required this.onTap,
-  });
-
+class _CategoryTabRedesign extends StatelessWidget {
   final String label;
   final IconData icon;
   final bool isSelected;
-  final bool isStudent;
+  final Color themeColor;
   final VoidCallback onTap;
+
+  const _CategoryTabRedesign({
+    required this.label,
+    required this.icon,
+    required this.isSelected,
+    required this.themeColor,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final activeBg = isStudent ? AppColors.primary : Colors.white;
-    final activeFg = isStudent ? Colors.white : AppColors.primary;
-    final inactiveBg = Colors.transparent;
-    final inactiveFg = isStudent ? const Color(0xFF475569) : Colors.white70;
-
-    return InkWell(
+    return _BouncyGestureDetector(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-        width: double.infinity,
+        duration: const Duration(milliseconds: 250),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? activeBg : inactiveBg,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: isSelected && isStudent
-              ? [
+          color: isSelected ? themeColor : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: const Color(0xFF1E293B),
+            width: isSelected ? 3.0 : 2.5,
+          ),
+          boxShadow: isSelected
+              ? const [
                   BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.25),
-                    blurRadius: 6,
-                    offset: const Offset(0, 3),
+                    color: Color(0xFF1E293B),
+                    offset: Offset(0, 4),
+                    blurRadius: 0,
                   ),
                 ]
-              : [],
+              : const [
+                  BoxShadow(
+                    color: Color(0xFF1E293B),
+                    offset: Offset(0, 2.5),
+                    blurRadius: 0,
+                  ),
+                ],
         ),
-        child: Column(
+        child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              icon,
-              size: 24,
-              color: isSelected ? activeFg : inactiveFg,
-            ),
-            const SizedBox(height: 6),
+            Icon(icon, size: 18, color: isSelected ? Colors.white : themeColor),
+            const SizedBox(width: 8),
             Text(
               label,
-              textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
-                color: isSelected ? activeFg : inactiveFg,
-                height: 1.2,
+                fontSize: 13,
+                fontWeight: FontWeight.w900,
+                color: isSelected ? Colors.white : const Color(0xFF1E293B),
               ),
             ),
           ],
@@ -554,115 +754,125 @@ class _CategoryTab extends StatelessWidget {
   }
 }
 
-class _CharTile extends StatelessWidget {
-  const _CharTile({
+class _CharBlockTile extends StatelessWidget {
+  final String character;
+  final bool isSelected;
+  final Color activeColor;
+  final VoidCallback onTap;
+
+  const _CharBlockTile({
     required this.character,
     required this.isSelected,
-    required this.isStudent,
+    required this.activeColor,
     required this.onTap,
   });
 
-  final String character;
-  final bool isSelected;
-  final bool isStudent;
-  final VoidCallback onTap;
-
   @override
   Widget build(BuildContext context) {
-    final Color bg;
-    final Color fg;
-    final Border? border;
-
-    if (isSelected) {
-      bg = isStudent ? AppColors.primary : Colors.white;
-      fg = isStudent ? Colors.white : AppColors.primary;
-      border = null;
-    } else {
-      bg = isStudent
-          ? Colors.white.withValues(alpha: 0.85)
-          : Colors.white.withValues(alpha: 0.08);
-      fg = isStudent ? const Color(0xFF334155) : Colors.white70;
-      border = Border.all(
-        color: isStudent
-            ? Colors.grey.shade200
-            : Colors.white.withValues(alpha: 0.12),
-      );
-    }
-
-    return GestureDetector(
+    return _BouncyGestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         curve: Curves.easeOut,
         decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(16),
-          border: border,
+          color: isSelected ? activeColor : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFF1E293B), width: 3),
           boxShadow: isSelected
-              ? [
+              ? const [
                   BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 3),
+                    color: Color(0xFF1E293B),
+                    offset: Offset(0, 4),
+                    blurRadius: 0,
                   ),
                 ]
-              : [],
+              : const [
+                  BoxShadow(
+                    color: Color(0xFF1E293B),
+                    offset: Offset(0, 3),
+                    blurRadius: 0,
+                  ),
+                ],
         ),
-        alignment: Alignment.center,
-        child: Text(
-          character,
-          style: TextStyle(
-            fontSize: 26,
-            fontWeight: FontWeight.w700,
-            color: fg,
-          ),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Text(
+              character,
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.w900,
+                color: isSelected ? Colors.white : const Color(0xFF1E293B),
+              ),
+            ),
+            if (isSelected)
+              Positioned(
+                right: 4,
+                top: 4,
+                child: Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF16A34A),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.check_rounded,
+                    color: Colors.white,
+                    size: 10,
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );
   }
 }
 
-class _ChipButton extends StatelessWidget {
-  const _ChipButton({
-    required this.label,
-    required this.icon,
-    required this.isStudent,
-    required this.onTap,
-  });
-
-  final String label;
-  final IconData icon;
-  final bool isStudent;
+class _BouncyGestureDetector extends StatefulWidget {
+  final Widget child;
   final VoidCallback onTap;
+
+  const _BouncyGestureDetector({required this.child, required this.onTap});
+
+  @override
+  State<_BouncyGestureDetector> createState() => _BouncyGestureDetectorState();
+}
+
+class _BouncyGestureDetectorState extends State<_BouncyGestureDetector>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 100),
+    );
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 0.92,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: isStudent ? Colors.white : Colors.white.withValues(alpha: 0.12),
-      borderRadius: BorderRadius.circular(12),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon,
-                  size: 16, color: isStudent ? AppColors.primary : Colors.white70),
-              const SizedBox(width: 4),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: isStudent ? const Color(0xFF334155) : Colors.white,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+    return GestureDetector(
+      onTapDown: (_) => _controller.forward(),
+      onTapUp: (_) {
+        _controller.reverse();
+        widget.onTap();
+      },
+      onTapCancel: () => _controller.reverse(),
+      child: ScaleTransition(scale: _scaleAnimation, child: widget.child),
     );
   }
 }

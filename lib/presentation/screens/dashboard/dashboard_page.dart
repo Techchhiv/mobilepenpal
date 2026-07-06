@@ -47,6 +47,13 @@ class DashboardPage extends StatelessWidget {
     final page2 = QuestPage();
     final page3 = ShopPage();
 
+    final List<Color> navColors = [
+      const Color(0xFFFF6347), // Lessons (tomato red)
+      const Color(0xFFFF793F), // Games (dark orange)
+      const Color(0xFF845EF7), // Quests (purple)
+      const Color(0xFFF57C00), // Shop (amber)
+    ];
+
     return Obx(() {
       final isLoading =
           worldController.isLoading.value || homeController.isLoading.value;
@@ -124,13 +131,8 @@ class DashboardPage extends StatelessWidget {
               );
             }
 
-            final List<Color> navColors = [
-              const Color(0xFFFF6347), // Lessons (tomato red)
-              const Color(0xFFFF793F), // Games (dark orange)
-              const Color(0xFF845EF7), // Quests (purple)
-              const Color(0xFFF57C00), // Shop (amber)
-            ];
             final activeColor = navColors[navController.currentIndex.value];
+
 
             return AnimatedContainer(
               duration: const Duration(milliseconds: 300),
@@ -174,27 +176,32 @@ class DashboardPage extends StatelessWidget {
                   Get.offAllNamed(AppRoutes.home);
                 }
               },
-              child: Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFF5A5F),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xFF1E293B), width: 3),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0xFF1E293B),
-                      offset: Offset(0, 4),
-                      blurRadius: 0,
-                    ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.home_rounded,
-                  color: Colors.white,
-                  size: 24,
-                ),
-              ),
+              child: Obx(() {
+                final activeColor = navColors[navController.currentIndex.value];
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOut,
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: activeColor,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: const Color(0xFF1E293B), width: 3),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0xFF1E293B),
+                        offset: Offset(0, 4),
+                        blurRadius: 0,
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.home_rounded,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                );
+              }),
             ),
           ),
         ),

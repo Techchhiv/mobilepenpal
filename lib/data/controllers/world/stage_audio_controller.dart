@@ -40,7 +40,12 @@ class StageAudioController extends GetxController {
   }
 
   String assetPathForCharacter({required String type, required String ch}) {
-    final t = type.trim().toLowerCase();
+    String t = type.trim().toLowerCase();
+    if (t == 'consonant') t = 'consonants';
+    if (t == 'independent_vowel') t = 'independent_vowels';
+    if (t == 'dependent_vowel') t = 'dependent_vowels';
+    if (t == 'digit') t = 'digits';
+
     final c = ch.trim();
     return 'audios/$t/$c.mp3';
   }

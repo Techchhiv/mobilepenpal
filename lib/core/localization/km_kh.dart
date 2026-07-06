@@ -573,6 +573,7 @@ final Map<String, String> kmKH = {
   'numbers': 'លេខ',
   'selected_count': 'បានជ្រើសរើស @count',
   'repeat_count_label': 'ចំនួនដង៖',
+  'select_characters_tip': 'ជ្រើសរើសតួអក្សរដើម្បីសរសេរ',
   'hint': 'ជំនួយ',
   'hint_coming_soon': 'មុខងារជំនួយនឹងមកដល់ឆាប់ៗនេះ!',
   'writing_practice_instruction': 'មើលគំរូអក្សរ រួចសរសេរខាងក្រោម!',

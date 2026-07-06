@@ -24,6 +24,8 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
   final rep = 0.obs;
   final isSubmitting = false.obs;
   final isLoading = true.obs;
+  final attemptLeft = 3.obs;
+  final repResults = <bool?>[].obs;
 
   // ── Drawing state ──────────────────────────────────────────────────────
   final drawingController = DrawingController();
@@ -75,6 +77,7 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
   @override
   void onInit() {
     super.onInit();
+    repResults.assignAll(List<bool?>.filled(repeatCount, null));
     drawingController.setStyle(color: Colors.black, strokeWidth: 6);
 
     _shakeController = AnimationController(
@@ -82,10 +85,12 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
       duration: const Duration(milliseconds: 350),
     );
 
-    _shakeAnimation = Tween<double>(
-      begin: 0,
-      end: 12,
-    ).chain(CurveTween(curve: Curves.elasticIn)).animate(_shakeController)
+    _shakeAnimation = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween<double>(begin: 0.0, end: 12.0), weight: 1),
+      TweenSequenceItem(tween: Tween<double>(begin: 12.0, end: -12.0), weight: 2),
+      TweenSequenceItem(tween: Tween<double>(begin: -12.0, end: 12.0), weight: 2),
+      TweenSequenceItem(tween: Tween<double>(begin: 12.0, end: 0.0), weight: 1),
+    ]).animate(CurvedAnimation(parent: _shakeController, curve: Curves.easeInOut))
       ..addListener(() {
         shakeOffset.value = _shakeAnimation.value;
       });
@@ -382,6 +387,7 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
   void onNext(VoidCallback onFinished) {
     drawingController.clear();
     _rawStrokes.clear();
+    attemptLeft.value = 3;
 
     final nextRep = rep.value + 1;
     if (nextRep < repeatCount) {
@@ -395,6 +401,7 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
     if (nextChar < characters.length) {
       charIndex.value = nextChar;
       rep.value = 0;
+      repResults.assignAll(List<bool?>.filled(repeatCount, null));
       _refreshGuide();
       return;
     }
@@ -432,7 +439,7 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
   }
 
   // ── AI check ───────────────────────────────────────────────────────────
-  String _getModelTypeForChar(String char) {
+  String getModelTypeForChar(String char) {
     const consonantsSet = {
       'ក', 'ខ', 'គ', 'ឃ', 'ង',
       'ច', 'ឆ', 'ជ', 'ឈ', 'ញ',
@@ -510,7 +517,7 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
     isSubmitting.value = true;
 
     try {
-      final modelType = _getModelTypeForChar(currentChar);
+      final modelType = getModelTypeForChar(currentChar);
       final evalService = DrawingEvaluationService();
 
       final data = await evalService.predictBoard(
@@ -529,6 +536,7 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
           : Get.put(StageAudioController());
 
       if (isCorrect) {
+        repResults[rep.value] = true;
         feedbackState.value = DrawFeedback.correct;
         praiseFeedback.value = DrawFeedback.correct;
         praiseText.value = [
@@ -546,6 +554,7 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
 
         onNext(onFinished);
       } else {
+        attemptLeft.value = (attemptLeft.value - 1).clamp(0, 3);
         feedbackState.value = DrawFeedback.wrong;
         praiseFeedback.value = DrawFeedback.wrong;
         praiseText.value = 'try_again'.tr;
@@ -560,6 +569,11 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
         praiseFeedback.value = DrawFeedback.none;
 
         clearBoard();
+
+        if (attemptLeft.value == 0) {
+          repResults[rep.value] = false;
+          onNext(onFinished);
+        }
       }
     } catch (e) {
       Get.snackbar(

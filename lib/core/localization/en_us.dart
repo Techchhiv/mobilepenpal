@@ -577,6 +577,7 @@ final Map<String, String> enUS = {
   'numbers': 'Numbers',
   'selected_count': '@count selected',
   'repeat_count_label': 'Repeat count:',
+  'select_characters_tip': 'Select characters to write',
   'hint': 'Hint',
   'hint_coming_soon': 'Hint feature is coming soon!',
   'writing_practice_instruction': 'Look at the guide and write below!',
