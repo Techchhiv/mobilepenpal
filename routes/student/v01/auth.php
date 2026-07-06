@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Route;
 
 
 Route::prefix('auth')->group(function () {
-    Route::get('/logout', [AuthController::class, 'logout']);
+    Route::match(['get', 'post'], '/logout', [AuthController::class, 'logout']);
     Route::get('/check', [AuthController::class, 'check']);
 });
 

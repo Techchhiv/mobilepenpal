@@ -78,6 +78,13 @@ class AuthController extends Controller
             return $this->returnError(__('messages.credentials_incorrect'), 401);
         }
 
+        // Check if there are active tokens for this student
+        $hasActiveSessions = $student->tokens()->exists();
+
+        if ($hasActiveSessions && empty($validated['confirm'])) {
+            return $this->returnError('already_logged_in', 409);
+        }
+
         $student->tokens()->delete();
 
         $token = $student->createToken('student_token')->plainTextToken;
@@ -108,9 +115,12 @@ class AuthController extends Controller
         return $this->returnResponse();
     }
 
-    public function logout(): JsonResponse
+    public function logout(Request $request): JsonResponse
     {
-        auth('students')->user()->tokens()->delete();
+        $user = $request->user();
+        if ($user) {
+            $user->tokens()->delete();
+        }
 
         return $this->returnSuccess("ok");
     }

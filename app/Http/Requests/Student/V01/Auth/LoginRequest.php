@@ -16,6 +16,7 @@ class LoginRequest extends FormRequest
         return [
             'phone' => 'required|string',
             'password' => 'required|string|min:6',
+            'confirm' => 'nullable|boolean',
             // 'school_key' => 'required|string',
         ];
     }
