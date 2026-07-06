@@ -40,11 +40,16 @@ import 'package:mobilepenpal/presentation/screens/mini_game/mini_game_page.dart'
 
 class AppPages {
   static final routes = [
-    GetPage(name: AppRoutes.splash, page: () => SplashPage()),
+    GetPage(
+      name: AppRoutes.splash,
+      page: () => SplashPage(),
+      middlewares: [AuthMiddleware()],
+    ),
     GetPage(
       name: AppRoutes.login,
       page: () => LoginPage(),
       binding: AuthBinding(),
+      middlewares: [AuthMiddleware()],
     ),
     GetPage(
       name: AppRoutes.register,

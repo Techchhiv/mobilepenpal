@@ -7,6 +7,7 @@ import 'package:mobilepenpal/core/config/env.dart';
 import 'package:mobilepenpal/data/services/auth_service.dart';
 import 'package:mobilepenpal/presentation/routes/app_routes.dart';
 import 'package:mobilepenpal/presentation/widgets/app_snackbar.dart';
+import 'package:mobilepenpal/presentation/widgets/confirm_modal.dart';
 
 class AuthController extends GetxController {
   final AuthService _authService = AuthService();
@@ -78,8 +79,8 @@ class AuthController extends GetxController {
     isPasswordVisible.value = !isPasswordVisible.value;
   }
 
-  Future<void> login() async {
-    if (isLoading.value) return;
+  Future<void> login({bool confirm = false}) async {
+    if (!confirm && isLoading.value) return;
 
     isSubmitted.value = true;
     validatePhone(phoneController.text);
@@ -113,6 +114,7 @@ class AuthController extends GetxController {
       final response = await _authService.loginStudent(
         phone: phoneController.text.trim(),
         password: passwordController.text,
+        confirm: confirm,
         // schoolKey: schoolIdController.text.trim(),
       );
 
@@ -130,7 +132,11 @@ class AuthController extends GetxController {
         //     colorText: Colors.white,
         //   );
         FocusManager.instance.primaryFocus?.unfocus();
-        final token = await const FlutterSecureStorage().read(
+        final token = await const FlutterSecureStorage(
+          iOptions: IOSOptions(
+            accessibility: KeychainAccessibility.first_unlock,
+          ),
+        ).read(
           key: Env.accessToken,
         );
         final ok = token != null && token.trim().isNotEmpty;
@@ -145,6 +151,31 @@ class AuthController extends GetxController {
         //     colorText: Colors.white,
         //   );
         // }
+      } else if (response.code == 409) {
+        isLoading.value = false;
+        final proceed = await showConfirmModal<bool>(
+          dismissible: false,
+          modal: ConfirmModal<bool>(
+            icon: const Icon(
+              Icons.warning_amber_rounded,
+              color: Colors.orange,
+              size: 28,
+            ),
+            title: Text('already_logged_in_title'.tr),
+            primaryText: 'yes'.tr,
+            secondaryText: 'no'.tr,
+            primaryColor: Colors.orange,
+            primaryTextColor: Colors.white,
+            secondaryTextColor: const Color(0xFF111827),
+            showCloseButton: false,
+            primaryResult: true,
+            secondaryResult: false,
+          ),
+        );
+
+        if (proceed == true) {
+          await login(confirm: true);
+        }
       } else {
         AppSnackbar.show(
           response.message,
@@ -153,7 +184,9 @@ class AuthController extends GetxController {
         );
       }
     } finally {
-      isLoading.value = false;
+      if (!confirm || isLoading.value) {
+        isLoading.value = false;
+      }
     }
   }
 }

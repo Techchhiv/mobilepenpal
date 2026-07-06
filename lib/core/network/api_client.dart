@@ -11,7 +11,11 @@ class ApiClient {
   factory ApiClient() => _instance;
 
   late final Dio dio;
-  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
+  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage(
+    iOptions: IOSOptions(
+      accessibility: KeychainAccessibility.first_unlock,
+    ),
+  );
   final GetStorage _box = GetStorage();
 
   ApiClient._internal() {

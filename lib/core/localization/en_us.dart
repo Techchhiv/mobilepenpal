@@ -76,6 +76,8 @@ final Map<String, String> enUS = {
   'current_password_required': 'Current password is required',
   'new_password_required': 'New password is required',
   'confirm_password_required': 'Please confirm your new password',
+  'already_logged_in_title': 'Account Logged In Elsewhere',
+  'already_logged_in_message': 'This account is currently logged in on another device. Logging in here will log you out from other devices. Do you want to proceed?',
 
   // ===== OTP Verfication =====
   'otp_verification': 'OTP Verification',

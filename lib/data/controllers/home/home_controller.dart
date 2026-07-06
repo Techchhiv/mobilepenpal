@@ -23,7 +23,11 @@ enum SummaryView { daily, weekly }
 class HomeController extends GetxController {
   final HomeService _homeService = HomeService();
   final _box = GetStorage();
-  final _secure = const FlutterSecureStorage();
+  final _secure = const FlutterSecureStorage(
+    iOptions: IOSOptions(
+      accessibility: KeychainAccessibility.first_unlock,
+    ),
+  );
 
   var isLoading = false.obs;
   var isProfileLoading = false.obs;

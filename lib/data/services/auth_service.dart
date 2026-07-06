@@ -9,6 +9,7 @@ class AuthService {
   Future<ApiResponse<Map<String, dynamic>>> loginStudent({
     required String phone,
     required String password,
+    bool? confirm,
     // required String schoolKey,
   }) async {
     final result = await _apiClient.request<Map<String, dynamic>>(
@@ -17,6 +18,7 @@ class AuthService {
       data: {
         "phone": phone,
         "password": password,
+        if (confirm != null) "confirm": confirm,
         // "school_key": schoolKey,
       },
       fromData: (data) {

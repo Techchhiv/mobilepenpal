@@ -76,6 +76,8 @@ final Map<String, String> kmKH = {
   'current_password_required': 'ត្រូវការលេខសម្ងាត់បច្ចុប្បន្ន',
   'new_password_required': 'ត្រូវការលេខសម្ងាត់ថ្មី',
   'confirm_password_required': 'សូមបញ្ជាក់លេខសម្ងាត់ថ្មីរបស់អ្នក',
+  'already_logged_in_title': 'គណនីកំពុងប្រើប្រាស់នៅឧបករណ៍ផ្សេង',
+  'already_logged_in_message': 'គណនីនេះកំពុងចូលប្រើប្រាស់នៅលើឧបករណ៍ផ្សេងទៀត។ ការចូលនៅទីនេះនឹងធ្វើឱ្យឧបករណ៍ផ្សេងទៀតចាកចេញពីគណនី។ តើអ្នកចង់បន្តដែរឬទេ?',
 
   // ===== OTP Verfication =====
   'otp_verification': 'ការផ្ទៀងផ្ទាត់ OTP',

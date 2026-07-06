@@ -26,7 +26,11 @@ class PinController extends GetxController {
   final TextEditingController pinController = TextEditingController();
   final TextEditingController confirmController = TextEditingController();
 
-  final _secure = const FlutterSecureStorage();
+  final _secure = const FlutterSecureStorage(
+    iOptions: IOSOptions(
+      accessibility: KeychainAccessibility.first_unlock,
+    ),
+  );
 
   bool get isConfirmStep => _isConfirmStep.value;
   bool get loading => _loading.value;

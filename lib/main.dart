@@ -29,11 +29,26 @@ void main() async {
 
   await GetStorage.init();
 
-  const secure = FlutterSecureStorage();
-  final token = await secure.read(key: Env.accessToken);
-  final isLoggedIn = token != null && token.trim().isNotEmpty;
+  String? token;
+  bool readSuccessful = false;
+  try {
+    const secure = FlutterSecureStorage(
+      iOptions: IOSOptions(
+        accessibility: KeychainAccessibility.first_unlock,
+      ),
+    );
+    token = await secure.read(key: Env.accessToken);
+    readSuccessful = true;
+  } catch (e) {
+    debugPrint('SECURE STORAGE ERROR AT STARTUP: $e');
+  }
 
-  await GetStorage().write('is_logged_in', isLoggedIn);
+  final isLoggedIn = token != null && token.trim().isNotEmpty;
+  if (readSuccessful) {
+    await GetStorage().write('is_logged_in', isLoggedIn);
+    await GetStorage().write('has_token', isLoggedIn);
+  }
+
   OnnxInferenceService.instance.init();
 
   runApp(MyApp(initialRoute: isLoggedIn ? AppRoutes.home : AppRoutes.splash));
