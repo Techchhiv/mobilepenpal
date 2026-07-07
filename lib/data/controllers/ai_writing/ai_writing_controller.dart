@@ -8,6 +8,7 @@ import 'package:get/get.dart';
 import 'package:mobilepenpal/core/utils/stroke_transform_util.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_audio_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_animation_controller.dart';
+import 'package:mobilepenpal/data/services/next_stroke_predictor_service.dart';
 import 'package:mobilepenpal/data/services/drawing_evaluation_service.dart';
 
 class AiWritingController extends GetxController with GetTickerProviderStateMixin {
@@ -121,6 +122,7 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
       });
 
     _loadStrokesDb();
+    NextStrokePredictorService.instance.init();
   }
 
   @override
@@ -130,6 +132,7 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
     drawingController.dispose();
     guideController.dispose();
     _shakeController.dispose();
+    NextStrokePredictorService.instance.dispose();
     super.onClose();
   }
 
@@ -378,15 +381,45 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
     return Offset(a.dx + (b.dx - a.dx) * localT, a.dy + (b.dy - a.dy) * localT);
   }
 
+  final autoPredict = true.obs;
+  final predictedSegments = <List<Offset>>[].obs;
+
+  Future<void> predictNextStrokes() async {
+    if (_rawStrokes.isEmpty) {
+      predictedSegments.clear();
+      return;
+    }
+
+    try {
+      final userStrokes = _rawStrokes.map((stroke) {
+        return stroke.map((p) => Offset((p["x"] as num).toDouble(), (p["y"] as num).toDouble())).toList();
+      }).toList();
+
+      final predictor = NextStrokePredictorService.instance;
+      final segments = await predictor.predictNextStrokes(
+        userStrokes: userStrokes,
+        char: currentChar,
+        canvasSize: canvasSize,
+      );
+
+      predictedSegments.assignAll(segments);
+    } catch (e) {
+      dev.log("Next-stroke prediction failed: $e", name: "AiWritingController");
+      predictedSegments.clear();
+    }
+  }
+
   // ── Actions ────────────────────────────────────────────────────────────
   void clearBoard() {
     drawingController.clear();
     _rawStrokes.clear();
+    predictedSegments.clear();
   }
 
   void onNext(VoidCallback onFinished) {
     drawingController.clear();
     _rawStrokes.clear();
+    predictedSegments.clear();
     attemptLeft.value = 3;
 
     final nextRep = rep.value + 1;
@@ -436,6 +469,9 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
       _rawStrokes.add(List<Map<String, dynamic>>.from(_currentStroke!));
     }
     _currentStroke = null;
+    if (autoPredict.value) {
+      predictNextStrokes();
+    }
   }
 
   // ── AI check ───────────────────────────────────────────────────────────

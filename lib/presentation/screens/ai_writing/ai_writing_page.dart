@@ -478,7 +478,7 @@ class _AiWritingPageState extends State<AiWritingPage>
                             onTap: _selectAllCategory,
                             child: Container(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
+                                horizontal: 8,
                                 vertical: 8,
                               ),
                               decoration: BoxDecoration(
@@ -503,11 +503,11 @@ class _AiWritingPageState extends State<AiWritingPage>
                                     size: 16,
                                     color: activeThemeColor,
                                   ),
-                                  const SizedBox(width: 6),
+                                  const SizedBox(width: 3),
                                   Text(
                                     'select_all'.tr,
                                     style: const TextStyle(
-                                      fontSize: 12,
+                                      fontSize: 10,
                                       fontWeight: FontWeight.w900,
                                       color: Color(0xFF1E293B),
                                     ),
@@ -516,13 +516,13 @@ class _AiWritingPageState extends State<AiWritingPage>
                               ),
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 4),
                           // Clear Button
                           _BouncyGestureDetector(
                             onTap: _clearAllCategory,
                             child: Container(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
+                                horizontal: 8,
                                 vertical: 8,
                               ),
                               decoration: BoxDecoration(
@@ -547,11 +547,11 @@ class _AiWritingPageState extends State<AiWritingPage>
                                     size: 16,
                                     color: Colors.grey,
                                   ),
-                                  const SizedBox(width: 6),
+                                  const SizedBox(width: 3),
                                   Text(
                                     'clear'.tr,
                                     style: const TextStyle(
-                                      fontSize: 12,
+                                      fontSize: 10,
                                       fontWeight: FontWeight.w900,
                                       color: Color(0xFF1E293B),
                                     ),
@@ -560,34 +560,18 @@ class _AiWritingPageState extends State<AiWritingPage>
                               ),
                             ),
                           ),
-                        ],
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      // Repetition Count Bubble Row
-                      Row(
-                        children: [
-                          Text(
-                            'repeat_count_label'.tr,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w900,
-                              color: Color(0xFF1E293B),
-                            ),
-                          ),
                           const Spacer(),
                           ...[1, 2, 3, 5].map((count) {
                             final isSel = _repeatCount == count;
                             return Padding(
-                              padding: const EdgeInsets.only(left: 6),
+                              padding: const EdgeInsets.only(left: 3),
                               child: _BouncyGestureDetector(
                                 onTap: () =>
                                     setState(() => _repeatCount = count),
                                 child: AnimatedContainer(
                                   duration: const Duration(milliseconds: 150),
-                                  width: 38,
-                                  height: 38,
+                                  width: 30,
+                                  height: 30,
                                   decoration: BoxDecoration(
                                     color: isSel
                                         ? activeThemeColor
@@ -595,12 +579,12 @@ class _AiWritingPageState extends State<AiWritingPage>
                                     shape: BoxShape.circle,
                                     border: Border.all(
                                       color: const Color(0xFF1E293B),
-                                      width: 2.5,
+                                      width: 2.2,
                                     ),
                                     boxShadow: const [
                                       BoxShadow(
                                         color: Color(0xFF1E293B),
-                                        offset: Offset(0, 3),
+                                        offset: Offset(0, 2),
                                         blurRadius: 0,
                                       ),
                                     ],
@@ -609,7 +593,7 @@ class _AiWritingPageState extends State<AiWritingPage>
                                   child: Text(
                                     '${count}x',
                                     style: TextStyle(
-                                      fontSize: 12,
+                                      fontSize: 10,
                                       fontWeight: FontWeight.w900,
                                       color: isSel
                                           ? Colors.white

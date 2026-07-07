@@ -92,6 +92,7 @@ final Map<String, String> enUS = {
   'resend': 'Resend',
   'resend_in': 'Resend in',
   'clear': 'Clear',
+  'ai_assist': 'AI Assist',
   'verify': 'Verify',
 
   // ===== Navigation =====

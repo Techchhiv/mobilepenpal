@@ -12,6 +12,7 @@ import 'package:mobilepenpal/data/controllers/world/stage_animation_controller.d
 import 'package:mobilepenpal/presentation/widgets/world/board_grid_painter.dart';
 import 'package:mobilepenpal/presentation/widgets/world/letter_painter.dart';
 import 'package:mobilepenpal/presentation/widgets/world/stage_components/stage_attempts_indicator.dart';
+import 'package:mobilepenpal/presentation/widgets/ai_writing/predictive_strokes_painter.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  AI WRITING PRACTICE PAGE – Gamified neobrutalist design for children
@@ -330,6 +331,7 @@ class _AiWritingPracticePageState extends State<AiWritingPracticePage>
                         child: _buildMainArea(),
                       ),
                     ),
+                    _buildAiPredictionControls(),
                     const SizedBox(height: 8),
                     _buildBottomActionBar(),
                     const SizedBox(height: 16),
@@ -973,6 +975,18 @@ class _AiWritingPracticePageState extends State<AiWritingPracticePage>
                                   )),
                             ),
 
+                            // Predictive next-stroke prediction overlay
+                            Positioned.fill(
+                              child: IgnorePointer(
+                                child: Obx(() => CustomPaint(
+                                      painter: PredictiveStrokesPainter(
+                                        predictedSegments:
+                                            _controller.predictedSegments.toList(),
+                                      ),
+                                    )),
+                              ),
+                            ),
+
                             // Feedback overlay
                             _buildFeedbackOverlay(),
                           ],
@@ -1119,6 +1133,75 @@ class _AiWritingPracticePageState extends State<AiWritingPracticePage>
               flex: 2,
             );
           }),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAiPredictionControls() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // ─── Auto-predict Toggle Switch ───
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.psychology_alt_rounded, color: Color(0xFF1E293B), size: 24),
+              const SizedBox(width: 6),
+              Text(
+                'ai_assist'.tr,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w900,
+                  color: Color(0xFF1E293B),
+                ),
+              ),
+              const SizedBox(width: 4),
+              Obx(() => Switch(
+                    value: _controller.autoPredict.value,
+                    activeColor: const Color(0xFF4CAF50),
+                    activeTrackColor: const Color(0xFFC8E6C9),
+                    inactiveThumbColor: Colors.grey.shade400,
+                    inactiveTrackColor: Colors.grey.shade200,
+                    onChanged: (val) {
+                      _controller.autoPredict.value = val;
+                      if (!val) {
+                        _controller.predictedSegments.clear();
+                      } else {
+                        _controller.predictNextStrokes();
+                      }
+                    },
+                  )),
+            ],
+          ),
+
+          // ─── Hint Button (Vibrant Yellow/Amber) ───
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              elevation: 0,
+              backgroundColor: const Color(0xFFFFC107), // Amber/Yellow
+              foregroundColor: const Color(0xFF1E293B), // Dark text
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: const BorderSide(color: Color(0xFF1E293B), width: 2.2),
+              ),
+              shadowColor: const Color(0xFF1E293B),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            ),
+            onPressed: () {
+              _controller.predictNextStrokes();
+            },
+            icon: const Icon(Icons.lightbulb_outline_rounded, size: 20),
+            label: Text(
+              'hint'.tr,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
         ],
       ),
     );

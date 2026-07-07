@@ -92,6 +92,7 @@ final Map<String, String> kmKH = {
   'resend': 'ផ្ញើរឡើងវិញ',
   'resend_in': 'ផ្ញើរឡើងវិញនៅពេល',
   'clear': 'លុប',
+  'ai_assist': 'ជំនួយ AI',
   'verify': 'ផ្ទៀងផ្ទាត់',
 
   // ===== Navigation =====
@@ -463,7 +464,7 @@ final Map<String, String> kmKH = {
   'choose_an_option': 'ជ្រើសរើសជម្រើស',
   'choose_your_games': 'ជ្រើសរើសហ្គេម',
   'deselect_all': 'ដោះជ្រើសរើសទាំងអស់',
-  'select_all': 'ជ្រើសរើសទាំងអស់',
+  'select_all': 'ជ្រើសទាំងអស់',
   'how_to_play': 'របៀបលេង',
   'select_a_game_first': 'សូមជ្រើសរើសហ្គេមសិន!',
   'start_playing': 'ចាប់ផ្តើមលេង',
@@ -574,7 +575,7 @@ final Map<String, String> kmKH = {
   'selected_count': 'បានជ្រើសរើស @count',
   'repeat_count_label': 'ចំនួនដង៖',
   'select_characters_tip': 'ជ្រើសរើសតួអក្សរដើម្បីសរសេរ',
-  'hint': 'ជំនួយ',
+  'hint': 'តម្រុយ',
   'hint_coming_soon': 'មុខងារជំនួយនឹងមកដល់ឆាប់ៗនេះ!',
   'writing_practice_instruction': 'មើលគំរូអក្សរ រួចសរសេរខាងក្រោម!',
   'draw_carefully': 'សរសេរតាមលំដាប់លំដោយ។',
