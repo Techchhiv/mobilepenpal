@@ -398,7 +398,6 @@ class HomePage extends StatelessWidget {
           children: [
             _buildActivityCard(
               title: 'my_lesson'.tr,
-              subtitle: 'my_lesson_student_desc'.tr,
               actionText: 'action_learn'.tr,
               bgColor: const Color(0xFFE0F2F1), // Soft teal
               buttonColor: const Color(0xFF009688), // Solid teal
@@ -413,7 +412,6 @@ class HomePage extends StatelessWidget {
             const SizedBox(width: 16),
             _buildActivityCard(
               title: 'my_writing'.tr,
-              subtitle: 'my_writing_student_desc'.tr,
               actionText: 'action_draw'.tr,
               bgColor: const Color(0xFFFFF3E0), // Soft orange
               buttonColor: const Color(0xFFFF9800), // Solid orange
@@ -433,7 +431,6 @@ class HomePage extends StatelessWidget {
 
   Widget _buildActivityCard({
     required String title,
-    required String subtitle,
     required String actionText,
     required Color bgColor,
     required Color buttonColor,
@@ -498,18 +495,6 @@ class HomePage extends StatelessWidget {
                             fontWeight: FontWeight.w900,
                             color: Color(0xFF1E293B),
                           ),
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        subtitle,
-                        textAlign: TextAlign.center,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF64748B),
                         ),
                       ),
                       const SizedBox(height: 10),

@@ -443,15 +443,39 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
     onFinished();
   }
 
+  // ── Stitching/Gap-closing State ────────────────────────────────────────
+  bool _isContinuingLastStroke = false;
+  static const double _strokeMergeThreshold = 35.0; // logical pixels
+
   // ── Pointer events coordinate capturing ───────────────────────────────
   void onPointerDown(PointerDownEvent e) {
-    _currentStroke = [];
     final now = DateTime.now().millisecondsSinceEpoch;
-    _currentStroke!.add({
+    final point = {
       "x": e.localPosition.dx,
       "y": e.localPosition.dy,
       "time": now,
-    });
+    };
+
+    // Check if we should stitch this new stroke with the last stroke
+    if (_rawStrokes.isNotEmpty) {
+      final lastStroke = _rawStrokes.last;
+      if (lastStroke.isNotEmpty) {
+        final lastPoint = lastStroke.last;
+        final dx = e.localPosition.dx - (lastPoint["x"] as num).toDouble();
+        final dy = e.localPosition.dy - (lastPoint["y"] as num).toDouble();
+        final distSq = dx * dx + dy * dy;
+
+        if (distSq < _strokeMergeThreshold * _strokeMergeThreshold) {
+          _isContinuingLastStroke = true;
+          _currentStroke = lastStroke;
+          _currentStroke!.add(point);
+          return;
+        }
+      }
+    }
+
+    _isContinuingLastStroke = false;
+    _currentStroke = [point];
   }
 
   void onPointerMove(PointerMoveEvent e) {
@@ -466,9 +490,12 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
 
   void onPointerUp(PointerUpEvent e) {
     if (_currentStroke != null && _currentStroke!.isNotEmpty) {
-      _rawStrokes.add(List<Map<String, dynamic>>.from(_currentStroke!));
+      if (!_isContinuingLastStroke) {
+        _rawStrokes.add(List<Map<String, dynamic>>.from(_currentStroke!));
+      }
     }
     _currentStroke = null;
+    _isContinuingLastStroke = false;
     if (autoPredict.value) {
       predictNextStrokes();
     }

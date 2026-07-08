@@ -25,17 +25,17 @@ class NextStrokePredictorService {
       OrtEnv.instance.init();
 
       // Load mappings and stats configs
-      final statsStr = await rootBundle.loadString('assets/models/transformer_runtime_stats.json');
+      final statsStr = await rootBundle.loadString('assets/models/bigru_runtime_stats.json');
       _stats = jsonDecode(statsStr) as Map<String, dynamic>;
 
-      final charToIdStr = await rootBundle.loadString('assets/models/transformer_char_to_id.json');
+      final charToIdStr = await rootBundle.loadString('assets/models/bigru_char_to_id.json');
       _charToId = jsonDecode(charToIdStr) as Map<String, dynamic>;
 
-      final sourceToIdStr = await rootBundle.loadString('assets/models/transformer_source_to_id.json');
+      final sourceToIdStr = await rootBundle.loadString('assets/models/bigru_source_to_id.json');
       _sourceToId = jsonDecode(sourceToIdStr) as Map<String, dynamic>;
 
       // Load ONNX model session
-      final modelBytes = await rootBundle.load('assets/models/transformer_strokes.onnx');
+      final modelBytes = await rootBundle.load('assets/models/bigru_strokes.onnx');
       final options = OrtSessionOptions();
       _session = OrtSession.fromBuffer(modelBytes.buffer.asUint8List(), options);
 

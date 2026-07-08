@@ -292,51 +292,7 @@ class _AiWritingPageState extends State<AiWritingPage>
                               : Colors.white,
                         ),
                       ),
-                      const Spacer(),
 
-                      // Selected count badge
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(99),
-                          border: Border.all(
-                            color: const Color(0xFF1E293B),
-                            width: 3,
-                          ),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Color(0xFF1E293B),
-                              offset: Offset(0, 4),
-                              blurRadius: 0,
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.edit_rounded,
-                              size: 16,
-                              color: activeThemeColor,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              'selected_count'.trParams({
-                                'count': _selected.length.toString(),
-                              }),
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w900,
-                                color: Color(0xFF1E293B),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
                     ],
                   ),
                 ),

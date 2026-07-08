@@ -113,10 +113,10 @@ flutter:
     - assets/models/best_independent_vowel.onnx
     - assets/models/best_digit.onnx
     - assets/models/best_math.onnx
-    - assets/models/transformer_strokes.onnx
-    - assets/models/transformer_char_to_id.json
-    - assets/models/transformer_source_to_id.json
-    - assets/models/transformer_runtime_stats.json
+    - assets/models/bigru_strokes.onnx
+    - assets/models/bigru_char_to_id.json
+    - assets/models/bigru_source_to_id.json
+    - assets/models/bigru_runtime_stats.json
     # - assets/icons/logo.png
     # - images/a_dot_ham.jpeg
 
