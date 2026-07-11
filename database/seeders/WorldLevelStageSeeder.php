@@ -132,7 +132,7 @@ class WorldLevelStageSeeder extends Seeder
                     'desc_en' => 'Learn Khmer digits',
                     'chars' => $digits,
                     'character_type' => 'digits',
-                    'chunk' => 5,
+                    'chunk' => 2,
                     'is_unlocked_by_default' => false,
                     'is_premium' => false,
                 ],

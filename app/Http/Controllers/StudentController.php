@@ -12,7 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 
-use function App\Helpers\isKhmerPhone;
+use function App\Helpers\isValidPhone;
 
 class StudentController extends Controller
 {
@@ -85,9 +85,9 @@ class StudentController extends Controller
         $validated['school_id'] = $schoolId;
         $validated['school_key'] = $school->school_key;
 
-        if (!isKhmerPhone($validated['phone'])) {
+        if (!isValidPhone($validated['phone'])) {
             return response()->json([
-                'message' => __('messages.valid_cambodian_number')
+                'message' => __('messages.valid_phone_number')
             ], 422);
         }
 
@@ -119,8 +119,8 @@ class StudentController extends Controller
 
         $validated = $request->validated();
 
-        if (array_key_exists('phone', $validated) && !empty($validated['phone']) && !isKhmerPhone($validated['phone'])) {
-            return $this->returnError(__('messages.valid_cambodian_number'), 422);
+        if (array_key_exists('phone', $validated) && !empty($validated['phone']) && !isValidPhone($validated['phone'])) {
+            return $this->returnError(__('messages.valid_phone_number'), 422);
         }
 
         if (!empty($validated['password'])) {

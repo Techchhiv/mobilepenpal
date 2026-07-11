@@ -5,7 +5,7 @@ namespace App\Helpers;
 use libphonenumber\PhoneNumberUtil;
 use libphonenumber\NumberParseException;
 
-function isKhmerPhone(string $phone): bool
+function isValidPhone(string $phone): bool
 {
     $phoneUtil = PhoneNumberUtil::getInstance();
 
@@ -15,4 +15,9 @@ function isKhmerPhone(string $phone): bool
     } catch (NumberParseException $e) {
         return false;
     }
+}
+
+function isKhmerPhone(string $phone): bool
+{
+    return isValidPhone($phone);
 }

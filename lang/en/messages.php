@@ -19,6 +19,7 @@ return [
     'join_code_expired' => 'This join code has expired. Please ask your teacher for a new one.',
     'already_enrolled' => 'You are already enrolled in another classroom. Please leave it first.',
     'valid_cambodian_number' => 'The phone number must be a valid Cambodian number.',
+    'valid_phone_number' => 'The phone number must be a valid phone number.',
     'credentials_incorrect' => 'The provided credentials are incorrect.',
     'student_not_found' => 'Student not found.',
     'invalid_firebase_token' => 'Invalid Firebase token.',

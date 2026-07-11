@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
-use function App\Helpers\isKhmerPhone;
+use function App\Helpers\isValidPhone;
 
 class AuthController extends Controller
 {
@@ -32,8 +32,8 @@ class AuthController extends Controller
     {
         $validated = $request->validated();
 
-        if (!isKhmerPhone($validated['phone'])) {
-            return $this->returnError(__('messages.valid_cambodian_number'), 422);
+        if (!isValidPhone($validated['phone'])) {
+            return $this->returnError(__('messages.valid_phone_number'), 422);
         }
 
         // $userInfo = [
@@ -71,8 +71,22 @@ class AuthController extends Controller
     {
         $validated = $request->validated();
 
-        $student = Student::where('phone', $validated['phone'])
-            ->first();
+        $phone = $validated['phone'];
+        $student = Student::where(function ($query) use ($phone) {
+            $query->where('phone', $phone);
+            try {
+                $phoneUtil = \libphonenumber\PhoneNumberUtil::getInstance();
+                $proto = $phoneUtil->parse($phone, 'KH');
+                if ($phoneUtil->isValidNumber($proto)) {
+                    $e164 = $phoneUtil->format($proto, \libphonenumber\PhoneNumberFormat::E164);
+                    $national = '0' . $proto->getNationalNumber();
+                    $query->orWhere('phone', $e164)
+                          ->orWhere('phone', $national);
+                }
+            } catch (\Exception $e) {
+                // Ignore
+            }
+        })->first();
 
         if (!$student || !Hash::check($validated['password'], $student->password)) {
             return $this->returnError(__('messages.credentials_incorrect'), 401);
@@ -100,8 +114,21 @@ class AuthController extends Controller
 
         $student = Student::where('school_key', $validated['school_key'])
             ->where(function ($query) use ($validated) {
-                $query->where('phone', $validated['identifier'])
-                    ->orWhere('email', $validated['identifier']);
+                $identifier = $validated['identifier'];
+                $query->where('email', $identifier)
+                      ->orWhere('phone', $identifier);
+                try {
+                    $phoneUtil = \libphonenumber\PhoneNumberUtil::getInstance();
+                    $proto = $phoneUtil->parse($identifier, 'KH');
+                    if ($phoneUtil->isValidNumber($proto)) {
+                        $e164 = $phoneUtil->format($proto, \libphonenumber\PhoneNumberFormat::E164);
+                        $national = '0' . $proto->getNationalNumber();
+                        $query->orWhere('phone', $e164)
+                              ->orWhere('phone', $national);
+                    }
+                } catch (\Exception $e) {
+                    // Ignore
+                }
             })
             ->first();
 
