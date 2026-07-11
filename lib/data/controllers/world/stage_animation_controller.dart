@@ -356,14 +356,30 @@ class StageAnimationController extends GetxController
       await _resolveDigitFruit(ch);
       return;
     }
+
+    String folder = type;
+    if (folder == 'independent_vowels' || folder == 'independent_vowel') {
+      folder = 'indep_vowels';
+    } else if (folder == 'dependent_vowels' || folder == 'dependent_vowel') {
+      folder = 'dep_vowels';
+    } else if (folder == 'consonant') {
+      folder = 'consonants';
+    }
+
     await _ensureAssetManifestLoaded();
     final keys = _assetKeysCache ?? const <String>{};
 
-    final prefix = 'assets/images/$type/${ch}_';
+    final prefix = 'assets/images/$folder/${ch}_';
 
-    final matches = keys
-        .where((k) => k.startsWith(prefix) && k.toLowerCase().endsWith('.png'))
-        .toList();
+    final matches = keys.where((k) {
+      try {
+        final decodedKey = Uri.decodeFull(k);
+        return decodedKey.startsWith(prefix) &&
+            decodedKey.toLowerCase().endsWith('.png');
+      } catch (_) {
+        return k.startsWith(prefix) && k.toLowerCase().endsWith('.png');
+      }
+    }).toList();
 
     if (matches.isEmpty) {
       illustrationAssetPath.value = '';
@@ -374,9 +390,14 @@ class StageAnimationController extends GetxController
     matches.sort();
     final picked = matches.first;
 
-    illustrationAssetPath.value = picked;
+    String decodedPicked = picked;
+    try {
+      decodedPicked = Uri.decodeFull(picked);
+    } catch (_) {}
 
-    final file = picked.split('/').last;
+    illustrationAssetPath.value = decodedPicked;
+
+    final file = decodedPicked.split('/').last;
     final underscore = file.indexOf('_');
     final dot = file.lastIndexOf('.');
     if (underscore != -1 && dot != -1 && dot > underscore) {

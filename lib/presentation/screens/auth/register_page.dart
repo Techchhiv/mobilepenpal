@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobilepenpal/data/controllers/auth/register_controller.dart';
 import 'package:mobilepenpal/presentation/routes/app_routes.dart';
+import 'package:mobilepenpal/core/utils/phone_number_utils.dart';
 
 class RegisterPage extends GetView<RegisterController> {
   const RegisterPage({super.key});
@@ -134,6 +135,39 @@ class RegisterPage extends GetView<RegisterController> {
                               onChanged: controller.validatePhone,
                               keyboardType: TextInputType.phone,
                               required: true,
+                              prefixWidget: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF5F6FA),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: Colors.transparent),
+                                ),
+                                child: DropdownButtonHideUnderline(
+                                  child: DropdownButton<String>(
+                                    value: controller.selectedCountryCode.value,
+                                    isDense: true,
+                                    alignment: Alignment.center,
+                                    menuMaxHeight: 250,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.black87,
+                                    ),
+                                    onChanged: (String? newValue) {
+                                      if (newValue != null) {
+                                        controller.selectedCountryCode.value = newValue;
+                                        controller.validatePhone(controller.phoneController.text);
+                                      }
+                                    },
+                                    items: PhoneNumberUtils.countryFlags.entries.map<DropdownMenuItem<String>>((entry) {
+                                      return DropdownMenuItem<String>(
+                                        value: entry.key,
+                                        child: Text('${entry.value}  ${entry.key}'),
+                                      );
+                                    }).toList(),
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
                           const _CardDivider(),
@@ -351,6 +385,7 @@ class RegisterPage extends GetView<RegisterController> {
     bool isLoading = false,
     bool required = false,
     TextInputType keyboardType = TextInputType.text,
+    Widget? prefixWidget,
   }) {
     final bool isKhmer = Get.locale?.languageCode == 'km';
     final bool hasError = errorText != null && errorText.isNotEmpty;
@@ -397,6 +432,10 @@ class RegisterPage extends GetView<RegisterController> {
                 child: Icon(icon, size: 20, color: iconColor),
               ),
               const SizedBox(width: 14),
+              if (prefixWidget != null) ...[
+                prefixWidget,
+                const SizedBox(width: 8),
+              ],
               // Field
               Expanded(
                 child: TextFormField(

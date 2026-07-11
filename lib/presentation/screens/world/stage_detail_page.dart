@@ -10,6 +10,7 @@ import 'package:mobilepenpal/core/utils/number_format_utils.dart';
 import 'package:mobilepenpal/data/controllers/world/level_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_animation_controller.dart';
+import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
 import 'package:mobilepenpal/presentation/routes/app_routes.dart';
 import 'package:mobilepenpal/presentation/widgets/app_snackbar.dart';
 import 'package:mobilepenpal/presentation/widgets/loading_overly.dart';
@@ -130,20 +131,31 @@ class StageDetailPage extends GetView<StageController> {
       padding: EdgeInsets.only(left: 16, right: 16, top: 8),
       child: Row(
         children: [
-          Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              // color: Colors.orange.shade300,
-              borderRadius: BorderRadius.circular(25),
-            ),
-            // child: const Icon(Icons.person, color: Colors.white, size: 30),
-            clipBehavior: Clip.antiAlias,
-            child: Image.asset(
-              'assets/images/illustrations/pencil.png',
-              fit: BoxFit.contain,
-            ),
-          ),
+          Obx(() {
+            final homeController = Get.find<HomeController>();
+            final shopAvatar = homeController.currentShopAvatar;
+            Widget avatarWidget;
+            if (shopAvatar != null && shopAvatar.id != 'default' && shopAvatar.assetPath != null) {
+              avatarWidget = Image.asset(shopAvatar.assetPath!, fit: BoxFit.cover);
+            } else {
+              avatarWidget = const Icon(Icons.person, color: Colors.white70, size: 28);
+            }
+
+            return Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.22),
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.35),
+                  width: 2,
+                ),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: avatarWidget,
+            );
+          }),
           const SizedBox(width: 12),
           Expanded(
             child: Container(
@@ -1261,13 +1273,23 @@ class StageDetailPage extends GetView<StageController> {
                                 return;
                               }
 
-                              final levelRoute =
-                                  RouteBuilder.build(AppRoutes.level, {
-                                    'worldId': controller.worldId.toString(),
-                                    'levelId': controller.levelId.toString(),
-                                  });
+                              bool hitLevel = false;
+                              Get.until((route) {
+                                final name = route.settings.name ?? '';
+                                final isLevelOnly =
+                                    name.contains('/level/') && !name.contains('/stage/');
+                                if (isLevelOnly) hitLevel = true;
+                                return isLevelOnly;
+                              });
 
-                              Get.offAllNamed(levelRoute);
+                              if (!hitLevel) {
+                                final levelRoute =
+                                    RouteBuilder.build(AppRoutes.level, {
+                                      'worldId': controller.worldId.toString(),
+                                      'levelId': controller.levelId.toString(),
+                                    });
+                                Get.offNamed(levelRoute);
+                              }
                             } finally {
                               controller.isSubmitting.value = false;
                             }

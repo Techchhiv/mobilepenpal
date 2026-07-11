@@ -447,12 +447,8 @@ class _AiWritingPracticePageState extends State<AiWritingPracticePage>
         ),
         child: Row(
           children: [
-            // ─ Pause button on the left ─
-            _buildNeoCircleButton(
-              icon: Icons.pause_rounded,
-              color: const Color(0xFFFF9800),
-              onTap: () => _showPauseDialog(context),
-            ),
+            // ─ Avatar on the left ─
+            _buildHudAvatar(),
             const SizedBox(width: 12),
 
             // ─ Star progression track ─
@@ -460,8 +456,12 @@ class _AiWritingPracticePageState extends State<AiWritingPracticePage>
 
             const SizedBox(width: 12),
 
-            // ─ Avatar on the right ─
-            _buildHudAvatar(),
+            // ─ Pause button on the right ─
+            _buildNeoCircleButton(
+              icon: Icons.pause_rounded,
+              color: const Color(0xFFFF9800),
+              onTap: () => _showPauseDialog(context),
+            ),
           ],
         ),
       ),
@@ -648,6 +648,43 @@ class _AiWritingPracticePageState extends State<AiWritingPracticePage>
       '៧': 'assets/images/fruits/apple.png',
       '៨': 'assets/images/fruits/orange.png',
       '៩': 'assets/images/fruits/banana.png',
+
+      // Dependent Vowels
+      'ា': 'assets/images/dep_vowels/ា_កា.png',
+      'ាំ': 'assets/images/dep_vowels/ាំ_កាំជណ្ដើរ.png',
+      'ិ': 'assets/images/dep_vowels/ិ_ផ្លិត.png',
+      'ិះ': 'assets/images/dep_vowels/ិះ_ជិះ.png',
+      'ី': 'assets/images/dep_vowels/ី_សី.png',
+      'ឹ': 'assets/images/dep_vowels/ឹ_មឹក.png',
+      'ឺ': 'assets/images/dep_vowels/ឺ_ឈឺ.png',
+      'ុ': 'assets/images/dep_vowels/ុ_តុ.png',
+      'ុំ': 'assets/images/dep_vowels/ុំ_រុំកាដូ.png',
+      'ុះ': 'assets/images/dep_vowels/ុះ_ពពុះ.png',
+      'ូ': 'assets/images/dep_vowels/ូ_ដូង.png',
+      'ួ': 'assets/images/dep_vowels/ួ_ភួយ.png',
+      'ើ': 'assets/images/dep_vowels/ើ_ដើមឈើ.png',
+      'ឿ': 'assets/images/dep_vowels/ឿ_គឿង.png',
+      'ៀ': 'assets/images/dep_vowels/ៀ_សៀវភៅ.png',
+      'េ': 'assets/images/dep_vowels/េ_សេក.png',
+      'េះ': 'assets/images/dep_vowels/េះ_ឆេះ.png',
+      'ែ': 'assets/images/dep_vowels/ែ_ខ្លែង.png',
+      'ៃ': 'assets/images/dep_vowels/ៃ_ស្ពៃ.png',
+      'ោ': 'assets/images/dep_vowels/ោ_ខោ.png',
+      'ោះ': 'assets/images/dep_vowels/ោះ_កោះ.png',
+      'ៅ': 'assets/images/dep_vowels/ៅ_ពូថៅ.png',
+      'ំ': 'assets/images/dep_vowels/ំ_នំ.png',
+      'ះ': 'assets/images/dep_vowels/ះ_ផ្ទះ.png',
+
+      // Independent Vowels
+      'ឥ': 'assets/images/indep_vowels/ឥ_ឥដ្ឋ.png',
+      'ឦ': 'assets/images/indep_vowels/ឦ_ឦសាន.png',
+      'ឪ': 'assets/images/indep_vowels/ឪ_ឪឡឹក.png',
+      'ឫ': 'assets/images/indep_vowels/ឫ_ឫស.png',
+      'ឬ': 'assets/images/indep_vowels/ឬ_ឬស្សី.png',
+      'ឭ': 'assets/images/indep_vowels/ឭ_រំឭក.png',
+      'ឮ': 'assets/images/indep_vowels/ឮ_ឮ.png',
+      'ឰ': 'assets/images/indep_vowels/ឰ_ឰសូរ.png',
+      'ឱ': 'assets/images/indep_vowels/ឱ_ឱប.png',
     };
     return consonantImages[char.trim()];
   }

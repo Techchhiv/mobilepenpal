@@ -31,8 +31,9 @@ class StageController extends GetxController {
     : _worldService = worldService ?? WorldService();
 
   final WorldService _worldService;
-  late final DrawingEvaluationService _evalService =
-      DrawingEvaluationService(worldService: _worldService);
+  late final DrawingEvaluationService _evalService = DrawingEvaluationService(
+    worldService: _worldService,
+  );
 
   final isLoading = false.obs;
   final isSubmitting = false.obs;
@@ -143,7 +144,11 @@ class StageController extends GetxController {
 
   bool get showIllustration {
     final t = (currentExercise?.characterType ?? '').trim().toLowerCase();
-    return t == 'consonants' || t == 'digits' || t == 'math';
+    return t == 'consonants' ||
+        t == 'digits' ||
+        t == 'math' ||
+        t == 'independent_vowels' ||
+        t == 'dependent_vowels';
   }
 
   bool get isMathCurrent {
@@ -444,9 +449,7 @@ class StageController extends GetxController {
     final dots = List<StarState>.generate(total, (i) {
       final a = attempts[i];
       if (a != null) {
-        return a['is_correct'] == true
-            ? StarState.correct
-            : StarState.wrong;
+        return a['is_correct'] == true ? StarState.correct : StarState.wrong;
       }
       return StarState.pending;
     });
@@ -599,7 +602,6 @@ class StageController extends GetxController {
     onPointerUp();
   }
 
-
   /// Build template strokes for a given character from the strokes DB,
   /// fitted to the current board size.  Used for behind-the-scenes
   /// structural validation when there is no visible guide.
@@ -632,8 +634,9 @@ class StageController extends GetxController {
     final cancelToken = CancelToken();
     _cancelToken = cancelToken;
 
-    final modelType =
-        _evalService.mapCharacterTypeToModelType(exercise.characterType);
+    final modelType = _evalService.mapCharacterTypeToModelType(
+      exercise.characterType,
+    );
 
     // Determine if this exercise has a visible stroke guide.
     final bool hasGuide = strokeStrokesNorm.isNotEmpty && !isMathCurrent;
@@ -662,10 +665,8 @@ class StageController extends GetxController {
             modelType: modelType,
             boardCount: boards,
             rawStrokesPerBoard: _rawStrokesList,
-            getPayload: (i) => getXYStrokeWithTime(
-              modelType: modelType,
-              boardIndex: i,
-            ),
+            getPayload: (i) =>
+                getXYStrokeWithTime(modelType: modelType, boardIndex: i),
             getReqId: () => _redId,
             currentReqId: myReqId,
             cancelToken: cancelToken,
@@ -680,10 +681,8 @@ class StageController extends GetxController {
           final data = await _evalService.predictBoard(
             modelType: modelType,
             rawStrokes: _rawStrokesList[0],
-            getPayload: () => getXYStrokeWithTime(
-              modelType: modelType,
-              boardIndex: 0,
-            ),
+            getPayload: () =>
+                getXYStrokeWithTime(modelType: modelType, boardIndex: 0),
             cancelToken: cancelToken,
           );
           if (myReqId != _redId) return;
@@ -710,8 +709,10 @@ class StageController extends GetxController {
           if (charToValidate != null) {
             final template = _getTemplateForChar(charToValidate);
             if (template.isNotEmpty) {
-              final centered =
-                  StrokeTransformUtil.autoCenterStrokes(_rawStrokesList[0], template);
+              final centered = StrokeTransformUtil.autoCenterStrokes(
+                _rawStrokesList[0],
+                template,
+              );
               strokeHint = StrokeFeedbackUtil.getFeedback(
                 userRawStrokes: centered,
                 templateStrokesPx: template,
@@ -826,12 +827,16 @@ class StageController extends GetxController {
     if (hasGuide && strokeStrokesNorm.isNotEmpty) {
       // Convert raw strokes to Offset lists for the morph painter.
       final userOffsets = _rawStrokesList[0]
-          .map((stroke) => stroke
-              .map((p) => Offset(
+          .map(
+            (stroke) => stroke
+                .map(
+                  (p) => Offset(
                     (p['x'] as num).toDouble(),
                     (p['y'] as num).toDouble(),
-                  ))
-              .toList())
+                  ),
+                )
+                .toList(),
+          )
           .toList();
 
       await anim.startMorph(

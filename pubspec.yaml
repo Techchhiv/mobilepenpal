@@ -96,6 +96,9 @@ flutter:
     - assets/images/consonants/
     - assets/images/digits/
     - assets/images/avatars/
+    - assets/images/dep_vowels/
+    - assets/images/indep_vowels/
+    - assets/images/fruits/
 
     - assets/animated/
 

@@ -24,6 +24,18 @@ class RegisterController extends GetxController {
   final isConfirmPasswordVisible = false.obs;
   final isSubmitted = false.obs;
 
+  var selectedCountryCode = '+855'.obs;
+
+  String get fullPhoneNumber {
+    final number = phoneController.text.trim().replaceAll(' ', '');
+    if (number.isEmpty) return '';
+    if (number.startsWith('+')) {
+      return number;
+    }
+    final sanitized = number.startsWith('0') ? number.substring(1) : number;
+    return '${selectedCountryCode.value}$sanitized';
+  }
+
   final studentFirstNameError = ''.obs;
   final studentLastNameError = ''.obs;
 
@@ -83,7 +95,11 @@ class RegisterController extends GetxController {
     final value = v.trim().replaceAll(' ', '');
     if (value.isEmpty) {
       phoneError.value = 'phone_required'.tr;
-    } else if (!GetUtils.isPhoneNumber(value)) {
+      return;
+    }
+    final fullNumber = fullPhoneNumber;
+    final digitsOnly = fullNumber.replaceAll(RegExp(r'\D'), '');
+    if (!GetUtils.isPhoneNumber(fullNumber) || digitsOnly.length < 7 || digitsOnly.length > 15) {
       phoneError.value = 'invalid_phone'.tr;
     } else {
       phoneError.value = '';
@@ -219,7 +235,7 @@ class RegisterController extends GetxController {
             : studentLastNameController.text.trim(),
         parentFirstName: parentFirstNameController.text.trim(),
         parentLastName: parentLastNameController.text.trim(),
-        phone: phoneController.text.trim(),
+        phone: fullPhoneNumber,
         password: passwordController.text,
         email: emailController.text.trim().isEmpty
             ? null
@@ -278,6 +294,7 @@ class RegisterController extends GetxController {
     passwordController.clear();
     confirmPasswordController.clear();
 
+    selectedCountryCode.value = '+855';
     isSubmitted.value = false;
     _clearFieldErrors();
   }

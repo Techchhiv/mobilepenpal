@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:mobilepenpal/core/theme/app_colors.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_animation_controller.dart';
+import 'package:get/get.dart';
+import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
 
 /// The top bar for a stage page showing a pencil avatar, a progress
 /// indicator with dots/stars, and an action button.
@@ -55,11 +57,7 @@ class StageTopBar extends StatelessWidget {
               ),
             ),
             child: ClipOval(
-              child: avatarWidget ??
-                  Image.asset(
-                    'assets/images/illustrations/pencil.png',
-                    fit: BoxFit.contain,
-                  ),
+              child: avatarWidget ?? _buildDefaultAvatar(),
             ),
           ),
           const SizedBox(width: 12),
@@ -253,5 +251,16 @@ class StageTopBar extends StatelessWidget {
       }
     }
     return starPositions;
+  }
+
+  Widget _buildDefaultAvatar() {
+    if (Get.isRegistered<HomeController>()) {
+      final homeController = Get.find<HomeController>();
+      final shopAvatar = homeController.currentShopAvatar;
+      if (shopAvatar != null && shopAvatar.id != 'default' && shopAvatar.assetPath != null) {
+        return Image.asset(shopAvatar.assetPath!, fit: BoxFit.cover);
+      }
+    }
+    return const Icon(Icons.person, size: 28, color: Colors.white70);
   }
 }

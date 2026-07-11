@@ -24,6 +24,18 @@ class AuthController extends GetxController {
   var passwordError = ''.obs;
   var isSubmitted = false.obs;
 
+  var selectedCountryCode = '+855'.obs;
+
+  String get fullPhoneNumber {
+    final number = phoneController.text.trim().replaceAll(' ', '');
+    if (number.isEmpty) return '';
+    if (number.startsWith('+')) {
+      return number;
+    }
+    final sanitized = number.startsWith('0') ? number.substring(1) : number;
+    return '${selectedCountryCode.value}$sanitized';
+  }
+
   @override
   void onInit() {
     super.onInit();
@@ -43,7 +55,11 @@ class AuthController extends GetxController {
 
     if (value.isEmpty) {
       phoneError.value = "phone_required".tr;
-    } else if (!GetUtils.isPhoneNumber(value.replaceAll(' ', ''))) {
+      return;
+    }
+    final fullNumber = fullPhoneNumber;
+    final digitsOnly = fullNumber.replaceAll(RegExp(r'\D'), '');
+    if (!GetUtils.isPhoneNumber(fullNumber) || digitsOnly.length < 7 || digitsOnly.length > 15) {
       phoneError.value = 'invalid_phone'.tr;
     } else {
       phoneError.value = '';
@@ -112,7 +128,7 @@ class AuthController extends GetxController {
       isLoading.value = true;
 
       final response = await _authService.loginStudent(
-        phone: phoneController.text.trim(),
+        phone: fullPhoneNumber,
         password: passwordController.text,
         confirm: confirm,
         // schoolKey: schoolIdController.text.trim(),

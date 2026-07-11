@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:mobilepenpal/core/theme/app_colors.dart';
 import 'package:mobilepenpal/data/controllers/auth/auth_controller.dart';
 import 'package:mobilepenpal/presentation/routes/app_routes.dart';
+import 'package:mobilepenpal/core/utils/phone_number_utils.dart';
 
 class LoginPage extends StatelessWidget {
   LoginPage({super.key});
@@ -91,56 +92,103 @@ class LoginPage extends StatelessWidget {
                 ),
               ),
               SizedBox(height: 8),
-              Obx(
-                () => TextFormField(
-                  key: Key('login_phone'),
-                  controller: authController.phoneController,
-                  keyboardType: TextInputType.phone,
-                  enabled: !authController.isLoading.value,
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: authController.isLoading.value
-                        ? Colors.grey[300]
-                        : Colors.grey[100],
-                    hintText: 'enter_your_phone_number'.tr,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: AppColors.primary,
-                        width: 2,
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Obx(
+                    () => Container(
+                      height: 52,
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: authController.isLoading.value
+                            ? Colors.grey[300]
+                            : Colors.grey[100],
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: authController.selectedCountryCode.value,
+                          isDense: true,
+                          alignment: Alignment.center,
+                          menuMaxHeight: 250,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87,
+                          ),
+                          onChanged: authController.isLoading.value
+                              ? null
+                              : (String? newValue) {
+                                  if (newValue != null) {
+                                    authController.selectedCountryCode.value = newValue;
+                                    authController.validatePhone(authController.phoneController.text);
+                                  }
+                                },
+                          items: PhoneNumberUtils.countryFlags.entries.map<DropdownMenuItem<String>>((entry) {
+                            return DropdownMenuItem<String>(
+                              value: entry.key,
+                              child: Text('${entry.value}  ${entry.key}'),
+                            );
+                          }).toList(),
+                        ),
                       ),
                     ),
-                    errorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Colors.red, width: 1),
-                    ),
-                    focusedErrorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Colors.red, width: 2),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 16,
-                    ),
-                    errorText: authController.phoneError.value.isNotEmpty
-                        ? authController.phoneError.value
-                        : null,
-                    hintStyle: TextStyle(
-                      color: authController.isLoading.value
-                          ? Colors.grey[500]
-                          : null,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Obx(
+                      () => TextFormField(
+                        key: Key('login_phone'),
+                        controller: authController.phoneController,
+                        keyboardType: TextInputType.phone,
+                        enabled: !authController.isLoading.value,
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: authController.isLoading.value
+                              ? Colors.grey[300]
+                              : Colors.grey[100],
+                          hintText: 'enter_your_phone_number'.tr,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: AppColors.primary,
+                              width: 2,
+                            ),
+                          ),
+                          errorBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: Colors.red, width: 1),
+                          ),
+                          focusedErrorBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: Colors.red, width: 2),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 16,
+                          ),
+                          errorText: authController.phoneError.value.isNotEmpty
+                              ? authController.phoneError.value
+                              : null,
+                          hintStyle: TextStyle(
+                            color: authController.isLoading.value
+                                ? Colors.grey[500]
+                                : null,
+                          ),
+                        ),
+                        onChanged: (value) => authController.validatePhone(value),
+                      ),
                     ),
                   ),
-                  onChanged: (value) => authController.validatePhone(value),
-                ),
+                ],
               ),
               const SizedBox(height: 24),
 
