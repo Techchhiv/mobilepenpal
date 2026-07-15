@@ -24,7 +24,7 @@ class StoreExerciseRequest extends FormRequest
 
             'character_type' => [
                 'required',
-                Rule::in(['digits', 'consonants', 'independent_vowels', 'dependent_vowels']),
+                Rule::in(['digits', 'consonants', 'independent_vowels', 'dependent_vowels', 'math', 'diacritics']),
             ],
 
             'difficulty' => ['nullable', 'in:easy,medium,hard'],

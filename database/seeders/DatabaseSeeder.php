@@ -25,7 +25,7 @@ class DatabaseSeeder extends Seeder
             MiniGameSeeder::class,
             // SubscriptionSeeder::class,
             // TeacherRolesSeeder::class
-            // StudentExerciseAttemptSeeder::class,
+            StudentExerciseAttemptSeeder::class,
             SystemSettingSeeder::class,
             QuestionTemplateSeeder::class,
         ]);

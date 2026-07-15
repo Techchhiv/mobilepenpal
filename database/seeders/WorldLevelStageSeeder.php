@@ -105,6 +105,21 @@ class WorldLevelStageSeeder extends Seeder
                 'ោះ'
             ];
 
+            $diacritics = [
+                '័',
+                '៊',
+                '៉',
+                '៏',
+                '់',
+                '៌',
+                '៎',
+                'ះ',
+                'ៈ',
+                'ៗ',
+                '៑',
+                'ំ',
+            ];
+
             $worldDefs = [
                 // ===== PUBLIC WORLDS (for general/public users) =====
                 [
@@ -161,6 +176,20 @@ class WorldLevelStageSeeder extends Seeder
                     'chars' => $independentVowels,
                     'character_type' => 'independent_vowels',
                     'chunk' => 5,
+                    'is_unlocked_by_default' => false,
+                    'is_premium' => false,
+                ],
+                [
+                    'key' => 'public_diacritics',
+                    'audience' => 'public',
+                    'order_index' => 5,
+                    'name_km' => 'វណ្ណយុត្តិ',
+                    'name_en' => 'Diacritics',
+                    'desc_km' => 'រៀនគូរវណ្ណយុត្តិខ្មែរ',
+                    'desc_en' => 'Learn Khmer diacritics',
+                    'chars' => $diacritics,
+                    'character_type' => 'diacritics',
+                    'chunk' => 3,
                     'is_unlocked_by_default' => false,
                     'is_premium' => false,
                 ],
@@ -229,6 +258,19 @@ class WorldLevelStageSeeder extends Seeder
                     'chars' => $independentVowels,
                     'character_type' => 'independent_vowels',
                     'chunk' => 5,
+                    'is_premium' => true,
+                ],
+                [
+                    'key' => 'schools_diacritics',
+                    'audience' => 'schools',
+                    'order_index' => 10,
+                    'name_km' => 'វណ្ណយុត្តិ',
+                    'name_en' => 'Diacritics',
+                    'desc_km' => 'រៀនគូរវណ្ណយុត្តិខ្មែរ',
+                    'desc_en' => 'Learn Khmer diacritics',
+                    'chars' => $diacritics,
+                    'character_type' => 'diacritics',
+                    'chunk' => 3,
                     'is_premium' => true,
                 ],
                 // [
@@ -503,6 +545,7 @@ class WorldLevelStageSeeder extends Seeder
             'digits' => ["លេខ {$first} - {$last}", "Digits {$first} - {$last}"],
             'independent_vowels' => ["ស្រៈ {$first} - {$last}", "Vowels {$first} - {$last}"],
             'dependent_vowels' => ["ស្រៈ {$first} - {$last}", "Vowels {$first} - {$last}"],
+            'diacritics' => ["វណ្ណយុត្តិ {$first} - {$last}", "Diacritics {$first} - {$last}"],
             default => ["កម្រិត", "Level"],
         };
     }
@@ -516,6 +559,7 @@ class WorldLevelStageSeeder extends Seeder
             'consonants' => ["រៀនអក្សរ {$ch}", "Practice letter {$ch}"],
             'digits' => ["រៀនលេខ {$ch}", "Practice digit {$ch}"],
             'independent_vowels', 'dependent_vowels' => ["រៀនស្រៈ {$ch}", "Practice vowel {$ch}"],
+            'diacritics' => ["រៀនវណ្ណយុត្តិ {$ch}", "Practice diacritic {$ch}"],
             default => ["រៀន {$ch}", "Practice {$ch}"],
         };
     }

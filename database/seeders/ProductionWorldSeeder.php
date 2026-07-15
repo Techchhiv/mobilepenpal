@@ -59,6 +59,21 @@ class ProductionWorldSeeder extends Seeder
                 'ឿ',
             ]; // Exactly 10
 
+            $diacritics = [
+                '័',
+                '៊',
+                '៉',
+                '៏',
+                '់',
+                '៌',
+                '៎',
+                'ះ',
+                'ៈ',
+                'ៗ',
+                '៑',
+                'ំ',
+            ];
+
             $worldDefs = [
                 [
                     'key' => 'prod_consonants',
@@ -99,6 +114,20 @@ class ProductionWorldSeeder extends Seeder
                     'chars' => $dependentVowels,
                     'character_type' => 'dependent_vowels',
                     'chunk' => 5, // 5 stages per level
+                    'is_unlocked_by_default' => false,
+                    'is_premium' => false,
+                ],
+                [
+                    'key' => 'prod_diacritics',
+                    'audience' => 'public',
+                    'order_index' => 4,
+                    'name_km' => 'វណ្ណយុត្តិ',
+                    'name_en' => 'Diacritics',
+                    'desc_km' => 'រៀនគូរវណ្ណយុត្តិខ្មែរ',
+                    'desc_en' => 'Learn Khmer diacritics',
+                    'chars' => $diacritics,
+                    'character_type' => 'diacritics',
+                    'chunk' => 3, // 3 stages per level
                     'is_unlocked_by_default' => false,
                     'is_premium' => false,
                 ],
@@ -242,6 +271,7 @@ class ProductionWorldSeeder extends Seeder
             'digits' => ["លេខ {$first} - {$last}", "Digits {$first} - {$last}"],
             'independent_vowels' => ["ស្រៈ {$first} - {$last}", "Vowels {$first} - {$last}"],
             'dependent_vowels' => ["ស្រៈ {$first} - {$last}", "Vowels {$first} - {$last}"],
+            'diacritics' => ["វណ្ណយុត្តិ {$first} - {$last}", "Diacritics {$first} - {$last}"],
             default => ["កម្រិត", "Level"],
         };
     }
@@ -252,6 +282,7 @@ class ProductionWorldSeeder extends Seeder
             'consonants' => ["រៀនអក្សរ {$ch}", "Practice letter {$ch}"],
             'digits' => ["រៀនលេខ {$ch}", "Practice digit {$ch}"],
             'independent_vowels', 'dependent_vowels' => ["រៀនស្រៈ {$ch}", "Practice vowel {$ch}"],
+            'diacritics' => ["រៀនវណ្ណយុត្តិ {$ch}", "Practice diacritic {$ch}"],
             default => ["រៀន {$ch}", "Practice {$ch}"],
         };
     }

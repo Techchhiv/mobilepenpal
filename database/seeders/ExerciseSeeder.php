@@ -99,10 +99,26 @@ class ExerciseSeeder extends Seeder
                 'ោះ'
             ];
 
+            $diacritics = [
+                '័',
+                '៊',
+                '៉',
+                '៏',
+                '់',
+                '៌',
+                '៎',
+                'ះ',
+                'ៈ',
+                'ៗ',
+                '៑',
+                'ំ',
+            ];
+
             $this->createExerciseBank($consonants, 'consonants');
             $this->createExerciseBank($digits, 'digits');
             $this->createExerciseBank($independentVowels, 'independent_vowels');
             $this->createExerciseBank($dependentVowels, 'dependent_vowels');
+            $this->createExerciseBank($diacritics, 'diacritics');
 
             $difficulties = ['easy', 'medium', 'hard', 'very_hard'];
             $ops = ['add', 'sub', 'mul', 'div'];
@@ -190,7 +206,7 @@ class ExerciseSeeder extends Seeder
         return match ($characterType) {
             'consonants' => "{$character} / {$character}ា / {$character}ិ / {$character}ី",
             'digits' => $character,
-            'dependent_vowels', 'independent_vowels' => $character,
+            'dependent_vowels', 'independent_vowels', 'diacritics' => $character,
             default => $character,
         };
     }

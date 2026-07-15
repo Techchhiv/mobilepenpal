@@ -26,7 +26,7 @@ return new class extends Migration {
             $table->text('hint')->nullable();
 
 
-            $table->enum('character_type', ['digits', 'consonants', 'dependent_vowels', 'independent_vowels', 'math'])->default('consonants');
+            $table->enum('character_type', ['digits', 'consonants', 'dependent_vowels', 'independent_vowels', 'math', 'diacritics'])->default('consonants');
             $table->enum('math_op', ['add', 'sub', 'mul', 'div'])->nullable();
             $table->enum('difficulty', ['easy', 'medium', 'hard', 'very_hard'])->default('easy');
             $table->index(['character_type', 'difficulty', 'math_op']);
