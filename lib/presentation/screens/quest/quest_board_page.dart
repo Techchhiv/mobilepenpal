@@ -11,6 +11,7 @@ import 'package:mobilepenpal/presentation/widgets/world/stage_components/stage_d
 import 'package:mobilepenpal/presentation/widgets/world/stage_components/stage_illustration.dart';
 import 'package:mobilepenpal/presentation/widgets/world/stage_components/stage_top_bar.dart';
 import 'package:mobilepenpal/presentation/widgets/world/stage_components/stage_pause_dialog.dart';
+import 'package:mobilepenpal/data/controllers/dashboard/navigation_controller.dart';
 
 class QuestBoardPage extends GetView<QuestBoardController> {
   const QuestBoardPage({super.key});
@@ -464,9 +465,20 @@ class QuestBoardPage extends GetView<QuestBoardController> {
         return StagePauseDialog(
           onHome: () async {
             Navigator.of(ctx).pop();
-            Get.until(
-              (route) => route.settings.name == AppRoutes.home || route.isFirst,
-            );
+            bool hitDashboard = false;
+            Get.until((route) {
+              if (route.settings.name == AppRoutes.dashboard) {
+                hitDashboard = true;
+                return true;
+              }
+              return route.isFirst;
+            });
+            if (!hitDashboard) {
+              Get.offAllNamed(AppRoutes.dashboard);
+            }
+            if (Get.isRegistered<NavigationController>()) {
+              Get.find<NavigationController>().changePage(2);
+            }
           },
           onRestart: () async {
             Navigator.of(ctx).pop();

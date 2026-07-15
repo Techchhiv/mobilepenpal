@@ -7,6 +7,7 @@ import 'package:mobilepenpal/core/utils/number_format_utils.dart';
 import 'package:mobilepenpal/data/controllers/shop/shop_controller.dart';
 import 'package:mobilepenpal/data/controllers/dashboard/navigation_controller.dart';
 import 'package:mobilepenpal/presentation/widgets/home/profile_header_card.dart';
+import 'package:mobilepenpal/presentation/widgets/animated_button.dart';
 
 class ShopPage extends StatelessWidget {
   final ShopController controller = Get.find<ShopController>();
@@ -590,7 +591,7 @@ class ShopPage extends StatelessWidget {
                             ],
                             const SizedBox(height: 24),
                             if (isAlreadySelected)
-                              Playful3DButton(
+                              AnimatedButton(
                                 label: 'ok'.tr.toUpperCase(),
                                 color: AppColors.primary,
                                 onTap: () => Navigator.of(context).pop(),
@@ -610,7 +611,7 @@ class ShopPage extends StatelessWidget {
                                       ),
                                     ),
                                   ),
-                                  Playful3DButton(
+                                  AnimatedButton(
                                     label: 'select_avatar'.tr,
                                     color: avatar.color,
                                     onTap: () {
@@ -810,7 +811,7 @@ class ShopPage extends StatelessWidget {
                                   ),
                                 ),
                                 const SizedBox(height: 24),
-                                Playful3DButton(
+                                AnimatedButton(
                                   label: 'ok'.tr.toUpperCase(),
                                   color: Colors.grey.shade500,
                                   onTap: () => Navigator.of(context).pop(),
@@ -944,7 +945,7 @@ class ShopPage extends StatelessWidget {
                                           ),
                                         ),
                                       ),
-                                    Playful3DButton(
+                                    AnimatedButton(
                                       label: controller.isPurchasing.value
                                           ? 'loading'.tr
                                           : 'buy_for'.trParams({
@@ -1050,7 +1051,7 @@ class ShopPage extends StatelessWidget {
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 28),
-                        Playful3DButton(
+                        AnimatedButton(
                           label: 'great_button'.tr,
                           color: Colors.green.shade600,
                           onTap: () {
@@ -1071,59 +1072,6 @@ class ShopPage extends StatelessWidget {
     );
   }
 }
-
-class BouncyGestureDetector extends StatefulWidget {
-  final Widget child;
-  final VoidCallback onTap;
-
-  const BouncyGestureDetector({
-    super.key,
-    required this.child,
-    required this.onTap,
-  });
-
-  @override
-  State<BouncyGestureDetector> createState() => _BouncyGestureDetectorState();
-}
-
-class _BouncyGestureDetectorState extends State<BouncyGestureDetector>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _scaleAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 100),
-    );
-    _scaleAnimation = Tween<double>(
-      begin: 1.0,
-      end: 0.93,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => _controller.forward(),
-      onTapUp: (_) {
-        _controller.reverse();
-        widget.onTap();
-      },
-      onTapCancel: () => _controller.reverse(),
-      child: ScaleTransition(scale: _scaleAnimation, child: widget.child),
-    );
-  }
-}
-
 class ScaleTransitionWidget extends StatefulWidget {
   final Widget child;
 
@@ -1256,160 +1204,6 @@ class StarburstPainter extends CustomPainter {
       oldDelegate.color != color || oldDelegate.rayCount != rayCount;
 }
 
-class PlayfulButtonLoader extends StatefulWidget {
-  final Color color;
-  const PlayfulButtonLoader({super.key, this.color = Colors.white});
-
-  @override
-  State<PlayfulButtonLoader> createState() => _PlayfulButtonLoaderState();
-}
-
-class _PlayfulButtonLoaderState extends State<PlayfulButtonLoader>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1200),
-    )..repeat();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        RotationTransition(
-          turns: _controller,
-          child: Icon(
-            Icons.stars_rounded,
-            color: widget.color,
-            size: 22,
-          ),
-        ),
-        const SizedBox(width: 10),
-        ...List.generate(3, (index) {
-          return AnimatedBuilder(
-            animation: _controller,
-            builder: (context, child) {
-              final delay = index * 0.2;
-              double value = (_controller.value - delay) % 1.0;
-              double bounce = math.sin(value * math.pi);
-              if (bounce < 0) bounce = 0;
-
-              return Transform.translate(
-                offset: Offset(0, -bounce * 6),
-                child: Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 2),
-                  width: 6,
-                  height: 6,
-                  decoration: BoxDecoration(
-                    color: widget.color,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              );
-            },
-          );
-        }),
-      ],
-    );
-  }
-}
-
-class Playful3DButton extends StatelessWidget {
-  final String label;
-  final IconData? icon;
-  final Color color;
-  final VoidCallback onTap;
-  final bool isLoading;
-
-  const Playful3DButton({
-    super.key,
-    required this.label,
-    required this.onTap,
-    required this.color,
-    this.icon,
-    this.isLoading = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final activeColor = isLoading ? Color.lerp(color, Colors.white, 0.2) ?? color : color;
-    final shadowColor = Color.lerp(activeColor, Colors.black, 0.28) ?? Colors.black;
-
-    return BouncyGestureDetector(
-      onTap: isLoading ? () {} : onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-        margin: const EdgeInsets.only(bottom: 6),
-        decoration: BoxDecoration(
-          color: activeColor,
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: [
-            BoxShadow(
-              color: shadowColor,
-              offset: const Offset(0, 5),
-              blurRadius: 0,
-            ),
-          ],
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-        child: AnimatedSize(
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 250),
-            transitionBuilder: (Widget child, Animation<double> animation) {
-              return ScaleTransition(
-                scale: animation,
-                child: FadeTransition(
-                  opacity: animation,
-                  child: child,
-                ),
-              );
-            },
-            child: isLoading
-                ? const PlayfulButtonLoader(
-                    key: ValueKey('loading'),
-                  )
-                : Row(
-                    key: const ValueKey('normal'),
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      if (icon != null) ...[
-                        Icon(icon, color: Colors.white, size: 20),
-                        const SizedBox(width: 8),
-                      ],
-                      Text(
-                        label,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.white,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ],
-                  ),
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 class ConfettiParticle {
   double x;

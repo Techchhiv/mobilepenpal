@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import 'package:mobilepenpal/presentation/routes/app_routes.dart';
+import 'package:mobilepenpal/data/controllers/dashboard/navigation_controller.dart';
 
 class QuestSummaryController extends GetxController {
   late final int starsEarned;
@@ -32,10 +33,25 @@ class QuestSummaryController extends GetxController {
     isContinuing.value = true;
 
     try {
-      // Pop until we find the home route, or we reach the bottom of the stack
-      Get.until((route) => route.settings.name == AppRoutes.home || route.isFirst);
+      bool hitDashboard = false;
+      Get.until((route) {
+        if (route.settings.name == AppRoutes.dashboard) {
+          hitDashboard = true;
+          return true;
+        }
+        return route.isFirst;
+      });
+      if (!hitDashboard) {
+        Get.offAllNamed(AppRoutes.dashboard);
+      }
+      if (Get.isRegistered<NavigationController>()) {
+        Get.find<NavigationController>().changePage(2);
+      }
     } catch (_) {
-      Get.offAllNamed(AppRoutes.home);
+      Get.offAllNamed(AppRoutes.dashboard);
+      if (Get.isRegistered<NavigationController>()) {
+        Get.find<NavigationController>().changePage(2);
+      }
     } finally {
       if (Get.isRegistered<QuestSummaryController>()) {
         isContinuing.value = false;

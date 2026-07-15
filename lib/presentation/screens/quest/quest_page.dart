@@ -7,6 +7,7 @@ import 'package:mobilepenpal/presentation/widgets/loading_overly.dart';
 import 'package:mobilepenpal/data/controllers/dashboard/navigation_controller.dart';
 import 'package:mobilepenpal/presentation/widgets/home/profile_header_card.dart';
 import 'package:mobilepenpal/presentation/widgets/home/randomly_floating_asset.dart';
+import 'package:mobilepenpal/presentation/widgets/animated_button.dart';
 
 /// The main Quest screen that replaces the old Daily Challenge page.
 ///
@@ -102,68 +103,63 @@ class QuestPage extends GetView<QuestController> {
                                 Color(0xFF6C3CE1),
                               ],
                               // subtitle: 'my_quest'.tr,
-                              trailing: SizedBox(
-                                width: 56,
-                                height: 56,
-                                child: Stack(
-                                  alignment: Alignment.center,
-                                  children: [
-                                    // Track
-                                    const SizedBox(
+                              trailing: total > 0
+                                  ? SizedBox(
                                       width: 56,
                                       height: 56,
-                                      child: CircularProgressIndicator(
-                                        value: 1.0,
-                                        strokeWidth: 5,
-                                        color: Colors.white24,
-                                        strokeCap: StrokeCap.round,
-                                      ),
-                                    ),
-                                    // Fill
-                                    SizedBox(
-                                      width: 56,
-                                      height: 56,
-                                      child: CircularProgressIndicator(
-                                        value: total > 0 ? done / total : 0.0,
-                                        strokeWidth: 5,
-                                        color: Colors.white,
-                                        backgroundColor: Colors.transparent,
-                                        strokeCap: StrokeCap.round,
-                                      ),
-                                    ),
-                                    // Label
-                                    Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Text(
-                                          '$done/$total',
-                                          style: const TextStyle(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w900,
-                                            color: Colors.white,
-                                            height: 1.0,
+                                      child: Stack(
+                                        alignment: Alignment.center,
+                                        children: [
+                                          // Track
+                                          const SizedBox(
+                                            width: 56,
+                                            height: 56,
+                                            child: CircularProgressIndicator(
+                                              value: 1.0,
+                                              strokeWidth: 5,
+                                              color: Colors.white24,
+                                              strokeCap: StrokeCap.round,
+                                            ),
                                           ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
+                                          // Fill
+                                          SizedBox(
+                                            width: 56,
+                                            height: 56,
+                                            child: CircularProgressIndicator(
+                                              value: total > 0 ? done / total : 0.0,
+                                              strokeWidth: 5,
+                                              color: Colors.white,
+                                              backgroundColor: Colors.transparent,
+                                              strokeCap: StrokeCap.round,
+                                            ),
+                                          ),
+                                          // Label
+                                          Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              Text(
+                                                '$done/$total',
+                                                style: const TextStyle(
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.w900,
+                                                  color: Colors.white,
+                                                  height: 1.0,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    )
+                                  : null,
                             );
                           }),
                         ),
                         SizedBox(height: 10),
                         Expanded(
                           child: Obx(() {
-                            if (controller.isLoading.value &&
-                                controller.quests.isEmpty) {
-                              return const Center(
-                                child: CircularProgressIndicator(),
-                              );
-                            }
-
                             if (controller.quests.isEmpty) {
                               return _buildEmptyState();
                             }
@@ -217,67 +213,81 @@ class QuestPage extends GetView<QuestController> {
 
   // ── Empty state ─────────────────────────────────────────────────
   Widget _buildEmptyState() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 100,
-              height: 100,
+    final bottomPadding = 80.0 + Get.mediaQuery.padding.bottom;
+    return Padding(
+      padding: EdgeInsets.only(bottom: bottomPadding),
+      child: Center(
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
               decoration: BoxDecoration(
-                color: const Color(0xFF845EF7).withValues(alpha: 0.10),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.explore_outlined,
-                size: 48,
-                color: Color(0xFF845EF7),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              'no_quests_available'.tr,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w800,
-                color: Color(0xFF3A3A5C),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'complete_lessons_unlock_quests'.tr,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: Colors.grey.shade500,
-                height: 1.5,
-              ),
-            ),
-            const SizedBox(height: 24),
-            OutlinedButton.icon(
-              onPressed: () => controller.refreshQuests(),
-              icon: const Icon(Icons.refresh_rounded, size: 18),
-              label: Text('refresh'.tr),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF845EF7),
-                side: const BorderSide(color: Color(0xFF845EF7)),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
+                color: Colors.white.withValues(alpha: 0.92),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: const Color(0xFF845EF7).withValues(alpha: 0.15),
+                  width: 2,
                 ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                textStyle: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 16,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 90,
+                    height: 90,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF845EF7).withValues(alpha: 0.10),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.explore_rounded,
+                      size: 46,
+                      color: Color(0xFF845EF7),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'no_quests_available'.tr,
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                      color: Color(0xFF2E2E4B),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'complete_lessons_unlock_quests'.tr,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF5D5D78),
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 28),
+                  AnimatedButton(
+                    onTap: () => controller.refreshQuests(),
+                    icon: Icons.refresh_rounded,
+                    label: 'refresh'.tr,
+                    color: const Color(0xFF845EF7),
+                    isLoading: controller.isLoading.value,
+                    loaderIcon: null,
+                  ),
+                ],
               ),
             ),
-          ],
+          ),
         ),
       ),
     );

@@ -22,6 +22,7 @@ import 'package:mobilepenpal/data/controllers/world/stage_audio_controller.dart'
 import 'package:mobilepenpal/data/models/stage/stage.dart';
 import 'package:mobilepenpal/data/models/stage/stage_exercise.dart';
 import 'package:mobilepenpal/data/services/drawing_evaluation_service.dart';
+import 'package:mobilepenpal/data/services/onnx_inference_service.dart';
 import 'package:mobilepenpal/data/services/world_service.dart';
 import 'package:mobilepenpal/presentation/routes/app_routes.dart';
 import 'package:mobilepenpal/presentation/widgets/app_snackbar.dart';
@@ -678,25 +679,41 @@ class StageController extends GetxController {
           isCorrect =
               expected != null && predValue != null && predValue == expected;
         } else {
-          final data = await _evalService.predictBoard(
-            modelType: modelType,
-            rawStrokes: _rawStrokesList[0],
-            getPayload: () =>
-                getXYStrokeWithTime(modelType: modelType, boardIndex: 0),
-            cancelToken: cancelToken,
-          );
-          if (myReqId != _redId) return;
-
-          prediction = (data?['prediction'] ?? '').toString().trim();
-
           if (isMathCurrent) {
+            final data = await _evalService.predictBoard(
+              modelType: modelType,
+              rawStrokes: _rawStrokesList[0],
+              getPayload: () =>
+                  getXYStrokeWithTime(modelType: modelType, boardIndex: 0),
+              cancelToken: cancelToken,
+            );
+            if (myReqId != _redId) return;
+
+            prediction = (data?['prediction'] ?? '').toString().trim();
             final expected = mathExpected.value;
             final predValue = NumberFormatUtils.parseIntAny(prediction);
             isCorrect =
                 expected != null && predValue != null && predValue == expected;
           } else {
             final expected = exercise.character.trim();
-            isCorrect = prediction == expected;
+            final isSupported = OnnxInferenceService.instance.supportsCharacter(expected, modelType);
+
+            if (isSupported) {
+              final data = await _evalService.predictBoard(
+                modelType: modelType,
+                rawStrokes: _rawStrokesList[0],
+                getPayload: () =>
+                    getXYStrokeWithTime(modelType: modelType, boardIndex: 0),
+                cancelToken: cancelToken,
+              );
+              if (myReqId != _redId) return;
+
+              prediction = (data?['prediction'] ?? '').toString().trim();
+              isCorrect = prediction == expected;
+            } else {
+              prediction = expected;
+              isCorrect = true;
+            }
           }
         }
 

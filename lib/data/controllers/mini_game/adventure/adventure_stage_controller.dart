@@ -762,38 +762,46 @@ class AdventureStageController extends GetxController
     bool isCorrect = false;
     String prediction = '';
 
-    try {
-      // Try local ONNX first
-      Map<String, dynamic>? data = await _predictLocal(modelType, 0);
+    final isSupported = OnnxInferenceService.instance.supportsCharacter(expectedChar, modelType);
 
-      if (data == null) {
-        // Fall back to server
-        final payload = _getXYStrokeWithTime(modelType: modelType);
-        final strokes = (payload['strokes'] as List)
-            .cast<Map<String, dynamic>>();
-        data = await _worldService.predictDrawingVector(
-          strokes: strokes,
-          modelType: payload['model_type'] as String,
-          cancelToken: cancelToken,
-        );
-      }
-
-      if (myReqId != _redId) return;
-
-      prediction = (data['prediction'] ?? '').toString().trim();
-      isCorrect = prediction == expectedChar.trim();
-    } on DioException catch (e) {
-      if (CancelToken.isCancel(e)) return;
-    } catch (e) {
-      dev.log('Predict failed: $e', name: 'AdventureStageController');
-      isCorrect = false;
-      AppSnackbar.show(
-        'Failed to evaluate drawing. Please try again.',
-        title: 'Error',
-        backgroundColor: Colors.red,
-      );
-    } finally {
+    if (!isSupported) {
+      isCorrect = _rawStrokesList[0].isNotEmpty;
+      prediction = expectedChar;
       if (myReqId == _redId) _cancelToken = null;
+    } else {
+      try {
+        // Try local ONNX first
+        Map<String, dynamic>? data = await _predictLocal(modelType, 0);
+
+        if (data == null) {
+          // Fall back to server
+          final payload = _getXYStrokeWithTime(modelType: modelType);
+          final strokes = (payload['strokes'] as List)
+              .cast<Map<String, dynamic>>();
+          data = await _worldService.predictDrawingVector(
+            strokes: strokes,
+            modelType: payload['model_type'] as String,
+            cancelToken: cancelToken,
+          );
+        }
+
+        if (myReqId != _redId) return;
+
+        prediction = (data['prediction'] ?? '').toString().trim();
+        isCorrect = prediction == expectedChar.trim();
+      } on DioException catch (e) {
+        if (CancelToken.isCancel(e)) return;
+      } catch (e) {
+        dev.log('Predict failed: $e', name: 'AdventureStageController');
+        isCorrect = false;
+        AppSnackbar.show(
+          'Failed to evaluate drawing. Please try again.',
+          title: 'Error',
+          backgroundColor: Colors.red,
+        );
+      } finally {
+        if (myReqId == _redId) _cancelToken = null;
+      }
     }
 
     totalDrawn.value++;

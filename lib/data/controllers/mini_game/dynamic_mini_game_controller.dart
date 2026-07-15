@@ -17,6 +17,7 @@ import 'package:mobilepenpal/core/utils/challenge_generator.dart';
 import 'package:mobilepenpal/data/models/api_response.dart';
 import 'package:mobilepenpal/data/models/mini_game/mini_game_model.dart';
 import 'package:mobilepenpal/data/models/mini_game/question_template_model.dart';
+import 'package:mobilepenpal/data/services/onnx_inference_service.dart';
 import 'package:mobilepenpal/data/services/drawing_evaluation_service.dart';
 import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
 import 'package:mobilepenpal/data/controllers/shop/shop_controller.dart';
@@ -1040,18 +1041,23 @@ class DynamicMiniGameController extends GetxController
       } else {
         // ── WITHOUT GUIDE (Medium/Hard): AI + structural checks ────────
         final modelType = _getModelTypeForDisplay();
+        final isSupported = OnnxInferenceService.instance.supportsCharacter(expectedChar, modelType);
 
-        final data = await _evalService.predictBoard(
-          modelType: modelType,
-          rawStrokes: _rawStrokes,
-          getPayload: () => _getXYStrokeWithTime(modelType: modelType),
-          cancelToken: cancelToken,
-        );
+        if (isSupported) {
+          final data = await _evalService.predictBoard(
+            modelType: modelType,
+            rawStrokes: _rawStrokes,
+            getPayload: () => _getXYStrokeWithTime(modelType: modelType),
+            cancelToken: cancelToken,
+          );
 
-        if (myReqId != _reqId) return;
+          if (myReqId != _reqId) return;
 
-        final prediction = (data?['prediction'] ?? '').toString().trim();
-        isCorrect = _isDrawingCorrect(prediction, expectedChar);
+          final prediction = (data?['prediction'] ?? '').toString().trim();
+          isCorrect = _isDrawingCorrect(prediction, expectedChar);
+        } else {
+          isCorrect = true;
+        }
 
         // If AI says correct, also validate stroke structure (ignoring bounds).
         if (isCorrect) {

@@ -278,4 +278,22 @@ class OnnxInferenceService {
         return '?';
     }
   }
+
+  bool supportsCharacter(String character, String modelType) {
+    final ch = character.trim();
+    switch (modelType) {
+      case 'digit':
+        return _khmerDigits.contains(ch);
+      case 'math':
+        return _mathLabelMap.containsValue(ch);
+      case 'consonant':
+        return _consonantChars.contains(ch);
+      case 'independent_vowel':
+        return _independentVowelChars.contains(ch);
+      case 'dependent_vowel':
+        return _dependentVowelChars.contains(ch);
+      default:
+        return false;
+    }
+  }
 }

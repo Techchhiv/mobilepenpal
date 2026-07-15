@@ -224,11 +224,11 @@ class _MiniGamePageState extends State<MiniGamePage>
                   height: 180,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: const Color(0xFF4ECDC4),
+                    color: const Color(0xFFFF9F43),
                     border: Border.all(color: Colors.white, width: 6),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF4ECDC4).withValues(alpha: 0.6),
+                        color: const Color(0xFFFF9F43).withValues(alpha: 0.6),
                         blurRadius: 20,
                         offset: const Offset(0, 10),
                       ),
@@ -393,12 +393,12 @@ class _MiniGamePageState extends State<MiniGamePage>
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
                             color: _isDetailView.value
-                                ? const Color(0xFF4ECDC4).withValues(alpha: 0.1)
+                                ? const Color(0xFFFF9F43).withValues(alpha: 0.1)
                                 : Colors.transparent,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
                               color: _isDetailView.value
-                                  ? const Color(0xFF4ECDC4)
+                                  ? const Color(0xFFFF9F43)
                                   : Colors.grey.shade300,
                               width: 1.5,
                             ),
@@ -409,7 +409,7 @@ class _MiniGamePageState extends State<MiniGamePage>
                                 : Icons.view_list_rounded,
                             size: 18,
                             color: _isDetailView.value
-                                ? const Color(0xFF4ECDC4)
+                                ? const Color(0xFFFF9F43)
                                 : Colors.grey.shade500,
                           ),
                         ),
@@ -544,13 +544,13 @@ class _MiniGamePageState extends State<MiniGamePage>
                     decoration: BoxDecoration(
                       color: _selectedGames.isEmpty
                           ? Colors.grey.shade300
-                          : const Color(0xFF4ECDC4),
+                          : const Color(0xFFFF9F43),
                       borderRadius: BorderRadius.circular(24),
                       boxShadow: [
                         BoxShadow(
                           color: _selectedGames.isEmpty
                               ? Colors.transparent
-                              : const Color(0xFF4ECDC4).withValues(alpha: 0.4),
+                              : const Color(0xFFFF9F43).withValues(alpha: 0.4),
                           blurRadius: _selectedGames.isEmpty ? 0.0 : 12,
                           offset: _selectedGames.isEmpty
                               ? Offset.zero
@@ -724,7 +724,7 @@ class _MiniGamePageState extends State<MiniGamePage>
                             shape: BoxShape.circle,
                             border: Border.all(
                               color: isSelected
-                                  ? const Color(0xFF4ECDC4)
+                                  ? const Color(0xFFFF9F43)
                                   : Colors.transparent,
                               width: 4,
                             ),
@@ -732,7 +732,7 @@ class _MiniGamePageState extends State<MiniGamePage>
                               BoxShadow(
                                 color: isSelected
                                     ? const Color(
-                                        0xFF4ECDC4,
+                                        0xFFFF9F43,
                                       ).withValues(alpha: 0.4)
                                     : Colors.transparent,
                                 blurRadius: isSelected ? 12 : 0.0,
@@ -758,7 +758,7 @@ class _MiniGamePageState extends State<MiniGamePage>
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               color: isSelected
-                                  ? const Color(0xFF4ECDC4)
+                                  ? const Color(0xFFFF9F43)
                                   : Colors.grey.shade600,
                               fontSize: 12,
                               fontWeight: isSelected
@@ -809,19 +809,19 @@ class _MiniGamePageState extends State<MiniGamePage>
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? const Color(0xFF4ECDC4).withValues(alpha: 0.05)
+                      ? const Color(0xFFFF9F43).withValues(alpha: 0.05)
                       : Colors.white,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color: isSelected
-                        ? const Color(0xFF4ECDC4)
+                        ? const Color(0xFFFF9F43)
                         : Colors.grey.shade200,
                     width: 2,
                   ),
                   boxShadow: [
                     BoxShadow(
                       color: isSelected
-                          ? const Color(0xFF4ECDC4).withValues(alpha: 0.1)
+                          ? const Color(0xFFFF9F43).withValues(alpha: 0.1)
                           : Colors.grey.shade100,
                       blurRadius: isSelected ? 8 : 4,
                       offset: const Offset(0, 4),
@@ -850,7 +850,7 @@ class _MiniGamePageState extends State<MiniGamePage>
                             title,
                             style: TextStyle(
                               color: isSelected
-                                  ? const Color(0xFF4ECDC4)
+                                  ? const Color(0xFFFF9F43)
                                   : const Color(0xFF4A4A4A),
                               fontSize: 16,
                               fontWeight: FontWeight.w900,
@@ -878,11 +878,11 @@ class _MiniGamePageState extends State<MiniGamePage>
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: isSelected
-                            ? const Color(0xFF4ECDC4)
+                            ? const Color(0xFFFF9F43)
                             : Colors.transparent,
                         border: Border.all(
                           color: isSelected
-                              ? const Color(0xFF4ECDC4)
+                              ? const Color(0xFFFF9F43)
                               : Colors.grey.shade300,
                           width: 2,
                         ),

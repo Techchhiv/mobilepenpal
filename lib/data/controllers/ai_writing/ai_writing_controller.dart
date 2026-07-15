@@ -402,7 +402,37 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
         canvasSize: canvasSize,
       );
 
-      predictedSegments.assignAll(segments);
+      List<List<Offset>> filteredSegments = [];
+      if (segments.isNotEmpty) {
+        final firstSeg = segments.first;
+        double pathLen = 0.0;
+        for (int i = 0; i < firstSeg.length - 1; i++) {
+          pathLen += (firstSeg[i + 1] - firstSeg[i]).distance;
+        }
+
+        // A threshold of 30.0 logical pixels is used to determine if the stroke is partial or complete.
+        // If it's less than 30.0, the current stroke is considered complete, so we show the next stroke.
+        const double threshold = 30.0;
+        if (pathLen < threshold) {
+          if (segments.length > 1) {
+            // If the first segment is extremely short, discard it to avoid rendering a tiny dot/speck
+            if (pathLen < 8.0) {
+              filteredSegments = [segments[1]];
+            } else {
+              filteredSegments = [firstSeg, segments[1]];
+            }
+          } else {
+            // No next stroke, and the current stroke is basically finished (leftover < threshold).
+            // We treat the character as completely finished and show no further guides.
+            filteredSegments = [];
+          }
+        } else {
+          // If the first segment is long enough, the user is still drawing it, so show only this stroke.
+          filteredSegments = [firstSeg];
+        }
+      }
+
+      predictedSegments.assignAll(filteredSegments);
     } catch (e) {
       dev.log("Next-stroke prediction failed: $e", name: "AiWritingController");
       predictedSegments.clear();
