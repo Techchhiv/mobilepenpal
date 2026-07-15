@@ -431,6 +431,12 @@ class StageAnimationController extends GetxController
       return;
     }
 
+    if (d == 0) {
+      illustrationAssetPath.value = 'assets/images/fruits/empty_basket.png';
+      illustrationLabel.value = digitChar.trim();
+      return;
+    }
+
     final fruits = await _loadDigitFruitAssets();
     if (fruits.isEmpty) {
       illustrationAssetPath.value = '';

@@ -663,7 +663,8 @@ class QuestBoardController extends GetxController {
         'exercise_id': exercise.id,
         'user_answer': prediction,
         'label': exercise.character,
-        'stroke': getXYStrokes(),
+        'stroke': getPointsJson(),
+        'device_type': _deviceType,
         'is_correct': false,
       };
 
@@ -709,7 +710,8 @@ class QuestBoardController extends GetxController {
       'exercise_id': exercise.id,
       'user_answer': prediction.isNotEmpty ? prediction : exercise.character,
       'label': exercise.character,
-      'stroke': getXYStrokes(),
+      'stroke': getPointsJson(),
+      'device_type': _deviceType,
       'is_correct': true,
     };
     _updateProgressUI();
@@ -741,7 +743,8 @@ class QuestBoardController extends GetxController {
         'exercise_id': exercise.id,
         'user_answer': '',
         'label': exercise.character,
-        'stroke': getAllXYStrokesCombined(),
+        'stroke': getPointsJson(),
+        'device_type': _deviceType,
         'is_correct': false,
       };
 
@@ -858,6 +861,12 @@ class QuestBoardController extends GetxController {
     return out;
   }
 
+  String get _deviceType {
+    final shortestSide =
+        MediaQueryData.fromView(WidgetsBinding.instance.platformDispatcher.views.first).size.shortestSide;
+    return shortestSide >= 600 ? 'tablet' : 'phone';
+  }
+
   List<dynamic> getXYStrokes({int boardIndex = 0}) {
     final out = <dynamic>[];
     final s = scale;
@@ -872,6 +881,56 @@ class QuestBoardController extends GetxController {
 
     if (out.isNotEmpty && out.last == '#') out.removeLast();
     return out;
+  }
+
+  List<Map<String, dynamic>> getPointsJson({int boardIndex = 0}) {
+    final s = scale;
+    final strokes = _rawStrokesList[boardIndex];
+    final points = <Map<String, dynamic>>[];
+    int timeStep = 0;
+
+    int? firstTimestamp;
+    for (final stroke in strokes) {
+      for (final p in stroke) {
+        final t = (p['time'] as num?)?.toInt();
+        if (t != null && (firstTimestamp == null || t < firstTimestamp)) {
+          firstTimestamp = t;
+        }
+      }
+    }
+    firstTimestamp ??= 0;
+
+    for (int si = 0; si < strokes.length; si++) {
+      final stroke = strokes[si];
+      final isLastStroke = si == strokes.length - 1;
+
+      for (int pi = 0; pi < stroke.length; pi++) {
+        final p = stroke[pi];
+        timeStep++;
+        final isLastPoint = pi == stroke.length - 1;
+
+        int penState;
+        if (isLastPoint && isLastStroke) {
+          penState = 2;
+        } else if (isLastPoint) {
+          penState = 1;
+        } else {
+          penState = 0;
+        }
+
+        final rawTime = (p['time'] as num?)?.toInt() ?? 0;
+        points.add({
+          'time_step': timeStep,
+          'x': double.parse(((p['x'] as num).toDouble() / s).toStringAsFixed(1)),
+          'y': double.parse(((p['y'] as num).toDouble() / s).toStringAsFixed(1)),
+          'pen_state': penState,
+          'timestamp_ms': rawTime - firstTimestamp,
+          'pressure': null,
+        });
+      }
+    }
+
+    return points;
   }
 
   Map<String, dynamic> getXYStrokeWithTime({
