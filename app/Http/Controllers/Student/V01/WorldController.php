@@ -24,6 +24,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use App\Models\Student;
+use InvalidArgumentException;
 
 class WorldController extends Controller
 {
@@ -214,6 +215,7 @@ class WorldController extends Controller
                     'stroke' => $attempt['stroke'] ?? null,
                     'label' => $attempt['label'] ?? null,
                     'math_op' => $attempt['math_op'] ?? null,
+                    'device_type' => $attempt['device_type'] ?? null,
                 ]);
 
                 $totalExercises++;
