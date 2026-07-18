@@ -17,6 +17,11 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
     required this.repeatCount,
   });
 
+  // ── Config: guide progress behaviour ───────────────────────────────────
+  // true  → guide fill updates automatically after every pen-lift
+  // false → guide fill only updates when the user taps Hint or has AI toggle ON
+  static const bool alwaysUpdateGuideProgress = true;
+
   final List<String> characters;
   final int repeatCount;
 
@@ -56,6 +61,11 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
   final shakeOffset = 0.0.obs;
   final praiseText = ''.obs;
   final praiseFeedback = DrawFeedback.none.obs;
+
+  // ── Progress tracking via model predictions ────────────────────────────
+  final drawingProgress = 0.0.obs;
+  final completedGuideStrokeCount = 0.obs;
+  final currentGuideStrokeFraction = 0.0.obs;
 
   late final AnimationController _shakeController;
   late final Animation<double> _shakeAnimation;
@@ -111,13 +121,13 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
         final pause = pauseBetweenStrokesMs;
 
         if (pause <= 0) {
-          guideController.forward(from: 0);
+          guideController.forward(from: _guideStartFraction());
           return;
         }
 
         _betweenStrokeTimer = Timer(Duration(milliseconds: pause), () {
           if (!isGuiding.value) return;
-          guideController.forward(from: 0);
+          guideController.forward(from: _guideStartFraction());
         });
       });
 
@@ -134,6 +144,15 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
     _shakeController.dispose();
     NextStrokePredictorService.instance.dispose();
     super.onClose();
+  }
+
+  Future<void> waitForLoading() async {
+    while (isLoading.value) {
+      await Future.delayed(const Duration(milliseconds: 50));
+    }
+    while (!NextStrokePredictorService.instance.isReady) {
+      await Future.delayed(const Duration(milliseconds: 50));
+    }
   }
 
   // ── Load strokes.json ──────────────────────────────────────────────────
@@ -187,6 +206,9 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
   }
 
   void _setGuideStrokes(List<List<Offset>> letterPx, List<List<Offset>> strokesPx) {
+    drawingProgress.value = 0.0;
+    completedGuideStrokeCount.value = 0;
+    currentGuideStrokeFraction.value = 0.0;
     miniGuidePaths.assignAll(letterPx);
     final cleaned = strokesPx.where((s) => s.length >= 2).toList();
     guideStrokesPx.assignAll(cleaned);
@@ -293,7 +315,7 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
       milliseconds: _strokeDurationMs(currentGuideStrokeIndex.value),
     );
 
-    guideController.forward(from: 0);
+    guideController.forward(from: _guideStartFraction());
   }
 
   void stopGuide() {
@@ -316,13 +338,31 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
     if (guideStrokesPx.isEmpty) return;
 
     final next = currentGuideStrokeIndex.value + 1;
-    currentGuideStrokeIndex.value = (next >= guideStrokesPx.length) ? 0 : next;
+    final minStroke = completedGuideStrokeCount.value
+        .clamp(0, guideStrokesPx.length - 1);
+    currentGuideStrokeIndex.value =
+        (next >= guideStrokesPx.length) ? minStroke : next;
 
-    final stroke = guideStrokesPx[currentGuideStrokeIndex.value];
-    guideCirclePx.value = stroke.isNotEmpty ? stroke.first : null;
+    final idx = currentGuideStrokeIndex.value;
+    final stroke = guideStrokesPx[idx];
+
+    // When landing on the partially completed stroke, start from progress
+    if (idx == completedGuideStrokeCount.value &&
+        currentGuideStrokeFraction.value > 0.01 &&
+        stroke.length >= 2 &&
+        idx < _cumLenByStroke.length) {
+      guideCirclePx.value = _pointAtByCumLen(
+        stroke,
+        _cumLenByStroke[idx],
+        _totalLenByStroke[idx],
+        currentGuideStrokeFraction.value,
+      );
+    } else {
+      guideCirclePx.value = stroke.isNotEmpty ? stroke.first : null;
+    }
 
     guideController.duration = Duration(
-      milliseconds: _strokeDurationMs(currentGuideStrokeIndex.value),
+      milliseconds: _strokeDurationMs(idx),
     );
   }
 
@@ -381,12 +421,20 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
     return Offset(a.dx + (b.dx - a.dx) * localT, a.dy + (b.dy - a.dy) * localT);
   }
 
-  final autoPredict = true.obs;
+  final autoPredict = false.obs;
   final predictedSegments = <List<Offset>>[].obs;
+
+  void toggleAutoPredict() {
+    autoPredict.value = !autoPredict.value;
+    if (autoPredict.value) {
+      predictNextStrokes();
+    }
+  }
 
   Future<void> predictNextStrokes() async {
     if (_rawStrokes.isEmpty) {
       predictedSegments.clear();
+      _updateProgressFromPrediction(0.0);
       return;
     }
 
@@ -401,6 +449,14 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
         char: currentChar,
         canvasSize: canvasSize,
       );
+
+      // Calculate the unfiltered predicted remaining path length for guide progress
+      double fullPredictedLength = 0.0;
+      for (final segment in segments) {
+        for (int i = 1; i < segment.length; i++) {
+          fullPredictedLength += (segment[i] - segment[i - 1]).distance;
+        }
+      }
 
       List<List<Offset>> filteredSegments = [];
       if (segments.isNotEmpty) {
@@ -433,10 +489,120 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
       }
 
       predictedSegments.assignAll(filteredSegments);
+      _updateProgressFromPrediction(fullPredictedLength);
     } catch (e) {
       dev.log("Next-stroke prediction failed: $e", name: "AiWritingController");
       predictedSegments.clear();
+      _updateProgressFromPrediction(0.0);
     }
+  }
+
+  // ── Progress calculation from model predictions ────────────────────────
+
+  void _updateProgressFromPrediction(double fullPredictedLength) {
+    if (_rawStrokes.isEmpty) {
+      drawingProgress.value = 0.0;
+      _syncGuideToProgress();
+      return;
+    }
+
+    // Calculate user drawn path length
+    double userLength = 0.0;
+    for (final stroke in _rawStrokes) {
+      for (int i = 1; i < stroke.length; i++) {
+        final x1 = (stroke[i - 1]['x'] as num).toDouble();
+        final y1 = (stroke[i - 1]['y'] as num).toDouble();
+        final x2 = (stroke[i]['x'] as num).toDouble();
+        final y2 = (stroke[i]['y'] as num).toDouble();
+        userLength += Offset(x2 - x1, y2 - y1).distance;
+      }
+    }
+
+    if (userLength + fullPredictedLength <= 0) {
+      drawingProgress.value = 0.0;
+    } else if (fullPredictedLength < 20.0) {
+      // Character essentially complete
+      drawingProgress.value = 1.0;
+    } else {
+      drawingProgress.value =
+          (userLength / (userLength + fullPredictedLength)).clamp(0.0, 1.0);
+    }
+
+    _syncGuideToProgress();
+  }
+
+  void _syncGuideToProgress() {
+    if (guideStrokesPx.isEmpty || _totalLenByStroke.isEmpty) {
+      completedGuideStrokeCount.value = 0;
+      currentGuideStrokeFraction.value = 0.0;
+      return;
+    }
+
+    final totalGuideLen = _totalLenByStroke.fold(0.0, (a, b) => a + b);
+    if (totalGuideLen <= 0) {
+      completedGuideStrokeCount.value = 0;
+      currentGuideStrokeFraction.value = 0.0;
+      return;
+    }
+
+    final targetLen = drawingProgress.value * totalGuideLen;
+
+    double accumulated = 0.0;
+    int completed = 0;
+    double fraction = 0.0;
+
+    for (int i = 0; i < _totalLenByStroke.length; i++) {
+      final strokeLen = _totalLenByStroke[i];
+      if (accumulated + strokeLen <= targetLen) {
+        accumulated += strokeLen;
+        completed = i + 1;
+      } else {
+        fraction = strokeLen > 0
+            ? ((targetLen - accumulated) / strokeLen).clamp(0.0, 1.0)
+            : 0.0;
+        break;
+      }
+    }
+
+    completedGuideStrokeCount.value =
+        completed.clamp(0, guideStrokesPx.length);
+    currentGuideStrokeFraction.value = fraction;
+
+    // Snap guide circle to progress position and restart animation
+    if (completed < guideStrokesPx.length) {
+      _betweenStrokeTimer?.cancel();
+      guideController.stop();
+      isGuiding.value = true;
+      currentGuideStrokeIndex.value = completed;
+
+      final stroke = guideStrokesPx[completed];
+      if (stroke.length >= 2 && completed < _cumLenByStroke.length) {
+        guideCirclePx.value = _pointAtByCumLen(
+          stroke,
+          _cumLenByStroke[completed],
+          _totalLenByStroke[completed],
+          fraction,
+        );
+      }
+
+      guideController.duration = Duration(
+        milliseconds: _strokeDurationMs(completed),
+      );
+      guideController.forward(from: fraction);
+    } else {
+      // All strokes completed – hide guide circle
+      guideController.stop();
+      guideCirclePx.value = null;
+    }
+  }
+
+  double _guideStartFraction() {
+    final idx = currentGuideStrokeIndex.value;
+    if (idx == completedGuideStrokeCount.value &&
+        currentGuideStrokeFraction.value > 0.01) {
+      return currentGuideStrokeFraction.value;
+    }
+    return 0.0;
   }
 
   // ── Actions ────────────────────────────────────────────────────────────
@@ -444,12 +610,19 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
     drawingController.clear();
     _rawStrokes.clear();
     predictedSegments.clear();
+    drawingProgress.value = 0.0;
+    completedGuideStrokeCount.value = 0;
+    currentGuideStrokeFraction.value = 0.0;
+    restartGuideFromStart();
   }
 
   void onNext(VoidCallback onFinished) {
     drawingController.clear();
     _rawStrokes.clear();
     predictedSegments.clear();
+    drawingProgress.value = 0.0;
+    completedGuideStrokeCount.value = 0;
+    currentGuideStrokeFraction.value = 0.0;
     attemptLeft.value = 3;
 
     final nextRep = rep.value + 1;
@@ -479,6 +652,9 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
 
   // ── Pointer events coordinate capturing ───────────────────────────────
   void onPointerDown(PointerDownEvent e) {
+    stopGuide();
+    guideCirclePx.value = null;
+
     final now = DateTime.now().millisecondsSinceEpoch;
     final point = {
       "x": e.localPosition.dx,
@@ -526,7 +702,7 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
     }
     _currentStroke = null;
     _isContinuingLastStroke = false;
-    if (autoPredict.value) {
+    if (alwaysUpdateGuideProgress || autoPredict.value) {
       predictNextStrokes();
     }
   }
@@ -608,6 +784,8 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
     }
 
     isSubmitting.value = true;
+    stopGuide();
+    guideCirclePx.value = null;
 
     try {
       final modelType = getModelTypeForChar(currentChar);

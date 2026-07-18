@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
+import 'package:mobilepenpal/data/controllers/ai_writing/ai_writing_controller.dart';
 import 'package:mobilepenpal/presentation/screens/ai_writing/ai_writing_practice_page.dart';
 import 'package:mobilepenpal/presentation/widgets/home/randomly_floating_asset.dart';
+import 'package:mobilepenpal/presentation/widgets/loading_overly.dart';
 
 enum _WritingCategory {
   consonants,
@@ -122,6 +124,9 @@ class _AiWritingPageState extends State<AiWritingPage>
   /// Repetition count for drawing practice.
   int _repeatCount = 3;
 
+  /// Whether we are currently loading the practice session.
+  bool _isLoadingPractice = false;
+
   @override
   void initState() {
     super.initState();
@@ -162,22 +167,63 @@ class _AiWritingPageState extends State<AiWritingPage>
     });
   }
 
-  void _startPractice() {
+  void _startPractice() async {
     if (_selected.isEmpty) return;
 
-    // Sort selected characters to match logical order across all lists.
-    final List<String> allOrdered = [
-      ..._consonants,
-      ..._dependentVowels,
-      ..._independentVowels,
-      ..._numbers,
-    ];
-    final ordered = allOrdered.where((c) => _selected.contains(c)).toList();
+    setState(() {
+      _isLoadingPractice = true;
+    });
 
-    Get.to(
-      () =>
-          AiWritingPracticePage(characters: ordered, repeatCount: _repeatCount),
-    );
+    try {
+      // Sort selected characters to match logical order across all lists.
+      final List<String> allOrdered = [
+        ..._consonants,
+        ..._dependentVowels,
+        ..._independentVowels,
+        ..._numbers,
+      ];
+      final ordered = allOrdered.where((c) => _selected.contains(c)).toList();
+
+      // Clean up any old registered controller to ensure fresh state
+      if (Get.isRegistered<AiWritingController>()) {
+        Get.delete<AiWritingController>();
+      }
+
+      // Initialize the controller (will load DB and trigger ONNX load)
+      final controller = Get.put(
+        AiWritingController(
+          characters: ordered,
+          repeatCount: _repeatCount,
+        ),
+      );
+
+      // Wait until everything is fully initialized
+      await controller.waitForLoading();
+
+      if (mounted) {
+        setState(() {
+          _isLoadingPractice = false;
+        });
+      }
+
+      Get.to(
+        () => AiWritingPracticePage(
+          characters: ordered,
+          repeatCount: _repeatCount,
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingPractice = false;
+        });
+      }
+      Get.snackbar(
+        'error'.tr,
+        'Failed to load writing session. Please try again.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
   }
 
   Color _getCategoryColor(_WritingCategory cat) {
@@ -200,8 +246,10 @@ class _AiWritingPageState extends State<AiWritingPage>
     final activeThemeColor = _getCategoryColor(_currentCategory);
 
     return Scaffold(
-      body: Stack(
-        children: [
+      body: LoadingOverlay(
+        isLoading: _isLoadingPractice,
+        child: Stack(
+          children: [
           // ── Beautiful Sky/Cartoon Background ───────────────────────
           Positioned.fill(
             child: Container(
@@ -621,6 +669,7 @@ class _AiWritingPageState extends State<AiWritingPage>
           ),
         ],
       ),
+     ),
     );
   }
 }
