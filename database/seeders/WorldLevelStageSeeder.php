@@ -314,6 +314,14 @@ class WorldLevelStageSeeder extends Seeder
 
     private function cleanup(): void
     {
+        // Only wipe data on a fresh install (no student progress exists).
+        // On production, skip cleanup so user progress stays intact.
+        if (Schema::hasTable('student_world_progress')
+            && DB::table('student_world_progress')->count() > 0
+        ) {
+            return;
+        }
+
         $this->safeDelete('stage_exercises');
         $this->safeDelete('student_exercise_attempts');
         $this->safeDelete('student_stage_progress');
@@ -364,7 +372,10 @@ class WorldLevelStageSeeder extends Seeder
             $data['description_en'] = $descEn;
         }
 
-        return World::create($data);
+        return World::firstOrCreate(
+            ['audience' => $audience, 'name' => $nameKm, 'order_index' => $orderIndex],
+            $data
+        );
     }
 
     private function seedWorldContent(World $world, string $worldKey, array $chars, string $characterType, int $chunk = 5, ?int $premiumAfterLevel = null): void
@@ -404,7 +415,10 @@ class WorldLevelStageSeeder extends Seeder
                 $levelData['description_en'] = "Level " . $levelNumber;
             }
 
-            $level = Level::create($levelData);
+            $level = Level::firstOrCreate(
+                ['world_id' => $world->id, 'order_index' => $levelNumber],
+                $levelData
+            );
 
             foreach ($levelChars as $stageIndex => $ch) {
                 [$stageNameKm, $stageNameEn] = $this->makeStageName($characterType, $ch);
@@ -425,7 +439,10 @@ class WorldLevelStageSeeder extends Seeder
                     $stageData['description_en'] = "Practice session for {$ch}";
                 }
 
-                $stage = Stage::create($stageData);
+                $stage = Stage::firstOrCreate(
+                    ['level_id' => $level->id, 'order_index' => $stageIndex + 1],
+                    $stageData
+                );
 
                 $this->attachExerciseToStage($stage, $bank[$ch], 1, 3);
             }
@@ -476,7 +493,10 @@ class WorldLevelStageSeeder extends Seeder
                 $levelData['description_en'] = "Math level ({$enName})";
             }
 
-            $level = Level::create($levelData);
+            $level = Level::firstOrCreate(
+                ['world_id' => $world->id, 'order_index' => $i + 1],
+                $levelData
+            );
 
             $order = 1;
             foreach ($difficulties as $diff) {
@@ -504,7 +524,10 @@ class WorldLevelStageSeeder extends Seeder
                     $stageData['description_en'] = "Practice {$stageEnName}";
                 }
 
-                $stage = Stage::create($stageData);
+                $stage = Stage::firstOrCreate(
+                    ['level_id' => $level->id, 'order_index' => $order - 1],
+                    $stageData
+                );
 
                 $this->attachExerciseToStage(
                     $stage,
@@ -522,13 +545,14 @@ class WorldLevelStageSeeder extends Seeder
 
     private function attachExerciseToStage(Stage $stage, Exercise $exercise, int $orderIndex = 1, int $repeatCount = 3): void
     {
-        StageExercise::create([
-            'stage_id' => $stage->id,
-            'exercise_id' => $exercise->id,
-            'order_index' => $orderIndex,
-            'repeat_count' => $repeatCount,
-            'is_active' => true,
-        ]);
+        StageExercise::firstOrCreate(
+            ['stage_id' => $stage->id, 'exercise_id' => $exercise->id],
+            [
+                'order_index' => $orderIndex,
+                'repeat_count' => $repeatCount,
+                'is_active' => true,
+            ]
+        );
     }
 
 

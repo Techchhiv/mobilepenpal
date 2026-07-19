@@ -128,6 +128,15 @@ class ExerciseSeeder extends Seeder
 
     private function cleanup(): void
     {
+        // Only wipe exercises on a fresh install (no student attempts exist).
+        // On production, skip the delete so existing FK references stay intact.
+        if (Schema::hasTable('exercises')
+            && Schema::hasTable('student_exercise_attempts')
+            && DB::table('student_exercise_attempts')->count() > 0
+        ) {
+            return;
+        }
+
         if (Schema::hasTable('exercises')) {
             Schema::disableForeignKeyConstraints();
             DB::table('exercises')->delete();
