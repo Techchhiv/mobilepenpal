@@ -3,9 +3,11 @@
 use App\Http\Controllers\Admin\V01\LevelController;
 use App\Http\Controllers\Admin\V01\ReportController;
 use App\Http\Controllers\Admin\V01\SubscriptionController as AdminSubscriptionController;
+use App\Http\Controllers\Admin\V01\StudentController as AdminStudentController;
 use App\Http\Controllers\Admin\V01\SystemSettingController;
 use App\Http\Controllers\Admin\V01\WorldController;
 use App\Http\Controllers\School\V01\WorldController as SchoolWorldController;
+use App\Http\Controllers\School\V01\StudentController as SchoolStudentController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\{
     AuthController,
@@ -19,7 +21,6 @@ use App\Http\Controllers\{
     SchoolPermissionController,
     SchoolRoleController,
     SchoolUserController,
-    StudentController,
     SubscriptionController,
     TeacherController
 };
@@ -164,6 +165,15 @@ Route::middleware('auth:api')->group(function () {
             Route::put('/{id}', [QuestionTemplateController::class, 'update']);
             Route::delete('/{id}', [QuestionTemplateController::class, 'destroy']);
         });
+
+        Route::prefix('students')->group(function () {
+            Route::get('', [AdminStudentController::class, 'index']);
+            Route::post('', [AdminStudentController::class, 'store']);
+            Route::get('{id}', [AdminStudentController::class, 'show']);
+            Route::put('{id}', [AdminStudentController::class, 'update']);
+            Route::put('{id}/toggle', [AdminStudentController::class, 'toggle']);
+            Route::delete('{id}', [AdminStudentController::class, 'destroy']);
+        });
     });
 
 
@@ -183,10 +193,10 @@ Route::middleware('auth:api')->group(function () {
 
         // Manage students
         Route::middleware('permission:parents.view|children.view|children.create|children.update')->group(function () {
-            Route::get('/students', [StudentController::class, 'index']);
-            Route::post('/students', [StudentController::class, 'store']);
-            Route::get('/students/{student}', [StudentController::class, 'show']);
-            Route::put('/students/{student}', [StudentController::class, 'update']);
+            Route::get('/students', [SchoolStudentController::class, 'index']);
+            Route::post('/students', [SchoolStudentController::class, 'store']);
+            Route::get('/students/{student}', [SchoolStudentController::class, 'show']);
+            Route::put('/students/{student}', [SchoolStudentController::class, 'update']);
         });
 
         // Manage Classroom

@@ -28,4 +28,5 @@ return [
     'validation_error' => 'Validation Error',
     'not_found' => 'Not Found',
     'an_error_occurred' => 'An Error Occurred',
+    'student_inactive' => 'Your account has been deactivated. Please contact admin.',
 ];

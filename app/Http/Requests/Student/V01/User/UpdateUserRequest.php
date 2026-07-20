@@ -11,13 +11,10 @@ class UpdateUserRequest extends FormRequest
         return true;
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, mixed>
-     */
-    public function rules()
+    public function rules(): array
     {
+        $studentId = $this->route('student') ?? auth()->id();
+
         return [
             'first_name' => 'sometimes|string|max:100',
             'last_name' => 'sometimes|nullable|string|max:100',
@@ -36,6 +33,10 @@ class UpdateUserRequest extends FormRequest
             'parent_last_name' => 'sometimes|nullable|string|max:100',
             'address' => 'sometimes|nullable|string',
             'enrollment_year' => 'sometimes|nullable|string',
+
+            'email' => 'sometimes|nullable|email|unique:students,email,' . $studentId,
+            'phone' => 'sometimes|required|string|unique:students,phone,' . $studentId,
+            'password' => 'sometimes|nullable|string|min:6',
         ];
     }
 }

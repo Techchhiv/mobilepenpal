@@ -92,6 +92,10 @@ class AuthController extends Controller
             return $this->returnError(__('messages.credentials_incorrect'), 401);
         }
 
+        if (!$student->is_active) {
+            return $this->returnError(__('messages.student_inactive'), 403);
+        }
+
         // Check if there are active tokens for this student
         $hasActiveSessions = $student->tokens()->exists();
 
@@ -134,6 +138,10 @@ class AuthController extends Controller
 
         if (!$student || !Hash::check($validated['password'], $student->password)) {
             return $this->returnError(__('messages.credentials_incorrect'), 401);
+        }
+
+        if (!$student->is_active) {
+            return $this->returnError(__('messages.student_inactive'), 403);
         }
         $token = $student->createToken('student_token')->plainTextToken;
 

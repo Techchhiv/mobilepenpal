@@ -87,7 +87,7 @@ class MiniGameSeeder extends Seeder
                 'description' => 'Practice drawing Khmer independent vowels!',
                 'description_kh' => 'ហ្វឹកហាត់គូរស្រៈពេញតួខ្មែរ!',
                 'display_type' => 'character',
-                'input_type' => 'drawing_board,multiple_choice',
+                'input_type' => 'drawing_board,multiple_choice,drag_and_drop',
                 'is_active' => true,
                 'cover_image_url' => null,
                 'config' => [
@@ -119,7 +119,7 @@ class MiniGameSeeder extends Seeder
                 'description' => 'Practice drawing Khmer dependent vowels!',
                 'description_kh' => 'ហ្វឹកហាត់គូរស្រៈនិស្ស័យខ្មែរ!',
                 'display_type' => 'character',
-                'input_type' => 'drawing_board,multiple_choice',
+                'input_type' => 'drawing_board,multiple_choice,drag_and_drop',
                 'is_active' => true,
                 'cover_image_url' => null,
                 'config' => [

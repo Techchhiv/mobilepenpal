@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\School\V01;
 
+use App\Http\Controllers\Controller;
 use App\Helpers\UploadMedia;
 use App\Http\Requests\Student\V01\Auth\RegisterRequest;
 use App\Http\Requests\Student\V01\User\UpdateUserRequest;
