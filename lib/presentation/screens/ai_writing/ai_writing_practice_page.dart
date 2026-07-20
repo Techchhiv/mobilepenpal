@@ -1151,40 +1151,33 @@ class _AiWritingPracticePageState extends State<AiWritingPracticePage>
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
           // ─── Hint Button ───
-          Obx(() {
-            final isHintActive = _controller.autoPredict.value;
-            return ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                elevation: 0,
-                backgroundColor: isHintActive
-                    ? const Color(0xFF4CAF50) // Green when active
-                    : const Color(0xFFFFC107), // Yellow/Amber when inactive
-                foregroundColor: isHintActive ? Colors.white : const Color(0xFF1E293B),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  side: const BorderSide(color: Color(0xFF1E293B), width: 2.2),
-                ),
-                shadowColor: const Color(0xFF1E293B),
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              elevation: 0,
+              backgroundColor: const Color(0xFFFFC107), // Yellow/Amber
+              foregroundColor: const Color(0xFF1E293B),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: const BorderSide(color: Color(0xFF1E293B), width: 2.2),
               ),
-              onPressed: () {
-                _controller.toggleAutoPredict();
-              },
-              icon: Icon(
-                isHintActive
-                    ? Icons.lightbulb_rounded
-                    : Icons.lightbulb_outline_rounded,
-                size: 20,
+              shadowColor: const Color(0xFF1E293B),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            ),
+            onPressed: () {
+              _controller.showHint();
+            },
+            icon: const Icon(
+              Icons.lightbulb_rounded,
+              size: 20,
+            ),
+            label: Text(
+              'hint'.tr,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w900,
               ),
-              label: Text(
-                'hint'.tr,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-            );
-          }),
+            ),
+          ),
         ],
       ),
     );

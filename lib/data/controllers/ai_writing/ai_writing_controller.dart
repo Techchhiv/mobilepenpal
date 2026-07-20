@@ -457,11 +457,9 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
   final autoPredict = false.obs;
   final predictedSegments = <List<Offset>>[].obs;
 
-  void toggleAutoPredict() {
-    autoPredict.value = !autoPredict.value;
-    if (autoPredict.value) {
-      predictNextStrokes();
-    }
+  void showHint() {
+    autoPredict.value = true;
+    predictNextStrokes();
   }
 
   Future<void> predictNextStrokes() async {
@@ -790,6 +788,11 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
     }
     _currentStroke = null;
     _isContinuingLastStroke = false;
+
+    // Clear hint guide after finger is lifted
+    autoPredict.value = false;
+    predictedSegments.clear();
+
     if (alwaysUpdateGuideProgress || autoPredict.value) {
       predictNextStrokes();
     }
