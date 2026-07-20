@@ -11,6 +11,7 @@ import 'package:flutter_drawing_board/flutter_drawing_board.dart';
 import 'package:flutter_drawing_board/paint_contents.dart';
 import 'package:mobilepenpal/presentation/widgets/world/image_stamp_content.dart';
 import 'package:get/get.dart';
+import 'package:mobilepenpal/core/utils/drawing_points_util.dart';
 import 'package:mobilepenpal/core/network/route_builder.dart';
 import 'package:mobilepenpal/core/utils/math_generation.dart';
 import 'package:mobilepenpal/core/utils/number_format_utils.dart';
@@ -1049,11 +1050,7 @@ class StageController extends GetxController {
     return out;
   }
 
-  String get _deviceType {
-    final shortestSide =
-        MediaQueryData.fromView(WidgetsBinding.instance.platformDispatcher.views.first).size.shortestSide;
-    return shortestSide >= 600 ? 'tablet' : 'phone';
-  }
+  String get _deviceType => DrawingPointsUtil.getDeviceType();
 
   List<dynamic> getXYStrokes({int boardIndex = 0}) {
     final out = <dynamic>[];
@@ -1072,54 +1069,10 @@ class StageController extends GetxController {
   }
 
   List<Map<String, dynamic>> getPointsJson({int boardIndex = 0}) {
-    final s = scale;
-    final strokes = _rawStrokesList[boardIndex];
-    final points = <Map<String, dynamic>>[];
-    int timeStep = 0;
-
-    // Determine the earliest timestamp across all strokes for relative timing.
-    int? firstTimestamp;
-    for (final stroke in strokes) {
-      for (final p in stroke) {
-        final t = (p['time'] as num?)?.toInt();
-        if (t != null && (firstTimestamp == null || t < firstTimestamp)) {
-          firstTimestamp = t;
-        }
-      }
-    }
-    firstTimestamp ??= 0;
-
-    for (int si = 0; si < strokes.length; si++) {
-      final stroke = strokes[si];
-      final isLastStroke = si == strokes.length - 1;
-
-      for (int pi = 0; pi < stroke.length; pi++) {
-        final p = stroke[pi];
-        timeStep++;
-        final isLastPoint = pi == stroke.length - 1;
-
-        int penState;
-        if (isLastPoint && isLastStroke) {
-          penState = 2; // end of entire drawing
-        } else if (isLastPoint) {
-          penState = 1; // lifting hand to draw another stroke
-        } else {
-          penState = 0; // drawing
-        }
-
-        final rawTime = (p['time'] as num?)?.toInt() ?? 0;
-        points.add({
-          'time_step': timeStep,
-          'x': double.parse(((p['x'] as num).toDouble() / s).toStringAsFixed(1)),
-          'y': double.parse(((p['y'] as num).toDouble() / s).toStringAsFixed(1)),
-          'pen_state': penState,
-          'timestamp_ms': rawTime - firstTimestamp,
-          'pressure': null,
-        });
-      }
-    }
-
-    return points;
+    return DrawingPointsUtil.getPointsJson(
+      rawStrokes: _rawStrokesList[boardIndex],
+      scale: scale,
+    );
   }
 
   Map<String, dynamic> getXYStrokeWithTime({

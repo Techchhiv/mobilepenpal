@@ -586,6 +586,8 @@ final Map<String, String> enUS = {
   'action_learn': 'Learn',
   'action_draw': 'Draw',
   'coins': 'Coins',
+  'total_characters': 'Total Characters',
+  'repetitions': 'Repetitions',
   'nav_lessons': 'Lessons',
   'nav_games': 'Games',
   'nav_quests': 'Quests',

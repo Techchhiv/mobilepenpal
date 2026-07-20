@@ -36,6 +36,7 @@ import 'package:mobilepenpal/presentation/screens/quest/quest_summary_page.dart'
 import 'package:mobilepenpal/presentation/screens/mini_game/adventure/adventure_page.dart';
 import 'package:mobilepenpal/presentation/screens/mini_game/adventure/adventure_summary_page.dart';
 import 'package:mobilepenpal/presentation/screens/mini_game/dynamic_mini_game_page.dart';
+import 'package:mobilepenpal/presentation/screens/mini_game/dynamic_mini_game_summary_page.dart';
 import 'package:mobilepenpal/presentation/screens/mini_game/mini_game_page.dart';
 
 class AppPages {
@@ -154,6 +155,11 @@ class AppPages {
       name: AppRoutes.dynamicMiniGame,
       page: () => const DynamicMiniGamePage(),
       binding: DynamicMiniGameBinding(),
+      middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      name: AppRoutes.dynamicMiniGameSummary,
+      page: () => const DynamicMiniGameSummaryPage(),
       middlewares: [AuthMiddleware()],
     ),
     GetPage(

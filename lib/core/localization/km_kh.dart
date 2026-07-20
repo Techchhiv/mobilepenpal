@@ -582,6 +582,8 @@ final Map<String, String> kmKH = {
   'action_learn': 'រៀន',
   'action_draw': 'សរសេរ',
   'coins': 'កាក់',
+  'total_characters': 'តួអក្សរសរុប',
+  'repetitions': 'ចំនួនដង',
   'nav_lessons': 'មេរៀន',
   'nav_games': 'ហ្គេម',
   'nav_quests': 'បេសកកម្ម',

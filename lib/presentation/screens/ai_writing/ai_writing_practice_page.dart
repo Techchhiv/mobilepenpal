@@ -3,12 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_drawing_board/flutter_drawing_board.dart';
 import 'package:get/get.dart';
 import 'package:lottie/lottie.dart';
-import 'package:mobilepenpal/core/theme/app_colors.dart';
 import 'package:mobilepenpal/data/controllers/ai_writing/ai_writing_controller.dart';
 import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
 import 'package:mobilepenpal/data/controllers/shop/shop_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_audio_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_animation_controller.dart';
+import 'package:mobilepenpal/presentation/screens/ai_writing/ai_writing_summary_page.dart';
 import 'package:mobilepenpal/presentation/widgets/world/board_grid_painter.dart';
 import 'package:mobilepenpal/presentation/widgets/world/letter_painter.dart';
 import 'package:mobilepenpal/presentation/widgets/world/stage_components/stage_attempts_indicator.dart';
@@ -72,59 +72,7 @@ class _AiWritingPracticePageState extends State<AiWritingPracticePage>
     super.dispose();
   }
 
-  // ── Completion dialog ──────────────────────────────────────────────────
-  void _showCompletionDialog() {
-    _confettiCtrl.play();
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24)),
-        title: Column(
-          children: [
-            const Text('🎉', style: TextStyle(fontSize: 48)),
-            const SizedBox(height: 8),
-            Text(
-              'great_job'.tr,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ],
-        ),
-        content: Text(
-          'You practiced ${widget.characters.length} character(s) × ${widget.repeatCount} time(s)!',
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-        ),
-        actionsAlignment: MainAxisAlignment.center,
-        actions: [
-          FilledButton.icon(
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 24, vertical: 14),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16)),
-            ),
-            onPressed: () {
-              Navigator.of(context).pop(); // close dialog
-              Get.back(); // back to selection page
-            },
-            icon: const Icon(Icons.check_rounded, color: Colors.white),
-            label: const Text(
-              'Done',
-              style: TextStyle(
-                  fontWeight: FontWeight.w700, color: Colors.white),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+
 
   void _showPauseDialog(BuildContext context) {
     showDialog(
@@ -1185,7 +1133,7 @@ class _AiWritingPracticePageState extends State<AiWritingPracticePage>
                   ? () {}
                   : () {
                       _controller.checkDrawingAndSubmit(() {
-                        _showCompletionDialog();
+                        Get.to(() => const AiWritingSummaryPage());
                       });
                     },
               flex: 2,

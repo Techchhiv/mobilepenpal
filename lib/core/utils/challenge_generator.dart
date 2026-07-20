@@ -845,6 +845,43 @@ class ChallengeGenerator {
     '៧': {'emoji': 'assets/images/fruits/apple.png*7', 'hint': '7 Apples'},
     '៨': {'emoji': 'assets/images/fruits/orange.png*8', 'hint': '8 Oranges'},
     '៩': {'emoji': 'assets/images/fruits/banana.png*9', 'hint': '9 Bananas'},
+
+    // Dependent Vowels
+    'ា': {'emoji': 'assets/images/dep_vowels/ា_កា.png', 'hint': 'Glass'},
+    'ាំ': {'emoji': 'assets/images/dep_vowels/ាំ_កាំជណ្ដើរ.png', 'hint': 'Stairs'},
+    'ិ': {'emoji': 'assets/images/dep_vowels/ិ_ផ្លិត.png', 'hint': 'Fan'},
+    'ិះ': {'emoji': 'assets/images/dep_vowels/ិះ_ជិះ.png', 'hint': 'Ride'},
+    'ី': {'emoji': 'assets/images/dep_vowels/ី_សី.png', 'hint': 'Shuttlecock'},
+    'ឹ': {'emoji': 'assets/images/dep_vowels/ឹ_មឹក.png', 'hint': 'Squid'},
+    'ឺ': {'emoji': 'assets/images/dep_vowels/ឺ_ឈឺ.png', 'hint': 'Sick'},
+    'ុ': {'emoji': 'assets/images/dep_vowels/ុ_តុ.png', 'hint': 'Table'},
+    'ុំ': {'emoji': 'assets/images/dep_vowels/ុំ_រុំកាដូ.png', 'hint': 'Wrap Gift'},
+    'ុះ': {'emoji': 'assets/images/dep_vowels/ុះ_ពពុះ.png', 'hint': 'Bubble'},
+    'ូ': {'emoji': 'assets/images/dep_vowels/ូ_ដូង.png', 'hint': 'Coconut'},
+    'ួ': {'emoji': 'assets/images/dep_vowels/ួ_ភួយ.png', 'hint': 'Blanket'},
+    'ើ': {'emoji': 'assets/images/dep_vowels/ើ_ដើមឈើ.png', 'hint': 'Tree'},
+    'ឿ': {'emoji': 'assets/images/dep_vowels/ឿ_គឿង.png', 'hint': 'Keung'},
+    'ៀ': {'emoji': 'assets/images/dep_vowels/ៀ_សៀវភៅ.png', 'hint': 'Book'},
+    'េ': {'emoji': 'assets/images/dep_vowels/េ_សេក.png', 'hint': 'Parrot'},
+    'េះ': {'emoji': 'assets/images/dep_vowels/េះ_ឆេះ.png', 'hint': 'Burn'},
+    'ែ': {'emoji': 'assets/images/dep_vowels/ែ_ខ្លែង.png', 'hint': 'Kite'},
+    'ៃ': {'emoji': 'assets/images/dep_vowels/ៃ_ស្ពៃ.png', 'hint': 'Cabbage'},
+    'ោ': {'emoji': 'assets/images/dep_vowels/ោ_ខោ.png', 'hint': 'Pants'},
+    'ោះ': {'emoji': 'assets/images/dep_vowels/ោះ_កោះ.png', 'hint': 'Island'},
+    'ៅ': {'emoji': 'assets/images/dep_vowels/ៅ_ពូថៅ.png', 'hint': 'Axe'},
+    'ំ': {'emoji': 'assets/images/dep_vowels/ំ_នំ.png', 'hint': 'Cake'},
+    'ះ': {'emoji': 'assets/images/dep_vowels/ះ_ផ្ទះ.png', 'hint': 'House'},
+
+    // Independent Vowels
+    'ឥ': {'emoji': 'assets/images/indep_vowels/ឥ_ឥដ្ឋ.png', 'hint': 'Brick'},
+    'ឦ': {'emoji': 'assets/images/indep_vowels/ឦ_ឦសាន.png', 'hint': 'Northeast'},
+    'ឪ': {'emoji': 'assets/images/indep_vowels/ឪ_ឪឡឹក.png', 'hint': 'Watermelon'},
+    'ឫ': {'emoji': 'assets/images/indep_vowels/ឫ_ឫស.png', 'hint': 'Root'},
+    'ឬ': {'emoji': 'assets/images/indep_vowels/ឬ_ឬស្សី.png', 'hint': 'Bamboo'},
+    'ឭ': {'emoji': 'assets/images/indep_vowels/ឭ_រំឭក.png', 'hint': 'Remind'},
+    'ឮ': {'emoji': 'assets/images/indep_vowels/ឮ_ឮ.png', 'hint': 'Hear'},
+    'ឰ': {'emoji': 'assets/images/indep_vowels/ឰ_ឰសូរ.png', 'hint': 'Aisour'},
+    'ឱ': {'emoji': 'assets/images/indep_vowels/ឱ_ឱប.png', 'hint': 'Hug'},
   };
 
   /// Generate pairs for drag-and-drop matching.

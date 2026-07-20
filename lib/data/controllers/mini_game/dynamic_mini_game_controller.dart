@@ -9,6 +9,7 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_drawing_board/flutter_drawing_board.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:mobilepenpal/core/utils/drawing_points_util.dart';
 import 'package:mobilepenpal/core/utils/stroke_feedback_util.dart';
 import 'package:mobilepenpal/core/utils/stroke_transform_util.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_animation_controller.dart';
@@ -25,6 +26,7 @@ import 'package:mobilepenpal/data/models/student/student.dart';
 import 'package:mobilepenpal/data/services/world_service.dart';
 import 'package:mobilepenpal/data/services/mini_game_service.dart';
 import 'package:mobilepenpal/presentation/widgets/app_snackbar.dart';
+import 'package:mobilepenpal/presentation/routes/app_routes.dart';
 
 /// A floating "+N" popup that animates from a spawn position up to the score bar.
 class FloatingScoreEvent {
@@ -48,6 +50,8 @@ class DynamicMiniGameController extends GetxController
     worldService: _worldService,
   );
   final GetStorage _box = GetStorage();
+  final attempts = <Map<String, dynamic>>[];
+  final _charToExerciseId = <String, int>{};
 
   // ── The mini-games being played ──
   late final List<MiniGameModel> miniGames;
@@ -169,6 +173,7 @@ class DynamicMiniGameController extends GetxController
   // Drawing board (only used when input_type == 'drawing_board')
   final boardWidth = 340.0.obs;
   final boardHeight = 340.0.obs;
+  double get scale => boardWidth.value / 340.0;
   final letterSubpathsNorm = <List<Offset>>[].obs;
   final strokeStrokesNorm = <List<Offset>>[].obs;
 
@@ -329,6 +334,7 @@ class DynamicMiniGameController extends GetxController
       );
       if (needsDrawing) {
         await _loadStrokeDb();
+        await _loadExercisesMap();
       }
 
       // Fetch question templates if any game uses the 'question' display type
@@ -421,6 +427,7 @@ class DynamicMiniGameController extends GetxController
     correctCount.value = 0;
     wrongCount.value = 0;
     earnedCoins.value = 0;
+    attempts.clear();
     feedbackText.value = '';
     hasRetried.value = false;
     lastWrongAnswer.value = '';
@@ -496,7 +503,7 @@ class DynamicMiniGameController extends GetxController
       }
 
       _worldService.submitExerciseBatch(
-        [], // No specific exercise attempts for endless minigames
+        attempts,
         coinsEarned: coins,
         xpEarned: score.value,
       ).catchError((e) {
@@ -508,6 +515,9 @@ class DynamicMiniGameController extends GetxController
         );
       });
     }
+
+    // Navigate to the summary screen
+    Get.toNamed(AppRoutes.dynamicMiniGameSummary);
   }
 
   void _startTimer() {
@@ -1026,6 +1036,7 @@ class DynamicMiniGameController extends GetxController
     final bool hasGuide = showShadowGuide && strokeStrokesNorm.isNotEmpty;
 
     bool isCorrect = false;
+    String prediction = '';
 
     try {
       if (hasGuide) {
@@ -1038,6 +1049,7 @@ class DynamicMiniGameController extends GetxController
           ignoreBounds: false,
         );
         isCorrect = (hint == null);
+        prediction = isCorrect ? expectedChar : '';
       } else {
         // ── WITHOUT GUIDE (Medium/Hard): AI + structural checks ────────
         final modelType = _getModelTypeForDisplay();
@@ -1053,10 +1065,12 @@ class DynamicMiniGameController extends GetxController
 
           if (myReqId != _reqId) return;
 
-          final prediction = (data?['prediction'] ?? '').toString().trim();
-          isCorrect = _isDrawingCorrect(prediction, expectedChar);
+          final predValue = (data?['prediction'] ?? '').toString().trim();
+          prediction = predValue;
+          isCorrect = _isDrawingCorrect(predValue, expectedChar);
         } else {
           isCorrect = true;
+          prediction = expectedChar;
         }
 
         // If AI says correct, also validate stroke structure (ignoring bounds).
@@ -1085,6 +1099,7 @@ class DynamicMiniGameController extends GetxController
     } catch (e) {
       dev.log('Predict failed: $e', name: 'DynamicMiniGameController');
       isCorrect = false;
+      prediction = '';
       AppSnackbar.show(
         'Failed to evaluate drawing. Please try again.',
         title: 'Error',
@@ -1092,6 +1107,18 @@ class DynamicMiniGameController extends GetxController
       );
     } finally {
       if (myReqId == _reqId) _cancelToken = null;
+    }
+
+    final int? exId = _charToExerciseId[expectedChar.trim()];
+    if (exId != null) {
+      attempts.add({
+        'exercise_id': exId,
+        'user_answer': prediction,
+        'label': expectedChar.trim(),
+        'stroke': getPointsJson(),
+        'device_type': _deviceType,
+        'is_correct': isCorrect,
+      });
     }
 
     totalAnswered.value++;
@@ -1544,6 +1571,28 @@ class DynamicMiniGameController extends GetxController
     _cancelToken?.cancel();
     _cancelToken = null;
   }
+
+  Future<void> _loadExercisesMap() async {
+    try {
+      final response = await _worldService.getExercises();
+      if (response.code == 200 && response.data != null) {
+        for (final ex in response.data!) {
+          _charToExerciseId[ex.character.trim()] = ex.id;
+        }
+      }
+    } catch (e) {
+      dev.log('Failed to load exercises map: $e', name: 'DynamicMiniGameController');
+    }
+  }
+
+  List<Map<String, dynamic>> getPointsJson() {
+    return DrawingPointsUtil.getPointsJson(
+      rawStrokes: _rawStrokes,
+      scale: scale,
+    );
+  }
+
+  String get _deviceType => DrawingPointsUtil.getDeviceType();
 
   @override
   void onClose() {

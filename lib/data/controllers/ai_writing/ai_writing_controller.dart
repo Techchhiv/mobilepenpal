@@ -5,11 +5,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_drawing_board/flutter_drawing_board.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
+import 'package:mobilepenpal/core/utils/drawing_points_util.dart';
 import 'package:mobilepenpal/core/utils/stroke_transform_util.dart';
+import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
+import 'package:mobilepenpal/data/controllers/shop/shop_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_audio_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_animation_controller.dart';
+import 'package:mobilepenpal/data/models/api_response.dart';
+import 'package:mobilepenpal/data/models/student/student.dart';
 import 'package:mobilepenpal/data/services/next_stroke_predictor_service.dart';
 import 'package:mobilepenpal/data/services/drawing_evaluation_service.dart';
+import 'package:mobilepenpal/data/services/world_service.dart';
 
 class AiWritingController extends GetxController with GetTickerProviderStateMixin {
   AiWritingController({
@@ -32,6 +39,18 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
   final isLoading = true.obs;
   final attemptLeft = 3.obs;
   final repResults = <bool?>[].obs;
+
+  // ── Session-wide statistics & rewards ──────────────────────────────
+  final totalCorrect = 0.obs;
+  final totalAttempted = 0.obs;
+  final earnedCoins = 0.obs;
+  static const int _coinsPerCorrect = 2;
+
+  final attempts = <Map<String, dynamic>>[].obs;
+  final _charToExerciseId = <String, int>{};
+
+  final GetStorage _box = GetStorage();
+  final WorldService _worldService = WorldService();
 
   // ── Drawing state ──────────────────────────────────────────────────────
   final drawingController = DrawingController();
@@ -132,7 +151,21 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
       });
 
     _loadStrokesDb();
+    _loadExercisesMap();
     NextStrokePredictorService.instance.init();
+  }
+
+  Future<void> _loadExercisesMap() async {
+    try {
+      final response = await _worldService.getExercises();
+      if (response.code == 200 && response.data != null) {
+        for (final ex in response.data!) {
+          _charToExerciseId[ex.character.trim()] = ex.id;
+        }
+      }
+    } catch (e) {
+      dev.log('Failed to load exercises map: $e', name: 'AiWritingController');
+    }
   }
 
   @override
@@ -642,8 +675,63 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
       return;
     }
 
-    // Session complete
+    // Session complete – sync coins and notify
+    _submitSessionProgress();
     onFinished();
+  }
+
+  List<Map<String, dynamic>> getPointsJson() {
+    return DrawingPointsUtil.getPointsJson(
+      rawStrokes: _rawStrokes,
+      scale: canvasSize / 340.0,
+    );
+  }
+
+  String get _deviceType => DrawingPointsUtil.getDeviceType();
+
+  /// Sync earned coins locally (HomeController + ShopController) and submit to backend.
+  void _submitSessionProgress() {
+    final coins = earnedCoins.value;
+
+    // Update local student coin balance immediately
+    if (coins > 0 && Get.isRegistered<HomeController>()) {
+      try {
+        final homeController = Get.find<HomeController>();
+        final currentStudent = homeController.student.value;
+        if (currentStudent != null) {
+          final newCoin = currentStudent.coin + coins;
+          final updatedStudent = Student.fromJson({
+            ...currentStudent.toJson(),
+            'coin': newCoin,
+          });
+          homeController.student.value = updatedStudent;
+          _box.write('student', updatedStudent.toJson());
+
+          if (Get.isRegistered<ShopController>()) {
+            Get.find<ShopController>().totalPoints.value = newCoin;
+            _box.write('adventure_points', newCoin);
+          }
+        }
+      } catch (e) {
+        dev.log('Failed to update local coins: $e', name: 'AiWritingController');
+      }
+    }
+
+    if (attempts.isEmpty) return;
+
+    // Submit to backend
+    _worldService.submitExerciseBatch(
+      attempts.toList(),
+      coinsEarned: coins,
+      isDailyChallenge: true, // Stageless session
+    ).catchError((e) {
+      dev.log('Failed to submit writing progress: $e', name: 'AiWritingController');
+      return ApiResponse<Map<String, dynamic>>(
+        code: 500,
+        message: 'Failed to submit progress: $e',
+        data: {},
+      );
+    });
   }
 
   // ── Stitching/Gap-closing State ────────────────────────────────────────
@@ -802,12 +890,27 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
 
       bool isCorrect = _isDrawingCorrect(prediction, expected);
 
+      final int? exId = _charToExerciseId[currentChar.trim()];
+      if (exId != null) {
+        attempts.add({
+          'exercise_id': exId,
+          'user_answer': prediction,
+          'label': currentChar.trim(),
+          'stroke': getPointsJson(),
+          'device_type': _deviceType,
+          'is_correct': isCorrect,
+        });
+      }
+
       final audio = Get.isRegistered<StageAudioController>()
           ? Get.find<StageAudioController>()
           : Get.put(StageAudioController());
 
       if (isCorrect) {
         repResults[rep.value] = true;
+        totalCorrect.value++;
+        totalAttempted.value++;
+        earnedCoins.value += _coinsPerCorrect;
         feedbackState.value = DrawFeedback.correct;
         praiseFeedback.value = DrawFeedback.correct;
         praiseText.value = [
@@ -843,6 +946,7 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
 
         if (attemptLeft.value == 0) {
           repResults[rep.value] = false;
+          totalAttempted.value++;
           onNext(onFinished);
         }
       }

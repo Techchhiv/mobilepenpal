@@ -28,7 +28,7 @@ class StageSummaryPage extends GetView<StageSummaryController> {
               children: [
                 Positioned.fill(
                   child: Image.asset(
-                    "assets/images/backgrounds/summary_background.png",
+                    "assets/images/backgrounds/stage_background.png",
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -41,9 +41,9 @@ class StageSummaryPage extends GetView<StageSummaryController> {
                         end: Alignment.bottomCenter,
                         colors: [
                           Color(0xFF2B7A78).withValues(alpha: 1),
-                          Color(0xFF6B9F8E).withValues(alpha: 0.8),
-                          Color(0xFF8FB99F).withValues(alpha: 0.1),
+                          Color(0xFF6B9F8E).withValues(alpha: 0.0),
                         ],
+                        stops: const [0.15, 0.45],
                       ),
                     ),
                   ),
