@@ -25,6 +25,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->unique(['student_id', 'level_id']);
+            $table->index(['student_id', 'is_completed']);
         });
     }
 

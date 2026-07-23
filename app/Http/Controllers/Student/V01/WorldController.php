@@ -205,23 +205,32 @@ class WorldController extends Controller
 
             $totalExercises = 0;
             $correctAttempts = 0;
+            $attemptsData = [];
+            $now = Carbon::now();
 
             foreach ($attempts as $attempt) {
-                StudentExerciseAttempt::create([
+                $isCorrect = !empty($attempt['is_correct']);
+                $attemptsData[] = [
                     'student_id' => $studentId,
                     'exercise_id' => (int) $attempt['exercise_id'],
                     'user_answer' => $attempt['user_answer'] ?? null,
-                    'is_correct' => !empty($attempt['is_correct']),
-                    'stroke' => $attempt['stroke'] ?? null,
+                    'is_correct' => $isCorrect,
+                    'stroke' => isset($attempt['stroke']) ? (is_string($attempt['stroke']) ? $attempt['stroke'] : json_encode($attempt['stroke'])) : null,
                     'label' => $attempt['label'] ?? null,
                     'math_op' => $attempt['math_op'] ?? null,
                     'device_type' => $attempt['device_type'] ?? null,
-                ]);
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
 
                 $totalExercises++;
-                if (!empty($attempt['is_correct'])) {
+                if ($isCorrect) {
                     $correctAttempts++;
                 }
+            }
+
+            if (!empty($attemptsData)) {
+                StudentExerciseAttempt::insert($attemptsData);
             }
 
             if ($durationSeconds > 0) {

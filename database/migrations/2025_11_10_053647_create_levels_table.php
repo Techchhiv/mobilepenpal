@@ -31,6 +31,7 @@ return new class extends Migration {
 
             $table->index(['world_id', 'is_active']);
             $table->index(['world_id', 'order_index']);
+            $table->index(['world_id', 'is_active', 'order_index']);
         });
     }
 

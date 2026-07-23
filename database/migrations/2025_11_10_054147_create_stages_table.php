@@ -33,6 +33,7 @@ return new class extends Migration
 
             $table->index(['level_id', 'is_active']);
             $table->index(['level_id', 'order_index']);
+            $table->index(['level_id', 'is_active', 'order_index']);
         });
     }
 
