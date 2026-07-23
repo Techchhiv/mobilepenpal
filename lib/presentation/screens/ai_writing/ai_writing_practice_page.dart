@@ -612,7 +612,7 @@ class _AiWritingPracticePageState extends State<AiWritingPracticePage>
       'ូ': 'assets/images/dep_vowels/ូ_ដូង.png',
       'ួ': 'assets/images/dep_vowels/ួ_ភួយ.png',
       'ើ': 'assets/images/dep_vowels/ើ_ដើមឈើ.png',
-      'ឿ': 'assets/images/dep_vowels/ឿ_គឿង.png',
+      'ឿ': 'assets/images/dep_vowels/ឿ_គ្រឿង.png',
       'ៀ': 'assets/images/dep_vowels/ៀ_សៀវភៅ.png',
       'េ': 'assets/images/dep_vowels/េ_សេក.png',
       'េះ': 'assets/images/dep_vowels/េះ_ឆេះ.png',

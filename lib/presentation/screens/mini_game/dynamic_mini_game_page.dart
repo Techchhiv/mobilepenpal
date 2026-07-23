@@ -45,21 +45,6 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
       },
       child: Scaffold(
         body: Obx(() {
-          if (controller.isLoading.value) {
-            return Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [GameColors.skyTop, GameColors.skyBot],
-                ),
-              ),
-              child: const Center(
-                child: CircularProgressIndicator(color: Color(0xFF4ECDC4)),
-              ),
-            );
-          }
-
           if (controller.isGameOver.value) {
             return _buildGameUI(context);
           }
@@ -67,11 +52,8 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
           return Stack(
             children: [
               _buildGameUI(context),
-              Obx(
-                () => controller.isCountingDown.value
-                    ? _buildCountdownOverlay()
-                    : const SizedBox.shrink(),
-              ),
+              if (controller.isCountingDown.value)
+                _buildCountdownOverlay(),
             ],
           );
         }),
@@ -397,6 +379,7 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
       final hint = controller.missingCharDisplayHint.value;
       final blank = controller.missingCharWordBlank.value;
       final fullWord = controller.missingCharFullWord.value;
+      final imagePath = controller.currentChallenge.value?.imagePath;
 
       return AnimatedBuilder(
         animation: controller.promptBounceCtrl,
@@ -411,7 +394,12 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
             borderRadius: BorderRadius.circular(24),
             border: Border.all(color: GameColors.cardBorder, width: 3),
             boxShadow: [
-              BoxShadow(color: GameColors.textDark.withValues(alpha: 0.05), blurRadius: 12, spreadRadius: 2, offset: const Offset(0, 4)),
+              BoxShadow(
+                color: GameColors.textDark.withValues(alpha: 0.05),
+                blurRadius: 12,
+                spreadRadius: 2,
+                offset: const Offset(0, 4),
+              ),
             ],
           ),
           child: FittedBox(
@@ -421,59 +409,27 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
               children: [
                 InstructionBadge(inputType: controller.currentInputType.value),
                 const SizedBox(height: 8),
-                if (hint == 'audio')
-                  // Hard: audio only
-                  GestureDetector(
-                    onTap: controller.replayPromptAudio,
-                    behavior: HitTestBehavior.opaque,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.volume_up_rounded,
-                          color: Colors.white.withValues(alpha: 0.6),
-                          size: 36,
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          'tap_to_listen'.tr,
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.6),
-                            fontSize: 20,
-                            fontWeight: FontWeight.w700,
-                            fontStyle: FontStyle.italic,
+
+                // Top Hint Component: Image / Memory Fade
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 400),
+                  child: (hint == 'hidden' || hint == 'with_audio_only' || hint == 'audio')
+                      ? const SizedBox(key: ValueKey('hidden'), height: 0)
+                      : Container(
+                          key: const ValueKey('image_badge'),
+                          margin: const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: GameColors.teal.withValues(alpha: 0.15),
+                            shape: BoxShape.circle,
                           ),
-                        ),
-                      ],
-                    ),
-                  )
-                else ...
-                  [
-                    // If there's an image or text hint, show it first (above the word)
-                    if (hint == 'with_image') ...
-                      [
-                        controller.currentChallenge.value?.imagePath != null
-                            ? Container(
-                                margin: const EdgeInsets.only(bottom: 12),
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color: GameColors.teal.withValues(alpha: 0.15),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Image.asset(
-                                  controller.currentChallenge.value!.imagePath!,
+                          child: imagePath != null
+                              ? Image.asset(
+                                  imagePath,
                                   height: 70,
                                   fit: BoxFit.contain,
-                                ),
-                              )
-                            : Container(
-                                margin: const EdgeInsets.only(bottom: 12),
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF4ECDC4).withValues(alpha: 0.15),
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                child: Text(
+                                )
+                              : Text(
                                   'hint_text'.trParams({'word': fullWord}),
                                   style: const TextStyle(
                                     color: Color(0xFF4ECDC4),
@@ -481,23 +437,22 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
                                     fontWeight: FontWeight.w800,
                                   ),
                                 ),
-                              ),
-                      ],
-
-                    // Easy & Medium: show word with blank below the image
-                    RichText(
-                      textAlign: TextAlign.center,
-                      text: TextSpan(
-                        style: const TextStyle(
-                          color: GameColors.textDark,
-                          fontSize: 56,
-                          fontWeight: FontWeight.w900,
-                          height: 1.2,
                         ),
-                        children: _buildBlankWordSpans(blank),
-                      ),
+                ),
+
+                // Word with Blank (e.g. ក_)
+                RichText(
+                  textAlign: TextAlign.center,
+                  text: TextSpan(
+                    style: const TextStyle(
+                      color: GameColors.textDark,
+                      fontSize: 56,
+                      fontWeight: FontWeight.w900,
+                      height: 1.2,
                     ),
-                  ],
+                    children: _buildBlankWordSpans(blank),
+                  ),
+                ),
               ],
             ),
           ),

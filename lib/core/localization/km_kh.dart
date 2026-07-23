@@ -501,6 +501,18 @@ final Map<String, String> kmKH = {
   'best_score': 'ពិន្ទុល្អបំផុត',
   'correct': 'ត្រូវ',
   'wrong': 'ខុស',
+  'missing': 'បាត់',
+  'missing_character': 'តួអក្សរដែលបាត់',
+  'fill_in_the_missing_character': 'បំពេញតួអក្សរដែលបាត់',
+  'how_many_objects': 'តើមានវត្ថុប៉ុន្មាន?',
+  'consonant_sprint': 'ប្រណាំងព្យញ្ជនៈ',
+  'digit_sprint': 'ប្រណាំងលេខ',
+  'independent_vowel_sprint': 'ប្រណាំងស្រៈពេញតួ',
+  'dependent_vowel_sprint': 'ប្រណាំងស្រៈនិស្ស័យ',
+  'counting_fun': 'រាប់លេខសប្បាយៗ',
+  'fill_the_word': 'បំពេញពាក្យ',
+  'math_challenge': 'ប្រកួតគណិតវិទ្យា',
+  'question_time': 'ម៉ោងសំណួរ',
 
   // ===== Quest & Challenge =====
   'daily_quests': 'បេសកកម្មប្រចាំថ្ងៃ',

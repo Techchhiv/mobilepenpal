@@ -8,7 +8,9 @@ import 'package:mobilepenpal/data/controllers/mini_game/mini_game_hub_controller
 import 'package:mobilepenpal/data/models/mini_game/mini_game_model.dart';
 import 'package:mobilepenpal/presentation/routes/app_routes.dart';
 import 'package:mobilepenpal/data/controllers/dashboard/navigation_controller.dart';
+import 'package:mobilepenpal/data/controllers/mini_game/dynamic_mini_game_controller.dart';
 import 'package:mobilepenpal/presentation/widgets/home/profile_header_card.dart';
+import 'package:mobilepenpal/presentation/widgets/loading_overly.dart';
 
 class MiniGamePage extends StatefulWidget {
   const MiniGamePage({super.key});
@@ -921,7 +923,7 @@ class _MiniGamePageState extends State<MiniGamePage>
     }
   }
 
-  void _startCustomRun() {
+  Future<void> _startCustomRun() async {
     final hubCtrl = Get.find<MiniGameHubController>();
     final selectedGamesList = hubCtrl.miniGames
         .where((g) => _selectedGames.contains(g.id))
@@ -932,15 +934,49 @@ class _MiniGamePageState extends State<MiniGamePage>
     final playedCount = _box.read<int>('dynamic_minigame_played_count') ?? 0;
     _box.write('dynamic_minigame_played_count', playedCount + 1);
 
-    Get.toNamed(
-      AppRoutes.dynamicMiniGame,
-      arguments: {
-        'miniGames': selectedGamesList,
-        'inputType': _selectedInputType.value, // null = auto/random
-      },
-    )?.then((_) {
-      setState(() {});
-    });
+    final overlayState = Overlay.of(context, rootOverlay: true);
+    final overlayEntry = OverlayEntry(
+      builder: (ctx) => const LoadingOverlay(
+        isLoading: true,
+        child: SizedBox.expand(),
+      ),
+    );
+    overlayState.insert(overlayEntry);
+
+    try {
+      if (Get.isRegistered<DynamicMiniGameController>()) {
+        Get.delete<DynamicMiniGameController>();
+      }
+
+      final controller = Get.put(DynamicMiniGameController());
+      await controller.prepareGame(
+        games: selectedGamesList,
+        inputType: _selectedInputType.value,
+      );
+
+      await WidgetsBinding.instance.endOfFrame;
+
+      final routeFuture = Get.toNamed(
+        AppRoutes.dynamicMiniGame,
+        arguments: {
+          'miniGames': selectedGamesList,
+          'inputType': _selectedInputType.value, // null = auto/random
+        },
+      );
+
+      // Remove overlay before awaiting route completion so it doesn't stay on screen during gameplay
+      overlayEntry.remove();
+
+      await routeFuture;
+    } catch (e) {
+      if (overlayEntry.mounted) {
+        overlayEntry.remove();
+      }
+    } finally {
+      if (mounted) {
+        setState(() {});
+      }
+    }
   }
 }
 

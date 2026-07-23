@@ -506,6 +506,18 @@ final Map<String, String> enUS = {
   'best_score': 'Best Score',
   'correct': 'Correct',
   'wrong': 'Wrong',
+  'missing': 'Missing',
+  'missing_character': 'Missing Character',
+  'fill_in_the_missing_character': 'Fill in the missing character',
+  'how_many_objects': 'How many objects?',
+  'consonant_sprint': 'Consonant Sprint',
+  'digit_sprint': 'Digit Sprint',
+  'independent_vowel_sprint': 'Independent Vowel Sprint',
+  'dependent_vowel_sprint': 'Dependent Vowel Sprint',
+  'counting_fun': 'Counting Fun',
+  'fill_the_word': 'Fill the Word',
+  'math_challenge': 'Math Challenge',
+  'question_time': 'Question Time',
 
   // ===== Quest & Challenge =====
   'daily_quests': 'Daily Quests',

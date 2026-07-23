@@ -277,10 +277,11 @@ class ChallengeGenerator {
         }
       case 2: // Multiplication: a × b = product
         final a = 1 + _rng.nextInt(3);
-        final maxB = (9 ~/ a).clamp(0, 9);
-        final b = _rng.nextInt(maxB + 1);
-        final product = a * b;
+        final maxB = (9 ~/ a).clamp(1, 9);
         if (missingFirst) {
+          // ? × b = product: b must be ≥ 1 so ? has a unique answer
+          final b = 1 + _rng.nextInt(maxB);
+          final product = a * b;
           return Challenge(
             display: '? × $b = $product',
             target: a.toString(),
@@ -290,6 +291,9 @@ class ChallengeGenerator {
             operator: '×',
           );
         } else {
+          // a × ? = product: a is ≥ 1, b can be 0
+          final b = _rng.nextInt(maxB + 1);
+          final product = a * b;
           return Challenge(
             display: '$a × ? = $product',
             target: b.toString(),
@@ -300,10 +304,11 @@ class ChallengeGenerator {
           );
         }
       default: // Division: a ÷ b = answer
-        final answer = _rng.nextInt(10);
         final b = 1 + _rng.nextInt(3);
-        final a = answer * b;
         if (missingFirst) {
+          // ? ÷ b = answer: answer can be 0..9 (e.g. ? ÷ 2 = 0 -> ? = 0)
+          final answer = _rng.nextInt(10);
+          final a = answer * b;
           return Challenge(
             display: '? ÷ $b = $answer',
             target: a.toString(),
@@ -313,6 +318,9 @@ class ChallengeGenerator {
             operator: '÷',
           );
         } else {
+          // a ÷ ? = answer: answer must be ≥ 1 to avoid 0 ÷ ? = 0
+          final answer = 1 + _rng.nextInt(9);
+          final a = answer * b;
           return Challenge(
             display: '$a ÷ ? = $answer',
             target: b.toString(),
@@ -752,6 +760,241 @@ class ChallengeGenerator {
       'meaning': 'Turtle',
       'image': 'assets/images/consonants/អ_អណ្ដើក.png',
     },
+
+    // Dependent Vowels
+    {
+      'word': 'កា',
+      'missing': 'ា',
+      'blank': 'ក_',
+      'meaning': 'Glass',
+      'image': 'assets/images/dep_vowels/ា_កា.png',
+    },
+    {
+      'word': 'កាំជណ្ដើរ',
+      'missing': 'ាំ',
+      'blank': 'ក_ជណ្ដើរ',
+      'meaning': 'Stairs',
+      'image': 'assets/images/dep_vowels/ាំ_កាំជណ្ដើរ.png',
+    },
+    {
+      'word': 'ផ្លិត',
+      'missing': 'ិ',
+      'blank': 'ផ្ល_ត',
+      'meaning': 'Fan',
+      'image': 'assets/images/dep_vowels/ិ_ផ្លិត.png',
+    },
+    {
+      'word': 'ជិះ',
+      'missing': 'ិះ',
+      'blank': 'ជ_',
+      'meaning': 'Ride',
+      'image': 'assets/images/dep_vowels/ិះ_ជិះ.png',
+    },
+    {
+      'word': 'សី',
+      'missing': 'ី',
+      'blank': 'ស_',
+      'meaning': 'Shuttlecock',
+      'image': 'assets/images/dep_vowels/ី_សី.png',
+    },
+    {
+      'word': 'មឹក',
+      'missing': 'ឹ',
+      'blank': 'ម_ក',
+      'meaning': 'Squid',
+      'image': 'assets/images/dep_vowels/ឹ_មឹក.png',
+    },
+    {
+      'word': 'ឈឺ',
+      'missing': 'ឺ',
+      'blank': 'ឈ_',
+      'meaning': 'Sick',
+      'image': 'assets/images/dep_vowels/ឺ_ឈឺ.png',
+    },
+    {
+      'word': 'តុ',
+      'missing': 'ុ',
+      'blank': 'ត_',
+      'meaning': 'Table',
+      'image': 'assets/images/dep_vowels/ុ_តុ.png',
+    },
+    {
+      'word': 'រុំកាដូ',
+      'missing': 'ុំ',
+      'blank': 'រ_កាដូ',
+      'meaning': 'Wrap Gift',
+      'image': 'assets/images/dep_vowels/ុំ_រុំកាដូ.png',
+    },
+    {
+      'word': 'ពពុះ',
+      'missing': 'ុះ',
+      'blank': 'ពព_',
+      'meaning': 'Bubble',
+      'image': 'assets/images/dep_vowels/ុះ_ពពុះ.png',
+    },
+    {
+      'word': 'ដូង',
+      'missing': 'ូ',
+      'blank': 'ដ_ង',
+      'meaning': 'Coconut',
+      'image': 'assets/images/dep_vowels/ូ_ដូង.png',
+    },
+    {
+      'word': 'ភួយ',
+      'missing': 'ួ',
+      'blank': 'ភ_យ',
+      'meaning': 'Blanket',
+      'image': 'assets/images/dep_vowels/ួ_ភួយ.png',
+    },
+    {
+      'word': 'ដើមឈើ',
+      'missing': 'ើ',
+      'blank': 'ដ_មឈើ',
+      'meaning': 'Tree',
+      'image': 'assets/images/dep_vowels/ើ_ដើមឈើ.png',
+    },
+    {
+      'word': 'គ្រឿង',
+      'missing': 'ឿ',
+      'blank': 'គ្រ_ង',
+      'meaning': 'Keung',
+      'image': 'assets/images/dep_vowels/ឿ_គ្រឿង.png',
+    },
+    {
+      'word': 'សៀវភៅ',
+      'missing': 'ៀ',
+      'blank': 'ស_វភៅ',
+      'meaning': 'Book',
+      'image': 'assets/images/dep_vowels/ៀ_សៀវភៅ.png',
+    },
+    {
+      'word': 'សេក',
+      'missing': 'េ',
+      'blank': 'ស_ក',
+      'meaning': 'Parrot',
+      'image': 'assets/images/dep_vowels/េ_សេក.png',
+    },
+    {
+      'word': 'ឆេះ',
+      'missing': 'េះ',
+      'blank': 'ឆ_',
+      'meaning': 'Burn',
+      'image': 'assets/images/dep_vowels/េះ_ឆេះ.png',
+    },
+    {
+      'word': 'ខ្លែង',
+      'missing': 'ែ',
+      'blank': 'ខ្ល_ង',
+      'meaning': 'Kite',
+      'image': 'assets/images/dep_vowels/ែ_ខ្លែង.png',
+    },
+    {
+      'word': 'ស្ពៃ',
+      'missing': 'ៃ',
+      'blank': 'ស្ព_',
+      'meaning': 'Cabbage',
+      'image': 'assets/images/dep_vowels/ៃ_ស្ពៃ.png',
+    },
+    {
+      'word': 'ខោ',
+      'missing': 'ោ',
+      'blank': 'ខ_',
+      'meaning': 'Pants',
+      'image': 'assets/images/dep_vowels/ោ_ខោ.png',
+    },
+    {
+      'word': 'កោះ',
+      'missing': 'ោះ',
+      'blank': 'ក_',
+      'meaning': 'Island',
+      'image': 'assets/images/dep_vowels/ោះ_កោះ.png',
+    },
+    {
+      'word': 'ពូថៅ',
+      'missing': 'ៅ',
+      'blank': 'ពូថ_',
+      'meaning': 'Axe',
+      'image': 'assets/images/dep_vowels/ៅ_ពូថៅ.png',
+    },
+    {
+      'word': 'នំ',
+      'missing': 'ំ',
+      'blank': 'ន_',
+      'meaning': 'Cake',
+      'image': 'assets/images/dep_vowels/ំ_នំ.png',
+    },
+    {
+      'word': 'ផ្ទះ',
+      'missing': 'ះ',
+      'blank': 'ផ្ទ_',
+      'meaning': 'House',
+      'image': 'assets/images/dep_vowels/ះ_ផ្ទះ.png',
+    },
+
+    // Independent Vowels
+    {
+      'word': 'ឥដ្ឋ',
+      'missing': 'ឥ',
+      'blank': '_ដ្ឋ',
+      'meaning': 'Brick',
+      'image': 'assets/images/indep_vowels/ឥ_ឥដ្ឋ.png',
+    },
+    {
+      'word': 'ឦសាន',
+      'missing': 'ឦ',
+      'blank': '_សាន',
+      'meaning': 'Northeast',
+      'image': 'assets/images/indep_vowels/ឦ_ឦសាន.png',
+    },
+    {
+      'word': 'ឪឡឹក',
+      'missing': 'ឪ',
+      'blank': '_ឡឹក',
+      'meaning': 'Watermelon',
+      'image': 'assets/images/indep_vowels/ឪ_ឪឡឹក.png',
+    },
+    {
+      'word': 'ឫស',
+      'missing': 'ឫ',
+      'blank': '_ស',
+      'meaning': 'Root',
+      'image': 'assets/images/indep_vowels/ឫ_ឫស.png',
+    },
+    {
+      'word': 'ឬស្សី',
+      'missing': 'ឬ',
+      'blank': '_ស្សី',
+      'meaning': 'Bamboo',
+      'image': 'assets/images/indep_vowels/ឬ_ឬស្សី.png',
+    },
+    {
+      'word': 'រំឭក',
+      'missing': 'ឭ',
+      'blank': 'រំ_ក',
+      'meaning': 'Remind',
+      'image': 'assets/images/indep_vowels/ឭ_រំឭក.png',
+    },
+    {
+      'word': 'ឮ',
+      'missing': 'ឮ',
+      'blank': '_',
+      'meaning': 'Hear',
+      'image': 'assets/images/indep_vowels/ឮ_ឮ.png',
+    },
+    {
+      'word': 'ឰសូរ',
+      'missing': 'ឰ',
+      'blank': '_សូរ',
+      'meaning': 'Aisour',
+      'image': 'assets/images/indep_vowels/ឰ_ឰសូរ.png',
+    },
+    {
+      'word': 'ឱប',
+      'missing': 'ឱ',
+      'blank': '_ប',
+      'meaning': 'Hug',
+      'image': 'assets/images/indep_vowels/ឱ_ឱប.png',
+    },
   ];
 
   /// Generates a challenge where the user fills in a missing character.
@@ -763,21 +1006,37 @@ class ChallengeGenerator {
     Map<String, dynamic>? config,
     MiniGameDifficulty difficulty,
   ) {
-    final entry = _khmerWords[_rng.nextInt(_khmerWords.length)];
+    final pool = (config?['pool'] as List<dynamic>?)
+            ?.map((e) => e.toString())
+            .toList() ??
+        [];
+
+    List<Map<String, String>> candidates = [];
+    if (pool.isNotEmpty) {
+      candidates =
+          _khmerWords.where((e) => pool.contains(e['missing'])).toList();
+    }
+
+    if (candidates.isEmpty) {
+      candidates = _khmerWords;
+    }
+
+    final entry = candidates[_rng.nextInt(candidates.length)];
     final fullWord = entry['word']!;
     final missing = entry['missing']!;
     final blank = entry['blank']!;
+    final imagePath = entry['image'];
 
     String displayHint;
     switch (difficulty) {
       case MiniGameDifficulty.easy:
       case MiniGameDifficulty.medium:
-      case MiniGameDifficulty.hard:
         displayHint = 'with_image';
         break;
+      case MiniGameDifficulty.hard:
+        displayHint = 'memory_fade';
+        break;
     }
-
-    final imagePath = entry['image'];
 
     return Challenge(
       display: displayHint,
@@ -860,7 +1119,7 @@ class ChallengeGenerator {
     'ូ': {'emoji': 'assets/images/dep_vowels/ូ_ដូង.png', 'hint': 'Coconut'},
     'ួ': {'emoji': 'assets/images/dep_vowels/ួ_ភួយ.png', 'hint': 'Blanket'},
     'ើ': {'emoji': 'assets/images/dep_vowels/ើ_ដើមឈើ.png', 'hint': 'Tree'},
-    'ឿ': {'emoji': 'assets/images/dep_vowels/ឿ_គឿង.png', 'hint': 'Keung'},
+    'ឿ': {'emoji': 'assets/images/dep_vowels/ឿ_គ្រឿង.png', 'hint': 'Keung'},
     'ៀ': {'emoji': 'assets/images/dep_vowels/ៀ_សៀវភៅ.png', 'hint': 'Book'},
     'េ': {'emoji': 'assets/images/dep_vowels/េ_សេក.png', 'hint': 'Parrot'},
     'េះ': {'emoji': 'assets/images/dep_vowels/េះ_ឆេះ.png', 'hint': 'Burn'},

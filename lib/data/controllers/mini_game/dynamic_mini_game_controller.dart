@@ -206,27 +206,43 @@ class DynamicMiniGameController extends GetxController
     return 'custom_mix_high_score';
   }
 
+  bool _isInitialized = false;
+
   @override
   void onInit() {
     super.onInit();
 
-    // Get the mini-games from navigation arguments
     final args = Get.arguments;
-    if (args != null && args['miniGames'] is List<MiniGameModel>) {
-      miniGames = args['miniGames'] as List<MiniGameModel>;
-    } else if (args != null && args['miniGame'] is MiniGameModel) {
-      miniGames = [args['miniGame'] as MiniGameModel];
-    } else {
-      // Fallback for safety
-      Get.back();
-      return;
+    if (args != null && !_isInitialized) {
+      List<MiniGameModel>? games;
+      if (args['miniGames'] is List<MiniGameModel>) {
+        games = args['miniGames'] as List<MiniGameModel>;
+      } else if (args['miniGame'] is MiniGameModel) {
+        games = [args['miniGame'] as MiniGameModel];
+      }
+      if (games != null) {
+        final String? inputType =
+            args['inputType'] is String ? args['inputType'] as String : null;
+        prepareGame(games: games, inputType: inputType);
+      }
     }
+  }
 
-    // Read user-chosen input type (may be null = random)
-    if (args != null && args['inputType'] is String) {
-      userChosenInputType = args['inputType'] as String;
-    }
+  Future<void> prepareGame({
+    required List<MiniGameModel> games,
+    String? inputType,
+  }) async {
+    if (_isInitialized) return;
+    _isInitialized = true;
 
+    miniGames = games;
+    userChosenInputType = inputType;
+
+    _setupControllers();
+    await _initGame();
+  }
+
+  void _setupControllers() {
     drawingController.setStyle(color: Colors.black, strokeWidth: 6);
 
     // Animation controller
@@ -293,8 +309,6 @@ class DynamicMiniGameController extends GetxController
         startCountdown();
       }
     });
-
-    _initGame();
   }
 
   void startCountdown() {
@@ -718,7 +732,13 @@ class DynamicMiniGameController extends GetxController
       missingCharWordBlank.value = challenge.wordWithBlank ?? '';
       missingCharFullWord.value = challenge.fullWord ?? '';
       missingCharDisplayHint.value =
-          challenge.display; // 'with_image' / 'word_only' / 'audio'
+          challenge.display; // 'with_image' / 'memory_fade' / 'with_audio_only' / 'audio'
+
+      if (challenge.display == 'memory_fade') {
+        _memoryFadeTimer = Timer(const Duration(milliseconds: 2500), () {
+          missingCharDisplayHint.value = 'hidden';
+        });
+      }
     } else {
       missingCharWordBlank.value = '';
       missingCharFullWord.value = '';

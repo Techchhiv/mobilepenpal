@@ -32,10 +32,10 @@ class DynamicMiniGameSummaryPage extends GetView<DynamicMiniGameController> {
                     padding: const EdgeInsets.symmetric(horizontal: 28),
                     child: Column(
                       children: [
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 12),
                         // Trophy / Game Over Icon
                         _buildIcon(),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 10),
 
                         Text(
                           'game_over'.tr.toUpperCase(),
@@ -46,70 +46,75 @@ class DynamicMiniGameSummaryPage extends GetView<DynamicMiniGameController> {
                             letterSpacing: Get.locale?.languageCode == 'km' ? 0 : 4,
                           ),
                         ),
-                        const SizedBox(height: 8),
 
-                        // Score label and value
-                        Text(
-                          'score'.tr.toUpperCase(),
-                          style: TextStyle(
-                            color: GameColors.textDark.withValues(alpha: 0.55),
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: Get.locale?.languageCode == 'km' ? 0 : 2,
-                          ),
-                        ),
-                        const SizedBox(height: 0),
-                        ShaderMask(
-                          shaderCallback: (bounds) => const LinearGradient(
-                            colors: [GameColors.purple, GameColors.teal],
-                          ).createShader(bounds),
-                          child: Text(
-                            '${controller.score.value}',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 56,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                        ),
-
-                        // High score badge
-                        if (controller.score.value >= controller.highScore.value && controller.score.value > 0)
-                          Container(
-                            margin: const EdgeInsets.only(top: 8),
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [Color(0xFFF2B024), Color(0xFFD29004)],
-                              ),
-                              borderRadius: BorderRadius.circular(20),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.1),
-                                  blurRadius: 4,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: Row(
+                        // Score section centered in the space between Game Over and stats container
+                        Expanded(
+                          child: Center(
+                            child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(Icons.emoji_events_rounded, color: Colors.white, size: 16),
-                                const SizedBox(width: 6),
                                 Text(
-                                  'new_high_score'.tr.toUpperCase(),
+                                  'score'.tr.toUpperCase(),
                                   style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: Get.locale?.languageCode == 'km' ? 0 : 1,
+                                    color: GameColors.textDark.withValues(alpha: 0.55),
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: Get.locale?.languageCode == 'km' ? 0 : 2,
                                   ),
                                 ),
+                                ShaderMask(
+                                  shaderCallback: (bounds) => const LinearGradient(
+                                    colors: [GameColors.purple, GameColors.teal],
+                                  ).createShader(bounds),
+                                  child: Text(
+                                    '${controller.score.value}',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 56,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                ),
+
+                                // High score badge
+                                if (controller.score.value >= controller.highScore.value && controller.score.value > 0)
+                                  Container(
+                                    margin: const EdgeInsets.only(top: 8),
+                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      gradient: const LinearGradient(
+                                        colors: [Color(0xFFF2B024), Color(0xFFD29004)],
+                                      ),
+                                      borderRadius: BorderRadius.circular(20),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withValues(alpha: 0.1),
+                                          blurRadius: 4,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(Icons.emoji_events_rounded, color: Colors.white, size: 16),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          'new_high_score'.tr.toUpperCase(),
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w800,
+                                            letterSpacing: Get.locale?.languageCode == 'km' ? 0 : 1,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                               ],
                             ),
-                          )
-                        else
-                          const SizedBox(height: 4),
+                          ),
+                        ),
 
                         // Stats Grid in a premium container consistent with stage summary card, wrapped in Expanded flex 2
                         Expanded(
