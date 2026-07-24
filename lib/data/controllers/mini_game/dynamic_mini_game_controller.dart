@@ -1605,7 +1605,7 @@ class DynamicMiniGameController extends GetxController
     }
   }
 
-  List<Map<String, dynamic>> getPointsJson() {
+  List<List<dynamic>> getPointsJson() {
     return DrawingPointsUtil.getPointsJson(
       rawStrokes: _rawStrokes,
       scale: scale,

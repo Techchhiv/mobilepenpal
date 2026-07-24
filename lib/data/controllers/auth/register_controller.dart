@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:mobilepenpal/core/network/api_client.dart';
 import 'package:mobilepenpal/data/services/auth_service.dart';
 import 'package:mobilepenpal/presentation/routes/app_routes.dart';
 import 'package:mobilepenpal/presentation/widgets/app_snackbar.dart';
@@ -247,7 +248,10 @@ class RegisterController extends GetxController {
 
         final token = response.data?['token'];
         if (token is String && token.trim().isNotEmpty) {
+          await ApiClient().saveToken(token);
+        } else {
           await GetStorage().write('is_logged_in', true);
+          await GetStorage().write('has_token', true);
         }
 
         clearForm();

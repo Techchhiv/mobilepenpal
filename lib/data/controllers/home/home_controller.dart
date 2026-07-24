@@ -24,6 +24,9 @@ class HomeController extends GetxController {
   final HomeService _homeService = HomeService();
   final _box = GetStorage();
   final _secure = const FlutterSecureStorage(
+    aOptions: AndroidOptions(
+      encryptedSharedPreferences: true,
+    ),
     iOptions: IOSOptions(
       accessibility: KeychainAccessibility.first_unlock,
     ),

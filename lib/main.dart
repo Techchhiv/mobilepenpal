@@ -33,6 +33,9 @@ void main() async {
   bool readSuccessful = false;
   try {
     const secure = FlutterSecureStorage(
+      aOptions: AndroidOptions(
+        encryptedSharedPreferences: true,
+      ),
       iOptions: IOSOptions(
         accessibility: KeychainAccessibility.first_unlock,
       ),
@@ -43,7 +46,13 @@ void main() async {
     debugPrint('SECURE STORAGE ERROR AT STARTUP: $e');
   }
 
-  final isLoggedIn = token != null && token.trim().isNotEmpty;
+  final storedLoggedIn = GetStorage().read('is_logged_in') == true;
+  final storedHasToken = GetStorage().read('has_token') == true;
+
+  final isLoggedIn = readSuccessful
+      ? (token != null && token.trim().isNotEmpty)
+      : (storedLoggedIn && storedHasToken);
+
   if (readSuccessful) {
     await GetStorage().write('is_logged_in', isLoggedIn);
     await GetStorage().write('has_token', isLoggedIn);

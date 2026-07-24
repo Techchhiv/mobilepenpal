@@ -1,11 +1,11 @@
 import 'package:flutter/widgets.dart';
 
 class DrawingPointsUtil {
-  static List<Map<String, dynamic>> getPointsJson({
+  static List<List<dynamic>> getPointsJson({
     required List<List<Map<String, dynamic>>> rawStrokes,
     required double scale,
   }) {
-    final points = <Map<String, dynamic>>[];
+    final points = <List<dynamic>>[];
     int timeStep = 0;
 
     int? firstTimestamp;
@@ -38,18 +38,18 @@ class DrawingPointsUtil {
         }
 
         final rawTime = (p['time'] as num?)?.toInt() ?? 0;
-        points.add({
-          'time_step': timeStep,
-          'x': double.parse(
+        points.add([
+          timeStep,
+          double.parse(
             ((p['x'] as num).toDouble() / scale).toStringAsFixed(1),
           ),
-          'y': double.parse(
+          double.parse(
             ((p['y'] as num).toDouble() / scale).toStringAsFixed(1),
           ),
-          'pen_state': penState,
-          'timestamp_ms': rawTime - firstTimestamp,
-          'pressure': null,
-        });
+          penState,
+          rawTime - firstTimestamp,
+          null,
+        ]);
       }
     }
 

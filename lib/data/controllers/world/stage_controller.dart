@@ -1068,7 +1068,7 @@ class StageController extends GetxController {
     return out;
   }
 
-  List<Map<String, dynamic>> getPointsJson({int boardIndex = 0}) {
+  List<List<dynamic>> getPointsJson({int boardIndex = 0}) {
     return DrawingPointsUtil.getPointsJson(
       rawStrokes: _rawStrokesList[boardIndex],
       scale: scale,

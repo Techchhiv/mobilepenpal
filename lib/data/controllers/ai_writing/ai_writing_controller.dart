@@ -678,7 +678,7 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
     onFinished();
   }
 
-  List<Map<String, dynamic>> getPointsJson() {
+  List<List<dynamic>> getPointsJson() {
     return DrawingPointsUtil.getPointsJson(
       rawStrokes: _rawStrokes,
       scale: canvasSize / 340.0,

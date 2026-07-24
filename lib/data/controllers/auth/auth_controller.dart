@@ -1,9 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
-import 'package:mobilepenpal/core/config/env.dart';
 import 'package:mobilepenpal/data/services/auth_service.dart';
 import 'package:mobilepenpal/presentation/routes/app_routes.dart';
 import 'package:mobilepenpal/presentation/widgets/app_snackbar.dart';
@@ -148,16 +146,8 @@ class AuthController extends GetxController {
         //     colorText: Colors.white,
         //   );
         FocusManager.instance.primaryFocus?.unfocus();
-        final token = await const FlutterSecureStorage(
-          iOptions: IOSOptions(
-            accessibility: KeychainAccessibility.first_unlock,
-          ),
-        ).read(
-          key: Env.accessToken,
-        );
-        final ok = token != null && token.trim().isNotEmpty;
-
-        await GetStorage().write('is_logged_in', ok);
+        await GetStorage().write('is_logged_in', true);
+        await GetStorage().write('has_token', true);
         Get.offAllNamed(AppRoutes.home);
         // } else {
         //   Get.snackbar(
