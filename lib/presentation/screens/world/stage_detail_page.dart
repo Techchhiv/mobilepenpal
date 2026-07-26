@@ -86,7 +86,7 @@ class StageDetailPage extends GetView<StageController> {
                                 transitionBuilder: (child, anim) =>
                                     SizeTransition(
                                       sizeFactor: anim,
-                                      axisAlignment: -1.0,
+                                      alignment: Alignment.topCenter,
                                       child: child,
                                     ),
                                 child: show
@@ -404,7 +404,7 @@ class StageDetailPage extends GetView<StageController> {
                                 padding: EdgeInsets.symmetric(
                                   horizontal: spacing / 2,
                                 ),
-                                child: Container(
+                                child: SizedBox(
                                   width: itemSize,
                                   height: itemSize,
                                   child: ClipRRect(
@@ -436,7 +436,7 @@ class StageDetailPage extends GetView<StageController> {
                                   padding: EdgeInsets.symmetric(
                                     horizontal: spacing / 2,
                                   ),
-                                  child: Container(
+                                  child: SizedBox(
                                     width: itemSize,
                                     height: itemSize,
                                     child: ClipRRect(
