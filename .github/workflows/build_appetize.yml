@@ -2,10 +2,10 @@ name: Build and Upload iOS to Appetize
 
 on:
   push:
-    branches: [ testing ]
+    branches: [ main]
   pull_request:
-    branches: [ testing ]
-  workflow_dispatch:
+    branches: [ main ]
+  workflow_dispatch: # Allows manual trigger from GitHub UI
 
 jobs:
   build-ios-appetize:
@@ -42,7 +42,7 @@ jobs:
       - name: Upload to Appetize.io
         env:
           APPETIZE_TOKEN: ${{ secrets.APPETIZE_API_TOKEN }}
-          APPETIZE_PUBLIC_KEY: ${{ secrets.APPETIZE_PUBLIC_KEY }} # Optional: specify if updating an existing Appetize app
+          APPETIZE_PUBLIC_KEY: ${{ secrets.APPETIZE_PUBLIC_KEY }} # Optional: set if updating existing Appetize app
         run: |
           if [ -n "$APPETIZE_PUBLIC_KEY" ]; then
             echo "Updating existing Appetize app ($APPETIZE_PUBLIC_KEY)..."
