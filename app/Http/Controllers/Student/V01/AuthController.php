@@ -96,12 +96,12 @@ class AuthController extends Controller
             return $this->returnError(__('messages.student_inactive'), 403);
         }
 
-        // Check if there are active tokens for this student
-        $hasActiveSessions = $student->tokens()->exists();
+        // Check if there are active tokens for this student (Disabled for now)
+        // $hasActiveSessions = $student->tokens()->exists();
 
-        if ($hasActiveSessions && empty($validated['confirm'])) {
-            return $this->returnError('already_logged_in', 409);
-        }
+        // if ($hasActiveSessions && empty($validated['confirm'])) {
+        //     return $this->returnError('already_logged_in', 409);
+        // }
 
         $student->tokens()->delete();
 
