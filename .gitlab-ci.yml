@@ -6,7 +6,7 @@ build_appetize_ios:
   tags:
     - saas-macos-medium-m1  # Requires a macOS runner on GitLab
   rules:
-    - if: $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "master" || $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "testing"
     - if: $CI_PIPELINE_SOURCE == "web" # Manual trigger via web UI
 
   before_script:
