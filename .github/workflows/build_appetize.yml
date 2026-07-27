@@ -40,21 +40,15 @@ jobs:
           zip -r app.zip Runner.app
 
       - name: Upload to Appetize.io
-        env:
-          APPETIZE_TOKEN: ${{ secrets.APPETIZE_API_TOKEN || 'tok_tv3ikuxequqr5p4na7smk27zju' }}
-          APPETIZE_PUBLIC_KEY: ${{ secrets.APPETIZE_PUBLIC_KEY }} # Optional: set if updating existing Appetize app
         run: |
-          TOKEN="${APPETIZE_TOKEN:-tok_tv3ikuxequqr5p4na7smk27zju}"
-          if [ -n "$APPETIZE_PUBLIC_KEY" ]; then
-            echo "Updating existing Appetize app ($APPETIZE_PUBLIC_KEY)..."
-            ENDPOINT="https://api.appetize.io/v1/apps/$APPETIZE_PUBLIC_KEY"
-          else
-            echo "Creating new Appetize app entry..."
-            ENDPOINT="https://api.appetize.io/v1/apps"
-          fi
+          TOKEN="tok_tv3ikuxequqr5p4na7smk27zju"
+          
+          echo "Uploading build/ios/iphonesimulator/app.zip to Appetize.io..."
 
           RESPONSE=$(curl --silent --show-error --location \
-            --request POST "$ENDPOINT" \
+            --request POST "https://api.appetize.io/v1/apps" \
+            -H "Authorization: Bearer $TOKEN" \
+            -u "$TOKEN:" \
             --form "file=@build/ios/iphonesimulator/app.zip" \
             --form "platform=ios" \
             --form "token=$TOKEN")
