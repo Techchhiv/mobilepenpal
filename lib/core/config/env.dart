@@ -1,4 +1,3 @@
-
 class Env {
   static const String apiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
@@ -25,7 +24,6 @@ class Env {
   static bool get isDebug => environment == 'development';
 
   static const String apiVersion = 'v1';
-
 
   static const String accessToken = 'student_token';
 }

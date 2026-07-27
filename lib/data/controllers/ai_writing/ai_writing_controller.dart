@@ -222,6 +222,7 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
       return;
     }
 
+    // ── Fit for mini guide box (100×100) ──
     final combined = <List<Offset>>[...letterOut, ...strokesOut];
     final fitted = StrokeTransformUtil.autoFitGlyphPx(
       combined,
@@ -528,7 +529,7 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
     }
   }
 
-  // ── Progress calculation from model predictions ────────────────────────
+  // ── Progress calculation from AI ONNX model predictions ──────────────────
 
   void _updateProgressFromPrediction(double fullPredictedLength) {
     if (_rawStrokes.isEmpty) {
@@ -537,7 +538,7 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
       return;
     }
 
-    // Calculate user drawn path length
+    // Calculate total drawn user length across all raw strokes
     double userLength = 0.0;
     for (final stroke in _rawStrokes) {
       for (int i = 1; i < stroke.length; i++) {
@@ -549,12 +550,21 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
       }
     }
 
+    // Basic safeguards:
+    // 1. If drawn length is tiny (< 15px), progress is 0.
+    if (userLength < 15.0) {
+      drawingProgress.value = 0.0;
+      _syncGuideToProgress();
+      return;
+    }
+
     if (userLength + fullPredictedLength <= 0) {
       drawingProgress.value = 0.0;
     } else if (fullPredictedLength < 20.0) {
-      // Character essentially complete
+      // The ONNX AI model predicts that the character is completely finished!
       drawingProgress.value = 1.0;
     } else {
+      // Calculate smooth progress ratio based on user length vs AI predicted remaining length
       drawingProgress.value =
           (userLength / (userLength + fullPredictedLength)).clamp(0.0, 1.0);
     }

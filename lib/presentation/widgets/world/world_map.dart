@@ -30,25 +30,31 @@ class _WorldMapState extends State<WorldMap> with TickerProviderStateMixin {
   static const String _floorAsset =
       "assets/images/backgrounds/map_background_floor.png";
 
-  /// Predefined waypoints (leftRatio, bottomRatio) relative to map background width and height
   static const List<Offset> _designWaypoints = [
-    Offset(0.56, 0.042),
-    Offset(0.38, 0.076),
-    Offset(0.58, 0.158),
-    Offset(0.55, 0.218),
-    Offset(0.34, 0.275),
-    Offset(0.525, 0.318),
-    Offset(0.45, 0.385),
-    Offset(0.32, 0.440),
-    Offset(0.55, 0.500),
-    Offset(0.62, 0.560),
-    Offset(0.36, 0.620),
-    Offset(0.54, 0.680),
-    Offset(0.40, 0.740),
-    Offset(0.58, 0.800),
-    Offset(0.35, 0.860),
-    Offset(0.50, 0.920),
+    Offset(0.4471, 0.0472), // (372, 4848)
+    Offset(0.2800, 0.0900), // (233, 4630)
+    Offset(0.5517, 0.1643), // (459, 4252)
+    Offset(0.3498, 0.2616), // (291, 3757)
+    Offset(0.5517, 0.3029), // (459, 3547)
+    Offset(0.4471, 0.3758), // (372, 3176)
+    Offset(0.2368, 0.4259), // (197, 2921)
+    Offset(0.4207, 0.5016), // (350, 2536)
+    Offset(0.6743, 0.5330), // (561, 2376)
+    Offset(0.8245, 0.6057), // (686, 2006)
+    Offset(0.8594, 0.7172), // (715, 1439)
+    Offset(0.5252, 0.7657), // (437, 1192)
+    Offset(0.3498, 0.8373), // (291, 828)
+    Offset(0.5433, 0.8915), // (452, 552)
   ];
+
+  static const Set<int> _bridgeSlots = {0, 1, 2, 5, 6, 10, 11, 12, 13};
+
+  String _getRockAssetForSlot(int slotIndex) {
+    if (_bridgeSlots.contains(slotIndex)) {
+      return "assets/images/backgrounds/rock.png";
+    }
+    return "assets/images/backgrounds/rock_on_bridge.png";
+  }
 
   Offset _getWaypoint(int index) {
     if (index < _designWaypoints.length) {
@@ -126,6 +132,26 @@ class _WorldMapState extends State<WorldMap> with TickerProviderStateMixin {
     super.dispose();
   }
 
+  int _getSlotIndex(int levelIndex, int totalLevels) {
+    if (totalLevels <= 0 || levelIndex < 0) return 0;
+    final int maxWaypoints = _designWaypoints.length;
+
+    int currentSlot = 0;
+    for (int i = 0; i <= levelIndex; i++) {
+      if (i == 0) {
+        currentSlot = 0;
+      } else {
+        final remainingLevelsAfterThis = totalLevels - 1 - i;
+        if ((currentSlot + 2) + remainingLevelsAfterThis < maxWaypoints) {
+          currentSlot += 2;
+        } else {
+          currentSlot += 1;
+        }
+      }
+    }
+    return currentSlot;
+  }
+
   double _requiredContentHeight({
     required int levelCount,
     required double mapWidth,
@@ -134,9 +160,10 @@ class _WorldMapState extends State<WorldMap> with TickerProviderStateMixin {
     final fullBgHeight = mapWidth * (_mapOriginalHeight / _mapOriginalWidth);
     if (levelCount <= 0) return fullBgHeight;
 
-    final lastWp = _getWaypoint(levelCount - 1);
+    final lastSlot = _getSlotIndex(levelCount - 1, levelCount);
+    final lastWp = _getWaypoint(lastSlot);
     final highestLevelYFromBottom = fullBgHeight * lastWp.dy;
-    final paddingAbove = max(1400, viewportHeight * 0.25);
+    final paddingAbove = max(250.0, viewportHeight * 0.25);
     final maxScrollableH = highestLevelYFromBottom + paddingAbove;
 
     return min(fullBgHeight, maxScrollableH);
@@ -174,7 +201,8 @@ class _WorldMapState extends State<WorldMap> with TickerProviderStateMixin {
       final contentH = max(neededH, viewportH);
 
       final idx = _findCurrentLevelIndex(levels);
-      final wp = _getWaypoint(idx);
+      final slot = _getSlotIndex(idx, levels.length);
+      final wp = _getWaypoint(slot);
       final targetY = contentH - (fullBgH * wp.dy);
 
       final targetOffset = (targetY - viewportH * 0.55).clamp(
@@ -333,39 +361,28 @@ class _WorldMapState extends State<WorldMap> with TickerProviderStateMixin {
     return Stack(
       children: [
         for (int i = 0; i < levels.length; i++) ...[
-          // Floor base image platform (commented out as map background image already has stone floors)
-          /*
-          const double floorWidth = 62.0;
-          const double floorHeight = 52.0;
+          () {
+            final slotIndex = _getSlotIndex(i, levels.length);
+            final wp = _getWaypoint(slotIndex);
+            final rockAsset = _getRockAssetForSlot(slotIndex);
 
-          Positioned(
-            left: (width * _getWaypoint(i).dx) - (floorWidth / 2),
-            top: contentHeight - (fullBgHeight * _getWaypoint(i).dy) - (floorHeight / 2) + 10.0,
-            child: Image.asset(
-              _floorAsset,
-              width: floorWidth,
-              height: floorHeight,
-              fit: BoxFit.contain,
-              errorBuilder: (_, __, ___) => const SizedBox(),
-            ),
-          ),
-          */
-          // Level Circle node
-          Positioned(
-            left: (width * _getWaypoint(i).dx) - 40.0,
-            top: contentHeight - (fullBgHeight * _getWaypoint(i).dy) - 75.0,
-            child: LevelCircle(
-              wave: waveCtrl,
-              bounce: bounceCtrl,
-              bounceHeight: 8.0,
-              waveAmplitudeFactor: 0.06,
-              waveAmplitudeMin: 2.0,
-              waveWavelengthFactor: 0.95,
-              level: levels[i],
-              isCurrent: i == currentIdx,
-              onTap: _onLevelTap,
-            ),
-          ),
+            return Positioned(
+              left: (width * wp.dx) - 50.0,
+              top: contentHeight - (fullBgHeight * wp.dy) - 35.0,
+              child: LevelCircle(
+                wave: waveCtrl,
+                bounce: bounceCtrl,
+                bounceHeight: 6.0,
+                waveAmplitudeFactor: 0.06,
+                waveAmplitudeMin: 2.0,
+                waveWavelengthFactor: 0.95,
+                level: levels[i],
+                isCurrent: i == currentIdx,
+                rockAsset: rockAsset,
+                onTap: _onLevelTap,
+              ),
+            );
+          }(),
         ],
       ],
     );
@@ -383,6 +400,7 @@ class LevelCircle extends StatefulWidget {
 
   final WorldLevel level;
   final bool isCurrent;
+  final String rockAsset;
   final Function(WorldLevel) onTap;
 
   const LevelCircle({
@@ -396,6 +414,7 @@ class LevelCircle extends StatefulWidget {
     required this.level,
     required this.onTap,
     required this.isCurrent,
+    required this.rockAsset,
   });
 
   @override
@@ -497,177 +516,203 @@ class _LevelCircleState extends State<LevelCircle> {
       ];
     }
 
-    return AnimatedBuilder(
-      animation: widget.bounce,
-      builder: (context, child) {
-        final double floatOffsetY = isCurrentActive
-            ? sin(widget.bounce.value * pi) * -6.0
-            : 0.0;
-        final double arrowOffsetY = isCurrentActive
-            ? sin(widget.bounce.value * pi) * -5.0
-            : 0.0;
+    return Stack(
+      clipBehavior: Clip.none,
+      alignment: Alignment.center,
+      children: [
+        // Static Rock Platform Image (centered at waypoint position)
+        Image.asset(
+          widget.rockAsset,
+          width: 60,
+          height: 50,
+          fit: BoxFit.contain,
+          errorBuilder: (_, __, ___) => const SizedBox(),
+        ),
 
-        return Transform.translate(
-          offset: Offset(0, floatOffsetY),
-          child: GestureDetector(
-            onTapDown: (_) => setState(() => _isPressed = true),
-            onTapUp: (_) => setState(() => _isPressed = false),
-            onTapCancel: () => setState(() => _isPressed = false),
-            onTap: () => widget.onTap(widget.level),
-            child: AnimatedScale(
-              scale: _isPressed ? 0.92 : 1.0,
-              duration: const Duration(milliseconds: 150),
-              curve: Curves.easeOutCubic,
-              child: SizedBox(
-                width: 80,
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  alignment: Alignment.topCenter,
-                  children: [
-                    // Floating arrow pointer for active level
-                    if (isCurrentActive)
-                      Positioned(
-                        top: -24 + arrowOffsetY,
-                        child: Text(
-                          '▼',
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: const Color(0xFFFACC15),
-                            fontWeight: FontWeight.bold,
-                            shadows: [
-                              Shadow(
-                                color: Colors.black.withValues(alpha: 0.6),
-                                offset: const Offset(0, 2),
-                                blurRadius: 4,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+        // Animated Floating Level Content (offset slightly above rock center)
+        AnimatedBuilder(
+          animation: widget.bounce,
+          builder: (context, child) {
+            final double floatOffsetY = isCurrentActive
+                ? sin(widget.bounce.value * pi) * -6.0
+                : 0.0;
+            final double arrowOffsetY = isCurrentActive
+                ? sin(widget.bounce.value * pi) * -5.0
+                : 0.0;
 
-                    Column(
-                      mainAxisSize: MainAxisSize.min,
+            return Transform.translate(
+              offset: Offset(0, -50.0 + floatOffsetY),
+              child: GestureDetector(
+                onTapDown: (_) => setState(() => _isPressed = true),
+                onTapUp: (_) => setState(() => _isPressed = false),
+                onTapCancel: () => setState(() => _isPressed = false),
+                onTap: () => widget.onTap(widget.level),
+                child: AnimatedScale(
+                  scale: _isPressed ? 0.92 : 1.0,
+                  duration: const Duration(milliseconds: 150),
+                  curve: Curves.easeOutCubic,
+                  child: SizedBox(
+                    width: 95,
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      alignment: Alignment.topCenter,
                       children: [
-                        // Top Badge Pill
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 3,
-                          ),
-                          decoration: BoxDecoration(
-                            gradient: badgeGradient,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: Colors.white, width: 2),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.3),
-                                blurRadius: 6,
-                                offset: const Offset(0, 3),
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Flexible(
-                                child: Text(
-                                  title,
-                                  style: const TextStyle(
-                                    fontFamily: 'Kantumruy Pro',
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
+                        // Floating arrow pointer for active level
+                        if (isCurrentActive)
+                          Positioned(
+                            top: -24 + arrowOffsetY,
+                            child: Text(
+                              '▼',
+                              style: TextStyle(
+                                fontSize: 18,
+                                color: const Color(0xFFFACC15),
+                                fontWeight: FontWeight.bold,
+                                shadows: [
+                                  Shadow(
+                                    color: Colors.black.withValues(alpha: 0.6),
+                                    offset: const Offset(0, 2),
+                                    blurRadius: 4,
                                   ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
+                                ],
                               ),
-                              if (isCompleted) ...[
-                                const SizedBox(width: 3),
-                                const Text(
-                                  '✔',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                            ),
+                          ),
+
+                        Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // Top Badge Pill
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 3.5,
+                              ),
+                              decoration: BoxDecoration(
+                                gradient: badgeGradient,
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: Colors.white,
+                                  width: 2,
                                 ),
-                              ],
-                            ],
-                          ),
-                        ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.3),
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 3),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      title,
+                                      style: const TextStyle(
+                                        fontFamily: 'Kantumruy Pro',
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  if (isCompleted) ...[
+                                    const SizedBox(width: 3),
+                                    const Text(
+                                      '✔',
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
 
-                        const SizedBox(height: 4),
+                            const SizedBox(height: 4),
 
-                        // Image Wrapper Box
-                        Container(
-                          width: 68,
-                          height: 68,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(18),
-                            border: Border.all(color: borderColor, width: 2.5),
-                            boxShadow: boxShadows,
-                            color: const Color(0xFF1E293B),
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(15.5),
-                            child: Stack(
-                              fit: StackFit.expand,
-                              children: [
-                                Image.asset(
-                                  thumbAsset,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => Container(
-                                    color: const Color(0xFF334155),
-                                    child: Center(
-                                      child: Text(
-                                        '${widget.level.orderIndex}',
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 22,
+                            // Image Wrapper Box (Level Thumbnail)
+                            Container(
+                              width: 68,
+                              height: 68,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(18),
+                                border: Border.all(
+                                  color: borderColor,
+                                  width: 2.5,
+                                ),
+                                boxShadow: boxShadows,
+                                color: const Color(0xFF1E293B),
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(15.5),
+                                child: Stack(
+                                  fit: StackFit.expand,
+                                  children: [
+                                    Image.asset(
+                                      thumbAsset,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_, __, ___) => Container(
+                                        color: const Color(0xFF334155),
+                                        child: Center(
+                                          child: Text(
+                                            '${widget.level.orderIndex}',
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 22,
+                                            ),
+                                          ),
                                         ),
                                       ),
                                     ),
-                                  ),
+
+                                    // Dark overlay & icons for locked states
+                                    if (!isUnlocked && !isSubLocked)
+                                      Container(
+                                        color: Colors.black.withValues(
+                                          alpha: 0.55,
+                                        ),
+                                        child: const Center(
+                                          child: Icon(
+                                            Icons.lock_rounded,
+                                            color: Colors.white,
+                                            size: 26,
+                                          ),
+                                        ),
+                                      ),
+
+                                    if (isSubLocked)
+                                      Container(
+                                        color: Colors.black.withValues(
+                                          alpha: 0.4,
+                                        ),
+                                        child: const Center(
+                                          child: Text(
+                                            '👑',
+                                            style: TextStyle(fontSize: 26),
+                                          ),
+                                        ),
+                                      ),
+                                  ],
                                 ),
-
-                                // Dark overlay & icons for locked states
-                                if (!isUnlocked && !isSubLocked)
-                                  Container(
-                                    color: Colors.black.withValues(alpha: 0.55),
-                                    child: const Center(
-                                      child: Icon(
-                                        Icons.lock_rounded,
-                                        color: Colors.white,
-                                        size: 26,
-                                      ),
-                                    ),
-                                  ),
-
-                                if (isSubLocked)
-                                  Container(
-                                    color: Colors.black.withValues(alpha: 0.4),
-                                    child: const Center(
-                                      child: Text(
-                                        '👑',
-                                        style: TextStyle(fontSize: 26),
-                                      ),
-                                    ),
-                                  ),
-                              ],
+                              ),
                             ),
-                          ),
+                          ],
                         ),
                       ],
                     ),
-                  ],
+                  ),
                 ),
               ),
-            ),
-          ),
-        );
-      },
+            );
+          },
+        ),
+      ],
     );
   }
 }
