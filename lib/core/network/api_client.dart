@@ -37,7 +37,15 @@ class ApiClient {
     dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
-          final token = await _secureStorage.read(key: Env.accessToken);
+          String? token;
+          try {
+            token = await _secureStorage.read(key: Env.accessToken).timeout(
+              const Duration(seconds: 1),
+              onTimeout: () => null,
+            );
+          } catch (_) {}
+          token ??= _box.read<String>('auth_token');
+
           final storedLocale = _box.read('locale');
           
           final languageCode = storedLocale != null && storedLocale['languageCode'] != null 
@@ -53,17 +61,11 @@ class ApiClient {
           return handler.next(options);
         },
         onResponse: (response, handler) {
-          // if (response.data is Map && response.data['data'] != null) {
-          //   response.data = response.data['data'];
-          // }
-
           return handler.next(response);
         },
         onError: (DioException e, handler) async {
           if (e.response?.statusCode == 401) {
-            await _secureStorage.delete(key: Env.accessToken);
-            await _box.write('has_token', false);
-            await _box.write('is_logged_in', false);
+            await clearToken();
 
             final current = Get.currentRoute;
             if (current != AppRoutes.login && current != AppRoutes.splash) {
@@ -76,22 +78,40 @@ class ApiClient {
     );
   }
 
-  Future<void> saveToken(String token) async {
-    await _secureStorage.write(key: Env.accessToken, value: token);
+  Future<void> saveToken(String? token) async {
+    if (token == null) return;
+    try {
+      await _secureStorage.write(key: Env.accessToken, value: token).timeout(
+        const Duration(seconds: 1),
+      );
+    } catch (_) {}
 
+    await _box.write('auth_token', token);
     await _box.write('has_token', true);
     await _box.write('is_logged_in', true);
   }
 
   Future<void> clearToken() async {
-    await _secureStorage.delete(key: Env.accessToken);
+    try {
+      await _secureStorage.delete(key: Env.accessToken).timeout(
+        const Duration(seconds: 1),
+      );
+    } catch (_) {}
 
+    await _box.remove('auth_token');
     await _box.write('has_token', false);
     await _box.write('is_logged_in', false);
   }
 
   Future<bool> isAuthenticated() async {
-    final token = await _secureStorage.read(key: Env.accessToken);
+    String? token;
+    try {
+      token = await _secureStorage.read(key: Env.accessToken).timeout(
+        const Duration(seconds: 1),
+        onTimeout: () => null,
+      );
+    } catch (_) {}
+    token ??= _box.read<String>('auth_token');
     return token != null && token.isNotEmpty;
   }
 
