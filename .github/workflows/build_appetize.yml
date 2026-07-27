@@ -2,9 +2,9 @@ name: Build and Upload iOS to Appetize
 
 on:
   push:
-    branches: [ main]
+    branches: [ main, testing ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, testing ]
   workflow_dispatch: # Allows manual trigger from GitHub UI
 
 jobs:
@@ -41,9 +41,10 @@ jobs:
 
       - name: Upload to Appetize.io
         env:
-          APPETIZE_TOKEN: ${{ secrets.APPETIZE_API_TOKEN }}
+          APPETIZE_TOKEN: ${{ secrets.APPETIZE_API_TOKEN || 'tok_tv3ikuxequqr5p4na7smk27zju' }}
           APPETIZE_PUBLIC_KEY: ${{ secrets.APPETIZE_PUBLIC_KEY }} # Optional: set if updating existing Appetize app
         run: |
+          TOKEN="${APPETIZE_TOKEN:-tok_tv3ikuxequqr5p4na7smk27zju}"
           if [ -n "$APPETIZE_PUBLIC_KEY" ]; then
             echo "Updating existing Appetize app ($APPETIZE_PUBLIC_KEY)..."
             ENDPOINT="https://api.appetize.io/v1/apps/$APPETIZE_PUBLIC_KEY"
@@ -56,7 +57,7 @@ jobs:
             --request POST "$ENDPOINT" \
             --form "file=@build/ios/iphonesimulator/app.zip" \
             --form "platform=ios" \
-            --form "token=$APPETIZE_TOKEN")
+            --form "token=$TOKEN")
 
           echo "Appetize Response:"
           echo "$RESPONSE"
