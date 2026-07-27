@@ -1,0 +1,40 @@
+stages:
+  - build
+
+build_appetize_ios:
+  stage: build
+  tags:
+    - saas-macos-medium-m1  # Requires a macOS runner on GitLab
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "master" || $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_PIPELINE_SOURCE == "web" # Manual trigger via web UI
+
+  before_script:
+    - git clone https://github.com/flutter/flutter.git -b stable $HOME/flutter
+    - export PATH="$PATH:$HOME/flutter/bin"
+    - flutter --version
+    - flutter pub get
+
+  script:
+    - flutter build ios --simulator --no-codesign
+    - cd build/ios/iphonesimulator
+    - zip -r app.zip Runner.app
+    - |
+      if [ -n "$APPETIZE_PUBLIC_KEY" ]; then
+        echo "Updating existing Appetize app ($APPETIZE_PUBLIC_KEY)..."
+        ENDPOINT="https://api.appetize.io/v1/apps/$APPETIZE_PUBLIC_KEY"
+      else
+        echo "Creating new Appetize app entry..."
+        ENDPOINT="https://api.appetize.io/v1/apps"
+      fi
+
+      curl --silent --show-error --location \
+        --request POST "$ENDPOINT" \
+        --form "file=@app.zip" \
+        --form "platform=ios" \
+        --form "token=$APPETIZE_TOKEN"
+
+  artifacts:
+    paths:
+      - build/ios/iphonesimulator/app.zip
+    expire_in: 1 week

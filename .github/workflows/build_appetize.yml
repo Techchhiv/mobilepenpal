@@ -1,0 +1,62 @@
+name: Build and Upload iOS to Appetize
+
+on:
+  push:
+    branches: [ testing ]
+  pull_request:
+    branches: [ testing ]
+  workflow_dispatch:
+
+jobs:
+  build-ios-appetize:
+    name: Build & Upload to Appetize
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build iOS Simulator App
+        run: flutter build ios --simulator --no-codesign
+
+      - name: Zip Simulator Build (.app)
+        run: |
+          cd build/ios/iphonesimulator
+          zip -r app.zip Runner.app
+
+      - name: Upload to Appetize.io
+        env:
+          APPETIZE_TOKEN: ${{ secrets.APPETIZE_API_TOKEN }}
+          APPETIZE_PUBLIC_KEY: ${{ secrets.APPETIZE_PUBLIC_KEY }} # Optional: specify if updating an existing Appetize app
+        run: |
+          if [ -n "$APPETIZE_PUBLIC_KEY" ]; then
+            echo "Updating existing Appetize app ($APPETIZE_PUBLIC_KEY)..."
+            ENDPOINT="https://api.appetize.io/v1/apps/$APPETIZE_PUBLIC_KEY"
+          else
+            echo "Creating new Appetize app entry..."
+            ENDPOINT="https://api.appetize.io/v1/apps"
+          fi
+
+          RESPONSE=$(curl --silent --show-error --location \
+            --request POST "$ENDPOINT" \
+            --form "file=@build/ios/iphonesimulator/app.zip" \
+            --form "platform=ios" \
+            --form "token=$APPETIZE_TOKEN")
+
+          echo "Appetize Response:"
+          echo "$RESPONSE"
