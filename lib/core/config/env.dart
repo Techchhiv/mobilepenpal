@@ -1,9 +1,8 @@
-
 class Env {
   static const String apiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    // defaultValue: 'https://api.dev.khmerpenpal.com/api/mobile',
-    defaultValue: 'http://192.168.0.157:8000/api/mobile',
+    defaultValue: 'https://api.dev.khmerpenpal.com/api/mobile',
+    // defaultValue: 'http://192.168.0.157:8000/api/mobile',
   );
 
   static const String aiApiBaseUrl = String.fromEnvironment(
@@ -13,8 +12,8 @@ class Env {
 
   static const String backendUrl = String.fromEnvironment(
     'BACKEND_URL',
-    // defaultValue: 'https://api.dev.khmerpenpal.com',
-    defaultValue: 'http://192.168.0.157:8000',
+    defaultValue: 'https://api.dev.khmerpenpal.com',
+    // defaultValue: 'http://192.168.0.157:8000',
   );
 
   static const String environment = String.fromEnvironment(
@@ -25,7 +24,6 @@ class Env {
   static bool get isDebug => environment == 'development';
 
   static const String apiVersion = 'v1';
-
 
   static const String accessToken = 'student_token';
 }
