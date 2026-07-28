@@ -24,12 +24,8 @@ class HomeController extends GetxController {
   final HomeService _homeService = HomeService();
   final _box = GetStorage();
   final _secure = const FlutterSecureStorage(
-    aOptions: AndroidOptions(
-      encryptedSharedPreferences: true,
-    ),
-    iOptions: IOSOptions(
-      accessibility: KeychainAccessibility.first_unlock,
-    ),
+    aOptions: AndroidOptions(encryptedSharedPreferences: true),
+    iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock),
   );
 
   var isLoading = false.obs;
@@ -62,21 +58,25 @@ class HomeController extends GetxController {
 
   // Feature lock settings (dynamic from backend)
   var featureLocksEnabled = true.obs;
-  var miniGameFreeDailyLimit = 1.obs;
+  var miniGameFreeDailyLimit = 3.obs;
   var aiWritingFreeCharLimit = 4.obs;
-  var learningFreeCharLimit = 'ញ'.obs;
+  var learningFreeStageLimit = 10.obs;
 
   String get avatarUrl => student.value?.avatar ?? '';
 
   bool get isAdventureUnlocked => isConsonantsWorldCompleted;
-  
+
   bool _isWorldCompleted(bool Function(StudentProgress) testFunc) {
-    return studentProgress.where(testFunc).any((progress) => progress.isCompleted || progress.completed);
+    return studentProgress
+        .where(testFunc)
+        .any((progress) => progress.isCompleted || progress.completed);
   }
 
   bool get isConsonantsWorldCompleted => _isWorldCompleted(_isConsonantsWorld);
-  bool get isDependentVowelsWorldCompleted => _isWorldCompleted(_isDependentVowelsWorld);
-  bool get isIndependentVowelsWorldCompleted => _isWorldCompleted(_isIndependentVowelsWorld);
+  bool get isDependentVowelsWorldCompleted =>
+      _isWorldCompleted(_isDependentVowelsWorld);
+  bool get isIndependentVowelsWorldCompleted =>
+      _isWorldCompleted(_isIndependentVowelsWorld);
   bool get isDigitsWorldCompleted => _isWorldCompleted(_isDigitsWorld);
 
   ShopAvatar? get currentShopAvatar {
@@ -126,7 +126,9 @@ class HomeController extends GetxController {
     try {
       final service = MiniGameService();
       final response = await service.getQuestionTemplates();
-      if (response.code == 200 && response.data != null && response.data!.isNotEmpty) {
+      if (response.code == 200 &&
+          response.data != null &&
+          response.data!.isNotEmpty) {
         final templatesJson = response.data!.map((t) => t.toJson()).toList();
         await _box.write('cached_question_templates', templatesJson);
         dev.log(
@@ -494,8 +496,10 @@ class HomeController extends GetxController {
             : int.tryParse(s['discount']?.toString() ?? '') ?? 50;
         subscriptionBillingCycle.value =
             s['billing_cycle']?.toString() ?? 'month';
-        contactPhone.value = s['contact_phone']?.toString() ?? '+855 935 248 60';
-        contactEmail.value = s['contact_email']?.toString() ?? 'contact@khmerpenpal.com';
+        contactPhone.value =
+            s['contact_phone']?.toString() ?? '+855 935 248 60';
+        contactEmail.value =
+            s['contact_email']?.toString() ?? 'contact@khmerpenpal.com';
       }
     } catch (_) {
       // Keep defaults on error
@@ -510,12 +514,16 @@ class HomeController extends GetxController {
         featureLocksEnabled.value = s['enabled'] == true;
         miniGameFreeDailyLimit.value = (s['mini_game_free_daily_limit'] is num)
             ? (s['mini_game_free_daily_limit'] as num).toInt()
-            : int.tryParse(s['mini_game_free_daily_limit']?.toString() ?? '') ?? 1;
+            : int.tryParse(s['mini_game_free_daily_limit']?.toString() ?? '') ??
+                  1;
         aiWritingFreeCharLimit.value = (s['ai_writing_free_char_limit'] is num)
             ? (s['ai_writing_free_char_limit'] as num).toInt()
-            : int.tryParse(s['ai_writing_free_char_limit']?.toString() ?? '') ?? 4;
-        learningFreeCharLimit.value =
-            s['learning_free_char_limit']?.toString() ?? 'ញ';
+            : int.tryParse(s['ai_writing_free_char_limit']?.toString() ?? '') ??
+                  4;
+        learningFreeStageLimit.value = (s['learning_free_stage_limit'] is num)
+            ? (s['learning_free_stage_limit'] as num).toInt()
+            : int.tryParse(s['learning_free_stage_limit']?.toString() ?? '') ??
+                  10;
       }
     } catch (_) {
       // Keep defaults on error
@@ -534,7 +542,9 @@ class HomeController extends GetxController {
   bool _isConsonantsWorld(StudentProgress progress) {
     final name = progress.nameEn.trim().toLowerCase();
     final desc = progress.descriptionEn.trim().toLowerCase();
-    return name == 'consonants' || name.contains('consonant') || desc.contains('consonant');
+    return name == 'consonants' ||
+        name.contains('consonant') ||
+        desc.contains('consonant');
   }
 
   bool _isDependentVowelsWorld(StudentProgress progress) {
@@ -546,12 +556,15 @@ class HomeController extends GetxController {
   bool _isIndependentVowelsWorld(StudentProgress progress) {
     final name = progress.nameEn.trim().toLowerCase();
     final desc = progress.descriptionEn.trim().toLowerCase();
-    return name.contains('independent vowel') || desc.contains('independent vowel');
+    return name.contains('independent vowel') ||
+        desc.contains('independent vowel');
   }
 
   bool _isDigitsWorld(StudentProgress progress) {
     final name = progress.nameEn.trim().toLowerCase();
     final desc = progress.descriptionEn.trim().toLowerCase();
-    return name.contains('digit') || name.contains('number') || desc.contains('digit');
+    return name.contains('digit') ||
+        name.contains('number') ||
+        desc.contains('digit');
   }
 }
