@@ -41,12 +41,13 @@ class StageAudioController extends GetxController {
 
   String assetPathForCharacter({required String type, required String ch}) {
     String t = type.trim().toLowerCase();
-    if (t == 'consonant') t = 'consonants';
-    if (t == 'independent_vowel') t = 'independent_vowels';
-    if (t == 'dependent_vowel') t = 'dependent_vowels';
-    if (t == 'digit') t = 'digits';
+    if (t.contains('consonant')) t = 'consonants';
+    if (t.contains('independent_vowel')) t = 'independent_vowels';
+    if (t.contains('dependent_vowel')) t = 'dependent_vowels';
+    if (t.contains('digit')) t = 'digits';
+    if (t.contains('diacritic')) t = 'diacritics';
 
-    final c = ch.trim();
+    final c = ch.replaceAll('◌', '').replaceAll('\u25cc', '').trim();
     return 'audios/$t/$c.mp3';
   }
 

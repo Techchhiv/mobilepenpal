@@ -98,6 +98,7 @@ flutter:
     - assets/images/avatars/
     - assets/images/dep_vowels/
     - assets/images/indep_vowels/
+    - assets/images/diacritics/
     - assets/images/fruits/
     - assets/images/minigames/
     - assets/images/levels/
@@ -110,6 +111,7 @@ flutter:
     - assets/audios/digits/
     - assets/audios/independent_vowels/
     - assets/audios/dependent_vowels/
+    - assets/audios/diacritics/
     - assets/audios/sfx/
 
     - assets/strokes/strokes.json

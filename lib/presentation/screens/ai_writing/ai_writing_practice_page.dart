@@ -627,15 +627,33 @@ class _AiWritingPracticePageState extends State<AiWritingPracticePage>
       // Independent Vowels
       'ឥ': 'assets/images/indep_vowels/ឥ_ឥដ្ឋ.png',
       'ឦ': 'assets/images/indep_vowels/ឦ_ឦសាន.png',
+      'ឧ': 'assets/images/indep_vowels/ឧ_ឧសភា.png',
+      'ឩ': 'assets/images/indep_vowels/ឩ_ឩដ៏.png',
       'ឪ': 'assets/images/indep_vowels/ឪ_ឪឡឹក.png',
       'ឫ': 'assets/images/indep_vowels/ឫ_ឫស.png',
       'ឬ': 'assets/images/indep_vowels/ឬ_ឬស្សី.png',
       'ឭ': 'assets/images/indep_vowels/ឭ_រំឭក.png',
       'ឮ': 'assets/images/indep_vowels/ឮ_ឮ.png',
+      'ឯ': 'assets/images/indep_vowels/ឯ_ឯកសារ.png',
       'ឰ': 'assets/images/indep_vowels/ឰ_ឰសូរ.png',
       'ឱ': 'assets/images/indep_vowels/ឱ_ឱប.png',
+      'ឲ': 'assets/images/indep_vowels/ឲ_ឲ្យ.png',
+      'ឳ': 'assets/images/indep_vowels/ឳ_ឳសថ.png',
+
+      // Diacritics
+      '័': 'assets/images/diacritics/័_ខិត្តប័ណ្ណ.png',
+      '៊': 'assets/images/diacritics/៊_ស៊ុត.png',
+      '៉': 'assets/images/diacritics/៉_ប៉ោម.png',
+      '៏': 'assets/images/diacritics/៏_ហ៏.png',
+      '់': 'assets/images/diacritics/់_កាត់.png',
+      '៌': 'assets/images/diacritics/៌_ពណ៌.png',
+      '៎': 'assets/images/diacritics/៎_ច៎ា.png',
+      'ៈ': 'assets/images/diacritics/ៈ_ធុរៈ.png',
+      'ៗ': 'assets/images/diacritics/ៗ_យឺតៗ.png',
+      '៑': 'assets/images/diacritics/៑_ឈប់.png',
     };
-    return consonantImages[char.trim()];
+    final cleanChar = char.replaceAll('◌', '').replaceAll('\u25cc', '').trim();
+    return consonantImages[cleanChar];
   }
 
   // ─────────────────────────────────────────────────────────────────────────

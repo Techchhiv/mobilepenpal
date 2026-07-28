@@ -358,20 +358,24 @@ class StageAnimationController extends GetxController
     }
 
     String folder = type;
-    if (folder == 'independent_vowels' || folder == 'independent_vowel') {
+    if (folder.contains('independent_vowel')) {
       folder = 'indep_vowels';
-    } else if (folder == 'dependent_vowels' || folder == 'dependent_vowel') {
+    } else if (folder.contains('dependent_vowel')) {
       folder = 'dep_vowels';
-    } else if (folder == 'consonant') {
+    } else if (folder.contains('consonant')) {
       folder = 'consonants';
+    } else if (folder.contains('diacritic')) {
+      folder = 'diacritics';
     }
+
+    final cleanCh = ch.replaceAll('◌', '').replaceAll('\u25cc', '').trim();
 
     await _ensureAssetManifestLoaded();
     final keys = _assetKeysCache ?? const <String>{};
 
-    final prefix = 'assets/images/$folder/${ch}_';
+    final prefix = 'assets/images/$folder/${cleanCh}_';
 
-    final matches = keys.where((k) {
+    var matches = keys.where((k) {
       try {
         final decodedKey = Uri.decodeFull(k);
         return decodedKey.startsWith(prefix) &&
@@ -380,6 +384,18 @@ class StageAnimationController extends GetxController
         return k.startsWith(prefix) && k.toLowerCase().endsWith('.png');
       }
     }).toList();
+
+    if (matches.isEmpty) {
+      matches = keys.where((k) {
+        try {
+          final decodedKey = Uri.decodeFull(k);
+          return decodedKey.contains('/${cleanCh}_') &&
+              decodedKey.toLowerCase().endsWith('.png');
+        } catch (_) {
+          return k.contains('/${cleanCh}_') && k.toLowerCase().endsWith('.png');
+        }
+      }).toList();
+    }
 
     if (matches.isEmpty) {
       illustrationAssetPath.value = '';
