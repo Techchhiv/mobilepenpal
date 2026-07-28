@@ -119,9 +119,8 @@ class WorldController extends Controller
     {
         $studentId = auth()->id();
         $attempts = $request->input('attempts', []);
-        $isAdventure = filter_var($request->input('is_adventure', false), FILTER_VALIDATE_BOOLEAN);
         $isDailyChallenge = filter_var($request->input('is_daily_challenge', false), FILTER_VALIDATE_BOOLEAN);
-        $isStagelessSession = $isAdventure || $isDailyChallenge;
+        $isStagelessSession = $isDailyChallenge;
 
         if (empty($attempts)) {
             return $this->returnError(__('messages.no_attempts_provided'), 400);

@@ -34,5 +34,15 @@ class SystemSettingController extends Controller
             'settings' => $setting->value,
         ]);
     }
+
+    public function showFeatureLocks(): JsonResponse
+    {
+        return $this->show('feature_locks');
+    }
+
+    public function updateFeatureLocks(UpdateSystemSettingRequest $request): JsonResponse
+    {
+        return $this->update($request, 'feature_locks');
+    }
 }
 

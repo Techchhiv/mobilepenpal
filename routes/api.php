@@ -92,6 +92,8 @@ Route::middleware('auth:api')->group(function () {
         Route::middleware(['permission:menu.subscription'])->group(function () {
             Route::get('/system-settings/{key}', [SystemSettingController::class, 'show']);
             Route::post('/system-settings/{key}', [SystemSettingController::class, 'update']);
+            Route::get('/feature-locks', [SystemSettingController::class, 'showFeatureLocks']);
+            Route::post('/feature-locks', [SystemSettingController::class, 'updateFeatureLocks']);
         });
 
         // Users

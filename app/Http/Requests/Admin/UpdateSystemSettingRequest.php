@@ -20,6 +20,13 @@ class UpdateSystemSettingRequest extends FormRequest
             $rules['value.contact_email'] = ['required', 'email'];
         }
 
+        if ($this->route('key') === 'feature_locks') {
+            $rules['value.enabled'] = ['required', 'boolean'];
+            $rules['value.mini_game_free_daily_limit'] = ['required', 'integer', 'min:0'];
+            $rules['value.ai_writing_free_char_limit'] = ['required', 'integer', 'min:1'];
+            $rules['value.learning_free_char_limit'] = ['required', 'string'];
+        }
+
         return $rules;
     }
 }

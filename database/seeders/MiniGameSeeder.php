@@ -4,12 +4,15 @@ namespace Database\Seeders;
 
 use App\Models\MiniGame;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Schema;
 
 class MiniGameSeeder extends Seeder
 {
     public function run(): void
     {
+        Schema::disableForeignKeyConstraints();
         MiniGame::truncate();
+        Schema::enableForeignKeyConstraints();
 
         // 1. Consonant Sprint
         MiniGame::updateOrCreate(

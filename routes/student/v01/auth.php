@@ -52,6 +52,8 @@ Route::prefix('minigames')->group(function () {
     Route::get('', [MiniGameController::class, 'index']);
     Route::post('', [MiniGameController::class, 'store']);
     Route::get('/question-templates', [QuestionTemplateController::class, 'index']);
+    Route::post('/record-play', [MiniGameController::class, 'recordPlay']);
+    Route::get('/daily-plays', [MiniGameController::class, 'dailyPlays']);
 
     Route::get('{miniGame}', [MiniGameController::class, 'show']);
     Route::put('{miniGame}', [MiniGameController::class, 'update']);

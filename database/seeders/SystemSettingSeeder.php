@@ -28,5 +28,19 @@ class SystemSettingSeeder extends Seeder
                 'updated_at' => now(),
             ]
         );
+
+        DB::table('system_settings')->updateOrInsert(
+            ['key' => 'feature_locks'],
+            [
+                'value' => json_encode([
+                    'enabled' => true,
+                    'mini_game_free_daily_limit' => 1,
+                    'ai_writing_free_char_limit' => 4,
+                    'learning_free_char_limit' => 'ញ',
+                ]),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
     }
 }

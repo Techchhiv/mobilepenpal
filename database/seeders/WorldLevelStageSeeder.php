@@ -135,7 +135,7 @@ class WorldLevelStageSeeder extends Seeder
                     'chunk' => 5,
                     'is_unlocked_by_default' => true,
                     'is_premium' => false,
-                    // 'premium_after_level' => 2,
+                    'premium_after_level' => 2,
                 ],
                 [
                     'key' => 'public_digits',
@@ -316,7 +316,8 @@ class WorldLevelStageSeeder extends Seeder
     {
         // Only wipe data on a fresh install (no student progress exists).
         // On production, skip cleanup so user progress stays intact.
-        if (Schema::hasTable('student_world_progress')
+        if (
+            Schema::hasTable('student_world_progress')
             && DB::table('student_world_progress')->count() > 0
         ) {
             return;
