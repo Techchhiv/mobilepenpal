@@ -36,4 +36,14 @@ class MiniGameService {
     );
     return result;
   }
+
+  Future<ApiResponse<Map<String, dynamic>>> recordPlay(int miniGameId) async {
+    final result = await _apiClient.request<Map<String, dynamic>>(
+      method: 'POST',
+      path: MiniGameEndpoints.recordPlay,
+      data: {'mini_game_id': miniGameId},
+      fromData: (data) => (data as Map<String, dynamic>?) ?? {},
+    );
+    return result;
+  }
 }

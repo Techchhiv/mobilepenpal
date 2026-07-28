@@ -11,6 +11,9 @@ import 'package:mobilepenpal/data/controllers/dashboard/navigation_controller.da
 import 'package:mobilepenpal/data/controllers/mini_game/dynamic_mini_game_controller.dart';
 import 'package:mobilepenpal/presentation/widgets/home/profile_header_card.dart';
 import 'package:mobilepenpal/presentation/widgets/loading_overly.dart';
+import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
+import 'package:mobilepenpal/presentation/widgets/home/subscribe_modal.dart';
+import 'package:mobilepenpal/data/services/mini_game_service.dart';
 
 class MiniGamePage extends StatefulWidget {
   const MiniGamePage({super.key});
@@ -31,6 +34,9 @@ class _MiniGamePageState extends State<MiniGamePage>
   @override
   void initState() {
     super.initState();
+    if (Get.isRegistered<HomeController>()) {
+      Get.find<HomeController>().fetchFeatureLockSettings();
+    }
     _pulseCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1200),
@@ -88,12 +94,27 @@ class _MiniGamePageState extends State<MiniGamePage>
                       const SizedBox(height: 12),
                       Obx(() {
                         final navController = Get.find<NavigationController>();
+                        final homeCtrl = Get.find<HomeController>();
                         final isTabActive =
                             navController.currentIndex.value == 1;
+
+                        final hasSub = homeCtrl.hasSubscription;
+                        final locksEnabled = homeCtrl.featureLocksEnabled.value;
+                        final limit = homeCtrl.miniGameFreeDailyLimit.value;
+
+                        String? subtitleText;
+                        if (!hasSub && locksEnabled) {
+                          final isKm = Get.locale?.languageCode == 'km';
+                          subtitleText = isKm
+                              ? 'លេងបាន $limit ដង/ថ្ងៃ ក្នុង១ហ្គេម'
+                              : 'Daily limit: $limit play${limit > 1 ? "s" : ""}/game';
+                        }
+
                         return ProfileHeaderCard(
                           heroTag: isTabActive
                               ? 'hero_profile_header'
                               : 'hero_profile_header_tab_1',
+                          subtitle: subtitleText,
                           gradientColors: const [
                             Color(0xFFFF9F43),
                             Color(0xFFFF793F),
@@ -931,9 +952,32 @@ class _MiniGamePageState extends State<MiniGamePage>
 
     if (selectedGamesList.isEmpty) return;
 
+    final homeCtrl = Get.find<HomeController>();
+    final hasSub = homeCtrl.hasSubscription;
+    final locksEnabled = homeCtrl.featureLocksEnabled.value;
+
+    if (!hasSub && locksEnabled) {
+      final service = MiniGameService();
+      for (final game in selectedGamesList) {
+        final res = await service.recordPlay(game.id);
+        if (res.code == 403) {
+          if (mounted) {
+            showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              backgroundColor: Colors.transparent,
+              builder: (_) => const SubscribeModal(),
+            );
+          }
+          return;
+        }
+      }
+    }
+
     final playedCount = _box.read<int>('dynamic_minigame_played_count') ?? 0;
     _box.write('dynamic_minigame_played_count', playedCount + 1);
 
+    if (!mounted) return;
     final overlayState = Overlay.of(context, rootOverlay: true);
     final overlayEntry = OverlayEntry(
       builder: (ctx) => const LoadingOverlay(

@@ -243,4 +243,17 @@ class HomeService {
     );
     return result;
   }
+
+  Future<ApiResponse<Map<String, dynamic>>> getFeatureLockSettings() async {
+    final result = await _apiClient.request<Map<String, dynamic>>(
+      method: 'GET',
+      path: HomeEndpoints.featureLockSettings,
+      fromData: (data) {
+        final settings = data['settings'];
+        if (settings is Map<String, dynamic>) return settings;
+        return <String, dynamic>{};
+      },
+    );
+    return result;
+  }
 }

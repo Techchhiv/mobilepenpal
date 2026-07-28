@@ -22,6 +22,7 @@ class HomeEndpoints {
 
   // System Settings
   static const String subscriptionSettings = '$_base/system-settings/subscription';
+  static const String featureLockSettings = '$_base/system-settings/feature_locks';
 
   static String getClassroomById(int id) => '$classrooms/$id';
 }

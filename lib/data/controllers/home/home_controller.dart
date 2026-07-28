@@ -58,7 +58,13 @@ class HomeController extends GetxController {
   var subscriptionDiscount = 50.obs;
   var subscriptionBillingCycle = 'month'.obs;
   var contactPhone = '+855 935 248 60'.obs;
-  var contactEmail = 'nginkimlong@gmail.com'.obs;
+  var contactEmail = 'contact@khmerpenpal.com'.obs;
+
+  // Feature lock settings (dynamic from backend)
+  var featureLocksEnabled = true.obs;
+  var miniGameFreeDailyLimit = 1.obs;
+  var aiWritingFreeCharLimit = 4.obs;
+  var learningFreeCharLimit = 'ញ'.obs;
 
   String get avatarUrl => student.value?.avatar ?? '';
 
@@ -112,6 +118,7 @@ class HomeController extends GetxController {
 
     fetchStudentProfile();
     fetchSubscriptionSettings();
+    fetchFeatureLockSettings();
     fetchQuestionTemplatesInBackground();
   }
 
@@ -488,7 +495,27 @@ class HomeController extends GetxController {
         subscriptionBillingCycle.value =
             s['billing_cycle']?.toString() ?? 'month';
         contactPhone.value = s['contact_phone']?.toString() ?? '+855 935 248 60';
-        contactEmail.value = s['contact_email']?.toString() ?? 'nginkimlong@gmail.com';
+        contactEmail.value = s['contact_email']?.toString() ?? 'contact@khmerpenpal.com';
+      }
+    } catch (_) {
+      // Keep defaults on error
+    }
+  }
+
+  Future<void> fetchFeatureLockSettings() async {
+    try {
+      final res = await _homeService.getFeatureLockSettings();
+      if (res.code == 200 && res.data != null) {
+        final s = res.data!;
+        featureLocksEnabled.value = s['enabled'] == true;
+        miniGameFreeDailyLimit.value = (s['mini_game_free_daily_limit'] is num)
+            ? (s['mini_game_free_daily_limit'] as num).toInt()
+            : int.tryParse(s['mini_game_free_daily_limit']?.toString() ?? '') ?? 1;
+        aiWritingFreeCharLimit.value = (s['ai_writing_free_char_limit'] is num)
+            ? (s['ai_writing_free_char_limit'] as num).toInt()
+            : int.tryParse(s['ai_writing_free_char_limit']?.toString() ?? '') ?? 4;
+        learningFreeCharLimit.value =
+            s['learning_free_char_limit']?.toString() ?? 'ញ';
       }
     } catch (_) {
       // Keep defaults on error

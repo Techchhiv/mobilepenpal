@@ -10,26 +10,34 @@ class SubscribeModal extends StatelessWidget {
     final homeController = Get.find<HomeController>();
     final isSchoolStudent = homeController.hasSchool;
 
-    return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      backgroundColor: Colors.white,
-      child: Stack(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: isSchoolStudent
-                ? _buildSchoolStudentContent()
-                : _buildPublicUserContent(),
+    return GestureDetector(
+      onTap: () => Get.back(),
+      behavior: HitTestBehavior.translucent,
+      child: GestureDetector(
+        onTap: () {},
+        child: Dialog(
+          insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          backgroundColor: Colors.white,
+          child: Stack(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: isSchoolStudent
+                    ? _buildSchoolStudentContent()
+                    : _buildPublicUserContent(),
+              ),
+              Positioned(
+                top: 12,
+                right: 12,
+                child: IconButton(
+                  icon: const Icon(Icons.close, color: Colors.black54),
+                  onPressed: () => Get.back(),
+                ),
+              ),
+            ],
           ),
-          Positioned(
-            top: 12,
-            right: 12,
-            child: IconButton(
-              icon: const Icon(Icons.close, color: Colors.black54),
-              onPressed: () => Get.back(),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

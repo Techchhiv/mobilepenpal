@@ -5,6 +5,7 @@ import 'package:mobilepenpal/data/controllers/ai_writing/ai_writing_controller.d
 import 'package:mobilepenpal/presentation/screens/ai_writing/ai_writing_practice_page.dart';
 import 'package:mobilepenpal/presentation/widgets/home/randomly_floating_asset.dart';
 import 'package:mobilepenpal/presentation/widgets/loading_overly.dart';
+import 'package:mobilepenpal/presentation/widgets/home/subscribe_modal.dart';
 
 enum _WritingCategory {
   consonants,
@@ -130,6 +131,9 @@ class _AiWritingPageState extends State<AiWritingPage>
   @override
   void initState() {
     super.initState();
+    if (Get.isRegistered<HomeController>()) {
+      Get.find<HomeController>().fetchFeatureLockSettings();
+    }
   }
 
   List<String> _getCurrentList() {
@@ -146,6 +150,22 @@ class _AiWritingPageState extends State<AiWritingPage>
   }
 
   void _toggle(String ch) {
+    final homeCtrl = Get.find<HomeController>();
+    final hasSub = homeCtrl.hasSubscription;
+    final locksEnabled = homeCtrl.featureLocksEnabled.value;
+    final freeLimit = homeCtrl.aiWritingFreeCharLimit.value;
+
+    if (!hasSub && locksEnabled) {
+      // Check if the character is beyond the free limit
+      final allChars = _getCurrentList();
+      final charIndex = allChars.indexOf(ch);
+      // Only consonants category has free limit; all other categories are locked
+      if (_currentCategory != _WritingCategory.consonants || charIndex >= freeLimit) {
+        _showSubscribeModal();
+        return;
+      }
+    }
+
     setState(() {
       if (_selected.contains(ch)) {
         _selected.remove(ch);
@@ -155,9 +175,30 @@ class _AiWritingPageState extends State<AiWritingPage>
     });
   }
 
+  void _showSubscribeModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const SubscribeModal(),
+    );
+  }
+
   void _selectAllCategory() {
+    final homeCtrl = Get.find<HomeController>();
+    final hasSub = homeCtrl.hasSubscription;
+    final locksEnabled = homeCtrl.featureLocksEnabled.value;
+    final freeLimit = homeCtrl.aiWritingFreeCharLimit.value;
+
     setState(() {
-      _selected.addAll(_getCurrentList());
+      if (!hasSub && locksEnabled) {
+        if (_currentCategory == _WritingCategory.consonants) {
+          _selected.addAll(_getCurrentList().take(freeLimit));
+        }
+        // Other categories are fully locked for free users — do nothing
+      } else {
+        _selected.addAll(_getCurrentList());
+      }
     });
   }
 
@@ -437,10 +478,20 @@ class _AiWritingPageState extends State<AiWritingPage>
                       itemBuilder: (context, i) {
                         final ch = _getCurrentList()[i];
                         final isSel = _selected.contains(ch);
+
+                        // Determine if this character is locked
+                        final homeCtrl = Get.find<HomeController>();
+                        final hasSub = homeCtrl.hasSubscription;
+                        final locksEnabled = homeCtrl.featureLocksEnabled.value;
+                        final freeLimit = homeCtrl.aiWritingFreeCharLimit.value;
+                        final isLocked = !hasSub && locksEnabled &&
+                            (_currentCategory != _WritingCategory.consonants || i >= freeLimit);
+
                         return _CharBlockTile(
                           character: ch,
                           isSelected: isSel,
                           activeColor: activeThemeColor,
+                          isLocked: isLocked,
                           onTap: () => _toggle(ch),
                         );
                       },
@@ -747,12 +798,14 @@ class _CharBlockTile extends StatelessWidget {
   final String character;
   final bool isSelected;
   final Color activeColor;
+  final bool isLocked;
   final VoidCallback onTap;
 
   const _CharBlockTile({
     required this.character,
     required this.isSelected,
     required this.activeColor,
+    this.isLocked = false,
     required this.onTap,
   });
 
@@ -791,10 +844,31 @@ class _CharBlockTile extends StatelessWidget {
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.w900,
-                color: isSelected ? Colors.white : const Color(0xFF1E293B),
+                color: isLocked
+                    ? const Color(0xFF1E293B).withValues(alpha: 0.3)
+                    : isSelected
+                        ? Colors.white
+                        : const Color(0xFF1E293B),
               ),
             ),
-            if (isSelected)
+            if (isLocked)
+              Positioned(
+                right: 4,
+                top: 4,
+                child: Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.shade700,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.lock_rounded,
+                    color: Colors.white,
+                    size: 10,
+                  ),
+                ),
+              ),
+            if (isSelected && !isLocked)
               Positioned(
                 right: 4,
                 top: 4,
