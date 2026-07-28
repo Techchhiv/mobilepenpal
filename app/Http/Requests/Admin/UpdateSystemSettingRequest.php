@@ -24,7 +24,7 @@ class UpdateSystemSettingRequest extends FormRequest
             $rules['value.enabled'] = ['required', 'boolean'];
             $rules['value.mini_game_free_daily_limit'] = ['required', 'integer', 'min:0'];
             $rules['value.ai_writing_free_char_limit'] = ['required', 'integer', 'min:1'];
-            $rules['value.learning_free_char_limit'] = ['required', 'string'];
+            $rules['value.learning_free_stage_limit'] = ['nullable', 'integer', 'min:0'];
         }
 
         return $rules;

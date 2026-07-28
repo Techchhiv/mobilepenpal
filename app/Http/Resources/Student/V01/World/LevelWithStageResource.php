@@ -9,9 +9,7 @@ class LevelWithStageResource extends JsonResource
     public function toArray($request)
     {
         $isPremium = (bool) $this->is_premium;
-        $hasSubscription = auth()->user()?->hasActiveSubscription() ?? false;
-        $worldPremium = (bool) ($this->world?->is_premium ?? false);
-        $isLockedBySub = ($isPremium || $worldPremium) && !$hasSubscription;
+        $isLockedBySub = (bool) $this->isLockedBySubscriptionForUser();
 
         return [
             'id' => (int) $this->id,

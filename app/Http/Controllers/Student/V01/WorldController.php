@@ -105,7 +105,7 @@ class WorldController extends Controller
         if (!$stage)
             return $this->returnError(__('messages.stage_not_found'), 404);
 
-        $isPremiumContent = ($stage->level?->is_premium || $stage->level?->world?->is_premium);
+        $isPremiumContent = (bool) $stage->level?->isLockedBySubscriptionForUser();
         if ($isPremiumContent && !auth()->user()->hasActiveSubscription()) {
             return $this->returnError(__('messages.subscription_required'), 403);
         }
@@ -146,7 +146,7 @@ class WorldController extends Controller
             }
 
             $stage = Stage::with('level.world')->find($stageId);
-            $isPremiumContent = ($stage->level?->is_premium || $stage->level?->world?->is_premium);
+            $isPremiumContent = (bool) $stage->level?->isLockedBySubscriptionForUser();
             if ($isPremiumContent && !auth()->user()->hasActiveSubscription()) {
                 return $this->returnError(__('messages.subscription_required'), 403);
             }

@@ -36,7 +36,7 @@ class SystemSettingSeeder extends Seeder
                     'enabled' => true,
                     'mini_game_free_daily_limit' => 1,
                     'ai_writing_free_char_limit' => 4,
-                    'learning_free_char_limit' => 'ញ',
+                    'learning_free_stage_limit' => 10,
                 ]),
                 'created_at' => now(),
                 'updated_at' => now(),
