@@ -12,6 +12,8 @@ class MiniGameModel {
   final String? coverImageUrl;
   final Map<String, dynamic>? config;
 
+  final int todayPlayCount;
+
   MiniGameModel({
     required this.id,
     required this.title,
@@ -23,7 +25,36 @@ class MiniGameModel {
     this.isActive = true,
     this.coverImageUrl,
     this.config,
+    this.todayPlayCount = 0,
   });
+
+  MiniGameModel copyWith({
+    int? id,
+    String? title,
+    String? titleKh,
+    String? description,
+    String? descriptionKh,
+    String? displayType,
+    String? inputType,
+    bool? isActive,
+    String? coverImageUrl,
+    Map<String, dynamic>? config,
+    int? todayPlayCount,
+  }) {
+    return MiniGameModel(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      titleKh: titleKh ?? this.titleKh,
+      description: description ?? this.description,
+      descriptionKh: descriptionKh ?? this.descriptionKh,
+      displayType: displayType ?? this.displayType,
+      inputType: inputType ?? this.inputType,
+      isActive: isActive ?? this.isActive,
+      coverImageUrl: coverImageUrl ?? this.coverImageUrl,
+      config: config ?? this.config,
+      todayPlayCount: todayPlayCount ?? this.todayPlayCount,
+    );
+  }
 
   /// Parse comma-separated display types into a list.
   List<String> get displayTypes =>
@@ -77,6 +108,7 @@ class MiniGameModel {
       config: json['config'] is Map<String, dynamic>
           ? json['config'] as Map<String, dynamic>
           : null,
+      todayPlayCount: (json['today_play_count'] as num?)?.toInt() ?? 0,
     );
   }
 }

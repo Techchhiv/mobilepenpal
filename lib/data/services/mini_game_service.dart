@@ -46,4 +46,13 @@ class MiniGameService {
     );
     return result;
   }
+
+  Future<ApiResponse<Map<String, dynamic>>> getDailyPlays() async {
+    final result = await _apiClient.request<Map<String, dynamic>>(
+      method: 'GET',
+      path: MiniGameEndpoints.dailyPlays,
+      fromData: (data) => (data as Map<String, dynamic>?) ?? {},
+    );
+    return result;
+  }
 }

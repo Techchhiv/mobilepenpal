@@ -49,6 +49,7 @@ class _MiniGamePageState extends State<MiniGamePage>
 
     if (Get.isRegistered<MiniGameHubController>()) {
       final hubCtrl = Get.find<MiniGameHubController>();
+      hubCtrl.refreshDailyPlays();
       if (hubCtrl.miniGames.isNotEmpty) {
         _selectedGames.addAll(hubCtrl.miniGames.map((e) => e.id));
       } else if (!hubCtrl.isLoading.value) {
@@ -105,9 +106,17 @@ class _MiniGamePageState extends State<MiniGamePage>
                         String? subtitleText;
                         if (!hasSub && locksEnabled) {
                           final isKm = Get.locale?.languageCode == 'km';
+                          final hubCtrl = Get.isRegistered<MiniGameHubController>()
+                              ? Get.find<MiniGameHubController>()
+                              : null;
+                          final remaining = hubCtrl != null
+                              ? hubCtrl.getRemainingPlaysForSelected(
+                                  _selectedGames.toList(), limit)
+                              : limit;
+
                           subtitleText = isKm
-                              ? 'លេងបាន $limit ដង/ថ្ងៃ ក្នុង១ហ្គេម'
-                              : 'Daily limit: $limit play${limit > 1 ? "s" : ""}/game';
+                              ? 'លេងបាននៅសល់ $remaining/$limit ដង/ថ្ងៃ'
+                              : 'Daily limit: $remaining/$limit remaining';
                         }
 
                         return ProfileHeaderCard(
@@ -226,61 +235,82 @@ class _MiniGamePageState extends State<MiniGamePage>
       return const SizedBox.shrink();
     }
     final hubCtrl = Get.find<MiniGameHubController>();
+    final homeCtrl = Get.find<HomeController>();
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        GestureDetector(
-          onTap: () {
-            if (!hubCtrl.isLoading.value) {
-              _showGameSelectionModal();
-            }
-          },
-          child: AnimatedBuilder(
-            animation: _pulseCtrl,
-            builder: (context, child) {
-              final scale = 1.0 + (_pulseCtrl.value * 0.08);
-              return Transform.scale(
-                scale: scale,
-                child: Container(
-                  width: 180,
-                  height: 180,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: const Color(0xFFFF9F43),
-                    border: Border.all(color: Colors.white, width: 6),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFFFF9F43).withValues(alpha: 0.6),
-                        blurRadius: 20,
-                        offset: const Offset(0, 10),
-                      ),
-                    ],
-                  ),
-                  child: Center(
-                    child: Obx(() {
-                      if (hubCtrl.isLoading.value) {
-                        return const SizedBox(
-                          width: 60,
-                          height: 60,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 6,
-                          ),
-                        );
-                      }
-                      return const Icon(
-                        Icons.play_arrow_rounded,
-                        color: Colors.white,
-                        size: 100,
-                      );
-                    }),
-                  ),
-                ),
-              );
+        Obx(() {
+          final hasSub = homeCtrl.hasSubscription;
+          final locksEnabled = homeCtrl.featureLocksEnabled.value;
+          final limit = homeCtrl.miniGameFreeDailyLimit.value;
+          final remaining = hubCtrl.getRemainingPlaysForSelected(
+            _selectedGames.toList(),
+            limit,
+          );
+          final isLimitReached = !hasSub && locksEnabled && remaining <= 0;
+          final btnColor = isLimitReached ? Colors.grey.shade400 : const Color(0xFFFF9F43);
+
+          return GestureDetector(
+            onTap: () {
+              if (isLimitReached) {
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                  builder: (_) => const SubscribeModal(),
+                );
+              } else if (!hubCtrl.isLoading.value) {
+                _showGameSelectionModal();
+              }
             },
-          ),
-        ),
+            child: AnimatedBuilder(
+              animation: _pulseCtrl,
+              builder: (context, child) {
+                final scale = isLimitReached ? 1.0 : (1.0 + (_pulseCtrl.value * 0.08));
+                return Transform.scale(
+                  scale: scale,
+                  child: Container(
+                    width: 180,
+                    height: 180,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: btnColor,
+                      border: Border.all(color: Colors.white, width: 6),
+                      boxShadow: [
+                        BoxShadow(
+                          color: isLimitReached
+                              ? Colors.black26
+                              : const Color(0xFFFF9F43).withValues(alpha: 0.6),
+                          blurRadius: isLimitReached ? 8 : 20,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
+                    ),
+                    child: Center(
+                      child: hubCtrl.isLoading.value
+                          ? const SizedBox(
+                              width: 60,
+                              height: 60,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 6,
+                              ),
+                            )
+                          : Icon(
+                              isLimitReached
+                                  ? Icons.lock_rounded
+                                  : Icons.play_arrow_rounded,
+                              color: Colors.white,
+                              size: isLimitReached ? 80 : 100,
+                            ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          );
+        }),
       ],
     );
   }
@@ -553,29 +583,56 @@ class _MiniGamePageState extends State<MiniGamePage>
               }),
               const SizedBox(height: 32),
 
-              Obx(
-                () => GestureDetector(
-                  onTap: _selectedGames.isEmpty
+              Obx(() {
+                final homeCtrl = Get.find<HomeController>();
+                final hasSub = homeCtrl.hasSubscription;
+                final locksEnabled = homeCtrl.featureLocksEnabled.value;
+                final limit = homeCtrl.miniGameFreeDailyLimit.value;
+                final remaining = hubCtrl.getRemainingPlaysForSelected(
+                  _selectedGames.toList(),
+                  limit,
+                );
+                final isLimitReached = !hasSub && locksEnabled && remaining <= 0;
+                final isDisabled = _selectedGames.isEmpty;
+
+                Color bgColor;
+                if (isDisabled) {
+                  bgColor = Colors.grey.shade300;
+                } else if (isLimitReached) {
+                  bgColor = Colors.grey.shade400;
+                } else {
+                  bgColor = const Color(0xFFFF9F43);
+                }
+
+                return GestureDetector(
+                  onTap: isDisabled
                       ? null
                       : () {
                           Navigator.pop(context);
-                          _startCustomRun();
+                          if (isLimitReached) {
+                            showModalBottomSheet(
+                              context: context,
+                              isScrollControlled: true,
+                              backgroundColor: Colors.transparent,
+                              builder: (_) => const SubscribeModal(),
+                            );
+                          } else {
+                            _startCustomRun();
+                          }
                         },
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     padding: const EdgeInsets.symmetric(vertical: 20),
                     decoration: BoxDecoration(
-                      color: _selectedGames.isEmpty
-                          ? Colors.grey.shade300
-                          : const Color(0xFFFF9F43),
+                      color: bgColor,
                       borderRadius: BorderRadius.circular(24),
                       boxShadow: [
                         BoxShadow(
-                          color: _selectedGames.isEmpty
+                          color: (isDisabled || isLimitReached)
                               ? Colors.transparent
                               : const Color(0xFFFF9F43).withValues(alpha: 0.4),
-                          blurRadius: _selectedGames.isEmpty ? 0.0 : 12,
-                          offset: _selectedGames.isEmpty
+                          blurRadius: (isDisabled || isLimitReached) ? 0.0 : 12,
+                          offset: (isDisabled || isLimitReached)
                               ? Offset.zero
                               : const Offset(0, 6),
                         ),
@@ -585,17 +642,17 @@ class _MiniGamePageState extends State<MiniGamePage>
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
-                          Icons.play_arrow_rounded,
-                          color: _selectedGames.isEmpty
-                              ? Colors.grey.shade500
-                              : Colors.white,
+                          isLimitReached
+                              ? Icons.lock_rounded
+                              : Icons.play_arrow_rounded,
+                          color: isDisabled ? Colors.grey.shade500 : Colors.white,
                           size: 28,
                         ),
                         const SizedBox(width: 12),
                         Text(
                           'start_playing'.tr,
                           style: TextStyle(
-                            color: _selectedGames.isEmpty
+                            color: isDisabled
                                 ? Colors.grey.shade500
                                 : Colors.white,
                             fontSize: 20,
@@ -608,8 +665,8 @@ class _MiniGamePageState extends State<MiniGamePage>
                       ],
                     ),
                   ),
-                ),
-              ),
+                );
+              }),
             ],
           ),
         );
@@ -958,6 +1015,7 @@ class _MiniGamePageState extends State<MiniGamePage>
 
     if (!hasSub && locksEnabled) {
       final service = MiniGameService();
+      final recordedGameIds = <int>[];
       for (final game in selectedGamesList) {
         final res = await service.recordPlay(game.id);
         if (res.code == 403) {
@@ -970,8 +1028,11 @@ class _MiniGamePageState extends State<MiniGamePage>
             );
           }
           return;
+        } else if (res.code == 200) {
+          recordedGameIds.add(game.id);
         }
       }
+      hubCtrl.recordPlayCounts(recordedGameIds);
     }
 
     final playedCount = _box.read<int>('dynamic_minigame_played_count') ?? 0;
@@ -1017,6 +1078,7 @@ class _MiniGamePageState extends State<MiniGamePage>
         overlayEntry.remove();
       }
     } finally {
+      hubCtrl.refreshDailyPlays();
       if (mounted) {
         setState(() {});
       }
