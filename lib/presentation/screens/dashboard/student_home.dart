@@ -209,12 +209,6 @@ class StudentHome extends StatelessWidget {
         'id': worldId.toString(),
       });
       Get.toNamed(route);
-    } else {
-      Get.snackbar(
-        'Error',
-        'Failed to load course'.tr,
-        snackPosition: SnackPosition.BOTTOM,
-      );
     }
   }
 

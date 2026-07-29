@@ -646,6 +646,16 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
     return 0.0;
   }
 
+  List<List<dynamic>> getPointsJson() {
+    final validStrokes = _rawStrokes.where((s) => s.length >= 2).toList();
+    return DrawingPointsUtil.getPointsJson(
+      rawStrokes: validStrokes,
+      scale: canvasSize / 340.0,
+    );
+  }
+
+  String get _deviceType => DrawingPointsUtil.getDeviceType();
+
   // ── Actions ────────────────────────────────────────────────────────────
   void clearBoard() {
     drawingController.clear();
@@ -688,15 +698,6 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
     onFinished();
   }
 
-  List<List<dynamic>> getPointsJson() {
-    return DrawingPointsUtil.getPointsJson(
-      rawStrokes: _rawStrokes,
-      scale: canvasSize / 340.0,
-    );
-  }
-
-  String get _deviceType => DrawingPointsUtil.getDeviceType();
-
   /// Sync earned coins locally (HomeController + ShopController) and submit to backend.
   void _submitSessionProgress() {
     final coins = earnedCoins.value;
@@ -725,15 +726,12 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
       }
     }
 
-    if (attempts.isEmpty) return;
-
-    // Submit to backend
     _worldService.submitExerciseBatch(
-      attempts.toList(),
+      attempts,
       coinsEarned: coins,
-      isDailyChallenge: true, // Stageless session
+      xpEarned: totalCorrect.value * 10,
     ).catchError((e) {
-      dev.log('Failed to submit writing progress: $e', name: 'AiWritingController');
+      dev.log('Failed to submit session progress: $e', name: 'AiWritingController');
       return ApiResponse<Map<String, dynamic>>(
         code: 500,
         message: 'Failed to submit progress: $e',
@@ -746,7 +744,7 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
   bool _isContinuingLastStroke = false;
   static const double _strokeMergeThreshold = 35.0; // logical pixels
 
-  // ── Pointer events coordinate capturing ───────────────────────────────
+  // ── Drawing Board Handlers ─────────────────────────────────────────────
   void onPointerDown(PointerDownEvent e) {
     stopGuide();
     guideCirclePx.value = null;
@@ -782,6 +780,14 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
 
   void onPointerMove(PointerMoveEvent e) {
     if (_currentStroke == null) return;
+    if (_currentStroke!.isNotEmpty) {
+      final lastPoint = _currentStroke!.last;
+      final dx = e.localPosition.dx - (lastPoint["x"] as num).toDouble();
+      final dy = e.localPosition.dy - (lastPoint["y"] as num).toDouble();
+      // Filter out duplicate or sub-pixel noise points closer than 1.5px
+      if (dx * dx + dy * dy < 2.25) return;
+    }
+
     final now = DateTime.now().millisecondsSinceEpoch;
     _currentStroke!.add({
       "x": e.localPosition.dx,
@@ -791,7 +797,8 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
   }
 
   void onPointerUp(PointerUpEvent e) {
-    if (_currentStroke != null && _currentStroke!.isNotEmpty) {
+    // Only accept strokes with at least 2 points (discarding 1-point tap specks)
+    if (_currentStroke != null && _currentStroke!.length >= 2) {
       if (!_isContinuingLastStroke) {
         _rawStrokes.add(List<Map<String, dynamic>>.from(_currentStroke!));
       }
@@ -839,8 +846,10 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
 
   Map<String, dynamic> _getXYStrokeWithTime(String modelType) {
     final s = canvasSize / 340.0;
+    final validStrokes = _rawStrokes.where((stroke) => stroke.length >= 2).toList();
+
     return {
-      "strokes": _rawStrokes
+      "strokes": validStrokes
           .map(
             (stroke) => {
               "points": stroke

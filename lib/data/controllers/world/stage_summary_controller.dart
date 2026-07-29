@@ -162,12 +162,6 @@ class StageSummaryController extends GetxController
 
       Get.offAllNamed(worldRoute);
     } catch (_) {
-      Get.snackbar(
-        'Notice',
-        'Could not refresh world yet'.tr,
-        snackPosition: SnackPosition.BOTTOM,
-      );
-    } finally {
       if (Get.isRegistered<StageSummaryController>()) {
         isContinuing.value = false;
       }
