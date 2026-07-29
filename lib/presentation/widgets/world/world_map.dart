@@ -430,12 +430,39 @@ class _LevelCircleState extends State<LevelCircle> {
       ((widget.level.completionPercentage) / 100.0).clamp(0.0, 1.0);
   bool get _isCompleted => _progress >= 1.0;
 
+  static const List<String> _levelThumbnailAssets = [
+    'assets/images/levels/ជ័យវរ្ម័នទី៧_jayavarman_vii.png',
+    'assets/images/levels/របាំអប្សារា_apsara_dance.png',
+    'assets/images/levels/ប្រាសាទភ្នំបាខែង_phnom_bakheng.png',
+    'assets/images/levels/ប្រាសាទបាយ័ន_bayon_temple.png',
+    'assets/images/levels/ចម្លាក់អប្សារា_apsara_carving.png',
+    'assets/images/levels/ល្ខោនស្បែកធំ_lakhaon_sbek_thom.png',
+    'assets/images/levels/ប្រាសាទអង្គរវត្ត_angkor_wat.png',
+  ];
+
   String _getThumbnailAsset(int orderIndex) {
-    final idx = ((orderIndex - 1) % 7) + 1;
-    if (idx == 2) {
-      return 'assets/images/levels/pen2.jpeg';
+    final idx = (orderIndex - 1) % _levelThumbnailAssets.length;
+    return _levelThumbnailAssets[idx];
+  }
+
+  String _getLandmarkName(int orderIndex) {
+    final idx = (orderIndex - 1) % _levelThumbnailAssets.length;
+    final path = _levelThumbnailAssets[idx];
+    final filename = path.split('/').last.replaceAll('.png', '');
+    final parts = filename.split('_');
+    final isKhmer = Get.locale?.languageCode == 'km';
+    if (isKhmer) {
+      return parts.first;
+    } else {
+      if (parts.length > 1) {
+        return parts.sublist(1).map((w) {
+          if (w.isEmpty) return '';
+          if (w.toLowerCase() == 'vii') return 'VII';
+          return w[0].toUpperCase() + w.substring(1).toLowerCase();
+        }).join(' ');
+      }
+      return parts.first;
     }
-    return 'assets/images/levels/pen$idx.jpg';
   }
 
   @override
@@ -552,7 +579,7 @@ class _LevelCircleState extends State<LevelCircle> {
                   duration: const Duration(milliseconds: 150),
                   curve: Curves.easeOutCubic,
                   child: SizedBox(
-                    width: 95,
+                    width: 105,
                     child: Stack(
                       clipBehavior: Clip.none,
                       alignment: Alignment.topCenter,
@@ -700,6 +727,36 @@ class _LevelCircleState extends State<LevelCircle> {
                                       ),
                                   ],
                                 ),
+                              ),
+                            ),
+
+                            const SizedBox(height: 3),
+
+                            // Landmark Label Pill (Bilingual)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.65),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.25),
+                                  width: 0.8,
+                                ),
+                              ),
+                              child: Text(
+                                _getLandmarkName(widget.level.orderIndex),
+                                style: const TextStyle(
+                                  fontFamily: 'Kantumruy Pro',
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.center,
                               ),
                             ),
                           ],
