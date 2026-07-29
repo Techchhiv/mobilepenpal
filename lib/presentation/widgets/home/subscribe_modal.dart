@@ -16,26 +16,29 @@ class SubscribeModal extends StatelessWidget {
       child: GestureDetector(
         onTap: () {},
         child: Dialog(
-          insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          insetPadding:
+              const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
           backgroundColor: Colors.white,
-          child: Stack(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: isSchoolStudent
-                    ? _buildSchoolStudentContent()
-                    : _buildPublicUserContent(),
-              ),
-              Positioned(
-                top: 12,
-                right: 12,
-                child: IconButton(
-                  icon: const Icon(Icons.close, color: Colors.black54),
-                  onPressed: () => Get.back(),
+          elevation: 8,
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 400),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(28),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.12),
+                  blurRadius: 24,
+                  spreadRadius: 2,
+                  offset: const Offset(0, 8),
                 ),
-              ),
-            ],
+              ],
+            ),
+            child: isSchoolStudent
+                ? _buildSchoolStudentContent()
+                : _buildPublicUserContent(),
           ),
         ),
       ),
@@ -45,85 +48,83 @@ class SubscribeModal extends StatelessWidget {
   /// Content shown to school-affiliated students.
   /// They need to contact their school admin to activate the subscription.
   Widget _buildSchoolStudentContent() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Text(
-          'school_subscription_title'.tr,
-          style: const TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.w900,
-            color: Colors.black87,
+    return Padding(
+      padding: const EdgeInsets.all(24.0),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // Close button row
+          Align(
+            alignment: Alignment.topRight,
+            child: _buildCloseButton(),
           ),
-        ),
 
-        const SizedBox(height: 24),
+          // Crown icon
+          _buildCrownIcon(),
+          const SizedBox(height: 20),
 
-        // School icon
-        Container(
-          width: 80,
-          height: 80,
-          decoration: BoxDecoration(
-            color: Colors.orange.withValues(alpha: 0.1),
-            shape: BoxShape.circle,
-          ),
-          child: const Icon(
-            Icons.school_rounded,
-            size: 40,
-            color: Colors.orange,
-          ),
-        ),
-
-        const SizedBox(height: 24),
-
-        // Message
-        Text(
-          'school_subscription_message'.tr,
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: Colors.black54,
-            height: 1.5,
-          ),
-        ),
-
-        const SizedBox(height: 24),
-
-        // Info box
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.orange.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: Colors.orange.withValues(alpha: 0.3),
-              width: 1,
+          Text(
+            'school_subscription_title'.tr,
+            style: const TextStyle(
+              fontFamily: 'Kantumruy Pro',
+              fontSize: 22,
+              fontWeight: FontWeight.w900,
+              color: Color(0xFF0F172A),
             ),
           ),
-          child: Row(
-            children: [
-              Icon(
-                Icons.info_outline_rounded,
-                color: Colors.orange.shade700,
-                size: 22,
+
+          const SizedBox(height: 14),
+
+          Text(
+            'school_subscription_message'.tr,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontFamily: 'Kantumruy Pro',
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: Color(0xFF475569),
+              height: 1.6,
+            ),
+          ),
+
+          const SizedBox(height: 24),
+
+          // Info box
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFFBEB),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: const Color(0xFFFDE68A),
+                width: 1,
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  'contact_school_admin'.tr,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.orange.shade800,
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.school_rounded,
+                  color: Color(0xFFD97706),
+                  size: 24,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'contact_school_admin'.tr,
+                    style: const TextStyle(
+                      fontFamily: 'Kantumruy Pro',
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFFD97706),
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -142,123 +143,314 @@ class SubscribeModal extends StatelessWidget {
       final discountedPrice = price * (1 - discount / 100);
       final hasDiscount = discount > 0;
 
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Text(
-            'subscription'.tr,
-            style: const TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w900,
-              color: Colors.black87,
-            ),
-          ),
-
-          const SizedBox(height: 24),
-
-          // Logo placeholder
-          Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              color: Colors.blue.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.workspace_premium_rounded,
-              size: 40,
-              color: Colors.blue,
-            ),
-          ),
-
-          const SizedBox(height: 20),
-
-          // Pricing
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.end,
+      return SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              if (hasDiscount) ...[
-                // Original price crossed out
-                Column(
+              // Close button
+              Align(
+                alignment: Alignment.topRight,
+                child: _buildCloseButton(),
+              ),
+
+              // ===== Header Section =====
+              _buildCrownIcon(),
+              const SizedBox(height: 16),
+
+              // Main Title Only (Subtitle removed as requested)
+              Text(
+                'unlock_unlimited_title'.tr,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontFamily: 'Kantumruy Pro',
+                  fontSize: 20,
+                  fontWeight: FontWeight.w900,
+                  color: Color(0xFF0F172A),
+                  height: 1.3,
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // ===== Feature Benefits =====
+              _buildFeatureItem(
+                icon: Icons.public_rounded,
+                iconColor: const Color(0xFF0D9488),
+                bgColor: const Color(0xFF14B8A6),
+                title: 'benefit_worlds_title'.tr,
+              ),
+              const SizedBox(height: 10),
+              _buildFeatureItem(
+                icon: Icons.draw_rounded,
+                iconColor: const Color(0xFF7C3AED),
+                bgColor: const Color(0xFF8B5CF6),
+                title: 'benefit_ai_title'.tr,
+              ),
+              const SizedBox(height: 10),
+              _buildFeatureItem(
+                icon: Icons.sports_esports_rounded,
+                iconColor: const Color(0xFFD97706),
+                bgColor: const Color(0xFFF59E0B),
+                title: 'benefit_minigames_title'.tr,
+              ),
+
+              const SizedBox(height: 20),
+
+              // ===== Pricing Card =====
+              Container(
+                width: double.infinity,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Color(0xFFEFF6FF),
+                      Color(0xFFDBEAFE),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: const Color(0xFFBFDBFE),
+                    width: 1.2,
+                  ),
+                ),
+                child: Column(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.red.shade100,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        "$discount% OFF",
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.red.shade700,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        if (hasDiscount) ...[
+                          // Discount badge + strikethrough price
+                          Column(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 3,
+                                ),
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    colors: [
+                                      Color(0xFFEF4444),
+                                      Color(0xFFDC2626),
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  "$discount% OFF",
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w900,
+                                    color: Colors.white,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                "\$${price.toStringAsFixed(1)}",
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF94A3B8),
+                                  decoration: TextDecoration.lineThrough,
+                                  decorationColor: Color(0xFF94A3B8),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(width: 12),
+                        ],
+
+                        // Main price
+                        Text(
+                          "\$${discountedPrice.toStringAsFixed(1)}",
+                          style: const TextStyle(
+                            fontFamily: 'Kantumruy Pro',
+                            fontSize: 32,
+                            fontWeight: FontWeight.w900,
+                            color: Color(0xFF1D4ED8),
+                          ),
                         ),
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      "\$${price.toStringAsFixed(1)}",
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.grey,
-                        decoration: TextDecoration.lineThrough,
-                      ),
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 5),
+                          child: Text(
+                            " / ${billingCycle.tr}",
+                            style: const TextStyle(
+                              fontFamily: 'Kantumruy Pro',
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF475569),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-                const SizedBox(width: 8),
-              ],
+              ),
 
-              // Discounted price (or full price if no discount)
+              const SizedBox(height: 18),
+
+              // ===== Contact Section =====
               Text(
-                "\$${discountedPrice.toStringAsFixed(1)} / ${billingCycle.tr}",
+                'subscribe_contact_us'.tr,
                 style: const TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w900,
-                  color: Colors.blue,
+                  fontFamily: 'Kantumruy Pro',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF64748B),
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              // Contact info
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: const Color(0xFFE2E8F0),
+                    width: 1,
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    _ContactRow(
+                      icon: Icons.phone_rounded,
+                      text: phone,
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 8),
+                      child: Divider(
+                        height: 1,
+                        color: Color(0xFFE2E8F0),
+                      ),
+                    ),
+                    _ContactRow(
+                      icon: Icons.email_rounded,
+                      text: email,
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
-
-          const SizedBox(height: 24),
-
-          // Contact Information section
-          Text(
-            'contact_information'.tr,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w800,
-              color: Colors.black87,
-            ),
-          ),
-
-          const SizedBox(height: 12),
-
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.grey.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Column(
-              children: [
-                _ContactRow(icon: Icons.phone, text: phone),
-                const SizedBox(height: 8),
-                _ContactRow(icon: Icons.email, text: email),
-              ],
-            ),
-          ),
-        ],
+        ),
       );
     });
+  }
+
+  Widget _buildCloseButton() {
+    return GestureDetector(
+      onTap: () => Get.back(),
+      child: Container(
+        width: 32,
+        height: 32,
+        decoration: BoxDecoration(
+          color: Colors.grey.shade100,
+          shape: BoxShape.circle,
+        ),
+        child: const Icon(
+          Icons.close_rounded,
+          color: Colors.black54,
+          size: 18,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCrownIcon() {
+    return Container(
+      width: 68,
+      height: 68,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFFFBBF24),
+            Color(0xFFF59E0B),
+            Color(0xFFD97706),
+          ],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFFBBF24).withValues(alpha: 0.4),
+            blurRadius: 18,
+            spreadRadius: 2,
+          ),
+        ],
+      ),
+      child: const Icon(
+        Icons.workspace_premium_rounded,
+        size: 34,
+        color: Colors.white,
+      ),
+    );
+  }
+
+  Widget _buildFeatureItem({
+    required IconData icon,
+    required Color iconColor,
+    required Color bgColor,
+    required String title,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+      decoration: BoxDecoration(
+        color: bgColor.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: bgColor.withValues(alpha: 0.25),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // Icon container
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: bgColor.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: iconColor, size: 20),
+          ),
+          const SizedBox(width: 12),
+          // Title
+          Expanded(
+            child: Text(
+              title,
+              style: const TextStyle(
+                fontFamily: 'Kantumruy Pro',
+                fontSize: 13.5,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF1E293B),
+              ),
+            ),
+          ),
+          // Checkmark
+          Icon(
+            Icons.check_circle_rounded,
+            color: iconColor,
+            size: 20,
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -272,15 +464,20 @@ class _ContactRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, size: 20, color: Colors.black54),
+        Icon(
+          icon,
+          size: 18,
+          color: const Color(0xFF64748B),
+        ),
         const SizedBox(width: 12),
         Expanded(
           child: Text(
             text,
             style: const TextStyle(
-              fontSize: 14,
-              color: Colors.black87,
-              fontWeight: FontWeight.w500,
+              fontFamily: 'Kantumruy Pro',
+              fontSize: 13,
+              color: Color(0xFF334155),
+              fontWeight: FontWeight.w600,
             ),
           ),
         ),

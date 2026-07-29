@@ -77,7 +77,8 @@ final Map<String, String> enUS = {
   'new_password_required': 'New password is required',
   'confirm_password_required': 'Please confirm your new password',
   'already_logged_in_title': 'Account Logged In Elsewhere',
-  'already_logged_in_message': 'This account is currently logged in on another device. Logging in here will log you out from other devices. Do you want to proceed?',
+  'already_logged_in_message':
+      'This account is currently logged in on another device. Logging in here will log you out from other devices. Do you want to proceed?',
 
   // ===== OTP Verfication =====
   'otp_verification': 'OTP Verification',
@@ -460,6 +461,13 @@ final Map<String, String> enUS = {
   'school_subscription_message':
       'This content requires a premium subscription. Please contact your school administrator to activate access for your account.',
   'contact_school_admin': 'Contact School Admin',
+  'unlock_unlimited_title': 'Subscribe to unlock more features',
+  'unlock_unlimited_subtitle':
+      'Get full access to all handwriting levels, AI feedback, and mini-games.',
+  'benefit_worlds_title': 'Unlock all lessons',
+  'benefit_ai_title': 'Unlock all handwriting with AI',
+  'benefit_minigames_title': 'No limit on mini games',
+  'subscribe_contact_us': 'Contact us to activate your subscription:',
 
   // ===== Dynamic Mini Game =====
   'highest_score': 'HIGHEST SCORE',

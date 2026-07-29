@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobilepenpal/core/theme/app_colors.dart';
+import 'package:mobilepenpal/core/utils/report_format.dart';
 import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
 import 'package:mobilepenpal/presentation/screens/dashboard/qr_scanner_page.dart';
 import 'package:mobilepenpal/presentation/widgets/home/parent_summary_page.dart';
+import 'package:mobilepenpal/presentation/widgets/home/subscribe_modal.dart';
 import 'package:mobilepenpal/presentation/widgets/input_modal.dart';
 import 'package:shimmer/shimmer.dart';
 
@@ -56,6 +58,7 @@ class ParentHome extends StatelessWidget {
                   ],
                 );
               }),
+              _buildSubscriptionSection(),
               ParentSummaryCard(homeController: homeController),
               const SizedBox(height: 24),
             ],
@@ -87,8 +90,7 @@ class ParentHome extends StatelessWidget {
                           ],
                         );
                       }),
-                      // _buildSubscriptionSection(),
-                      // const SizedBox(height: 12),
+                      _buildSubscriptionSection(),
                       ParentSummaryCard(homeController: homeController),
                       const SizedBox(height: 24),
                     ],
@@ -188,9 +190,11 @@ class ParentHome extends StatelessWidget {
     });
   }
 
-  /*
   Widget _buildSubscriptionSection() {
     return Obx(() {
+      final isFeatureLockEnabled = homeController.featureLocksEnabled.value;
+      if (!isFeatureLockEnabled) return const SizedBox.shrink();
+
       final student = homeController.student.value;
       if (student == null) return const SizedBox.shrink();
 
@@ -224,7 +228,7 @@ class ParentHome extends StatelessWidget {
               color: Colors.white,
             ),
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           Material(
             color: Colors.transparent,
             child: InkWell(
@@ -296,9 +300,9 @@ class ParentHome extends StatelessWidget {
                             Text(
                               'upgrade_for_more'.tr,
                               style: TextStyle(
-                                  fontSize: 13,
-                                  color: Colors.grey[600],
-                                  fontWeight: FontWeight.w500,
+                                fontSize: 13,
+                                color: Colors.grey[600],
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
                         ],
@@ -315,11 +319,11 @@ class ParentHome extends StatelessWidget {
               ),
             ),
           ),
+          const SizedBox(height: 16),
         ],
       );
     });
   }
-  */
 
   Widget _buildEmptyClassroomCard() {
     return Container(

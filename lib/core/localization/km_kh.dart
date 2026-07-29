@@ -77,7 +77,8 @@ final Map<String, String> kmKH = {
   'new_password_required': 'ត្រូវការលេខសម្ងាត់ថ្មី',
   'confirm_password_required': 'សូមបញ្ជាក់លេខសម្ងាត់ថ្មីរបស់អ្នក',
   'already_logged_in_title': 'គណនីកំពុងប្រើប្រាស់នៅឧបករណ៍ផ្សេង',
-  'already_logged_in_message': 'គណនីនេះកំពុងចូលប្រើប្រាស់នៅលើឧបករណ៍ផ្សេងទៀត។ ការចូលនៅទីនេះនឹងធ្វើឱ្យឧបករណ៍ផ្សេងទៀតចាកចេញពីគណនី។ តើអ្នកចង់បន្តដែរឬទេ?',
+  'already_logged_in_message':
+      'គណនីនេះកំពុងចូលប្រើប្រាស់នៅលើឧបករណ៍ផ្សេងទៀត។ ការចូលនៅទីនេះនឹងធ្វើឱ្យឧបករណ៍ផ្សេងទៀតចាកចេញពីគណនី។ តើអ្នកចង់បន្តដែរឬទេ?',
 
   // ===== OTP Verfication =====
   'otp_verification': 'ការផ្ទៀងផ្ទាត់ OTP',
@@ -455,6 +456,13 @@ final Map<String, String> kmKH = {
   'school_subscription_message':
       'មាតិកានេះត្រូវការការបើកប្រាក់ប្រីមៀម។ សូមទាក់ទងអ្នកគ្រប់គ្រងសាលារៀនរបស់អ្នកដើម្បីដំណើរការ។',
   'contact_school_admin': 'ទាក់ទងអ្នកគ្រប់គ្រង',
+  'unlock_unlimited_title': 'ធ្វើការជាវដើម្បីទទួលបានមុខងារបន្ថែម',
+  'unlock_unlimited_subtitle':
+      'ទទួលបានសិទ្ធិពេញលេញក្នុងការរៀនអក្សរខ្មែរ AI និងហ្គេមអប់រំ។',
+  'benefit_worlds_title': 'ដោះសោមេរៀនទាំងអស់',
+  'benefit_ai_title': 'ដោះសោការសរសេរដៃជាមួយ AI',
+  'benefit_minigames_title': 'លេងហ្គេមអប់រំគ្មានការកំណត់',
+  'subscribe_contact_us': 'ទាក់ទងមកយើងដើម្បីដំណើរការការជាវ:',
 
   // ===== Dynamic Mini Game =====
   'highest_score': 'ពិន្ទុខ្ពស់បំផុត',
@@ -581,7 +589,8 @@ final Map<String, String> kmKH = {
   'repetition': 'ការសរសេរ',
   'finish': 'រួចរាល់',
   'leave_practice': 'ចាកចេញ?',
-  'leave_practice_desc': 'ការរីកចម្រើនបច្ចុប្បន្នរបស់អ្នកនឹងមិនត្រូវបានរក្សាទុកទេ។',
+  'leave_practice_desc':
+      'ការរីកចម្រើនបច្ចុប្បន្នរបស់អ្នកនឹងមិនត្រូវបានរក្សាទុកទេ។',
   'leave': 'ចាកចេញ',
   'numbers': 'លេខ',
   'selected_count': 'បានជ្រើសរើស @count',
