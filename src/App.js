@@ -19,6 +19,10 @@ import ManagePaymentsPage from "./pages/admin/ManagePaymentsPage";
 import SchoolPayments from "./pages/admin/SchoolPayments";
 import SchoolSubscriptionsPage from "./pages/admin/Subscriptions/SchoolSubscriptionsPage";
 import UserSubscriptionsPage from "./pages/admin/Subscriptions/UserSubscriptionsPage";
+import AdminStudentList from "./pages/admin/Student/StudentList";
+import AdminStudentCreate from "./pages/admin/Student/StudentCreate";
+import AdminStudentEdit from "./pages/admin/Student/StudentEdit";
+import AdminStudentView from "./pages/admin/Student/StudentView";
 
 // ---------- School Pages ----------
 import SchoolSignInLayer from "./pages/school/page/SchoolSignin";
@@ -109,6 +113,24 @@ export default function App() {
           <Route path="/admin/schools" element={<ManageClientsPage />} />
         </Route>
 
+        {/* ---------- Admin Student Management ---------- */}
+        <Route
+          element={
+            <Gate
+              anyPerm={[
+                "student.view",
+                "student.create",
+                "student.update",
+                "student.delete",
+              ]}
+            />
+          }
+        >
+          <Route path="/admin/students" element={<AdminStudentList />} />
+          <Route path="/admin/students/create" element={<AdminStudentCreate />} />
+          <Route path="/admin/students/:id/edit" element={<AdminStudentEdit />} />
+          <Route path="/admin/students/:id" element={<AdminStudentView />} />
+        </Route>
 
 
         {/* ---------- Payments (Payment Manager only) ---------- */}

@@ -9,7 +9,14 @@ const SETTINGS_DEFAULTS = {
     discount: 50,
     billing_cycle: "month",
     contact_phone: "+855 935 248 60",
-    contact_email: "nginkimlong@gmail.com",
+    contact_email: "contact@khmerpenpal.com",
+};
+
+const FEATURE_LOCKS_DEFAULTS = {
+    enabled: true,
+    mini_game_free_daily_limit: 1,
+    ai_writing_free_char_limit: 4,
+    learning_free_stage_limit: 10,
 };
 
 export default function UserSubscriptionsPage() {
@@ -29,6 +36,12 @@ export default function UserSubscriptionsPage() {
     const [settingsLoading, setSettingsLoading] = useState(false);
     const [settingsSaving, setSettingsSaving] = useState(false);
     const [settings, setSettings] = useState({ ...SETTINGS_DEFAULTS });
+
+    // --- Feature Locks modal state ---
+    const [showFeatureLocks, setShowFeatureLocks] = useState(false);
+    const [featureLocksLoading, setFeatureLocksLoading] = useState(false);
+    const [featureLocksSaving, setFeatureLocksSaving] = useState(false);
+    const [featureLocks, setFeatureLocks] = useState({ ...FEATURE_LOCKS_DEFAULTS });
 
     const load = async () => {
         setLoading(true);
@@ -116,6 +129,39 @@ export default function UserSubscriptionsPage() {
         loadSettings();
     };
 
+    // --- Feature Locks helpers ---
+    const loadFeatureLocks = async () => {
+        setFeatureLocksLoading(true);
+        try {
+            const res = await API.get("admin/feature-locks");
+            const s = res.data?.data?.settings || {};
+            setFeatureLocks({ ...FEATURE_LOCKS_DEFAULTS, ...s });
+        } catch {
+            setFeatureLocks({ ...FEATURE_LOCKS_DEFAULTS });
+        } finally {
+            setFeatureLocksLoading(false);
+        }
+    };
+
+    const saveFeatureLocks = async (e) => {
+        e.preventDefault();
+        setFeatureLocksSaving(true);
+        try {
+            await API.post("admin/feature-locks", { value: featureLocks });
+            flash("Feature locks settings saved successfully");
+            setShowFeatureLocks(false);
+        } catch (e) {
+            flash(e?.response?.data?.message || "Failed to save feature locks settings", true);
+        } finally {
+            setFeatureLocksSaving(false);
+        }
+    };
+
+    const openFeatureLocks = () => {
+        setShowFeatureLocks(true);
+        loadFeatureLocks();
+    };
+
     const handleActivate = async (e) => {
         e.preventDefault();
         if (!modal) return;
@@ -165,6 +211,14 @@ export default function UserSubscriptionsPage() {
                         <div className="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
                             <h6 className="mb-0">All Public Users</h6>
                             <div className="d-flex align-items-center gap-2">
+                                <button
+                                    type="button"
+                                    className="btn btn-outline-warning btn-sm d-inline-flex align-items-center gap-1"
+                                    onClick={openFeatureLocks}
+                                >
+                                    <Icon icon="mdi:lock-cog" />
+                                    Feature Locks
+                                </button>
                                 <button
                                     type="button"
                                     className="btn btn-outline-primary btn-sm d-inline-flex align-items-center gap-1"
@@ -526,6 +580,154 @@ export default function UserSubscriptionsPage() {
                                             disabled={settingsSaving}
                                         >
                                             {settingsSaving ? (
+                                                <>
+                                                    <span className="spinner-border spinner-border-sm me-1" />
+                                                    Saving…
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Icon icon="mdi:content-save" className="me-1" />
+                                                    Save Settings
+                                                </>
+                                            )}
+                                        </button>
+                                    </div>
+                                </form>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* Feature Locks Modal */}
+            {showFeatureLocks && (
+                <div
+                    className="modal d-block"
+                    tabIndex={-1}
+                    style={{ background: "rgba(0,0,0,0.5)" }}
+                    onClick={(e) => {
+                        if (e.target === e.currentTarget) setShowFeatureLocks(false);
+                    }}
+                >
+                    <div className="modal-dialog modal-dialog-centered">
+                        <div className="modal-content">
+                            <div className="modal-header">
+                                <h5 className="modal-title d-flex align-items-center gap-2">
+                                    <Icon icon="mdi:lock-cog" className="text-warning fs-4" />
+                                    Feature Locks Settings
+                                </h5>
+                                <button
+                                    type="button"
+                                    className="btn-close"
+                                    onClick={() => setShowFeatureLocks(false)}
+                                />
+                            </div>
+                            {featureLocksLoading ? (
+                                <div className="text-center py-5">
+                                    <div className="spinner-border text-primary" role="status" />
+                                    <p className="mt-2 text-muted">Loading settings…</p>
+                                </div>
+                            ) : (
+                                <form onSubmit={saveFeatureLocks}>
+                                    <div className="modal-body row g-3">
+                                        <div className="col-12">
+                                            <div className="p-3 d-flex align-items-center justify-content-between alert alert-warning border rounded-3 mb-0 shadow-sm">
+                                                <div className="pe-3">
+                                                    <label className="form-check-label fw-bold d-block mb-1 cursor-pointer text-dark" htmlFor="locksEnabledSwitch">
+                                                        Enable Free Tier Feature Restrictions
+                                                    </label>
+                                                    <div className="form-text mt-0 text-muted" style={{ fontSize: "0.85rem" }}>
+                                                        When enabled, unsubscribed users are restricted based on limits below.
+                                                    </div>
+                                                </div>
+                                                <div className="form-switch switch-primary d-flex align-items-center m-0 p-0 flex-shrink-0">
+                                                    <input
+                                                        className="form-check-input m-0 cursor-pointer"
+                                                        type="checkbox"
+                                                        role="switch"
+                                                        id="locksEnabledSwitch"
+                                                        checked={featureLocks.enabled}
+                                                        onChange={(e) =>
+                                                            setFeatureLocks((s) => ({
+                                                                ...s,
+                                                                enabled: e.target.checked,
+                                                            }))
+                                                        }
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="col-12 col-sm-6">
+                                            <label className="form-label fw-semibold">Mini-Game Daily Play Limit</label>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                step="1"
+                                                className="form-control"
+                                                value={featureLocks.mini_game_free_daily_limit}
+                                                onChange={(e) =>
+                                                    setFeatureLocks((s) => ({
+                                                        ...s,
+                                                        mini_game_free_daily_limit: parseInt(e.target.value) || 0,
+                                                    }))
+                                                }
+                                                required
+                                            />
+                                            <div className="form-text">Max free plays allowed per mini-game daily</div>
+                                        </div>
+
+                                        <div className="col-12 col-sm-6">
+                                            <label className="form-label fw-semibold">AI Writing Character Limit</label>
+                                            <input
+                                                type="number"
+                                                min="1"
+                                                step="1"
+                                                className="form-control"
+                                                value={featureLocks.ai_writing_free_char_limit}
+                                                onChange={(e) =>
+                                                    setFeatureLocks((s) => ({
+                                                        ...s,
+                                                        ai_writing_free_char_limit: parseInt(e.target.value) || 1,
+                                                    }))
+                                                }
+                                                required
+                                            />
+                                            <div className="form-text">Free consonants allowed (e.g. 4 = ក, ខ, គ, ឃ)</div>
+                                        </div>
+
+                                        <div className="col-12">
+                                            <label className="form-label fw-semibold">My Learning Free Stage Limit</label>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                step="1"
+                                                className="form-control"
+                                                value={featureLocks.learning_free_stage_limit !== undefined ? featureLocks.learning_free_stage_limit : (parseInt(featureLocks.learning_free_char_limit) || 10)}
+                                                onChange={(e) =>
+                                                    setFeatureLocks((s) => ({
+                                                        ...s,
+                                                        learning_free_stage_limit: parseInt(e.target.value) || 0,
+                                                    }))
+                                                }
+                                                required
+                                            />
+                                            <div className="form-text">Total free stages allowed sequentially across all worlds (e.g. 10 or 40)</div>
+                                        </div>
+                                    </div>
+                                    <div className="modal-footer">
+                                        <button
+                                            type="button"
+                                            className="btn btn-light"
+                                            onClick={() => setShowFeatureLocks(false)}
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            className="btn btn-primary d-inline-flex align-items-center justify-content-center"
+                                            disabled={featureLocksSaving}
+                                        >
+                                            {featureLocksSaving ? (
                                                 <>
                                                     <span className="spinner-border spinner-border-sm me-1" />
                                                     Saving…

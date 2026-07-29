@@ -23,6 +23,7 @@ const MasterLayout = ({ children }) => {
   const showRoles = isSuperAdmin || hasPermission("roles.manage");
   const showPermissions = isSuperAdmin || hasPermission("permissions.manage");
   const showWorldManage = isSuperAdmin
+  const showStudents = isSuperAdmin || hasPermission("student.view");
 
   useEffect(() => {
     const p = location.pathname;
@@ -40,6 +41,8 @@ const MasterLayout = ({ children }) => {
       setOpenDropdownKey("world");
     } else if (p.startsWith("/admin/subscriptions")) {
       setOpenDropdownKey("subscriptions");
+    } else if (p.startsWith("/admin/students")) {
+      setOpenDropdownKey(null);
     } else {
       setOpenDropdownKey(null);
     }
@@ -100,6 +103,15 @@ const MasterLayout = ({ children }) => {
                 <NavLink to="/admin/schools">
                   <Icon icon="mdi:account-multiple" className="menu-icon" />
                   <span>Manage Clients</span>
+                </NavLink>
+              </li>
+            )}
+
+            {showStudents && (
+              <li>
+                <NavLink to="/admin/students">
+                  <Icon icon="mdi:account-school" className="menu-icon" />
+                  <span>Manage Students</span>
                 </NavLink>
               </li>
             )}
