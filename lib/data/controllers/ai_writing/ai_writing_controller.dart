@@ -7,6 +7,7 @@ import 'package:flutter_drawing_board/flutter_drawing_board.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:mobilepenpal/core/utils/drawing_points_util.dart';
+import 'package:mobilepenpal/core/utils/stroke_feedback_util.dart';
 import 'package:mobilepenpal/core/utils/stroke_transform_util.dart';
 import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
 import 'package:mobilepenpal/data/controllers/shop/shop_controller.dart';
@@ -60,7 +61,19 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
   List<Map<String, dynamic>>? _currentStroke;
 
   // ── Canvas size ────────────────────────────────────────────────────────
-  double canvasSize = 340.0;
+  double _canvasSize = 340.0;
+  double _lastCanvasSizeForTemplate = 0.0;
+  double get canvasSize => _canvasSize;
+  set canvasSize(double value) {
+    _canvasSize = value;
+    // Recompute canvas-sized template when canvas size changes significantly
+    if ((_canvasSize - _lastCanvasSizeForTemplate).abs() > 1) {
+      _refreshCanvasTemplate();
+    }
+  }
+
+  // ── Canvas-sized template strokes (for validation) ─────────────────────
+  List<List<Offset>> canvasTemplateStrokesPx = [];
 
   // ── Strokes database ───────────────────────────────────────────────────
   Map<String, dynamic>? _strokesDb;
@@ -208,6 +221,7 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
 
     if (entry == null) {
       _setGuideStrokes([], []);
+      _refreshCanvasTemplate();
       return;
     }
 
@@ -219,6 +233,7 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
 
     if (letterOut.isEmpty && strokesOut.isEmpty) {
       _setGuideStrokes([], []);
+      _refreshCanvasTemplate();
       return;
     }
 
@@ -237,6 +252,35 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
     final fittedStrokes = fitted.skip(letterOut.length).toList();
 
     _setGuideStrokes(fittedLetter, fittedStrokes);
+    _refreshCanvasTemplate();
+  }
+
+  // ── Compute template strokes scaled to the actual drawing canvas ───────
+  void _refreshCanvasTemplate() {
+    _lastCanvasSizeForTemplate = _canvasSize;
+    final items = _strokesDb?['items'] as Map<String, dynamic>?;
+    final entry = items?[currentChar.trim()] as Map<String, dynamic>?;
+
+    if (entry == null) {
+      canvasTemplateStrokesPx = [];
+      return;
+    }
+
+    final pathsPx = entry['paths_px'] as List<dynamic>? ?? [];
+    final strokesOut = StrokeTransformUtil.readSubpathsPx(pathsPx);
+    if (strokesOut.isEmpty) {
+      canvasTemplateStrokesPx = [];
+      return;
+    }
+
+    canvasTemplateStrokesPx = StrokeTransformUtil.autoFitGlyphPx(
+      strokesOut,
+      boardW: _canvasSize,
+      boardH: _canvasSize,
+      pad: 24,
+      minWidthFill: 0.72,
+      minHeightFill: 0.78,
+    );
   }
 
   void _setGuideStrokes(List<List<Offset>> letterPx, List<List<Offset>> strokesPx) {
@@ -464,14 +508,19 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
   }
 
   Future<void> predictNextStrokes() async {
-    if (_rawStrokes.isEmpty) {
+    final validStrokes = _filterValidStrokes();
+
+    if (validStrokes.isEmpty) {
       predictedSegments.clear();
-      _updateProgressFromPrediction(0.0);
+      drawingProgress.value = 0.0;
+      completedGuideStrokeCount.value = 0;
+      currentGuideStrokeFraction.value = 0.0;
+      _updateGuideCirclePosition();
       return;
     }
 
     try {
-      final userStrokes = _rawStrokes.map((stroke) {
+      final userStrokes = validStrokes.map((stroke) {
         return stroke.map((p) => Offset((p["x"] as num).toDouble(), (p["y"] as num).toDouble())).toList();
       }).toList();
 
@@ -482,7 +531,7 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
         canvasSize: canvasSize,
       );
 
-      // Calculate the unfiltered predicted remaining path length for guide progress
+      // Calculate the predicted remaining path length from ONNX model
       double fullPredictedLength = 0.0;
       for (final segment in segments) {
         for (int i = 1; i < segment.length; i++) {
@@ -498,75 +547,133 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
           pathLen += (firstSeg[i + 1] - firstSeg[i]).distance;
         }
 
-        // A threshold of 30.0 logical pixels is used to determine if the stroke is partial or complete.
-        // If it's less than 30.0, the current stroke is considered complete, so we show the next stroke.
         const double threshold = 30.0;
         if (pathLen < threshold) {
           if (segments.length > 1) {
-            // If the first segment is extremely short, discard it to avoid rendering a tiny dot/speck
             if (pathLen < 8.0) {
               filteredSegments = [segments[1]];
             } else {
               filteredSegments = [firstSeg, segments[1]];
             }
           } else {
-            // No next stroke, and the current stroke is basically finished (leftover < threshold).
-            // We treat the character as completely finished and show no further guides.
             filteredSegments = [];
           }
         } else {
-          // If the first segment is long enough, the user is still drawing it, so show only this stroke.
           filteredSegments = [firstSeg];
         }
       }
 
       predictedSegments.assignAll(filteredSegments);
-      _updateProgressFromPrediction(fullPredictedLength);
+      _updateProgressFromValidStrokesAndPrediction(validStrokes, fullPredictedLength);
     } catch (e) {
       dev.log("Next-stroke prediction failed: $e", name: "AiWritingController");
       predictedSegments.clear();
-      _updateProgressFromPrediction(0.0);
+      _updateProgressFromValidStrokesAndPrediction(validStrokes, 0.0);
     }
   }
 
-  // ── Progress calculation from AI ONNX model predictions ──────────────────
+  // ── Progress calculation combining Valid Strokes & AI Predictions ────────
 
-  void _updateProgressFromPrediction(double fullPredictedLength) {
-    if (_rawStrokes.isEmpty) {
+  /// Returns only user strokes that are genuinely on-target along character template paths.
+  /// Rejects random scribbles where lines wander into empty space or loop endlessly.
+  List<List<Map<String, dynamic>>> _filterValidStrokes() {
+    if (_rawStrokes.isEmpty || canvasTemplateStrokesPx.isEmpty) return [];
+
+    final tPoints = <Offset>[];
+    double maxTemplateStrokeLen = 0.0;
+    for (final stroke in canvasTemplateStrokesPx) {
+      tPoints.addAll(stroke);
+      double len = 0.0;
+      for (int i = 1; i < stroke.length; i++) {
+        len += (stroke[i] - stroke[i - 1]).distance;
+      }
+      if (len > maxTemplateStrokeLen) maxTemplateStrokeLen = len;
+    }
+    if (tPoints.isEmpty) return [];
+
+    final double allowedDist = _canvasSize * 0.12; // ~41px direct tolerance on 340px canvas
+    final double allowedDistSq = allowedDist * allowedDist;
+
+    final validStrokes = <List<Map<String, dynamic>>>[];
+
+    for (final stroke in _rawStrokes) {
+      if (stroke.length < 2) continue;
+
+      double strokeLen = 0.0;
+      int onTargetCount = 0;
+
+      for (int i = 0; i < stroke.length; i++) {
+        final p = stroke[i];
+        final ux = (p['x'] as num).toDouble();
+        final uy = (p['y'] as num).toDouble();
+
+        if (i > 0) {
+          final px = (stroke[i - 1]['x'] as num).toDouble();
+          final py = (stroke[i - 1]['y'] as num).toDouble();
+          strokeLen += Offset(ux - px, uy - py).distance;
+        }
+
+        for (final tp in tPoints) {
+          final dx = tp.dx - ux;
+          final dy = tp.dy - uy;
+          if (dx * dx + dy * dy <= allowedDistSq) {
+            onTargetCount++;
+            break;
+          }
+        }
+      }
+
+      final onTargetRatio = onTargetCount / stroke.length;
+      final bool isLengthOk = maxTemplateStrokeLen <= 0 || strokeLen <= maxTemplateStrokeLen * 2.5;
+
+      if (onTargetRatio >= 0.40 && isLengthOk) {
+        validStrokes.add(stroke);
+      }
+    }
+
+    return validStrokes;
+  }
+
+  void _updateProgressFromValidStrokesAndPrediction(
+    List<List<Map<String, dynamic>>> validStrokes,
+    double fullPredictedLength,
+  ) {
+    if (validStrokes.isEmpty || guideStrokesPx.isEmpty || _totalLenByStroke.isEmpty) {
       drawingProgress.value = 0.0;
-      _syncGuideToProgress();
+      completedGuideStrokeCount.value = 0;
+      currentGuideStrokeFraction.value = 0.0;
+      _updateGuideCirclePosition();
       return;
     }
 
-    // Calculate total drawn user length across all raw strokes
-    double userLength = 0.0;
-    for (final stroke in _rawStrokes) {
+    // Calculate drawn length across VALID user strokes
+    double validUserLength = 0.0;
+    for (final stroke in validStrokes) {
       for (int i = 1; i < stroke.length; i++) {
         final x1 = (stroke[i - 1]['x'] as num).toDouble();
         final y1 = (stroke[i - 1]['y'] as num).toDouble();
         final x2 = (stroke[i]['x'] as num).toDouble();
         final y2 = (stroke[i]['y'] as num).toDouble();
-        userLength += Offset(x2 - x1, y2 - y1).distance;
+        validUserLength += Offset(x2 - x1, y2 - y1).distance;
       }
     }
 
-    // Basic safeguards:
-    // 1. If drawn length is tiny (< 15px), progress is 0.
-    if (userLength < 15.0) {
+    if (validUserLength < 15.0) {
       drawingProgress.value = 0.0;
       _syncGuideToProgress();
       return;
     }
 
-    if (userLength + fullPredictedLength <= 0) {
-      drawingProgress.value = 0.0;
-    } else if (fullPredictedLength < 20.0) {
-      // The ONNX AI model predicts that the character is completely finished!
+    final totalGuideLen = _totalLenByStroke.fold(0.0, (a, b) => a + b);
+
+    // Safeguard: fullPredictedLength < 20 only marks complete if valid user length >= 50% of character
+    if (fullPredictedLength < 20.0 && validUserLength >= totalGuideLen * 0.50) {
       drawingProgress.value = 1.0;
-    } else {
-      // Calculate smooth progress ratio based on user length vs AI predicted remaining length
+    } else if (validUserLength + fullPredictedLength > 0) {
       drawingProgress.value =
-          (userLength / (userLength + fullPredictedLength)).clamp(0.0, 1.0);
+          (validUserLength / (validUserLength + fullPredictedLength)).clamp(0.0, 1.0);
+    } else {
+      drawingProgress.value = 0.0;
     }
 
     _syncGuideToProgress();
@@ -576,6 +683,7 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
     if (guideStrokesPx.isEmpty || _totalLenByStroke.isEmpty) {
       completedGuideStrokeCount.value = 0;
       currentGuideStrokeFraction.value = 0.0;
+      _updateGuideCirclePosition();
       return;
     }
 
@@ -583,6 +691,7 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
     if (totalGuideLen <= 0) {
       completedGuideStrokeCount.value = 0;
       currentGuideStrokeFraction.value = 0.0;
+      _updateGuideCirclePosition();
       return;
     }
 
@@ -605,11 +714,16 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
       }
     }
 
-    completedGuideStrokeCount.value =
-        completed.clamp(0, guideStrokesPx.length);
+    completedGuideStrokeCount.value = completed.clamp(0, guideStrokesPx.length);
     currentGuideStrokeFraction.value = fraction;
 
-    // Snap guide circle to progress position and restart animation
+    _updateGuideCirclePosition();
+  }
+
+  void _updateGuideCirclePosition() {
+    final completed = completedGuideStrokeCount.value;
+    final fraction = currentGuideStrokeFraction.value;
+
     if (completed < guideStrokesPx.length) {
       _betweenStrokeTimer?.cancel();
       guideController.stop();
@@ -636,6 +750,8 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
       guideCirclePx.value = null;
     }
   }
+
+
 
   double _guideStartFraction() {
     final idx = currentGuideStrokeIndex.value;
@@ -810,9 +926,8 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
     autoPredict.value = false;
     predictedSegments.clear();
 
-    if (alwaysUpdateGuideProgress || autoPredict.value) {
-      predictNextStrokes();
-    }
+    // Trigger background ONNX AI prediction & smooth guide sync
+    predictNextStrokes();
   }
 
   // ── AI check ───────────────────────────────────────────────────────────
@@ -901,6 +1016,61 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
       final modelType = getModelTypeForChar(currentChar);
       final evalService = DrawingEvaluationService();
 
+      // ── Pre-validation: structural check against canvas template ──────
+      if (canvasTemplateStrokesPx.isNotEmpty) {
+        final strokeHint = StrokeFeedbackUtil.getFeedback(
+          userRawStrokes: _rawStrokes,
+          templateStrokesPx: canvasTemplateStrokesPx,
+          boardWidth: _canvasSize,
+          boardHeight: _canvasSize,
+          ignoreBounds: false,
+        );
+
+        if (strokeHint != null) {
+          // Drawing failed structural validation – treat as wrong
+          final audio = Get.isRegistered<StageAudioController>()
+              ? Get.find<StageAudioController>()
+              : Get.put(StageAudioController());
+
+          attemptLeft.value = (attemptLeft.value - 1).clamp(0, 3);
+          feedbackState.value = DrawFeedback.wrong;
+          praiseFeedback.value = DrawFeedback.wrong;
+          praiseText.value = strokeHint.tr;
+
+          final int? exId = _charToExerciseId[currentChar.trim()];
+          if (exId != null) {
+            attempts.add({
+              'exercise_id': exId,
+              'user_answer': '',
+              'label': currentChar.trim(),
+              'stroke': getPointsJson(),
+              'device_type': _deviceType,
+              'is_correct': false,
+            });
+          }
+
+          await audio.playWrongSfx();
+          _shakeController.forward(from: 0);
+          await Future.delayed(const Duration(milliseconds: 1500));
+
+          feedbackState.value = DrawFeedback.none;
+          praiseText.value = '';
+          praiseFeedback.value = DrawFeedback.none;
+
+          clearBoard();
+
+          if (attemptLeft.value == 0) {
+            repResults[rep.value] = false;
+            totalAttempted.value++;
+            onNext(onFinished);
+          }
+
+          isSubmitting.value = false;
+          return;
+        }
+      }
+
+      // ── ONNX AI evaluation ────────────────────────────────────────────
       final data = await evalService.predictBoard(
         modelType: modelType,
         rawStrokes: _rawStrokes,
