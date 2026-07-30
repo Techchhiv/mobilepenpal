@@ -605,47 +605,73 @@ class AiWritingController extends GetxController
 
   // ── Progress calculation combining Valid Strokes & AI Predictions ────────
 
-  /// Returns only user strokes that are genuinely on-target along character template paths.
-  /// Rejects random scribbles where lines wander into empty space or loop endlessly.
+  /// Returns only user strokes that are genuinely on-target along character template paths
+  /// and drawn in the correct direction matching the active character.
   List<List<Map<String, dynamic>>> _filterValidStrokes() {
     if (_rawStrokes.isEmpty || canvasTemplateStrokesPx.isEmpty) return [];
 
-    final tPoints = <Offset>[];
-    double maxTemplateStrokeLen = 0.0;
-    for (final stroke in canvasTemplateStrokesPx) {
-      tPoints.addAll(stroke);
-      double len = 0.0;
-      for (int i = 1; i < stroke.length; i++) {
-        len += (stroke[i] - stroke[i - 1]).distance;
-      }
-      if (len > maxTemplateStrokeLen) maxTemplateStrokeLen = len;
-    }
-    if (tPoints.isEmpty) return [];
-
-    final double allowedDist =
-        _canvasSize * 0.12; // ~41px direct tolerance on 340px canvas
+    final double allowedDist = _canvasSize * 0.12; // ~41px on 340px board
     final double allowedDistSq = allowedDist * allowedDist;
 
     final validStrokes = <List<Map<String, dynamic>>>[];
 
+    int templateIdx = 0;
+
     for (final stroke in _rawStrokes) {
       if (stroke.length < 2) continue;
+      if (templateIdx >= canvasTemplateStrokesPx.length) break;
 
-      double strokeLen = 0.0;
+      final tStroke = canvasTemplateStrokesPx[templateIdx];
+      if (tStroke.length < 2) continue;
+
+      final uStart = Offset(
+        (stroke.first['x'] as num).toDouble(),
+        (stroke.first['y'] as num).toDouble(),
+      );
+      final uEnd = Offset(
+        (stroke.last['x'] as num).toDouble(),
+        (stroke.last['y'] as num).toDouble(),
+      );
+      final tStart = tStroke.first;
+      final tEnd = tStroke.last;
+
+      // 1. Direction Check: ensure user start/end points align with template stroke direction
+      if ((tStart - tEnd).distance > 15.0) {
+        final dForward = (uStart - tStart).distance + (uEnd - tEnd).distance;
+        final dReverse = (uStart - tEnd).distance + (uEnd - tStart).distance;
+        if (dReverse < dForward) {
+          // Wrong direction – reject this stroke
+          continue;
+        }
+      }
+
+      // 2. Stroke Length Cap Check: reject excessively long scribble loops
+      double tStrokeLen = 0.0;
+      for (int i = 1; i < tStroke.length; i++) {
+        tStrokeLen += (tStroke[i] - tStroke[i - 1]).distance;
+      }
+
+      double uStrokeLen = 0.0;
+      for (int i = 1; i < stroke.length; i++) {
+        final p1 = stroke[i - 1];
+        final p2 = stroke[i];
+        final dx = (p2['x'] as num).toDouble() - (p1['x'] as num).toDouble();
+        final dy = (p2['y'] as num).toDouble() - (p1['y'] as num).toDouble();
+        uStrokeLen += Offset(dx, dy).distance;
+      }
+
+      if (tStrokeLen > 10.0 && uStrokeLen > tStrokeLen * 1.6) {
+        // Scribble loop – stroke is too long compared to target template stroke
+        continue;
+      }
+
+      // 3. Trajectory Overlap Check against target template stroke
       int onTargetCount = 0;
-
-      for (int i = 0; i < stroke.length; i++) {
-        final p = stroke[i];
+      for (final p in stroke) {
         final ux = (p['x'] as num).toDouble();
         final uy = (p['y'] as num).toDouble();
 
-        if (i > 0) {
-          final px = (stroke[i - 1]['x'] as num).toDouble();
-          final py = (stroke[i - 1]['y'] as num).toDouble();
-          strokeLen += Offset(ux - px, uy - py).distance;
-        }
-
-        for (final tp in tPoints) {
+        for (final tp in tStroke) {
           final dx = tp.dx - ux;
           final dy = tp.dy - uy;
           if (dx * dx + dy * dy <= allowedDistSq) {
@@ -656,11 +682,12 @@ class AiWritingController extends GetxController
       }
 
       final onTargetRatio = onTargetCount / stroke.length;
-      final bool isLengthOk =
-          maxTemplateStrokeLen <= 0 || strokeLen <= maxTemplateStrokeLen * 2.5;
+      final offTargetRatio = 1.0 - onTargetRatio;
 
-      if (onTargetRatio >= 0.40 && isLengthOk) {
+      // Require >= 70% of points on target and <= 30% off target
+      if (onTargetRatio >= 0.70 && offTargetRatio <= 0.30) {
         validStrokes.add(stroke);
+        templateIdx++;
       }
     }
 
@@ -1162,7 +1189,18 @@ class AiWritingController extends GetxController
           ignoreBounds: false,
         );
 
-        if (strokeHint != null) {
+        final bool isGuideCompleted =
+            completedGuideStrokeCount.value >= guideStrokesPx.length ||
+            drawingProgress.value >= 0.90 ||
+            (guideStrokesPx.isNotEmpty &&
+                completedGuideStrokeCount.value >= guideStrokesPx.length - 1 &&
+                currentGuideStrokeFraction.value >= 0.85);
+
+        final bool isOutofBoundsOrScribble =
+            strokeHint == 'feedback_out_of_bounds' ||
+            strokeHint == 'feedback_wrong_count';
+
+        if (strokeHint != null && (!isGuideCompleted || isOutofBoundsOrScribble)) {
           // Drawing failed structural validation – treat as wrong
           final audio = Get.isRegistered<StageAudioController>()
               ? Get.find<StageAudioController>()
@@ -1221,9 +1259,14 @@ class AiWritingController extends GetxController
       */
 
       final String prediction = currentChar.trim();
-      final bool isCorrect =
-          completedGuideStrokeCount.value >= guideStrokesPx.length ||
-          drawingProgress.value >= 0.85;
+      final bool isAllStrokesCompleted =
+          completedGuideStrokeCount.value >= guideStrokesPx.length;
+      final bool isGuideFilled = drawingProgress.value >= 0.90 ||
+          (guideStrokesPx.isNotEmpty &&
+              completedGuideStrokeCount.value >= guideStrokesPx.length - 1 &&
+              currentGuideStrokeFraction.value >= 0.85);
+
+      final bool isCorrect = isAllStrokesCompleted || isGuideFilled;
 
       final int? exId = _charToExerciseId[currentChar.trim()];
       if (exId != null) {
