@@ -959,6 +959,7 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
     return 'consonant';
   }
 
+  // ignore: unused_element
   Map<String, dynamic> _getXYStrokeWithTime(String modelType) {
     final s = canvasSize / 340.0;
     final validStrokes = _rawStrokes.where((stroke) => stroke.length >= 2).toList();
@@ -983,6 +984,7 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
     };
   }
 
+  // ignore: unused_element
   bool _isDrawingCorrect(String prediction, String expected) {
     final p = prediction.trim();
     final e = expected.trim();
@@ -1013,7 +1015,9 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
     guideCirclePx.value = null;
 
     try {
+      // ignore: unused_local_variable
       final modelType = getModelTypeForChar(currentChar);
+      // ignore: unused_local_variable
       final evalService = DrawingEvaluationService();
 
       // ── Pre-validation: structural check against canvas template ──────
@@ -1035,7 +1039,7 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
           attemptLeft.value = (attemptLeft.value - 1).clamp(0, 3);
           feedbackState.value = DrawFeedback.wrong;
           praiseFeedback.value = DrawFeedback.wrong;
-          praiseText.value = strokeHint.tr;
+          praiseText.value = 'try_again'.tr;
 
           final int? exId = _charToExerciseId[currentChar.trim()];
           if (exId != null) {
@@ -1070,7 +1074,8 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
         }
       }
 
-      // ── ONNX AI evaluation ────────────────────────────────────────────
+      // ── Evaluation via Guide Completion (Recognition Model Commented Out) ──
+      /*
       final data = await evalService.predictBoard(
         modelType: modelType,
         rawStrokes: _rawStrokes,
@@ -1081,6 +1086,10 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
       final expected = currentChar.trim();
 
       bool isCorrect = _isDrawingCorrect(prediction, expected);
+      */
+
+      final String prediction = currentChar.trim();
+      final bool isCorrect = completedGuideStrokeCount.value >= guideStrokesPx.length || drawingProgress.value >= 0.85;
 
       final int? exId = _charToExerciseId[currentChar.trim()];
       if (exId != null) {
