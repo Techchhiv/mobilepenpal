@@ -312,9 +312,15 @@ class NextStrokePredictorService {
     final scaled = standardizeDeltas(seq, deltaMean, deltaStd);
     final split = splitAndPadStrokes(scaled, chunkSize);
 
-    if (split.chunks.isEmpty) {
-      throw Exception("Could not create substrokes from this input.");
-    }
+    final totalResampledDeltas = seq.length;
+    final keptChunks = split.chunks.length;
+    final validLastCount = split.validCounts.isNotEmpty ? split.validCounts.last : chunkSize;
+    final keptDeltas = (keptChunks > 1 && validLastCount == chunkSize)
+        ? keptChunks * chunkSize
+        : (keptChunks == 1 ? validLastCount : totalResampledDeltas);
+    final keptRatio = totalResampledDeltas > 0
+        ? (keptDeltas / totalResampledDeltas).clamp(0.0, 1.0)
+        : 1.0;
 
     final transform = {
       'scale': normData['scale'],
@@ -327,6 +333,7 @@ class NextStrokePredictorService {
       'chunks': split.chunks,
       'valid_counts': split.validCounts,
       'transform': transform,
+      'kept_ratio': keptRatio,
     };
   }
 
@@ -673,6 +680,7 @@ class NextStrokePredictorService {
     String smoothingStrength = "Medium",
     String mode = "Auto complete current chunk",
     double canvasSize = 320.0,
+    void Function(double keptRatio)? onKeptRatio,
   }) async {
     if (!_initialized) {
       await init();
@@ -708,6 +716,8 @@ class NextStrokePredictorService {
     final seed = seedData['chunks'] as List<List<List<double>>>;
     final validCounts = seedData['valid_counts'] as List<int>;
     final transform = seedData['transform'] as Map<String, dynamic>;
+    final keptRatio = (seedData['kept_ratio'] as num?)?.toDouble() ?? 1.0;
+    onKeptRatio?.call(keptRatio);
 
     // 2. Select starting sequence seed
     final startInfo = chooseModelSeed(
