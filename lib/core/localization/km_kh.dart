@@ -446,6 +446,7 @@ final Map<String, String> kmKH = {
   'feedback_incomplete': 'សូមគូរឲ្យតាមស្រមោល!',
   'feedback_wrong_direction': 'គូរខុសទិសដៅ!',
   'feedback_wrong_order': 'គូរខុសលំដាប់!',
+  'please_follow_guide': 'សូមគូរតាមការណែនាំ!',
 
   // ===== Praise =====
   'praise_excellent': 'ល្អណាស់!',

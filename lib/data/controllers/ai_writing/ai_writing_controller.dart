@@ -16,7 +16,6 @@ import 'package:mobilepenpal/data/controllers/world/stage_animation_controller.d
 import 'package:mobilepenpal/data/models/api_response.dart';
 import 'package:mobilepenpal/data/models/student/student.dart';
 import 'package:mobilepenpal/data/services/next_stroke_predictor_service.dart';
-import 'package:mobilepenpal/data/services/drawing_evaluation_service.dart';
 import 'package:mobilepenpal/data/services/world_service.dart';
 import 'package:mobilepenpal/presentation/widgets/ai_writing/stitch_debug_painter.dart';
 
@@ -522,14 +521,32 @@ class AiWritingController extends GetxController
 
   final autoPredict = false.obs;
   final predictedSegments = <List<Offset>>[].obs;
+  final hintMessage = ''.obs;
 
   void showHint() {
     autoPredict.value = true;
     predictNextStrokes();
+    if (_rawStrokes.isNotEmpty) {
+      final validStrokes = _filterValidStrokes();
+      if (validStrokes.isEmpty || validStrokes.length < _rawStrokes.length) {
+        hintMessage.value = 'please_follow_guide'.tr;
+      } else {
+        hintMessage.value = '';
+      }
+    } else {
+      hintMessage.value = '';
+    }
   }
 
   Future<void> predictNextStrokes() async {
     final validStrokes = _filterValidStrokes();
+
+    if (_rawStrokes.isNotEmpty &&
+        (validStrokes.isEmpty || validStrokes.length < _rawStrokes.length)) {
+      hintMessage.value = 'please_follow_guide'.tr;
+    } else {
+      hintMessage.value = '';
+    }
 
     if (validStrokes.isEmpty) {
       predictedSegments.clear();
@@ -607,14 +624,15 @@ class AiWritingController extends GetxController
 
   /// Returns only user strokes that are genuinely on-target along character template paths
   /// and drawn in the correct direction matching the active character.
+  /// Matches strokes directly in canvas space against canvasTemplateStrokesPx.
+  /// If a user stroke is invalid or belongs to a different character, matching stops.
   List<List<Map<String, dynamic>>> _filterValidStrokes() {
     if (_rawStrokes.isEmpty || canvasTemplateStrokesPx.isEmpty) return [];
 
-    final double allowedDist = _canvasSize * 0.12; // ~41px on 340px board
+    final double allowedDist = _canvasSize * 0.15; // ~51px on 340px board
     final double allowedDistSq = allowedDist * allowedDist;
 
     final validStrokes = <List<Map<String, dynamic>>>[];
-
     int templateIdx = 0;
 
     for (final stroke in _rawStrokes) {
@@ -640,12 +658,12 @@ class AiWritingController extends GetxController
         final dForward = (uStart - tStart).distance + (uEnd - tEnd).distance;
         final dReverse = (uStart - tEnd).distance + (uEnd - tStart).distance;
         if (dReverse < dForward) {
-          // Wrong direction – reject this stroke
-          continue;
+          // Wrong direction – stop matching
+          break;
         }
       }
 
-      // 2. Stroke Length Cap Check: reject excessively long scribble loops
+      // 2. Stroke Length Check: reject excessively long scribble loops
       double tStrokeLen = 0.0;
       for (int i = 1; i < tStroke.length; i++) {
         tStrokeLen += (tStroke[i] - tStroke[i - 1]).distance;
@@ -662,10 +680,10 @@ class AiWritingController extends GetxController
 
       if (tStrokeLen > 10.0 && uStrokeLen > tStrokeLen * 1.6) {
         // Scribble loop – stroke is too long compared to target template stroke
-        continue;
+        break;
       }
 
-      // 3. Trajectory Overlap Check against target template stroke
+      // 3. Spatial Trajectory Overlap Check against target template stroke in canvas space
       int onTargetCount = 0;
       for (final p in stroke) {
         final ux = (p['x'] as num).toDouble();
@@ -682,12 +700,14 @@ class AiWritingController extends GetxController
       }
 
       final onTargetRatio = onTargetCount / stroke.length;
-      final offTargetRatio = 1.0 - onTargetRatio;
 
-      // Require >= 70% of points on target and <= 30% off target
-      if (onTargetRatio >= 0.70 && offTargetRatio <= 0.30) {
+      // Require >= 65% of user stroke points to be near the target template stroke
+      if (onTargetRatio >= 0.65) {
         validStrokes.add(stroke);
         templateIdx++;
+      } else {
+        // Wrong stroke drawn – stop guide progress here
+        break;
       }
     }
 
@@ -844,6 +864,7 @@ class AiWritingController extends GetxController
     drawingProgress.value = 0.0;
     completedGuideStrokeCount.value = 0;
     currentGuideStrokeFraction.value = 0.0;
+    hintMessage.value = '';
     restartGuideFromStart();
   }
 
@@ -855,6 +876,7 @@ class AiWritingController extends GetxController
     drawingProgress.value = 0.0;
     completedGuideStrokeCount.value = 0;
     currentGuideStrokeFraction.value = 0.0;
+    hintMessage.value = '';
     attemptLeft.value = 3;
 
     final nextRep = rep.value + 1;
@@ -1174,99 +1196,31 @@ class AiWritingController extends GetxController
     guideCirclePx.value = null;
 
     try {
-      // ignore: unused_local_variable
-      final modelType = getModelTypeForChar(currentChar);
-      // ignore: unused_local_variable
-      final evalService = DrawingEvaluationService();
+      bool isCorrect = false;
+      String? strokeHint;
 
-      // ── Pre-validation: structural check against canvas template ──────
+      // ── Structural Stroke Validation ─────────────────────────────────
+      // Auto-center user's free drawing onto the template for fair comparison,
+      // then check stroke count, direction, and order.
       if (canvasTemplateStrokesPx.isNotEmpty) {
-        final strokeHint = StrokeFeedbackUtil.getFeedback(
-          userRawStrokes: _rawStrokes,
+        final centered = StrokeTransformUtil.autoCenterStrokes(
+          _rawStrokes,
+          canvasTemplateStrokesPx,
+        );
+        strokeHint = StrokeFeedbackUtil.getFeedback(
+          userRawStrokes: centered,
           templateStrokesPx: canvasTemplateStrokesPx,
           boardWidth: _canvasSize,
           boardHeight: _canvasSize,
-          ignoreBounds: false,
+          ignoreBounds: true, // no visible shadow, don't penalise position
         );
-
-        final bool isGuideCompleted =
-            completedGuideStrokeCount.value >= guideStrokesPx.length ||
-            drawingProgress.value >= 0.90 ||
-            (guideStrokesPx.isNotEmpty &&
-                completedGuideStrokeCount.value >= guideStrokesPx.length - 1 &&
-                currentGuideStrokeFraction.value >= 0.85);
-
-        final bool isOutofBoundsOrScribble =
-            strokeHint == 'feedback_out_of_bounds' ||
-            strokeHint == 'feedback_wrong_count';
-
-        if (strokeHint != null && (!isGuideCompleted || isOutofBoundsOrScribble)) {
-          // Drawing failed structural validation – treat as wrong
-          final audio = Get.isRegistered<StageAudioController>()
-              ? Get.find<StageAudioController>()
-              : Get.put(StageAudioController());
-
-          attemptLeft.value = (attemptLeft.value - 1).clamp(0, 3);
-          feedbackState.value = DrawFeedback.wrong;
-          praiseFeedback.value = DrawFeedback.wrong;
-          praiseText.value = 'try_again'.tr;
-
-          final int? exId = _charToExerciseId[currentChar.trim()];
-          if (exId != null) {
-            attempts.add({
-              'exercise_id': exId,
-              'user_answer': '',
-              'label': currentChar.trim(),
-              'stroke': getPointsJson(),
-              'device_type': _deviceType,
-              'is_correct': false,
-            });
-          }
-
-          await audio.playWrongSfx();
-          _shakeController.forward(from: 0);
-          await Future.delayed(const Duration(milliseconds: 1500));
-
-          feedbackState.value = DrawFeedback.none;
-          praiseText.value = '';
-          praiseFeedback.value = DrawFeedback.none;
-
-          clearBoard();
-
-          if (attemptLeft.value == 0) {
-            repResults[rep.value] = false;
-            totalAttempted.value++;
-            onNext(onFinished);
-          }
-
-          isSubmitting.value = false;
-          return;
-        }
+        isCorrect = (strokeHint == null);
+      } else {
+        // No template available for this character — accept the drawing
+        isCorrect = true;
       }
 
-      // ── Evaluation via Guide Completion (Recognition Model Commented Out) ──
-      /*
-      final data = await evalService.predictBoard(
-        modelType: modelType,
-        rawStrokes: _rawStrokes,
-        getPayload: () => _getXYStrokeWithTime(modelType),
-      );
-
-      final prediction = (data?['prediction'] ?? '').toString().trim();
-      final expected = currentChar.trim();
-
-      bool isCorrect = _isDrawingCorrect(prediction, expected);
-      */
-
-      final String prediction = currentChar.trim();
-      final bool isAllStrokesCompleted =
-          completedGuideStrokeCount.value >= guideStrokesPx.length;
-      final bool isGuideFilled = drawingProgress.value >= 0.90 ||
-          (guideStrokesPx.isNotEmpty &&
-              completedGuideStrokeCount.value >= guideStrokesPx.length - 1 &&
-              currentGuideStrokeFraction.value >= 0.85);
-
-      final bool isCorrect = isAllStrokesCompleted || isGuideFilled;
+      final String prediction = isCorrect ? currentChar.trim() : '';
 
       final int? exId = _charToExerciseId[currentChar.trim()];
       if (exId != null) {
@@ -1309,7 +1263,8 @@ class AiWritingController extends GetxController
         attemptLeft.value = (attemptLeft.value - 1).clamp(0, 3);
         feedbackState.value = DrawFeedback.wrong;
         praiseFeedback.value = DrawFeedback.wrong;
-        praiseText.value = 'try_again'.tr;
+        // Show specific stroke feedback hint if available
+        praiseText.value = (strokeHint != null) ? strokeHint.tr : 'try_again'.tr;
 
         await audio.playWrongSfx();
         _shakeController.forward(from: 0);

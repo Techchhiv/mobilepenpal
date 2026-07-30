@@ -451,6 +451,7 @@ final Map<String, String> enUS = {
   'feedback_incomplete': 'Please complete the drawing!',
   'feedback_wrong_direction': 'Wrong direction!',
   'feedback_wrong_order': 'Wrong order!',
+  'please_follow_guide': 'Please follow the guide!',
 
   // ===== Praise =====
   'praise_excellent': 'Excellent!',
