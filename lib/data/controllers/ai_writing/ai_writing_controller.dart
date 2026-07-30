@@ -18,12 +18,11 @@ import 'package:mobilepenpal/data/models/student/student.dart';
 import 'package:mobilepenpal/data/services/next_stroke_predictor_service.dart';
 import 'package:mobilepenpal/data/services/drawing_evaluation_service.dart';
 import 'package:mobilepenpal/data/services/world_service.dart';
+import 'package:mobilepenpal/presentation/widgets/ai_writing/stitch_debug_painter.dart';
 
-class AiWritingController extends GetxController with GetTickerProviderStateMixin {
-  AiWritingController({
-    required this.characters,
-    required this.repeatCount,
-  });
+class AiWritingController extends GetxController
+    with GetTickerProviderStateMixin {
+  AiWritingController({required this.characters, required this.repeatCount});
 
   // ── Config: guide progress behaviour ───────────────────────────────────
   // true  → guide fill updates automatically after every pen-lift
@@ -114,6 +113,7 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
   final List<List<double>> _cumLenByStroke = [];
   final List<double> _totalLenByStroke = [];
   Timer? _betweenStrokeTimer;
+  final showStitchDebug = false.obs;
 
   String get currentChar => characters[charIndex.value];
 
@@ -128,40 +128,56 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
       duration: const Duration(milliseconds: 350),
     );
 
-    _shakeAnimation = TweenSequence<double>([
-      TweenSequenceItem(tween: Tween<double>(begin: 0.0, end: 12.0), weight: 1),
-      TweenSequenceItem(tween: Tween<double>(begin: 12.0, end: -12.0), weight: 2),
-      TweenSequenceItem(tween: Tween<double>(begin: -12.0, end: 12.0), weight: 2),
-      TweenSequenceItem(tween: Tween<double>(begin: 12.0, end: 0.0), weight: 1),
-    ]).animate(CurvedAnimation(parent: _shakeController, curve: Curves.easeInOut))
-      ..addListener(() {
-        shakeOffset.value = _shakeAnimation.value;
-      });
+    _shakeAnimation =
+        TweenSequence<double>([
+            TweenSequenceItem(
+              tween: Tween<double>(begin: 0.0, end: 12.0),
+              weight: 1,
+            ),
+            TweenSequenceItem(
+              tween: Tween<double>(begin: 12.0, end: -12.0),
+              weight: 2,
+            ),
+            TweenSequenceItem(
+              tween: Tween<double>(begin: -12.0, end: 12.0),
+              weight: 2,
+            ),
+            TweenSequenceItem(
+              tween: Tween<double>(begin: 12.0, end: 0.0),
+              weight: 1,
+            ),
+          ]).animate(
+            CurvedAnimation(parent: _shakeController, curve: Curves.easeInOut),
+          )
+          ..addListener(() {
+            shakeOffset.value = _shakeAnimation.value;
+          });
 
-    guideController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1000),
-    )
-      ..addListener(_updateGuideCircle)
-      ..addStatusListener((status) {
-        if (status != AnimationStatus.completed) return;
+    guideController =
+        AnimationController(
+            vsync: this,
+            duration: const Duration(milliseconds: 1000),
+          )
+          ..addListener(_updateGuideCircle)
+          ..addStatusListener((status) {
+            if (status != AnimationStatus.completed) return;
 
-        _advanceGuideStroke();
-        if (!isGuiding.value) return;
+            _advanceGuideStroke();
+            if (!isGuiding.value) return;
 
-        _betweenStrokeTimer?.cancel();
-        final pause = pauseBetweenStrokesMs;
+            _betweenStrokeTimer?.cancel();
+            final pause = pauseBetweenStrokesMs;
 
-        if (pause <= 0) {
-          guideController.forward(from: _guideStartFraction());
-          return;
-        }
+            if (pause <= 0) {
+              guideController.forward(from: _guideStartFraction());
+              return;
+            }
 
-        _betweenStrokeTimer = Timer(Duration(milliseconds: pause), () {
-          if (!isGuiding.value) return;
-          guideController.forward(from: _guideStartFraction());
-        });
-      });
+            _betweenStrokeTimer = Timer(Duration(milliseconds: pause), () {
+              if (!isGuiding.value) return;
+              guideController.forward(from: _guideStartFraction());
+            });
+          });
 
     _loadStrokesDb();
     _loadExercisesMap();
@@ -208,7 +224,10 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
       _strokesDb = jsonDecode(raw) as Map<String, dynamic>;
       _refreshGuide();
     } catch (e) {
-      dev.log('Failed to load strokes database: $e', name: 'AiWritingController');
+      dev.log(
+        'Failed to load strokes database: $e',
+        name: 'AiWritingController',
+      );
     } finally {
       isLoading.value = false;
     }
@@ -283,7 +302,10 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
     );
   }
 
-  void _setGuideStrokes(List<List<Offset>> letterPx, List<List<Offset>> strokesPx) {
+  void _setGuideStrokes(
+    List<List<Offset>> letterPx,
+    List<List<Offset>> strokesPx,
+  ) {
     drawingProgress.value = 0.0;
     completedGuideStrokeCount.value = 0;
     currentGuideStrokeFraction.value = 0.0;
@@ -345,9 +367,7 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
     final totalMs = guideTotalDurationMs;
 
     if (_lenByStroke.isEmpty || _totalLenAll <= 0) {
-      return <int>[
-        totalMs.clamp(minStrokeDurationMs, maxStrokeDurationMs),
-      ];
+      return <int>[totalMs.clamp(minStrokeDurationMs, maxStrokeDurationMs)];
     }
 
     final out = <int>[];
@@ -416,10 +436,13 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
     if (guideStrokesPx.isEmpty) return;
 
     final next = currentGuideStrokeIndex.value + 1;
-    final minStroke = completedGuideStrokeCount.value
-        .clamp(0, guideStrokesPx.length - 1);
-    currentGuideStrokeIndex.value =
-        (next >= guideStrokesPx.length) ? minStroke : next;
+    final minStroke = completedGuideStrokeCount.value.clamp(
+      0,
+      guideStrokesPx.length - 1,
+    );
+    currentGuideStrokeIndex.value = (next >= guideStrokesPx.length)
+        ? minStroke
+        : next;
 
     final idx = currentGuideStrokeIndex.value;
     final stroke = guideStrokesPx[idx];
@@ -439,9 +462,7 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
       guideCirclePx.value = stroke.isNotEmpty ? stroke.first : null;
     }
 
-    guideController.duration = Duration(
-      milliseconds: _strokeDurationMs(idx),
-    );
+    guideController.duration = Duration(milliseconds: _strokeDurationMs(idx));
   }
 
   void _updateGuideCircle() {
@@ -521,7 +542,14 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
 
     try {
       final userStrokes = validStrokes.map((stroke) {
-        return stroke.map((p) => Offset((p["x"] as num).toDouble(), (p["y"] as num).toDouble())).toList();
+        return stroke
+            .map(
+              (p) => Offset(
+                (p["x"] as num).toDouble(),
+                (p["y"] as num).toDouble(),
+              ),
+            )
+            .toList();
       }).toList();
 
       final predictor = NextStrokePredictorService.instance;
@@ -564,7 +592,10 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
       }
 
       predictedSegments.assignAll(filteredSegments);
-      _updateProgressFromValidStrokesAndPrediction(validStrokes, fullPredictedLength);
+      _updateProgressFromValidStrokesAndPrediction(
+        validStrokes,
+        fullPredictedLength,
+      );
     } catch (e) {
       dev.log("Next-stroke prediction failed: $e", name: "AiWritingController");
       predictedSegments.clear();
@@ -591,7 +622,8 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
     }
     if (tPoints.isEmpty) return [];
 
-    final double allowedDist = _canvasSize * 0.12; // ~41px direct tolerance on 340px canvas
+    final double allowedDist =
+        _canvasSize * 0.12; // ~41px direct tolerance on 340px canvas
     final double allowedDistSq = allowedDist * allowedDist;
 
     final validStrokes = <List<Map<String, dynamic>>>[];
@@ -624,7 +656,8 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
       }
 
       final onTargetRatio = onTargetCount / stroke.length;
-      final bool isLengthOk = maxTemplateStrokeLen <= 0 || strokeLen <= maxTemplateStrokeLen * 2.5;
+      final bool isLengthOk =
+          maxTemplateStrokeLen <= 0 || strokeLen <= maxTemplateStrokeLen * 2.5;
 
       if (onTargetRatio >= 0.40 && isLengthOk) {
         validStrokes.add(stroke);
@@ -638,7 +671,9 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
     List<List<Map<String, dynamic>>> validStrokes,
     double fullPredictedLength,
   ) {
-    if (validStrokes.isEmpty || guideStrokesPx.isEmpty || _totalLenByStroke.isEmpty) {
+    if (validStrokes.isEmpty ||
+        guideStrokesPx.isEmpty ||
+        _totalLenByStroke.isEmpty) {
       drawingProgress.value = 0.0;
       completedGuideStrokeCount.value = 0;
       currentGuideStrokeFraction.value = 0.0;
@@ -671,7 +706,10 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
       drawingProgress.value = 1.0;
     } else if (validUserLength + fullPredictedLength > 0) {
       drawingProgress.value =
-          (validUserLength / (validUserLength + fullPredictedLength)).clamp(0.0, 1.0);
+          (validUserLength / (validUserLength + fullPredictedLength)).clamp(
+            0.0,
+            1.0,
+          );
     } else {
       drawingProgress.value = 0.0;
     }
@@ -751,8 +789,6 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
     }
   }
 
-
-
   double _guideStartFraction() {
     final idx = currentGuideStrokeIndex.value;
     if (idx == completedGuideStrokeCount.value &&
@@ -777,6 +813,7 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
     drawingController.clear();
     _rawStrokes.clear();
     predictedSegments.clear();
+    stitchDebugSegments.clear();
     drawingProgress.value = 0.0;
     completedGuideStrokeCount.value = 0;
     currentGuideStrokeFraction.value = 0.0;
@@ -787,6 +824,7 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
     drawingController.clear();
     _rawStrokes.clear();
     predictedSegments.clear();
+    stitchDebugSegments.clear();
     drawingProgress.value = 0.0;
     completedGuideStrokeCount.value = 0;
     currentGuideStrokeFraction.value = 0.0;
@@ -838,27 +876,38 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
           }
         }
       } catch (e) {
-        dev.log('Failed to update local coins: $e', name: 'AiWritingController');
+        dev.log(
+          'Failed to update local coins: $e',
+          name: 'AiWritingController',
+        );
       }
     }
 
-    _worldService.submitExerciseBatch(
-      attempts,
-      coinsEarned: coins,
-      xpEarned: totalCorrect.value * 10,
-    ).catchError((e) {
-      dev.log('Failed to submit session progress: $e', name: 'AiWritingController');
-      return ApiResponse<Map<String, dynamic>>(
-        code: 500,
-        message: 'Failed to submit progress: $e',
-        data: {},
-      );
-    });
+    _worldService
+        .submitExerciseBatch(
+          attempts,
+          coinsEarned: coins,
+          xpEarned: totalCorrect.value * 10,
+        )
+        .catchError((e) {
+          dev.log(
+            'Failed to submit session progress: $e',
+            name: 'AiWritingController',
+          );
+          return ApiResponse<Map<String, dynamic>>(
+            code: 500,
+            message: 'Failed to submit progress: $e',
+            data: {},
+          );
+        });
   }
 
   // ── Stitching/Gap-closing State ────────────────────────────────────────
   bool _isContinuingLastStroke = false;
-  static const double _strokeMergeThreshold = 35.0; // logical pixels
+  static const double _strokeMergeRatio =
+      0.1; // percentage of canvas dimension (e.g. 0.045 = 4.5%, 0.1 = 10%)
+  final RxList<StitchDebugSegment> stitchDebugSegments =
+      <StitchDebugSegment>[].obs;
 
   // ── Drawing Board Handlers ─────────────────────────────────────────────
   void onPointerDown(PointerDownEvent e) {
@@ -881,8 +930,21 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
         final dy = e.localPosition.dy - (lastPoint["y"] as num).toDouble();
         final distSq = dx * dx + dy * dy;
 
-        if (distSq < _strokeMergeThreshold * _strokeMergeThreshold) {
+        final mergeThresholdPx = canvasSize * _strokeMergeRatio;
+        if (distSq < mergeThresholdPx * mergeThresholdPx) {
           _isContinuingLastStroke = true;
+          if (showStitchDebug.value) {
+            stitchDebugSegments.add(
+              StitchDebugSegment(
+                from: Offset(
+                  (lastPoint["x"] as num).toDouble(),
+                  (lastPoint["y"] as num).toDouble(),
+                ),
+                to: Offset(e.localPosition.dx, e.localPosition.dy),
+                radius: mergeThresholdPx,
+              ),
+            );
+          }
           _currentStroke = lastStroke;
           _currentStroke!.add(point);
           return;
@@ -933,23 +995,83 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
   // ── AI check ───────────────────────────────────────────────────────────
   String getModelTypeForChar(String char) {
     const consonantsSet = {
-      'ក', 'ខ', 'គ', 'ឃ', 'ង',
-      'ច', 'ឆ', 'ជ', 'ឈ', 'ញ',
-      'ដ', 'ឋ', 'ឌ', 'ឍ', 'ណ',
-      'ត', 'ថ', 'ទ', 'ធ', 'ន',
-      'ប', 'ផ', 'ព', 'ភ', 'ម',
-      'យ', 'រ', 'ល', 'វ', 'ស',
-      'ហ', 'ឡ', 'អ',
+      'ក',
+      'ខ',
+      'គ',
+      'ឃ',
+      'ង',
+      'ច',
+      'ឆ',
+      'ជ',
+      'ឈ',
+      'ញ',
+      'ដ',
+      'ឋ',
+      'ឌ',
+      'ឍ',
+      'ណ',
+      'ត',
+      'ថ',
+      'ទ',
+      'ធ',
+      'ន',
+      'ប',
+      'ផ',
+      'ព',
+      'ភ',
+      'ម',
+      'យ',
+      'រ',
+      'ល',
+      'វ',
+      'ស',
+      'ហ',
+      'ឡ',
+      'អ',
     };
     const independentVowelsSet = {
-      'ឥ', 'ឦ', 'ឧ', 'ឩ', 'ឪ', 'ឫ', 'ឬ', 'ឭ', 'ឮ', 'ឯ', 'ឰ', 'ឱ', 'ឲ', 'ឳ'
+      'ឥ',
+      'ឦ',
+      'ឧ',
+      'ឩ',
+      'ឪ',
+      'ឫ',
+      'ឬ',
+      'ឭ',
+      'ឮ',
+      'ឯ',
+      'ឰ',
+      'ឱ',
+      'ឲ',
+      'ឳ',
     };
     const dependentVowelsSet = {
-      'ា', 'ិ', 'ី', 'ឹ', 'ឺ', 'ុ', 'ូ', 'ួ', 'ើ', 'ឿ', 'ៀ', 'េ', 'ែ', 'ៃ', 'ោ', 'ៅ', 'ុំ', 'ំ', 'ាំ', 'ះ', 'ិះ', 'ុះ', 'េះ', 'ោះ'
+      'ា',
+      'ិ',
+      'ី',
+      'ឹ',
+      'ឺ',
+      'ុ',
+      'ូ',
+      'ួ',
+      'ើ',
+      'ឿ',
+      'ៀ',
+      'េ',
+      'ែ',
+      'ៃ',
+      'ោ',
+      'ៅ',
+      'ុំ',
+      'ំ',
+      'ាំ',
+      'ះ',
+      'ិះ',
+      'ុះ',
+      'េះ',
+      'ោះ',
     };
-    const numbersSet = {
-      '០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'
-    };
+    const numbersSet = {'០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'};
 
     final trimChar = char.trim();
     if (consonantsSet.contains(trimChar)) return 'consonant';
@@ -962,7 +1084,9 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
   // ignore: unused_element
   Map<String, dynamic> _getXYStrokeWithTime(String modelType) {
     final s = canvasSize / 340.0;
-    final validStrokes = _rawStrokes.where((stroke) => stroke.length >= 2).toList();
+    final validStrokes = _rawStrokes
+        .where((stroke) => stroke.length >= 2)
+        .toList();
 
     return {
       "strokes": validStrokes
@@ -991,8 +1115,16 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
     if (p == e) return true;
 
     const arabicToKhmer = {
-      '0': '០', '1': '១', '2': '២', '3': '៣', '4': '៤',
-      '5': '៥', '6': '៦', '7': '៧', '8': '៨', '9': '៩',
+      '0': '០',
+      '1': '១',
+      '2': '២',
+      '3': '៣',
+      '4': '៤',
+      '5': '៥',
+      '6': '៦',
+      '7': '៧',
+      '8': '៨',
+      '9': '៩',
     };
 
     final normP = arabicToKhmer[p] ?? p;
@@ -1089,7 +1221,9 @@ class AiWritingController extends GetxController with GetTickerProviderStateMixi
       */
 
       final String prediction = currentChar.trim();
-      final bool isCorrect = completedGuideStrokeCount.value >= guideStrokesPx.length || drawingProgress.value >= 0.85;
+      final bool isCorrect =
+          completedGuideStrokeCount.value >= guideStrokesPx.length ||
+          drawingProgress.value >= 0.85;
 
       final int? exId = _charToExerciseId[currentChar.trim()];
       if (exId != null) {

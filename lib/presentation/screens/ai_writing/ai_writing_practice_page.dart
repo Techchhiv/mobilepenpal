@@ -13,6 +13,7 @@ import 'package:mobilepenpal/presentation/widgets/world/board_grid_painter.dart'
 import 'package:mobilepenpal/presentation/widgets/world/letter_painter.dart';
 import 'package:mobilepenpal/presentation/widgets/world/stage_components/stage_attempts_indicator.dart';
 import 'package:mobilepenpal/presentation/widgets/ai_writing/predictive_strokes_painter.dart';
+import 'package:mobilepenpal/presentation/widgets/ai_writing/stitch_debug_painter.dart';
 import 'package:mobilepenpal/presentation/widgets/world/progressive_strokes_painter.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -59,9 +60,10 @@ class _AiWritingPracticePageState extends State<AiWritingPracticePage>
       vsync: this,
       duration: const Duration(milliseconds: 500),
     );
-    _starBounceAnim = Tween<double>(begin: 1.0, end: 1.35)
-        .chain(CurveTween(curve: Curves.elasticOut))
-        .animate(_starBounceCtrl);
+    _starBounceAnim = Tween<double>(
+      begin: 1.0,
+      end: 1.35,
+    ).chain(CurveTween(curve: Curves.elasticOut)).animate(_starBounceCtrl);
   }
 
   @override
@@ -71,8 +73,6 @@ class _AiWritingPracticePageState extends State<AiWritingPracticePage>
     Get.delete<AiWritingController>();
     super.dispose();
   }
-
-
 
   void _showPauseDialog(BuildContext context) {
     showDialog(
@@ -258,7 +258,9 @@ class _AiWritingPracticePageState extends State<AiWritingPracticePage>
         body: Container(
           decoration: const BoxDecoration(
             image: DecorationImage(
-              image: AssetImage('assets/images/backgrounds/ai_writing_practice_background.png'),
+              image: AssetImage(
+                'assets/images/backgrounds/ai_writing_practice_background.png',
+              ),
               fit: BoxFit.cover,
             ),
           ),
@@ -383,15 +385,9 @@ class _AiWritingPracticePageState extends State<AiWritingPracticePage>
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: const Color(0xFF1E293B),
-            width: 2.5,
-          ),
+          border: Border.all(color: const Color(0xFF1E293B), width: 2.5),
           boxShadow: const [
-            BoxShadow(
-              color: Color(0xFF1E293B),
-              offset: Offset(3, 4),
-            ),
+            BoxShadow(color: Color(0xFF1E293B), offset: Offset(3, 4)),
           ],
         ),
         child: Row(
@@ -432,10 +428,7 @@ class _AiWritingPracticePageState extends State<AiWritingPracticePage>
           shape: BoxShape.circle,
           border: Border.all(color: const Color(0xFF1E293B), width: 2),
           boxShadow: const [
-            BoxShadow(
-              color: Color(0xFF1E293B),
-              offset: Offset(2, 2),
-            ),
+            BoxShadow(color: Color(0xFF1E293B), offset: Offset(2, 2)),
           ],
         ),
         child: Icon(icon, color: Colors.white, size: 20),
@@ -473,21 +466,15 @@ class _AiWritingPracticePageState extends State<AiWritingPracticePage>
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeOut,
             margin: const EdgeInsets.symmetric(horizontal: 3),
-            child: Icon(
-              starIcon,
-              color: starColor,
-              size: isCurrent ? 30 : 26,
-            ),
+            child: Icon(starIcon, color: starColor, size: isCurrent ? 30 : 26),
           );
 
           // Add bounce for the most recently filled star
           if (state != null && i == currentRep - 1) {
             star = AnimatedBuilder(
               animation: _starBounceAnim,
-              builder: (_, child) => Transform.scale(
-                scale: _starBounceAnim.value,
-                child: child,
-              ),
+              builder: (_, child) =>
+                  Transform.scale(scale: _starBounceAnim.value, child: child),
               child: star,
             );
           }
@@ -508,19 +495,14 @@ class _AiWritingPracticePageState extends State<AiWritingPracticePage>
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: Colors.white,
-          border: Border.all(
-            color: const Color(0xFF1E293B),
-            width: 2,
-          ),
+          border: Border.all(color: const Color(0xFF1E293B), width: 2),
           boxShadow: const [
-            BoxShadow(
-              color: Color(0xFF1E293B),
-              offset: Offset(2, 2),
-            ),
+            BoxShadow(color: Color(0xFF1E293B), offset: Offset(2, 2)),
           ],
         ),
         child: ClipOval(
-          child: shopAvatar != null &&
+          child:
+              shopAvatar != null &&
                   shopAvatar.id != 'default' &&
                   shopAvatar.assetPath != null
               ? Image.asset(shopAvatar.assetPath!, fit: BoxFit.cover)
@@ -665,15 +647,9 @@ class _AiWritingPracticePageState extends State<AiWritingPracticePage>
       decoration: BoxDecoration(
         color: const Color(0xFFFFFDE7), // pale yellow
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: const Color(0xFF1E293B),
-          width: 2.5,
-        ),
+        border: Border.all(color: const Color(0xFF1E293B), width: 2.5),
         boxShadow: const [
-          BoxShadow(
-            color: Color(0xFF1E293B),
-            offset: Offset(3, 4),
-          ),
+          BoxShadow(color: Color(0xFF1E293B), offset: Offset(3, 4)),
         ],
       ),
       child: Row(
@@ -686,15 +662,9 @@ class _AiWritingPracticePageState extends State<AiWritingPracticePage>
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: const Color(0xFF1E293B),
-                width: 2.5,
-              ),
+              border: Border.all(color: const Color(0xFF1E293B), width: 2.5),
               boxShadow: const [
-                BoxShadow(
-                  color: Color(0xFF1E293B),
-                  offset: Offset(2, 2),
-                ),
+                BoxShadow(color: Color(0xFF1E293B), offset: Offset(2, 2)),
               ],
             ),
             child: ClipRRect(
@@ -764,8 +734,9 @@ class _AiWritingPracticePageState extends State<AiWritingPracticePage>
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: const Color(0xFFEF4444)
-                                          .withValues(alpha: 0.4),
+                                      color: const Color(
+                                        0xFFEF4444,
+                                      ).withValues(alpha: 0.4),
                                       blurRadius: 6,
                                       spreadRadius: 1,
                                     ),
@@ -786,7 +757,9 @@ class _AiWritingPracticePageState extends State<AiWritingPracticePage>
           Expanded(
             child: Center(
               child: Obx(() {
-                final imagePath = _getCharacterImagePath(_controller.currentChar);
+                final imagePath = _getCharacterImagePath(
+                  _controller.currentChar,
+                );
                 if (imagePath != null) {
                   return Container(
                     height: 90,
@@ -806,14 +779,14 @@ class _AiWritingPracticePageState extends State<AiWritingPracticePage>
                       ],
                     ),
                     padding: const EdgeInsets.all(8),
-                    child: Image.asset(
-                      imagePath,
-                      fit: BoxFit.contain,
-                    ),
+                    child: Image.asset(imagePath, fit: BoxFit.contain),
                   );
                 } else {
                   return Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 10,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(16),
@@ -882,10 +855,7 @@ class _AiWritingPracticePageState extends State<AiWritingPracticePage>
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: const Color(0xFF1E293B), width: 2),
           boxShadow: const [
-            BoxShadow(
-              color: Color(0xFF1E293B),
-              offset: Offset(2, 2),
-            ),
+            BoxShadow(color: Color(0xFF1E293B), offset: Offset(2, 2)),
           ],
         ),
         child: Icon(icon, color: Colors.white, size: 22),
@@ -952,8 +922,8 @@ class _AiWritingPracticePageState extends State<AiWritingPracticePage>
                             color: feedback == DrawFeedback.correct
                                 ? const Color(0xFF4CAF50).withValues(alpha: 0.3)
                                 : feedback == DrawFeedback.wrong
-                                    ? const Color(0xFFEF4444).withValues(alpha: 0.3)
-                                    : Colors.transparent,
+                                ? const Color(0xFFEF4444).withValues(alpha: 0.3)
+                                : Colors.transparent,
                             blurRadius: 20,
                             spreadRadius: 4,
                           ),
@@ -966,48 +936,67 @@ class _AiWritingPracticePageState extends State<AiWritingPracticePage>
                             // Grid pattern
                             Positioned.fill(
                               child: IgnorePointer(
-                                child: CustomPaint(
-                                  painter: BoardGridPainter(),
-                                ),
+                                child: CustomPaint(painter: BoardGridPainter()),
                               ),
                             ),
 
                             // Drawing board
                             Positioned.fill(
-                              child: Obx(() => AbsorbPointer(
-                                    absorbing: _controller.isSubmitting.value ||
-                                        _controller.feedbackState.value !=
-                                            DrawFeedback.none,
-                                    child: Listener(
-                                      behavior: HitTestBehavior.opaque,
-                                      onPointerDown: _controller.onPointerDown,
-                                      onPointerMove: _controller.onPointerMove,
-                                      onPointerUp: _controller.onPointerUp,
-                                      child: DrawingBoard(
-                                        boardPanEnabled: false,
-                                        boardScaleEnabled: false,
-                                        controller:
-                                            _controller.drawingController,
-                                        background: SizedBox(
-                                          width: size,
-                                          height: size,
-                                        ),
+                              child: Obx(
+                                () => AbsorbPointer(
+                                  absorbing:
+                                      _controller.isSubmitting.value ||
+                                      _controller.feedbackState.value !=
+                                          DrawFeedback.none,
+                                  child: Listener(
+                                    behavior: HitTestBehavior.opaque,
+                                    onPointerDown: _controller.onPointerDown,
+                                    onPointerMove: _controller.onPointerMove,
+                                    onPointerUp: _controller.onPointerUp,
+                                    child: DrawingBoard(
+                                      boardPanEnabled: false,
+                                      boardScaleEnabled: false,
+                                      controller: _controller.drawingController,
+                                      background: SizedBox(
+                                        width: size,
+                                        height: size,
                                       ),
                                     ),
-                                  )),
+                                  ),
+                                ),
+                              ),
                             ),
 
                             // Predictive next-stroke prediction overlay
                             Positioned.fill(
                               child: IgnorePointer(
-                                child: Obx(() => CustomPaint(
-                                      painter: PredictiveStrokesPainter(
-                                        predictedSegments:
-                                            _controller.autoPredict.value
-                                                ? _controller.predictedSegments.toList()
-                                                : const [],
-                                      ),
-                                    )),
+                                child: Obx(
+                                  () => CustomPaint(
+                                    painter: PredictiveStrokesPainter(
+                                      predictedSegments:
+                                          _controller.autoPredict.value
+                                          ? _controller.predictedSegments
+                                                .toList()
+                                          : const [],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+
+                            // Stitching Debug Overlay (Yellow lines & threshold radius)
+                            Positioned.fill(
+                              child: IgnorePointer(
+                                child: Obx(
+                                  () => CustomPaint(
+                                    painter: StitchDebugPainter(
+                                      segments: _controller.showStitchDebug.value
+                                          ? _controller.stitchDebugSegments
+                                                .toList()
+                                          : const [],
+                                    ),
+                                  ),
+                                ),
                               ),
                             ),
 
@@ -1023,10 +1012,12 @@ class _AiWritingPracticePageState extends State<AiWritingPracticePage>
                       top: -34,
                       right: 8,
                       child: IgnorePointer(
-                        child: Obx(() => StageAttemptsIndicator(
-                              attemptLeft: _controller.attemptLeft.value,
-                              maxAttempts: 3,
-                            )),
+                        child: Obx(
+                          () => StageAttemptsIndicator(
+                            attemptLeft: _controller.attemptLeft.value,
+                            maxAttempts: 3,
+                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -1088,10 +1079,7 @@ class _AiWritingPracticePageState extends State<AiWritingPracticePage>
                       width: 2.5,
                     ),
                     boxShadow: const [
-                      BoxShadow(
-                        color: Color(0xFF1E293B),
-                        offset: Offset(2, 3),
-                      ),
+                      BoxShadow(color: Color(0xFF1E293B), offset: Offset(2, 3)),
                     ],
                   ),
                   child: Text(
@@ -1135,14 +1123,12 @@ class _AiWritingPracticePageState extends State<AiWritingPracticePage>
           Obx(() {
             final isLast =
                 _controller.charIndex.value == widget.characters.length - 1 &&
-                    _controller.rep.value == widget.repeatCount - 1;
+                _controller.rep.value == widget.repeatCount - 1;
             final isLoading = _controller.isSubmitting.value;
 
             return _Neo3DButton(
               label: isLast ? 'finish'.tr : 'next'.tr,
-              icon: isLast
-                  ? Icons.check_rounded
-                  : Icons.arrow_forward_rounded,
+              icon: isLast ? Icons.check_rounded : Icons.arrow_forward_rounded,
               bgColor: const Color(0xFF4CAF50),
               borderColor: const Color(0xFF1E293B),
               textColor: Colors.white,
@@ -1184,16 +1170,10 @@ class _AiWritingPracticePageState extends State<AiWritingPracticePage>
             onPressed: () {
               _controller.showHint();
             },
-            icon: const Icon(
-              Icons.lightbulb_rounded,
-              size: 20,
-            ),
+            icon: const Icon(Icons.lightbulb_rounded, size: 20),
             label: Text(
               'hint'.tr,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w900,
-              ),
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900),
             ),
           ),
         ],
@@ -1255,10 +1235,7 @@ class _Neo3DButtonState extends State<_Neo3DButton> {
           decoration: BoxDecoration(
             color: widget.bgColor,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: widget.borderColor,
-              width: 2.5,
-            ),
+            border: Border.all(color: widget.borderColor, width: 2.5),
             boxShadow: [
               BoxShadow(
                 color: widget.borderColor,
