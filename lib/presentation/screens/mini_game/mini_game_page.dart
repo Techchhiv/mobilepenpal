@@ -1009,35 +1009,6 @@ class _MiniGamePageState extends State<MiniGamePage>
 
     if (selectedGamesList.isEmpty) return;
 
-    final homeCtrl = Get.find<HomeController>();
-    final hasSub = homeCtrl.hasSubscription;
-    final locksEnabled = homeCtrl.featureLocksEnabled.value;
-
-    if (!hasSub && locksEnabled) {
-      final service = MiniGameService();
-      final recordedGameIds = <int>[];
-      for (final game in selectedGamesList) {
-        final res = await service.recordPlay(game.id);
-        if (res.code == 403) {
-          if (mounted) {
-            showModalBottomSheet(
-              context: context,
-              isScrollControlled: true,
-              backgroundColor: Colors.transparent,
-              builder: (_) => const SubscribeModal(),
-            );
-          }
-          return;
-        } else if (res.code == 200) {
-          recordedGameIds.add(game.id);
-        }
-      }
-      hubCtrl.recordPlayCounts(recordedGameIds);
-    }
-
-    final playedCount = _box.read<int>('dynamic_minigame_played_count') ?? 0;
-    _box.write('dynamic_minigame_played_count', playedCount + 1);
-
     if (!mounted) return;
     final overlayState = Overlay.of(context, rootOverlay: true);
     final overlayEntry = OverlayEntry(
@@ -1049,6 +1020,51 @@ class _MiniGamePageState extends State<MiniGamePage>
     overlayState.insert(overlayEntry);
 
     try {
+      final homeCtrl = Get.find<HomeController>();
+      final hasSub = homeCtrl.hasSubscription;
+      final locksEnabled = homeCtrl.featureLocksEnabled.value;
+
+      if (!hasSub && locksEnabled) {
+        final service = MiniGameService();
+        final results = await Future.wait(
+          selectedGamesList.map((game) => service.recordPlay(game.id)),
+        );
+
+        final recordedGameIds = <int>[];
+        bool limitExceeded = false;
+
+        for (int i = 0; i < results.length; i++) {
+          final res = results[i];
+          if (res.code == 403) {
+            limitExceeded = true;
+          } else if (res.code == 200) {
+            recordedGameIds.add(selectedGamesList[i].id);
+          }
+        }
+
+        if (recordedGameIds.isNotEmpty) {
+          hubCtrl.recordPlayCounts(recordedGameIds);
+        }
+
+        if (limitExceeded && recordedGameIds.isEmpty) {
+          if (overlayEntry.mounted) {
+            overlayEntry.remove();
+          }
+          if (mounted) {
+            showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              backgroundColor: Colors.transparent,
+              builder: (_) => const SubscribeModal(),
+            );
+          }
+          return;
+        }
+      }
+
+      final playedCount = _box.read<int>('dynamic_minigame_played_count') ?? 0;
+      _box.write('dynamic_minigame_played_count', playedCount + 1);
+
       if (Get.isRegistered<DynamicMiniGameController>()) {
         Get.delete<DynamicMiniGameController>();
       }
@@ -1070,7 +1086,9 @@ class _MiniGamePageState extends State<MiniGamePage>
       );
 
       // Remove overlay before awaiting route completion so it doesn't stay on screen during gameplay
-      overlayEntry.remove();
+      if (overlayEntry.mounted) {
+        overlayEntry.remove();
+      }
 
       await routeFuture;
     } catch (e) {
@@ -1078,6 +1096,9 @@ class _MiniGamePageState extends State<MiniGamePage>
         overlayEntry.remove();
       }
     } finally {
+      if (overlayEntry.mounted) {
+        overlayEntry.remove();
+      }
       hubCtrl.refreshDailyPlays();
       if (mounted) {
         setState(() {});

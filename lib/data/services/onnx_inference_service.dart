@@ -55,7 +55,7 @@ class OnnxInferenceService {
     11: '៩',
   };
 
-  static final List<String> _consonantChars = (List<String>.from([
+  static const List<String> _consonantChars = [
     'ក',
     'ខ',
     'គ',
@@ -89,9 +89,9 @@ class OnnxInferenceService {
     'ហ',
     'ឡ',
     'អ',
-  ]))..sort();
+  ];
 
-  static final List<String> _independentVowelChars = (List<String>.from([
+  static const List<String> _independentVowelChars = [
     'ឥ',
     'ឦ',
     'ឧ',
@@ -104,35 +104,36 @@ class OnnxInferenceService {
     'ឯ',
     'ឰ',
     'ឱ',
+    'ឲ',
     'ឳ',
-  ]))..sort();
+  ];
 
-  static final List<String> _dependentVowelChars = (List<String>.from([
+  static const List<String> _dependentVowelChars = [
     'ា',
+    'ាំ',
     'ិ',
+    'ិះ',
     'ី',
     'ឹ',
     'ឺ',
     'ុ',
+    'ុំ',
+    'ុះ',
     'ូ',
     'ួ',
     'ើ',
     'ឿ',
     'ៀ',
     'េ',
+    'េះ',
     'ែ',
     'ៃ',
     'ោ',
-    'ៅ',
-    'ុំ',
-    'ំ',
-    'ាំ',
-    'ះ',
-    'ិះ',
-    'ុះ',
-    'េះ',
     'ោះ',
-  ]))..sort();
+    'ៅ',
+    'ំ',
+    'ះ',
+  ];
 
   void init() {
     if (!_envInitialized) {

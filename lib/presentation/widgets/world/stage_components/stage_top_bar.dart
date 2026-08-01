@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:lottie/lottie.dart';
 import 'package:mobilepenpal/core/theme/app_colors.dart';
-import 'package:mobilepenpal/data/controllers/world/stage_animation_controller.dart';
-import 'package:get/get.dart';
 import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
+import 'package:mobilepenpal/data/controllers/shop/shop_controller.dart';
+import 'package:mobilepenpal/data/controllers/world/stage_animation_controller.dart';
 
-/// The top bar for a stage page showing a pencil avatar, a progress
+/// The top bar for a stage page showing the user's shop avatar, a progress
 /// indicator with dots/stars, and an action button.
-///
-/// Passive widget: No internal Obx. Caller must manage reactivity.
 class StageTopBar extends StatelessWidget {
   const StageTopBar({
     super.key,
@@ -35,60 +34,65 @@ class StageTopBar extends StatelessWidget {
   /// Icon displayed on the action button.
   final IconData actionIcon;
 
-  /// Custom avatar widget to display instead of the pencil.
+  /// Custom avatar widget to display instead of the default shop avatar.
   final Widget? avatarWidget;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: 16, right: 16, top: 8),
+      padding: const EdgeInsets.only(left: 12, right: 12, top: 8),
       child: Row(
         children: [
-          // Pencil avatar
+          // Left User Shop Avatar Icon
           Container(
-            width: 50,
-            height: 50,
+            width: 52,
+            height: 52,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.white.withValues(alpha: 0.22),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.35),
-                width: 2,
-              ),
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.1),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
             child: ClipOval(
               child: avatarWidget ?? _buildDefaultAvatar(),
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
 
-          // Progress indicator
+          // Center White Pill Progress Bar
           Expanded(
             child: Container(
-              height: 60,
+              height: 54,
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(22),
+                borderRadius: BorderRadius.circular(30),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
               child: Padding(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 10,
+                  horizontal: 16,
+                  vertical: 8,
                 ),
                 child: LayoutBuilder(
                   builder: (context, cst) {
                     final w = cst.maxWidth;
                     final h = cst.maxHeight;
 
-                    // Calculate dynamic sizes based on available width and exercise count
                     final spacing = totalExercises > 0 ? (w / totalExercises) : w;
-                    
-                    // Aim for dots to take up about 50% of their allotted space, capped at 18
-                    final dotSize = (spacing * 0.5).clamp(8.0, 18.0);
-                    // Stars are roughly 2x the dot size, capped at 40
-                    final starSize = (dotSize * 2.2).clamp(20.0, 40.0);
-                    // Bar height scales with dots
-                    final barHeight = (dotSize * 0.6).clamp(6.0, 12.0);
+                    final dotSize = (spacing * 0.5).clamp(8.0, 16.0);
+                    final starSize = (dotSize * 2.2).clamp(20.0, 36.0);
+                    final barHeight = (dotSize * 0.6).clamp(6.0, 10.0);
 
                     final barTop = (h - barHeight) / 2;
                     final dotTop = barTop + (barHeight / 2) - (dotSize / 2);
@@ -185,22 +189,29 @@ class StageTopBar extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
 
-          // Action button
+          // Right Teal Action / Pause Button
           GestureDetector(
             onTap: onActionTap,
             child: Container(
-              width: 50,
-              height: 50,
-              decoration: const BoxDecoration(
-                color: Colors.white60,
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                color: const Color(0xFF2B7A6B),
                 shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF2B7A6B).withValues(alpha: 0.35),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
               child: Icon(
                 actionIcon,
-                color: AppColors.buttonPrimary,
-                size: 28,
+                color: Colors.white,
+                size: 26,
               ),
             ),
           ),
@@ -256,11 +267,34 @@ class StageTopBar extends StatelessWidget {
   Widget _buildDefaultAvatar() {
     if (Get.isRegistered<HomeController>()) {
       final homeController = Get.find<HomeController>();
-      final shopAvatar = homeController.currentShopAvatar;
-      if (shopAvatar != null && shopAvatar.id != 'default' && shopAvatar.assetPath != null) {
-        return Image.asset(shopAvatar.assetPath!, fit: BoxFit.cover);
+      final ShopAvatar? shopAvatar = homeController.currentShopAvatar;
+
+      if (shopAvatar != null && shopAvatar.assetPath != null && shopAvatar.assetPath!.isNotEmpty) {
+        return Padding(
+          padding: const EdgeInsets.all(2),
+          child: Image.asset(
+            shopAvatar.assetPath!,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => Icon(
+              shopAvatar.icon ?? Icons.person,
+              size: 28,
+              color: const Color(0xFF2B7A6B),
+            ),
+          ),
+        );
+      } else if (shopAvatar?.icon != null) {
+        return Icon(
+          shopAvatar!.icon,
+          size: 28,
+          color: const Color(0xFF2B7A6B),
+        );
       }
     }
-    return const Icon(Icons.person, size: 28, color: Colors.white70);
+
+    return const Icon(
+      Icons.person,
+      size: 28,
+      color: Color(0xFF2B7A6B),
+    );
   }
 }

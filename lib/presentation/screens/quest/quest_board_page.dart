@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobilepenpal/core/config/app_constants.dart';
-import 'package:mobilepenpal/core/theme/app_colors.dart';
 import 'package:mobilepenpal/data/controllers/quest/quest_board_controller.dart';
-import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
-import 'package:mobilepenpal/data/controllers/shop/shop_controller.dart';
 import 'package:mobilepenpal/presentation/routes/app_routes.dart';
 import 'package:mobilepenpal/presentation/widgets/loading_overly.dart';
 import 'package:mobilepenpal/presentation/widgets/world/stage_components/stage_drawing_board.dart';
-import 'package:mobilepenpal/presentation/widgets/world/stage_components/stage_illustration.dart';
 import 'package:mobilepenpal/presentation/widgets/world/stage_components/stage_top_bar.dart';
 import 'package:mobilepenpal/presentation/widgets/world/stage_components/stage_pause_dialog.dart';
+import 'package:mobilepenpal/presentation/widgets/world/stage_components/stage_variant_bar.dart';
+import 'package:mobilepenpal/presentation/widgets/world/stage_components/mascot_board_illustration.dart';
+import 'package:mobilepenpal/presentation/widgets/world/stage_components/stage_floating_action_buttons.dart';
 import 'package:mobilepenpal/data/controllers/dashboard/navigation_controller.dart';
 
 class QuestBoardPage extends GetView<QuestBoardController> {
@@ -34,24 +33,10 @@ class QuestBoardPage extends GetView<QuestBoardController> {
               children: [
                 Positioned.fill(
                   child: Image.asset(
-                    "assets/images/backgrounds/stage_background.png",
+                    "assets/images/backgrounds/bg_writting.png",
                     fit: BoxFit.cover,
-                  ),
-                ),
-
-                Positioned.fill(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          const Color(0xFF2B7A78).withValues(alpha: 1),
-                          const Color(0xFF6B9F8E).withValues(alpha: 0.0),
-                        ],
-                        stops: const [0.15, 0.45],
-                      ),
-                    ),
+                    errorBuilder: (_, __, ___) =>
+                        Container(color: const Color(0xFFFCF7F2)),
                   ),
                 ),
 
@@ -64,45 +49,13 @@ class QuestBoardPage extends GetView<QuestBoardController> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 12,
-                          vertical: 16,
+                          vertical: 12,
                         ),
                         child: Column(
                           children: [
-                            Obx(() {
-                              Widget? avatarWidget;
-                              if (Get.isRegistered<HomeController>()) {
-                                final homeController =
-                                    Get.find<HomeController>();
-                                final ShopAvatar? shopAvatar =
-                                    homeController.currentShopAvatar;
-
-                                if (shopAvatar != null &&
-                                    shopAvatar.id != 'default') {
-                                  if (shopAvatar.assetPath != null) {
-                                    avatarWidget = Padding(
-                                      padding: const EdgeInsets.all(2),
-                                      child: Image.asset(
-                                        shopAvatar.assetPath!,
-                                        fit: BoxFit.cover,
-                                      ),
-                                    );
-                                  } else {
-                                    avatarWidget = Icon(
-                                      shopAvatar.icon ?? Icons.person,
-                                      size: 28,
-                                      color: Colors.white,
-                                    );
-                                  }
-                                } else {
-                                  avatarWidget = const Icon(
-                                    Icons.person,
-                                    size: 28,
-                                    color: Colors.white,
-                                  );
-                                }
-                              }
-
-                              return StageTopBar(
+                            // Top Navigation Header
+                            Obx(
+                              () => StageTopBar(
                                 totalExercises: controller.totalExercises,
                                 completedExercises:
                                     controller.completedExercises,
@@ -111,38 +64,49 @@ class QuestBoardPage extends GetView<QuestBoardController> {
                                 onActionTap: () =>
                                     _showPauseDialog(Get.context!),
                                 actionIcon: Icons.pause,
-                                avatarWidget: avatarWidget,
-                              );
-                            }),
-                            const SizedBox(height: 16),
+                              ),
+                            ),
+
+                            const SizedBox(height: 8),
+
+                            // Top Variant Bar: Character Options + Audio Speaker
                             Obx(() {
-                              final show = controller.showIllustration;
-                              return AnimatedSwitcher(
-                                duration: const Duration(milliseconds: 220),
-                                switchInCurve: Curves.easeOut,
-                                switchOutCurve: Curves.easeIn,
-                                transitionBuilder: (child, anim) =>
-                                    SizeTransition(
-                                      sizeFactor: anim,
-                                      alignment: Alignment.topCenter,
-                                      child: child,
-                                    ),
-                                child: show
-                                    ? Column(
-                                        key: const ValueKey('illus'),
-                                        children: [
-                                          _buildIllustrationWrapper(),
-                                          const SizedBox(height: 0),
-                                        ],
-                                      )
-                                    : const SizedBox(
-                                        key: ValueKey('no_illus'),
-                                        height: 20,
-                                      ),
+                              final variants =
+                                  controller.characterVowelFormsList;
+                              final currentSelected =
+                                  controller.selectedCharacter.value;
+                              final activeIndex = variants
+                                  .indexOf(currentSelected)
+                                  .clamp(
+                                    0,
+                                    variants.isEmpty ? 0 : variants.length - 1,
+                                  );
+
+                              return StageVariantBar(
+                                variants: variants,
+                                currentIndex: activeIndex,
+                                onVariantSelected: (index) {
+                                  // Variant selection disabled since variant audio files are currently missing.
+                                  // Always play the dynamic exercise character audio (consonant, vowel, or number).
+                                  controller.playCurrentCharacterAudio();
+
+                                  /*
+                                  if (index >= 0 && index < variants.length) {
+                                    controller.selectedCharacter.value =
+                                        variants[index];
+                                    controller.playCurrentCharacterAudio();
+                                  }
+                                  */
+                                },
+                                onSpeakerTap: () {
+                                  controller.playCurrentCharacterAudio();
+                                },
                               );
                             }),
 
-                            // Prevent trying to build the board when no exercises are loaded yet
+                            const SizedBox(height: 8),
+
+                            // 1:1 Aspect Ratio Drawing Grid Board
                             if (!controller.isLoading.value &&
                                 controller.exercises.isNotEmpty)
                               Obx(
@@ -173,20 +137,54 @@ class QuestBoardPage extends GetView<QuestBoardController> {
                                       controller.anim.guideCirclePx.value,
                                   isGuiding: controller.anim.isGuiding.value,
                                   showMorph: controller.anim.showMorph.value,
-                                  morphProgress: controller.anim.morphProgress.value,
-                                  userMorphStrokes: controller.anim.userMorphStrokes,
-                                  templateMorphStrokes: controller.anim.templateMorphStrokes,
+                                  morphProgress:
+                                      controller.anim.morphProgress.value,
+                                  userMorphStrokes:
+                                      controller.anim.userMorphStrokes,
+                                  templateMorphStrokes:
+                                      controller.anim.templateMorphStrokes,
                                   stampImage: controller.currentStampImage,
                                   showGuiding: true,
                                   activeBoardCount: controller.activeBoardCount,
                                 ),
                               ),
 
-                            const SizedBox(height: 8),
-                            _buildCharacterOptions(),
-                            const SizedBox(height: 24),
-                            _buildBottomButtons(),
-                            const SizedBox(height: 8),
+                            const SizedBox(height: 12),
+
+                            // Bottom Area: Bottom-Left Mascot Board + Bottom-Right Action Buttons
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                left: 0,
+                                right: 12,
+                              ),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  // Bottom-Left Mascot Board framing dynamic quest exercise image
+                                  Obx(
+                                    () => MascotBoardIllustration(
+                                      illustrationWidget:
+                                          _buildIllustrationContent(),
+                                      height: 230,
+                                    ),
+                                  ),
+
+                                  const Spacer(),
+
+                                  // Bottom-Right Action Controls (Delete & Skip/Next)
+                                  Obx(
+                                    () => StageFloatingActionButtons(
+                                      onClear: controller.clearBoard,
+                                      onSubmitOrSkip:
+                                          controller.skipCurrentExercise,
+                                      isSubmitting:
+                                          controller.isSubmitting.value,
+                                      submitIcon: Icons.skip_next_rounded,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -201,257 +199,29 @@ class QuestBoardPage extends GetView<QuestBoardController> {
     );
   }
 
-  Widget _buildIllustrationWrapper() {
-    return Obx(() {
-      return StageIllustration(
-        illustrationAssetPath: controller.anim.illustrationAssetPath.value,
-        illustrationLabel: controller.anim.illustrationLabel.value,
-        selectedCharacter: controller.selectedCharacter.value,
-      );
-    });
-  }
-
-  Widget _buildCharacterOptions() {
-    return Obx(() {
-      final forms = controller.characterVowelFormsList;
-      if (forms.isEmpty) return const SizedBox.shrink();
-
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 18),
-        child: SizedBox(
-          height: 64,
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              const double padH = 12;
-              const double audioBtnW = 140;
-              const double gapToAudio = 12;
-
-              final availableW = (constraints.maxWidth - audioBtnW - gapToAudio)
-                  .clamp(0.0, constraints.maxWidth);
-
-              return Stack(
-                alignment: Alignment.center,
-                children: [
-                  Align(
-                    alignment: Alignment.center,
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(maxWidth: availableW),
-                      child: IntrinsicWidth(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 10,
-                            horizontal: padH,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: SingleChildScrollView(
-                              scrollDirection: Axis.horizontal,
-                              physics: const BouncingScrollPhysics(),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: forms.map((char) {
-                                  return Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 10,
-                                    ),
-                                    child: Text(
-                                      char,
-                                      softWrap: false,
-                                      style: TextStyle(
-                                        fontSize: 24,
-                                        fontWeight: FontWeight.w800,
-                                        color: Colors.grey.shade700,
-                                      ),
-                                    ),
-                                  );
-                                }).toList(),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: Obx(() {
-                      final isPlaying = controller.audio.isPlaying.value;
-
-                      return TweenAnimationBuilder<double>(
-                        tween: Tween(begin: 1.0, end: isPlaying ? 1.15 : 1.0),
-                        duration: const Duration(milliseconds: 700),
-                        curve: Curves.easeInOut,
-                        builder: (context, scale, child) {
-                          return AnimatedScale(
-                            scale: scale,
-                            duration: const Duration(milliseconds: 90),
-                            curve: Curves.easeOut,
-                            child: Stack(
-                              alignment: Alignment.center,
-                              children: [
-                                if (isPlaying)
-                                  TweenAnimationBuilder<double>(
-                                    tween: Tween(begin: 0.9, end: 1.2),
-                                    duration: const Duration(milliseconds: 500),
-                                    curve: Curves.easeOut,
-                                    builder: (_, ringScale, __) {
-                                      return Opacity(
-                                        opacity: 0.35,
-                                        child: Transform.scale(
-                                          scale: ringScale,
-                                          child: Container(
-                                            width: 54,
-                                            height: 54,
-                                            decoration: BoxDecoration(
-                                              shape: BoxShape.circle,
-                                              border: Border.all(
-                                                color: Colors.white,
-                                                width: 2,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  ),
-
-                                Material(
-                                  color: Colors.transparent,
-                                  shape: const CircleBorder(),
-                                  child: Ink(
-                                    width: 48,
-                                    height: 48,
-                                    decoration: const BoxDecoration(
-                                      color: AppColors.buttonSecondary,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: InkWell(
-                                      customBorder: const CircleBorder(),
-                                      onTap:
-                                          controller.playCurrentCharacterAudio,
-                                      child: Center(
-                                        child: AnimatedSwitcher(
-                                          duration: const Duration(
-                                            milliseconds: 200,
-                                          ),
-                                          transitionBuilder: (c, anim) =>
-                                              ScaleTransition(
-                                                scale: anim,
-                                                child: c,
-                                              ),
-                                          child: Icon(
-                                            isPlaying
-                                                ? Icons.graphic_eq
-                                                : Icons.volume_up,
-                                            key: ValueKey(isPlaying),
-                                            color: Colors.white,
-                                            size: 26,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        },
-                      );
-                    }),
-                  ),
-                ],
-              );
-            },
-          ),
-        ),
-      );
-    });
-  }
-
-  Widget _buildBottomButtons() {
-    Widget buildActionButton({
-      required VoidCallback? onTap,
-      required Color bg,
-      required Color fg,
-      required IconData icon,
-      required String label,
-      Color? borderColor,
-    }) {
-      return Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(28),
-          onTap: onTap,
-          child: Ink(
-            height: 56,
-            decoration: BoxDecoration(
-              color: bg,
-              borderRadius: BorderRadius.circular(28),
-              border: borderColor != null
-                  ? Border.all(color: borderColor, width: 2)
-                  : null,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.10),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(icon, color: fg),
-                const SizedBox(width: 8),
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: fg,
-                  ),
-                ),
-              ],
-            ),
+  Widget _buildIllustrationContent() {
+    final path = controller.anim.illustrationAssetPath.value;
+    if (path.isNotEmpty) {
+      return Image.asset(
+        path,
+        fit: BoxFit.contain,
+        errorBuilder: (_, __, ___) => Text(
+          controller.selectedCharacter.value,
+          style: const TextStyle(
+            fontSize: 36,
+            fontWeight: FontWeight.w900,
+            color: Color(0xFF2B7A6B),
           ),
         ),
       );
     }
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        children: [
-          Expanded(
-            child: buildActionButton(
-              onTap: controller.clearBoard,
-              bg: Colors.white,
-              fg: Colors.red.shade400,
-              icon: Icons.delete,
-              label: "delete".tr,
-              borderColor: Colors.pink.shade200,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Obx(() {
-              final enabled = controller.canSkip;
-              return buildActionButton(
-                onTap: enabled ? controller.skipCurrentExercise : null,
-                bg: enabled
-                    ? AppColors.buttonPrimary
-                    : AppColors.buttonPrimary.withValues(alpha: 0.55),
-                fg: Colors.white.withValues(alpha: enabled ? 1.0 : 0.65),
-                icon: Icons.skip_next,
-                label: "skip".tr,
-              );
-            }),
-          ),
-        ],
+    return Text(
+      controller.selectedCharacter.value,
+      style: const TextStyle(
+        fontSize: 36,
+        fontWeight: FontWeight.w900,
+        color: Color(0xFF2B7A6B),
       ),
     );
   }
