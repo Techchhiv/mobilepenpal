@@ -177,9 +177,9 @@ class SubscribeModal extends StatelessWidget {
 
               // ===== Feature Benefits =====
               _buildFeatureItem(
-                icon: Icons.public_rounded,
-                iconColor: const Color(0xFF0D9488),
-                bgColor: const Color(0xFF14B8A6),
+                icon: Icons.favorite_rounded,
+                iconColor: const Color(0xFFD32F2F),
+                bgColor: const Color(0xFFE53935),
                 title: 'benefit_worlds_title'.tr,
               ),
               const SizedBox(height: 10),

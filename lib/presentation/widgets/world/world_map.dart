@@ -7,7 +7,6 @@ import 'package:mobilepenpal/data/controllers/world/world_controller.dart';
 import 'package:mobilepenpal/data/models/world/world.dart';
 import 'package:mobilepenpal/data/models/world/world_level.dart';
 import 'package:mobilepenpal/presentation/routes/app_routes.dart';
-import 'package:mobilepenpal/presentation/widgets/home/subscribe_modal.dart';
 
 class WorldMap extends StatefulWidget {
   final World world;
@@ -219,11 +218,6 @@ class _WorldMapState extends State<WorldMap> with TickerProviderStateMixin {
   }
 
   Future<void> _onLevelTap(WorldLevel level) async {
-    if (level.isLockedBySubscription) {
-      Get.dialog(const SubscribeModal());
-      return;
-    }
-
     final bool isUnlocked = _boolish(level.isUnlocked);
 
     if (!isUnlocked) {
@@ -425,7 +419,7 @@ class _LevelCircleState extends State<LevelCircle> {
   bool _isPressed = false;
 
   bool get _isUnlocked => widget.level.isUnlocked;
-  bool get _isSubLocked => widget.level.isLockedBySubscription == true;
+  bool get _isSubLocked => false;
   double get _progress =>
       ((widget.level.completionPercentage) / 100.0).clamp(0.0, 1.0);
   bool get _isCompleted => _progress >= 1.0;

@@ -11,6 +11,10 @@ import 'package:mobilepenpal/data/models/level/level_stage.dart';
 import 'package:mobilepenpal/presentation/routes/app_routes.dart';
 import 'package:mobilepenpal/presentation/widgets/app_snackbar.dart';
 import 'package:mobilepenpal/presentation/widgets/loading_overly.dart';
+import 'package:mobilepenpal/data/controllers/world/heart_controller.dart';
+import 'package:mobilepenpal/presentation/widgets/world/out_of_hearts_modal.dart';
+import 'package:mobilepenpal/presentation/widgets/world/heart_status_widget.dart';
+import 'package:mobilepenpal/presentation/widgets/world/heart_deduct_overlay.dart';
 
 class LevelDetailPage extends StatefulWidget {
   const LevelDetailPage({super.key});
@@ -132,6 +136,9 @@ class _LevelDetailPageState extends State<LevelDetailPage> {
                   ),
                 ),
               ),
+              const SizedBox(width: 6),
+              const HeartStatusWidget(compact: true),
+              const SizedBox(width: 4),
               IconButton(
                 icon: const Icon(
                   Icons.home_rounded,
@@ -412,16 +419,42 @@ class _LevelDetailPageState extends State<LevelDetailPage> {
   }
 
   Future<void> _navigateToStage(int stageId) async {
+    final heartController = Get.isRegistered<HeartController>()
+        ? HeartController.to
+        : Get.put(HeartController());
+
+    if (!heartController.isUnlimited.value && heartController.currentHearts.value <= 0) {
+      Get.dialog(const OutOfHeartsModal());
+      return;
+    }
+
     final controller = Get.find<LevelController>();
     final stageController = Get.find<StageController>();
 
-    controller.isLoading.value = true;
+    // Start Parallel Execution: Heart deduct animation (~700ms) + Stage data loading
+    final isFreeTier = !heartController.isUnlimited.value;
+    final animationFuture = isFreeTier
+        ? HeartDeductOverlay.show(context)
+        : Future.value();
+
+    bool isDataLoaded = false;
+    final loadFuture = stageController.loadStage(
+      newStageId: stageId,
+      newWorldId: controller.worldId,
+      newLevelId: controller.levelId,
+    ).then((_) {
+      isDataLoaded = true;
+    });
+
     try {
-      await stageController.loadStage(
-        newStageId: stageId,
-        newWorldId: controller.worldId,
-        newLevelId: controller.levelId,
-      );
+      // 1. Wait for animation to complete first
+      await animationFuture;
+
+      // 2. If data loading is still in progress, display loading overlay until finished
+      if (!isDataLoaded) {
+        controller.isLoading.value = true;
+      }
+      await loadFuture;
 
       if (stageController.currentStage.value == null) {
         AppSnackbar.show(
@@ -429,6 +462,12 @@ class _LevelDetailPageState extends State<LevelDetailPage> {
           'stage_not_found'.tr,
           backgroundColor: Colors.red,
         );
+        return;
+      }
+
+      final canPlay = await heartController.useHeart();
+      if (!canPlay) {
+        Get.dialog(const OutOfHeartsModal());
         return;
       }
 

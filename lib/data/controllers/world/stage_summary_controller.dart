@@ -5,6 +5,8 @@ import 'package:mobilepenpal/data/controllers/world/level_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/world_controller.dart';
 import 'package:mobilepenpal/presentation/routes/app_routes.dart';
+import 'package:mobilepenpal/data/controllers/world/heart_controller.dart';
+import 'package:mobilepenpal/presentation/widgets/world/out_of_hearts_modal.dart';
 
 class StageSummaryController extends GetxController
     with GetTickerProviderStateMixin {
@@ -127,7 +129,22 @@ class StageSummaryController extends GetxController
     }
   }
 
-  void retryStage() {
+  Future<void> retryStage() async {
+    final heartController = Get.isRegistered<HeartController>()
+        ? HeartController.to
+        : Get.put(HeartController());
+
+    if (!heartController.isUnlimited.value && heartController.currentHearts.value <= 0) {
+      Get.dialog(const OutOfHeartsModal());
+      return;
+    }
+
+    final canPlay = await heartController.useHeart();
+    if (!canPlay) {
+      Get.dialog(const OutOfHeartsModal());
+      return;
+    }
+
     try {
       final stageController = Get.find<StageController>();
       stageController.resetForRetry();

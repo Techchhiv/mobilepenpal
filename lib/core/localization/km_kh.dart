@@ -298,6 +298,13 @@ final Map<String, String> kmKH = {
   'month': 'ខែ',
   'premium': 'ពិសេស',
   'premium_content': 'មាតិកាពិសេស',
+  'out_of_hearts': 'អស់បេះដូងហើយ!',
+  'out_of_hearts_desc':
+      'អ្នកអស់បេះដូងហើយ។ រង់ចាំបេះដូងស្តារឡើងវិញ ឬជាវគម្រោងពិសេសដើម្បីទទួលបានបេះដូងមិនកំណត់!',
+  'next_heart_in': 'បេះដូងបន្ទាប់ក្នុង',
+  'get_unlimited_hearts': 'រៀនដោយគ្មានការកំណត់',
+  'wait_for_timer': 'រង់ចាំបេះដូង',
+  'unlimited': 'មិនកំណត់',
   'subscribe_to_unlock': 'ធ្វើការជាវដើម្បីដោះសោ',
   'progress': 'ធ្វើបាន',
   'lessons': 'មេរៀន',
@@ -460,7 +467,7 @@ final Map<String, String> kmKH = {
   'unlock_unlimited_title': 'ធ្វើការជាវដើម្បីទទួលបានមុខងារបន្ថែម',
   'unlock_unlimited_subtitle':
       'ទទួលបានសិទ្ធិពេញលេញក្នុងការរៀនអក្សរខ្មែរ AI និងហ្គេមអប់រំ។',
-  'benefit_worlds_title': 'ដោះសោមេរៀនទាំងអស់',
+  'benefit_worlds_title': 'ទទួលបានបេះដូងដោយគ្មានការកំណត់',
   'benefit_ai_title': 'ដោះសោការសរសេរដៃជាមួយ AI',
   'benefit_minigames_title': 'លេងហ្គេមអប់រំគ្មានការកំណត់',
   'subscribe_contact_us': 'ទាក់ទងមកយើងដើម្បីដំណើរការការជាវ:',

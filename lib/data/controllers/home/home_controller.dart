@@ -16,6 +16,7 @@ import 'package:mobilepenpal/presentation/widgets/confirm_modal.dart';
 import 'package:mobilepenpal/presentation/widgets/home/pin_entry_widget.dart';
 import 'package:mobilepenpal/data/controllers/shop/shop_controller.dart';
 import 'package:mobilepenpal/data/services/mini_game_service.dart';
+import 'package:mobilepenpal/data/controllers/world/heart_controller.dart';
 import 'dart:developer' as dev;
 
 enum SummaryView { daily, weekly }
@@ -113,6 +114,7 @@ class HomeController extends GetxController {
     if (cached is Map<String, dynamic>) {
       try {
         student.value = Student.fromJson(Map<String, dynamic>.from(cached));
+        _initHeartController();
       } catch (_) {}
     }
 
@@ -120,6 +122,19 @@ class HomeController extends GetxController {
     fetchSubscriptionSettings();
     fetchFeatureLockSettings();
     fetchQuestionTemplatesInBackground();
+  }
+
+  void _initHeartController() {
+    final st = student.value;
+    if (st != null) {
+      if (!Get.isRegistered<HeartController>()) {
+        Get.put(HeartController());
+      }
+      HeartController.to.initForStudent(
+        studentId: st.id,
+        hasSubscription: st.hasSubscription,
+      );
+    }
   }
 
   Future<void> fetchQuestionTemplatesInBackground() async {
@@ -154,6 +169,8 @@ class HomeController extends GetxController {
         student.value = response.data!.profile;
         await _box.write('student', student.value!.toJson());
         studentProgress.assignAll(response.data!.progress);
+
+        _initHeartController();
 
         await _syncParentPin(student.value!);
 

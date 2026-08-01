@@ -7,8 +7,7 @@ import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/world_controller.dart';
 import 'package:mobilepenpal/presentation/routes/app_routes.dart';
 import 'package:mobilepenpal/presentation/widgets/home/course_card.dart';
-import 'package:mobilepenpal/presentation/widgets/home/premium_course_card.dart';
-import 'package:mobilepenpal/presentation/widgets/home/subscribe_modal.dart';
+import 'package:mobilepenpal/presentation/widgets/world/heart_status_widget.dart';
 
 class StudentHome extends StatelessWidget {
   final HomeController homeController;
@@ -38,6 +37,8 @@ class StudentHome extends StatelessWidget {
                     ),
                   ),
                 ),
+                const HeartStatusWidget(),
+                const SizedBox(width: 4),
                 Obx(() {
                   final isBusy = homeController.isProfileLoading.value;
                   return IconButton(
@@ -125,7 +126,6 @@ class StudentHome extends StatelessWidget {
                           itemBuilder: (_, index) {
                             final progress = list[index];
                             final unlocked = progress.isUnlocked == true;
-                            final isSubLocked = progress.isLockedBySubscription;
                             final locale = Get.find<LocaleController>();
                             final title = locale.isKhmer
                                 ? (progress.name)
@@ -134,34 +134,15 @@ class StudentHome extends StatelessWidget {
                                 ? (progress.description)
                                 : (progress.descriptionEn);
 
-                            final Color primaryColor = isSubLocked
-                                ? const Color(0xFFB8860B)
-                                : _getColorByIndex(index);
+                            final Color primaryColor = _getColorByIndex(index);
 
                             String buttonLabel;
-                            if (isSubLocked) {
-                              buttonLabel = 'subscribe'.tr;
-                            } else if (!unlocked) {
+                            if (!unlocked) {
                               buttonLabel = 'locked'.tr;
                             } else if (progress.levelsCompleted > 0) {
                               buttonLabel = 'continue'.tr;
                             } else {
                               buttonLabel = 'start'.tr;
-                            }
-
-                            if (isSubLocked) {
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 24),
-                                child: PremiumCourseCard(
-                                  courseTitle: title,
-                                  courseSubtitle: subtitle,
-                                  badgeText: 'premium'.tr,
-                                  completedLessons: progress.levelsCompleted,
-                                  totalLessons: progress.levelsTotal,
-                                  buttonText: buttonLabel,
-                                  onTap: () => _showSubscriptionPrompt(),
-                                ),
-                              );
                             }
 
                             final cardBgColor =
@@ -187,7 +168,7 @@ class StudentHome extends StatelessWidget {
                                 onTap: unlocked
                                     ? () => _openWorld(progress.id)
                                     : null,
-                                isLocked: !unlocked && !isSubLocked,
+                                isLocked: !unlocked,
                               ),
                             );
                           },
@@ -210,10 +191,6 @@ class StudentHome extends StatelessWidget {
       });
       Get.toNamed(route);
     }
-  }
-
-  void _showSubscriptionPrompt() {
-    Get.dialog(const SubscribeModal());
   }
 
   final List<Color> _courseColors = [
