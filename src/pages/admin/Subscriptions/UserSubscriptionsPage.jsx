@@ -16,7 +16,6 @@ const FEATURE_LOCKS_DEFAULTS = {
     enabled: true,
     mini_game_free_daily_limit: 1,
     ai_writing_free_char_limit: 4,
-    learning_free_stage_limit: 10,
 };
 
 export default function UserSubscriptionsPage() {
@@ -693,25 +692,6 @@ export default function UserSubscriptionsPage() {
                                                 required
                                             />
                                             <div className="form-text">Free consonants allowed (e.g. 4 = ក, ខ, គ, ឃ)</div>
-                                        </div>
-
-                                        <div className="col-12">
-                                            <label className="form-label fw-semibold">My Learning Free Stage Limit</label>
-                                            <input
-                                                type="number"
-                                                min="0"
-                                                step="1"
-                                                className="form-control"
-                                                value={featureLocks.learning_free_stage_limit !== undefined ? featureLocks.learning_free_stage_limit : (parseInt(featureLocks.learning_free_char_limit) || 10)}
-                                                onChange={(e) =>
-                                                    setFeatureLocks((s) => ({
-                                                        ...s,
-                                                        learning_free_stage_limit: parseInt(e.target.value) || 0,
-                                                    }))
-                                                }
-                                                required
-                                            />
-                                            <div className="form-text">Total free stages allowed sequentially across all worlds (e.g. 10 or 40)</div>
                                         </div>
                                     </div>
                                     <div className="modal-footer">

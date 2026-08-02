@@ -220,12 +220,6 @@ const WorldCreate = () => {
                       >
                         {form.is_unlocked_by_default ? "Default Unlock" : "Not Default"}
                       </span>
-                      {form.is_premium && (
-                        <span className="badge bg-warning text-dark">
-                          <Icon icon="mdi:crown" className="me-1" />
-                          Premium
-                        </span>
-                      )}
                     </div>
                   </div>
                 </div>
@@ -373,20 +367,7 @@ const WorldCreate = () => {
                         </div>
                       </div>
 
-                      <div className="col-md-6 d-flex align-items-end">
-                        <div className="form-check d-flex align-items-center">
-                          <input
-                            className="form-check-input"
-                            type="checkbox"
-                            id="isPremium"
-                            checked={!!form.is_premium}
-                            onChange={onChange("is_premium")}
-                          />
-                          <label className="form-check-label" htmlFor="isPremium">
-                            Is Premium
-                          </label>
-                        </div>
-                      </div>
+
 
                       <div className="col-md-6 d-flex align-items-end">
                         <div className="form-check d-flex align-items-center">

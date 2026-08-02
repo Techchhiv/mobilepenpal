@@ -248,12 +248,6 @@ const LevelCreate = () => {
                         ? "Default Unlock"
                         : "Not Default"}
                     </span>
-                    {form.is_premium && (
-                      <span className="px-16 py-4 rounded-pill fw-medium text-sm bg-warning-focus text-warning-main">
-                        <Icon icon="mdi:crown" className="me-1" />
-                        Premium
-                      </span>
-                    )}
                   </div>
                 </div>
               </div>
@@ -389,19 +383,6 @@ const LevelCreate = () => {
                           />
                           <label className="form-check-label" htmlFor="isActive">
                             Active
-                          </label>
-                        </div>
-
-                        <div className="form-check mt-2">
-                          <input
-                            className="form-check-input"
-                            type="checkbox"
-                            id="isPremium"
-                            checked={!!form.is_premium}
-                            onChange={onChange("is_premium")}
-                          />
-                          <label className="form-check-label" htmlFor="isPremium">
-                            Is Premium
                           </label>
                         </div>
 

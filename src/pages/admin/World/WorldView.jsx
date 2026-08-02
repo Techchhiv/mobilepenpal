@@ -279,13 +279,6 @@ const WorldView = () => {
                                                     ? "Default Unlock"
                                                     : "Not Default"}
                                             </span>
-
-                                            {normalized.is_premium && (
-                                                <span className="badge bg-warning text-dark">
-                                                    <Icon icon="mdi:crown" className="me-1" />
-                                                    Premium
-                                                </span>
-                                            )}
                                         </div>
 
                                         <div className="mt-10 text-muted">
@@ -387,7 +380,6 @@ const WorldView = () => {
                                                         <tr>
                                                             <th>Order</th>
                                                             <th>Name</th>
-                                                            <th className="text-center">Premium</th>
                                                             <th>Status</th>
                                                             <th>Stages</th>
                                                             <th style={{ width: 120 }} className="text-center">Action</th>
@@ -406,11 +398,6 @@ const WorldView = () => {
                                                                         <td>
                                                                             <div className="fw-medium">{l.name ?? "—"}</div>
                                                                             {l.name_en ? <div className="text-muted small">{l.name_en}</div> : null}
-                                                                        </td>
-                                                                        <td className="text-center">
-                                                                            {(l?.is_premium === true || String(l?.is_premium ?? "0") === "1") && (
-                                                                                <Icon icon="mdi:crown" className="text-warning" width={20} title="Premium" />
-                                                                            )}
                                                                         </td>
                                                                         <td>
                                                                             <span

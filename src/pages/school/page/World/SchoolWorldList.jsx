@@ -200,7 +200,6 @@ const SchoolWorldList = () => {
                 <th>Order</th>
                 <th>Source</th>
                 <th>Name</th>
-                <th className="text-center">Premium</th>
                 <th>Description</th>
                 <th className="text-center align-middle">Content</th>
                 <th className="text-center align-middle">Default Unlock</th>
@@ -236,10 +235,6 @@ const SchoolWorldList = () => {
 
                     <td>
                       <Trunc value={w.name} maxWidth={260} />
-                    </td>
-
-                    <td className="text-center align-middle text-warning">
-                      {w.is_premium && <Icon icon="mdi:crown" width={24} title="Premium" />}
                     </td>
 
                     <td>

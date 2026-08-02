@@ -292,13 +292,6 @@ const WorldEdit = () => {
                             ? "Default Unlock"
                             : "Not Default"}
                         </span>
-
-                        {form.is_premium && (
-                          <span className="badge bg-warning text-dark">
-                            <Icon icon="mdi:crown" className="me-1" />
-                            Premium
-                          </span>
-                        )}
                       </div>
                     </div>
                   </div>
@@ -433,21 +426,6 @@ const WorldEdit = () => {
 
                         <div className="col-12">
                           <div className="d-flex justify-content-end gap-4 flex-wrap">
-                            <div className="form-check d-flex align-content-center">
-                              <input
-                                className="form-check-input"
-                                type="checkbox"
-                                id="isPremium"
-                                checked={!!form.is_premium}
-                                onChange={onChange("is_premium")}
-                              />
-                              <label
-                                className="form-check-label"
-                                htmlFor="isPremium"
-                              >
-                                Is Premium
-                              </label>
-                            </div>
 
                             <div className="form-check d-flex align-content-center">
                               <input

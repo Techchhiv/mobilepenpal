@@ -328,13 +328,6 @@ const SchoolWorldView = () => {
                           {normalized.is_hidden_for_school ? "Hidden" : "Visible"}
                         </span>
                       )}
-
-                      {normalized.is_premium && (
-                        <span className="badge bg-warning text-dark" title={normalized.owned_by_school ? "Worlds created by your school are always premium" : "Premium Content"}>
-                          <Icon icon="mdi:crown" className="me-1" />
-                          {normalized.owned_by_school ? "Premium (Always Included)" : "Premium"}
-                        </span>
-                      )}
                     </div>
 
                     <div className="mt-10 text-muted">
@@ -437,7 +430,6 @@ const SchoolWorldView = () => {
                             <tr>
                               <th>Order</th>
                               <th>Name</th>
-                              <th className="text-center">Premium</th>
                               <th>Status</th>
                               <th>Stages</th>
                               <th style={{ width: 120 }} className="text-center">
@@ -468,12 +460,6 @@ const SchoolWorldView = () => {
                                       {l.name_en ? (
                                         <div className="text-muted small">{l.name_en}</div>
                                       ) : null}
-                                    </td>
-
-                                    <td className="text-center">
-                                      {boolish(l?.is_premium) && (
-                                        <Icon icon="mdi:crown" className="text-warning" width={20} title="Premium" />
-                                      )}
                                     </td>
 
                                     <td>
