@@ -22,12 +22,7 @@ class UpdateUserRequest extends FormRequest
             'age' => 'sometimes|nullable|integer|min:1|max:100',
             'gender' => 'sometimes|in:male,female,other',
             'date_of_birth' => 'sometimes|date',
-            'avatar' => [
-                'sometimes',
-                'nullable',
-                'string',
-                'regex:/^data:image\/(png|jpe?g);base64,/',
-            ],
+            'avatar' => 'sometimes|nullable|string',
 
             'parent_first_name' => 'sometimes|nullable|string|max:100',
             'parent_last_name' => 'sometimes|nullable|string|max:100',

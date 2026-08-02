@@ -20,12 +20,18 @@ public function __construct()
     /**
      * Display a listing of the resource.
      *
+     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
+        $authUser = $request->user();
+
         // keep it light: only basic fields + role names
         $users = User::query()
+            ->when($authUser, function ($q) use ($authUser) {
+                $q->where('id', '!=', $authUser->id);
+            })
             ->select(['id','name','email','is_online','last_seen_at','created_at'])
             ->with(['roles:id,name'])   // NO pivot/huge relations
             ->orderByDesc('id')
@@ -90,6 +96,11 @@ public function __construct()
      */
     public function update(Request $request, User $user)
     {
+        $authUser = $request->user();
+        if ($authUser && (int)$user->id === (int)$authUser->id) {
+            return response()->json(['message' => 'You cannot modify your own account from user management.'], 403);
+        }
+
         $request->validate([
             'name' => 'sometimes|required|string|max:255',
             'email' => 'sometimes|required|string|email|max:255|unique:users,email,' . $user->id,
@@ -117,11 +128,17 @@ public function __construct()
     /**
      * Remove the specified resource from storage.
      *
+     * @param  \Illuminate\Http\Request  $request
      * @param  \App\Models\User  $user
      * @return \Illuminate\Http\Response
      */
-    public function destroy(User $user)
+    public function destroy(Request $request, User $user)
     {
+        $authUser = $request->user();
+        if ($authUser && (int)$user->id === (int)$authUser->id) {
+            return response()->json(['message' => 'You cannot delete your own account.'], 403);
+        }
+
         $user->delete();
         return response()->json(null, 204);
     }

@@ -17,10 +17,10 @@ class SetLocale
      */
     public function handle(Request $request, Closure $next)
     {
-        $locale = $request->header('Accept-Language');
+        $raw = strtolower(trim((string) $request->header('Accept-Language')));
 
-        if ($locale && in_array($locale, ['en', 'km'])) {
-            App::setLocale($locale);
+        if ($raw !== '' && (str_contains($raw, 'km') || str_contains($raw, 'kh'))) {
+            App::setLocale('km');
         } else {
             App::setLocale('en');
         }

@@ -25,8 +25,12 @@ class SchoolUserController extends Controller
         // Only school-admin: see users in their school
         $query = User::query()->with('roles:id,name');
 
-        if ($authUser->hasRole('school-admin')) {
-            $query->where('school_id', $authUser->school_id);
+        if ($authUser) {
+            $query->where('id', '!=', $authUser->id);
+
+            if ($authUser->hasRole('school-admin')) {
+                $query->where('school_id', $authUser->school_id);
+            }
         }
 
         $users = $query->select(['id', 'name', 'email', 'created_at'])
@@ -109,6 +113,10 @@ class SchoolUserController extends Controller
         $authUser = $request->user();
         $user = User::findOrFail($id);
 
+        if ($authUser && (int)$user->id === (int)$authUser->id) {
+            return response()->json(['message' => 'You cannot modify your own account from user management.'], 403);
+        }
+
         if ($authUser->hasRole('school-admin') && $user->school_id !== $authUser->school_id) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
@@ -152,6 +160,10 @@ class SchoolUserController extends Controller
     {
         $authUser = $request->user();
         $user = User::findOrFail($id);
+
+        if ($authUser && (int)$user->id === (int)$authUser->id) {
+            return response()->json(['message' => 'You cannot delete your own account.'], 403);
+        }
 
         if ($authUser->hasRole('school-admin') && $user->school_id !== $authUser->school_id) {
             return response()->json(['message' => 'Unauthorized'], 403);

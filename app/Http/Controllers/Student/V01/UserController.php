@@ -51,6 +51,10 @@ class UserController extends Controller
 
         $validated = $request->validated();
 
+        if (isset($validated['avatar']) && str_starts_with($validated['avatar'], 'data:image')) {
+            $validated['avatar'] = UploadMedia::uploadImageBase64($validated['avatar']);
+        }
+
         $student->update($validated);
 
         $this->setResult('students', new UserDetailResource($student));
