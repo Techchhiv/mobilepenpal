@@ -4,12 +4,10 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import SchoolLayout from "../../masterLayout/SchoolLayout";
 import API from "../../../../helper/api";
 import API_BASE_URL from "../../../../helper/Base_urls";
-import { useAuth } from "../../../../context/AuthContext";
 
 const Required = () => <span className="text-danger ms-1">*</span>;
 
 export default function TeacherEdit() {
-    const { hasPermission } = useAuth();
     const { id } = useParams();
     const navigate = useNavigate();
 
@@ -21,25 +19,16 @@ export default function TeacherEdit() {
     const [phone, setPhone] = useState("");
     const [subject, setSubject] = useState("");
 
-    // password (optional change)
+    // Optional password change
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
 
     // photo
-    const [uploadedImage, setUploadedImage] = useState(null); // { src, file }
-    const [existingPhoto, setExistingPhoto] = useState(null); // string|null
+    const [uploadedImage, setUploadedImage] = useState(null);
+    const [existingPhoto, setExistingPhoto] = useState(null);
 
     const [error, setError] = useState("");
-
-    // lightbox preview
-    const [previewSrc, setPreviewSrc] = useState(null);
-    const closePreview = () => setPreviewSrc(null);
-
-    useEffect(() => {
-        const onKeyDown = (e) => e.key === "Escape" && closePreview();
-        if (previewSrc) window.addEventListener("keydown", onKeyDown);
-        return () => window.removeEventListener("keydown", onKeyDown);
-    }, [previewSrc]);
 
     const photoUrl = (p) =>
         !p ? null : String(p).startsWith("http") ? p : `${API_BASE_URL}/${String(p).replace(/^\/+/, "")}`;
@@ -50,31 +39,23 @@ export default function TeacherEdit() {
         return null;
     }, [uploadedImage, existingPhoto]);
 
-    const displayName = useMemo(() => name?.trim() || "Teacher", [name]);
-
     const handleFileChange = (e) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
         const reader = new FileReader();
-        reader.onload = () => setUploadedImage({ src: reader.result, file: null });
+        reader.onload = () => setUploadedImage({ src: reader.result });
         reader.readAsDataURL(file);
-
         e.target.value = "";
     };
 
-
-    const removeNewImage = () => {
-        if (uploadedImage?.src) URL.revokeObjectURL(uploadedImage.src);
-        setUploadedImage(null);
-    };
+    const removeNewImage = () => setUploadedImage(null);
 
     const fetchTeacher = async () => {
         setLoading(true);
         setError("");
         try {
             const res = await API.get(`/school/teachers/${id}`);
-
             const t = res?.data?.teacher ?? res?.data;
 
             setName(t?.name ?? "");
@@ -84,7 +65,7 @@ export default function TeacherEdit() {
             setExistingPhoto(t?.photo ?? null);
         } catch (err) {
             console.error("Fetch teacher failed:", err);
-            setError(err?.response?.data?.message || "Failed to load teacher.");
+            setError(err?.response?.data?.message || "Failed to load teacher details.");
         } finally {
             setLoading(false);
         }
@@ -92,66 +73,56 @@ export default function TeacherEdit() {
 
     useEffect(() => {
         fetchTeacher();
-        return () => {
-            if (uploadedImage?.src) URL.revokeObjectURL(uploadedImage.src);
-        };
     }, [id]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError("");
 
-        // Optional permissions check (depends on your permission names)
-        if (hasPermission && !hasPermission("teachers.update")) {
-            setError("You don't have permission to update teachers.");
+        if (password && password !== confirmPassword) {
+            setError("Passwords do not match. Please verify password entries.");
             return;
         }
-
-        if (password || confirmPassword) {
-            if (password !== confirmPassword) {
-                setError("Passwords do not match.");
-                return;
-            }
-            if (password.length > 0 && password.length < 6) {
-                setError("Password must be at least 6 characters.");
-                return;
-            }
+        if (password && password.length < 6) {
+            setError("Password must be at least 6 characters long.");
+            return;
         }
 
         setSubmitting(true);
         try {
             const formData = new FormData();
-
+            formData.append("_method", "PUT");
             formData.append("name", name);
             formData.append("email", email);
-
             formData.append("phone", phone || "");
             formData.append("subject", subject || "");
 
-            if (password) formData.append("password", password);
-            if (uploadedImage?.src) formData.append("photo", uploadedImage.src);
+            if (password) {
+                formData.append("password", password);
+            }
 
-            formData.append("_method", "PUT");
+            if (uploadedImage?.src) {
+                formData.append("photo", uploadedImage.src);
+            }
 
-            await API.post(`/school/teachers/${id}`, formData, {
-                headers: { "Content-Type": "multipart/form-data" },
-            });
+            await API.post(`/school/teachers/${id}`, formData);
 
             navigate("/school/teachers", {
-                state: { flash: "Teacher updated successfully!" },
+                state: {
+                    flash: `Teacher "${name}" updated successfully.`,
+                },
                 replace: true,
             });
         } catch (err) {
-            console.error("Update teacher failed:", err);
-
             setError(
                 err?.response?.data?.errors?.name?.[0] ||
                 err?.response?.data?.errors?.email?.[0] ||
-                err?.response?.data?.errors?.photo?.[0] ||
                 err?.response?.data?.errors?.password?.[0] ||
+                err?.response?.data?.errors?.photo?.[0] ||
                 err?.response?.data?.message ||
-                "Failed to update teacher."
+                "Failed to update teacher profile."
             );
+            console.error(err);
         } finally {
             setSubmitting(false);
         }
@@ -159,257 +130,210 @@ export default function TeacherEdit() {
 
     return (
         <SchoolLayout>
-            <div className="col-12">
-                <div className="card">
-                    <div className="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-                        <div>
-                            <h5 className="card-title mb-0">Edit Teacher</h5>
-                            <small className="text-muted">Update teacher profile information</small>
+            <div className="d-flex flex-column gap-4">
+                {/* Header Card */}
+                <div className="card border-0 shadow-sm radius-12 p-3 bg-white">
+                    <div className="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                        <div className="d-flex align-items-center gap-3">
+                            <button
+                                type="button"
+                                className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 radius-8"
+                                onClick={() => navigate(-1)}
+                            >
+                                <Icon icon="mdi:arrow-left" /> Back
+                            </button>
+                            <div>
+                                <h5 className="mb-0 fw-bold text-dark">Edit Teacher Profile</h5>
+                                <small className="text-muted">Update instructor details and credentials for {name || "Teacher"}</small>
+                            </div>
                         </div>
 
                         <div className="d-flex gap-2">
-                            <Link to="/school/teachers" className="btn btn-outline-secondary">
-                                <Icon icon="mdi:arrow-left" className="me-6" />
-                                Back
+                            <Link to={`/school/teachers/${id}`} className="btn btn-sm btn-outline-info d-flex align-items-center gap-1 radius-8">
+                                <Icon icon="mdi:eye" /> View Profile
+                            </Link>
+                            <Link to="/school/teachers" className="btn btn-sm btn-outline-primary d-flex align-items-center gap-1 radius-8">
+                                <Icon icon="mdi:format-list-bulleted" /> All Teachers
                             </Link>
                         </div>
                     </div>
+                </div>
 
-                    <div className="card-body">
-                        {error && <div className="alert alert-danger">{error}</div>}
+                {error && (
+                    <div className="alert alert-danger alert-dismissible fade show radius-12 mb-0" role="alert">
+                        <Icon icon="mdi:alert-circle-outline" className="me-2 text-lg" />
+                        {error}
+                        <button type="button" className="btn-close" onClick={() => setError("")} />
+                    </div>
+                )}
 
-                        {loading ? (
-                            <div className="text-center py-40">
-                                <div className="spinner-border" role="status" />
-                                <div className="mt-12 text-muted">Loading teacher...</div>
-                            </div>
-                        ) : (
-                            <form onSubmit={handleSubmit}>
-                                <div className="row g-3">
-                                    {/* LEFT: Photo */}
-                                    <div className="col-12 col-lg-4">
-                                        <div className="card border">
-                                            <div className="card-header d-flex align-items-center gap-2">
-                                                <Icon icon="solar:camera-outline" />
-                                                <h6 className="mb-0">Photo</h6>
-                                            </div>
+                {loading ? (
+                    <div className="d-flex justify-content-center align-items-center py-5" style={{ minHeight: "300px" }}>
+                        <div className="spinner-border text-primary" role="status">
+                            <span className="visually-hidden">Loading teacher details...</span>
+                        </div>
+                    </div>
+                ) : (
+                    <form onSubmit={handleSubmit}>
+                        <div className="row g-4">
+                            {/* Left Column: Avatar Photo & Info */}
+                            <div className="col-12 col-lg-4">
+                                <div className="card border-0 shadow-sm radius-12 bg-white h-100 p-4 d-flex flex-column align-items-center text-center">
+                                    <h6 className="fw-bold text-dark w-100 text-start mb-3">Teacher Photo</h6>
 
-                                            <div className="card-body">
-                                                <div className="d-flex align-items-center gap-3">
-                                                    <div
-                                                        className="border radius-12 overflow-hidden bg-neutral-50"
-                                                        style={{ width: 120, height: 120 }}
-                                                    >
-                                                        {previewImageSrc ? (
-                                                            <button
-                                                                type="button"
-                                                                className="p-0 border-0 bg-transparent w-100 h-100"
-                                                                onClick={() => setPreviewSrc(previewImageSrc)}
-                                                                style={{ cursor: "zoom-in" }}
-                                                                title="Click to view"
-                                                            >
-                                                                <img
-                                                                    className="w-100 h-100 object-fit-cover"
-                                                                    src={previewImageSrc}
-                                                                    alt="Photo"
-                                                                />
-                                                            </button>
-                                                        ) : (
-                                                            <div className="w-100 h-100 d-flex align-items-center justify-content-center text-muted">
-                                                                <Icon icon="mdi:account" width={44} />
-                                                            </div>
-                                                        )}
-                                                    </div>
-
-                                                    <div className="flex-grow-1">
-                                                        <div className="fw-semibold">{displayName}</div>
-                                                        <div className="text-muted small">Teacher ID: {id}</div>
-
-                                                        <div className="mt-10 d-flex gap-2 flex-wrap">
-                                                            <label className="btn btn-outline-primary btn-sm mb-0">
-                                                                <Icon icon="solar:camera-outline" className="me-6" />
-                                                                Upload
-                                                                <input
-                                                                    type="file"
-                                                                    hidden
-                                                                    accept="image/*"
-                                                                    onChange={handleFileChange}
-                                                                />
-                                                            </label>
-
-                                                            {uploadedImage && (
-                                                                <button
-                                                                    type="button"
-                                                                    className="btn btn-outline-danger btn-sm"
-                                                                    onClick={removeNewImage}
-                                                                >
-                                                                    <Icon icon="radix-icons:cross-2" className="me-6" />
-                                                                    Remove
-                                                                </button>
-                                                            )}
-                                                        </div>
-
-                                                        <div className="text-muted small mt-8">
-                                                            Max size: 2MB (jpg/png).
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
+                                    <div className="position-relative mb-3">
+                                        <div className="w-120-px h-120-px rounded-circle overflow-hidden bg-light border d-flex align-items-center justify-content-center shadow-sm">
+                                            {previewImageSrc ? (
+                                                <img src={previewImageSrc} alt="Preview" className="w-100 h-100 object-fit-cover" />
+                                            ) : (
+                                                <Icon icon="mdi:account" className="text-secondary text-5xl opacity-50" />
+                                            )}
                                         </div>
-                                    </div>
-
-                                    {/* RIGHT: Form */}
-                                    <div className="col-12 col-lg-8">
-                                        {/* Teacher Info */}
-                                        <div className="card border mb-3">
-                                            <div className="card-header d-flex align-items-center gap-2">
-                                                <Icon icon="mdi:account" />
-                                                <h6 className="mb-0">Teacher Information</h6>
-                                            </div>
-
-                                            <div className="card-body">
-                                                <div className="row gy-3">
-                                                    <div className="col-md-6">
-                                                        <label className="form-label">
-                                                            Full Name <Required />
-                                                        </label>
-                                                        <input
-                                                            className="form-control"
-                                                            value={name}
-                                                            onChange={(e) => setName(e.target.value)}
-                                                            required
-                                                        />
-                                                    </div>
-
-                                                    <div className="col-md-6">
-                                                        <label className="form-label">
-                                                            Email <Required />
-                                                        </label>
-                                                        <input
-                                                            type="email"
-                                                            className="form-control"
-                                                            value={email}
-                                                            onChange={(e) => setEmail(e.target.value)}
-                                                            required
-                                                        />
-                                                    </div>
-
-                                                    <div className="col-md-6">
-                                                        <label className="form-label">Phone</label>
-                                                        <input
-                                                            className="form-control"
-                                                            value={phone}
-                                                            onChange={(e) => setPhone(e.target.value)}
-                                                            placeholder="+855..."
-                                                        />
-                                                    </div>
-
-                                                    <div className="col-md-6">
-                                                        <label className="form-label">Subject</label>
-                                                        <input
-                                                            className="form-control"
-                                                            value={subject}
-                                                            onChange={(e) => setSubject(e.target.value)}
-                                                            placeholder="e.g. Khmer Writing"
-                                                        />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Security */}
-                                        <div className="card border mb-3">
-                                            <div className="card-header d-flex align-items-center gap-2">
-                                                <Icon icon="mdi:lock" />
-                                                <h6 className="mb-0">Security</h6>
-                                            </div>
-                                            <div className="card-body">
-                                                <div className="row gy-3">
-                                                    <div className="col-md-6">
-                                                        <label className="form-label">New Password</label>
-                                                        <input
-                                                            type="password"
-                                                            className="form-control"
-                                                            placeholder="Leave empty to keep current"
-                                                            value={password}
-                                                            onChange={(e) => setPassword(e.target.value)}
-                                                        />
-                                                        <div className="form-text">
-                                                            At least 6 characters.
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="col-md-6">
-                                                        <label className="form-label">Confirm New Password</label>
-                                                        <input
-                                                            type="password"
-                                                            className="form-control"
-                                                            placeholder="Re-type new password"
-                                                            value={confirmPassword}
-                                                            onChange={(e) => setConfirmPassword(e.target.value)}
-                                                        />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Actions */}
-                                        <div className="d-flex gap-2 flex-wrap">
-                                            <button
-                                                className="btn btn-primary"
-                                                type="submit"
-                                                disabled={submitting}
-                                            >
-                                                <Icon icon="mdi:content-save" className="me-6" />
-                                                {submitting ? "Saving..." : "Save Changes"}
-                                            </button>
-
+                                        {uploadedImage && (
                                             <button
                                                 type="button"
-                                                className="btn btn-outline-secondary"
-                                                onClick={() => navigate("/school/teachers")}
-                                                disabled={submitting}
+                                                className="btn btn-sm btn-danger rounded-circle p-1 position-absolute top-0 end-0 shadow-sm"
+                                                onClick={removeNewImage}
+                                                title="Remove New Photo"
                                             >
-                                                Cancel
+                                                <Icon icon="mdi:close" className="text-white text-xs d-block" />
                                             </button>
+                                        )}
+                                    </div>
+
+                                    <label className="btn btn-outline-primary btn-sm radius-8 cursor-pointer mb-2">
+                                        <Icon icon="mdi:camera" className="me-1" /> Change Photo
+                                        <input type="file" accept="image/*" className="d-none" onChange={handleFileChange} />
+                                    </label>
+                                    <small className="text-muted text-xs">JPG, PNG or GIF up to 5MB</small>
+
+                                    <div className="mt-4 p-3 bg-light radius-8 w-100 text-start">
+                                        <div className="d-flex align-items-center gap-2 text-primary fw-bold text-xs mb-1">
+                                            <Icon icon="mdi:information-outline" /> Account Info
                                         </div>
+                                        <p className="text-muted text-xs mb-0">
+                                            Modifying email address will update the login credentials for this teacher account.
+                                        </p>
                                     </div>
                                 </div>
-                            </form>
-                        )}
-                    </div>
-                </div>
-            </div>
+                            </div>
 
-            {/* ✅ image-only preview */}
-            {previewSrc && (
-                <div
-                    className="position-fixed top-0 start-0 w-100 h-100"
-                    style={{
-                        background: "rgba(0,0,0,0.75)",
-                        zIndex: 1055,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        padding: 16,
-                    }}
-                    onClick={closePreview}
-                    role="dialog"
-                    aria-modal="true"
-                >
-                    <img
-                        src={previewSrc}
-                        alt="Preview"
-                        style={{
-                            maxWidth: "95vw",
-                            maxHeight: "90vh",
-                            borderRadius: 12,
-                            cursor: "default",
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                    />
-                </div>
-            )}
+                            {/* Right Column: Edit Form */}
+                            <div className="col-12 col-lg-8">
+                                <div className="card border-0 shadow-sm radius-12 bg-white p-4 d-flex flex-column gap-4">
+                                    <div>
+                                        <h6 className="fw-bold text-dark mb-3 pb-2 border-bottom">Personal Information</h6>
+                                        <div className="row g-3">
+                                            <div className="col-12 col-md-6">
+                                                <label className="form-label text-xs fw-semibold">
+                                                    Full Name <Required />
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    className="form-control form-control-sm radius-8"
+                                                    value={name}
+                                                    onChange={(e) => setName(e.target.value)}
+                                                    required
+                                                />
+                                            </div>
+
+                                            <div className="col-12 col-md-6">
+                                                <label className="form-label text-xs fw-semibold">
+                                                    Email Address <Required />
+                                                </label>
+                                                <input
+                                                    type="email"
+                                                    className="form-control form-control-sm radius-8"
+                                                    value={email}
+                                                    onChange={(e) => setEmail(e.target.value)}
+                                                    required
+                                                />
+                                            </div>
+
+                                            <div className="col-12 col-md-6">
+                                                <label className="form-label text-xs fw-semibold">Phone Number</label>
+                                                <input
+                                                    type="text"
+                                                    className="form-control form-control-sm radius-8"
+                                                    value={phone}
+                                                    onChange={(e) => setPhone(e.target.value)}
+                                                />
+                                            </div>
+
+                                            <div className="col-12 col-md-6">
+                                                <label className="form-label text-xs fw-semibold">Subject / Department</label>
+                                                <input
+                                                    type="text"
+                                                    className="form-control form-control-sm radius-8"
+                                                    value={subject}
+                                                    onChange={(e) => setSubject(e.target.value)}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <div className="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
+                                            <h6 className="fw-bold text-dark mb-0">Reset Password (Optional)</h6>
+                                            <small className="text-muted">Leave blank to keep current password</small>
+                                        </div>
+                                        <div className="row g-3">
+                                            <div className="col-12 col-md-6">
+                                                <label className="form-label text-xs fw-semibold">New Password</label>
+                                                <div className="position-relative">
+                                                    <input
+                                                        type={showPassword ? "text" : "password"}
+                                                        className="form-control form-control-sm radius-8 pe-5"
+                                                        placeholder="Leave empty to keep unchanged"
+                                                        value={password}
+                                                        onChange={(e) => setPassword(e.target.value)}
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        className="btn btn-sm btn-link position-absolute top-50 end-0 translate-middle-y text-muted pe-3 text-decoration-none"
+                                                        onClick={() => setShowPassword(!showPassword)}
+                                                    >
+                                                        <Icon icon={showPassword ? "mdi:eye-off" : "mdi:eye"} />
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <div className="col-12 col-md-6">
+                                                <label className="form-label text-xs fw-semibold">Confirm New Password</label>
+                                                <input
+                                                    type={showPassword ? "text" : "password"}
+                                                    className="form-control form-control-sm radius-8"
+                                                    placeholder="Re-enter new password"
+                                                    value={confirmPassword}
+                                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Form Actions */}
+                                    <div className="d-flex align-items-center justify-content-end gap-2 pt-3 border-top">
+                                        <Link to="/school/teachers" className="btn btn-sm btn-light radius-8 px-3">
+                                            Cancel
+                                        </Link>
+                                        <button type="submit" className="btn btn-sm btn-primary radius-8 px-4 d-flex align-items-center gap-1" disabled={submitting}>
+                                            {submitting ? (
+                                                <>
+                                                    <span className="spinner-border spinner-border-sm me-1" role="status" /> Saving...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Icon icon="mdi:check" /> Save Changes
+                                                </>
+                                            )}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                )}
+            </div>
         </SchoolLayout>
     );
 }

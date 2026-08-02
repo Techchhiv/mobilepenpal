@@ -53,11 +53,12 @@ const SchoolSignInLayer = () => {
       setAuthToken(data.token);
       login(data.user || data.teacher, data.token, data.abilities);
 
+      const hasSchoolId = Boolean(data.user?.school_id || data.teacher?.school_id);
       const roles = (data.user?.roles || data.teacher?.roles || []).map(r => r.name.toLowerCase());
 
-      if (roles.includes("school-admin") || roles.includes("teacher") || roles.includes("parent")) {
+      if (hasSchoolId || roles.includes("school-admin") || roles.includes("teacher") || roles.some(r => r.includes("manager"))) {
         navigate("/school", { replace: true });
-      } else if (roles.includes("super-admin") || roles.includes("team-admin")) {
+      } else {
         navigate("/admin", { replace: true });
       }
     } catch (err) {

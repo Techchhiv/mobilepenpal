@@ -23,8 +23,8 @@ const SchoolLayout = ({ children }) => {
   const showPermissions = hasPermission("permissions.manage");
   const showTeacher = hasPermission("teachers.view");
   const showClassRooms = hasPermission("classrooms.view");
-  const showStudents = hasPermission("children.view")
-  const showWorldManage = isSchoolAdmin || hasPermission("worlds.view")
+  const showStudents = hasPermission("children.view") || hasPermission("student.view");
+  const showWorldManage = isSchoolAdmin || hasPermission("worlds.view") || hasPermission("world.view");
 
   useEffect(() => {
     const p = location.pathname;

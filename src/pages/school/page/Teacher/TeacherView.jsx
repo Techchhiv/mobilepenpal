@@ -13,28 +13,22 @@ function prettyDate(d) {
     if (!d) return "—";
     const dt = new Date(d);
     if (Number.isNaN(dt.getTime())) return String(d);
-    return dt.toLocaleDateString();
+    return dt.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
 const TeacherView = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { hasPermission } = useAuth();
+    const { hasPermission, isSchoolAdmin } = useAuth();
 
     const [teacher, setTeacher] = useState(null);
+    const [classrooms, setClassrooms] = useState([]);
     const [loading, setLoading] = useState(true);
-
     const [error, setError] = useState("");
     const [message, setMessage] = useState("");
 
-    const [previewSrc, setPreviewSrc] = useState(null);
-    const closePreview = () => setPreviewSrc(null);
-
-    useEffect(() => {
-        const onKeyDown = (e) => e.key === "Escape" && closePreview();
-        if (previewSrc) window.addEventListener("keydown", onKeyDown);
-        return () => window.removeEventListener("keydown", onKeyDown);
-    }, [previewSrc]);
+    const canUpdate = isSchoolAdmin || hasPermission("teachers.update");
+    const canDelete = isSchoolAdmin || hasPermission("teachers.delete");
 
     const isOnline = (t) => {
         const flag = t?.is_online === true || String(t?.is_online) === "1";
@@ -55,10 +49,20 @@ const TeacherView = () => {
         setMessage("");
         try {
             const res = await API.get(`/school/teachers/${id}`);
-            setTeacher(res.data?.teacher ?? res.data ?? null);
+            const tData = res.data?.teacher ?? res.data ?? null;
+            setTeacher(tData);
+
+            // Fetch teacher classrooms if available
+            if (res.data?.classrooms) {
+                setClassrooms(res.data.classrooms);
+            } else {
+                const crRes = await API.get(`/school/classrooms?teacher_id=${id}`);
+                const crList = Array.isArray(crRes.data) ? crRes.data : crRes.data?.data || [];
+                setClassrooms(crList);
+            }
         } catch (err) {
             console.error("Fetch teacher failed:", err);
-            setError(err?.response?.data?.message || "Failed to load teacher.");
+            setError(err?.response?.data?.message || "Failed to load teacher profile.");
         } finally {
             setLoading(false);
         }
@@ -70,11 +74,7 @@ const TeacherView = () => {
 
     const normalized = useMemo(() => {
         if (!teacher) return null;
-
-        const active =
-            teacher?.is_active === true ||
-            String(teacher?.is_active ?? teacher?.status ?? "0") === "1";
-
+        const active = teacher?.is_active === true || String(teacher?.is_active ?? teacher?.status ?? "0") === "1";
         return {
             ...teacher,
             active,
@@ -84,233 +84,197 @@ const TeacherView = () => {
 
     const avatar = useMemo(() => photoUrl(normalized?.photo), [normalized]);
 
-    const canView = hasPermission("teachers.view");
-
     const deleteTeacher = async () => {
-        if (!window.confirm("Delete this teacher?")) return;
+        if (!window.confirm(`Are you sure you want to delete teacher "${normalized?.name}"?`)) return;
 
         setError("");
         setMessage("");
         try {
             await API.delete(`/school/teachers/${id}`);
-            setMessage("Teacher deleted successfully");
-            navigate("/school/teachers");
+            navigate("/school/teachers", {
+                state: { flash: `Teacher "${normalized?.name}" deleted successfully.` },
+                replace: true,
+            });
         } catch (err) {
             console.error("Delete failed:", err);
-            setError(err?.response?.data?.message || "Delete failed");
+            setError(err?.response?.data?.message || "Failed to delete teacher.");
         }
     };
 
-    if (!canView) {
-        return (
-            <SchoolLayout>
-                <div className="alert alert-danger mb-0">
-                    You don’t have permission to view teacher details.
-                </div>
-            </SchoolLayout>
-        );
-    }
-
     return (
         <SchoolLayout>
-            <div className="card">
-                <div className="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-                    <div>
-                        <h5 className="mb-0">Teacher Details</h5>
-                        <small className="text-muted">ID: {id}</small>
-                    </div>
+            <div className="d-flex flex-column gap-4">
+                {/* Header Card */}
+                <div className="card border-0 shadow-sm radius-12 p-3 bg-white">
+                    <div className="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                        <div className="d-flex align-items-center gap-3">
+                            <button
+                                type="button"
+                                className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 radius-8"
+                                onClick={() => navigate(-1)}
+                            >
+                                <Icon icon="mdi:arrow-left" /> Back
+                            </button>
+                            <div>
+                                <h5 className="mb-0 fw-bold text-dark">Teacher Profile</h5>
+                                <small className="text-muted">Instructor overview and assigned classrooms</small>
+                            </div>
+                        </div>
 
-                    <div className="d-flex gap-2 flex-wrap">
-                        <Link
-                            to="/school/teachers"
-                            className="d-flex align-items-center btn btn-secondary radius-3 px-20 py-11"
-                        >
-                            <Icon icon="mdi:arrow-left" className="me-6" />
-                            Back
-                        </Link>
+                        <div className="d-flex gap-2">
+                            {canUpdate && (
+                                <Link to={`/school/teachers/${id}/edit`} className="btn btn-sm btn-outline-primary d-flex align-items-center gap-1 radius-8">
+                                    <Icon icon="mdi:pencil" /> Edit Profile
+                                </Link>
+                            )}
+                            {canDelete && (
+                                <button type="button" className="btn btn-sm btn-outline-danger d-flex align-items-center gap-1 radius-8" onClick={deleteTeacher}>
+                                    <Icon icon="mdi:trash-can-outline" /> Delete
+                                </button>
+                            )}
+                        </div>
                     </div>
                 </div>
 
-                <div className="card-body">
-                    {message && <div className="alert alert-success">{message}</div>}
-                    {error && <div className="alert alert-danger">{error}</div>}
+                {message && (
+                    <div className="alert alert-success alert-dismissible fade show radius-12 mb-0" role="alert">
+                        <Icon icon="mdi:check-circle-outline" className="me-2 text-lg" />
+                        {message}
+                        <button type="button" className="btn-close" onClick={() => setMessage("")} />
+                    </div>
+                )}
 
-                    {loading ? (
-                        <div className="text-center py-40">
-                            <div className="spinner-border" role="status" />
-                            <div className="mt-12 text-muted">Loading teacher...</div>
+                {error && (
+                    <div className="alert alert-danger alert-dismissible fade show radius-12 mb-0" role="alert">
+                        <Icon icon="mdi:alert-circle-outline" className="me-2 text-lg" />
+                        {error}
+                        <button type="button" className="btn-close" onClick={() => setError("")} />
+                    </div>
+                )}
+
+                {loading ? (
+                    <div className="d-flex justify-content-center align-items-center py-5" style={{ minHeight: "300px" }}>
+                        <div className="spinner-border text-primary" role="status">
+                            <span className="visually-hidden">Loading teacher profile...</span>
                         </div>
-                    ) : !normalized ? (
-                        <div className="text-center py-40 text-muted">Teacher not found.</div>
-                    ) : (
-                        <div className="row g-3">
-                            {/* Left: Photo + status */}
-                            <div className="col-12 col-md-4 col-lg-3">
-                                <div className="card border">
-                                    <div className="card-body text-center">
-                                        {avatar ? (
-                                            <button
-                                                type="button"
-                                                className="p-0 border-0 bg-transparent"
-                                                onClick={() => setPreviewSrc(avatar)}
-                                                style={{ cursor: "zoom-in" }}
-                                                title="Click to view"
-                                            >
-                                                <img
-                                                    src={avatar}
-                                                    alt={normalized.name}
-                                                    style={{
-                                                        width: 120,
-                                                        height: 120,
-                                                        objectFit: "cover",
-                                                        borderRadius: "50%",
-                                                    }}
-                                                />
-                                            </button>
-                                        ) : (
-                                            <div
-                                                className="d-inline-flex align-items-center justify-content-center bg-light text-muted"
-                                                style={{
-                                                    width: 120,
-                                                    height: 120,
-                                                    borderRadius: "50%",
-                                                }}
-                                                title="No photo"
-                                            >
-                                                <Icon icon="mdi:account" width={48} />
-                                            </div>
-                                        )}
-
-                                        <h6 className="mt-16 mb-4">{normalized.name || "—"}</h6>
-
-                                        <div className="d-flex justify-content-center gap-8 flex-wrap">
-                                            <span
-                                                className={`badge ${normalized.active ? "bg-success" : "bg-secondary"
-                                                    }`}
-                                            >
-                                                {normalized.active ? "Active" : "Inactive"}
-                                            </span>
-
-                                            <span
-                                                className={`badge ${normalized.online ? "bg-primary" : "bg-light text-dark"
-                                                    }`}
-                                                title={
-                                                    normalized.last_seen_at
-                                                        ? `Last seen: ${normalized.last_seen_at}`
-                                                        : ""
-                                                }
-                                            >
-                                                {normalized.online ? "Online" : "Offline"}
-                                            </span>
+                    </div>
+                ) : normalized ? (
+                    <>
+                        {/* Profile Info Card */}
+                        <div className="card border-0 shadow-sm radius-12 bg-white p-4">
+                            <div className="d-flex align-items-center flex-wrap gap-4">
+                                <div className="position-relative w-96-px h-96-px rounded-circle overflow-hidden bg-light border flex-shrink-0 shadow-sm">
+                                    {avatar ? (
+                                        <img src={avatar} alt={normalized.name} className="w-100 h-100 object-fit-cover" />
+                                    ) : (
+                                        <div className="w-100 h-100 d-flex align-items-center justify-content-center text-muted">
+                                            <Icon icon="mdi:account" className="text-4xl" />
                                         </div>
-
-                                        <div className="mt-10 text-muted">
-                                            Teacher ID:{" "}
-                                            <span className="text-dark">
-                                                {normalized.teacher_id || "—"}
-                                            </span>
-                                        </div>
-                                    </div>
+                                    )}
                                 </div>
 
-                                {/* School-like info */}
-                                <div className="card border mt-3">
-                                    <div className="card-header">
-                                        <h6 className="mb-0">School</h6>
+                                <div className="flex-grow-1">
+                                    <div className="d-flex align-items-center gap-2 flex-wrap mb-1">
+                                        <h4 className="mb-0 fw-bold text-dark">{normalized.name}</h4>
+                                        <span className={`badge ${normalized.active ? "bg-success-subtle text-success" : "bg-secondary-subtle text-secondary"}`}>
+                                            {normalized.active ? "Active Status" : "Inactive Status"}
+                                        </span>
+                                        <span className={`badge ${normalized.online ? "bg-success" : "bg-secondary text-white"}`}>
+                                            {normalized.online ? "Online Now" : "Offline"}
+                                        </span>
                                     </div>
-                                    <div className="card-body">
-                                        <MiniRow label="School ID" value={normalized.school_id ?? "—"} />
-                                        <MiniRow label="School Key" value={normalized.school_key ?? "—"} />
-                                    </div>
-                                </div>
-                            </div>
 
-                            {/* Right: Details */}
-                            <div className="col-12 col-md-8 col-lg-9">
-                                <div className="card border mb-3">
-                                    <div className="card-header">
-                                        <h6 className="mb-0">Teacher Information</h6>
-                                    </div>
-                                    <div className="card-body">
-                                        <div className="row g-3">
-                                            <InfoItem label="Name" value={normalized.name} />
-                                            <InfoItem label="Email" value={normalized.email} />
-                                            <InfoItem label="Phone" value={normalized.phone} />
-                                            <InfoItem label="Subject" value={normalized.subject} />
+                                    <div className="d-flex align-items-center gap-4 flex-wrap text-sm text-muted mt-2">
+                                        <div>
+                                            <Icon icon="mdi:card-account-details-outline" className="me-1 text-primary" />
+                                            ID: <strong className="text-dark font-mono">{normalized.teacher_id || `#${normalized.id}`}</strong>
                                         </div>
-                                    </div>
-                                </div>
-
-                                <div className="card border">
-                                    <div className="card-header">
-                                        <h6 className="mb-0">System</h6>
-                                    </div>
-                                    <div className="card-body">
-                                        <div className="row g-3">
-                                            <InfoItem label="Created At" value={prettyDate(normalized.created_at)} />
-                                            <InfoItem label="Updated At" value={prettyDate(normalized.updated_at)} />
+                                        <div>
+                                            <Icon icon="mdi:email-outline" className="me-1 text-primary" />
+                                            Email: <strong className="text-dark">{normalized.email || "—"}</strong>
+                                        </div>
+                                        <div>
+                                            <Icon icon="mdi:phone-outline" className="me-1 text-primary" />
+                                            Phone: <strong className="text-dark">{normalized.phone || "—"}</strong>
+                                        </div>
+                                        <div>
+                                            <Icon icon="mdi:book-open-page-variant-outline" className="me-1 text-primary" />
+                                            Subject: {normalized.subject ? <span className="badge bg-purple-subtle text-purple border">{normalized.subject}</span> : <strong className="text-dark">—</strong>}
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    )}
-                </div>
+
+                        {/* Assigned Classrooms Card */}
+                        <div className="card border-0 shadow-sm radius-12 bg-white">
+                            <div className="card-header bg-white border-bottom py-3 d-flex align-items-center justify-content-between">
+                                <div className="d-flex align-items-center gap-2">
+                                    <Icon icon="mdi:google-classroom" className="text-purple text-xl" />
+                                    <h6 className="mb-0 fw-bold">Assigned Classrooms ({classrooms.length})</h6>
+                                </div>
+                                <Link to="/school/classrooms/create" className="btn btn-sm btn-link text-decoration-none">
+                                    + Add Classroom
+                                </Link>
+                            </div>
+                            <div className="card-body p-0">
+                                {classrooms.length === 0 ? (
+                                    <div className="d-flex flex-column align-items-center justify-content-center py-5 text-muted small text-center">
+                                        <Icon icon="mdi:google-classroom" className="text-3xl text-muted mb-2" />
+                                        <span>No classrooms assigned to this teacher yet</span>
+                                    </div>
+                                ) : (
+                                    <div className="table-responsive">
+                                        <table className="table align-middle mb-0">
+                                            <thead className="table-light text-xs text-uppercase text-muted">
+                                                <tr>
+                                                    <th className="ps-3">Classroom Name</th>
+                                                    <th>Join Code</th>
+                                                    <th>Enrolled Students</th>
+                                                    <th>Schedule Range</th>
+                                                    <th>Status</th>
+                                                    <th className="pe-3 text-end">Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="text-sm">
+                                                {classrooms.map((c) => (
+                                                    <tr key={c.id}>
+                                                        <td className="ps-3 fw-semibold text-dark">{c.name}</td>
+                                                        <td>
+                                                            <span className="badge bg-light text-dark font-mono text-xs border">
+                                                                {c.join_code || "—"}
+                                                            </span>
+                                                        </td>
+                                                        <td>
+                                                            <span className="badge bg-primary-subtle text-primary">
+                                                                {c.students_count ?? c.enrollments_count ?? 0} Students
+                                                            </span>
+                                                        </td>
+                                                        <td className="text-muted text-xs">
+                                                            {prettyDate(c.start_date)} &ndash; {prettyDate(c.end_date)}
+                                                        </td>
+                                                        <td>
+                                                            <span className={`badge ${c.is_active ? "bg-success" : "bg-secondary"}`}>
+                                                                {c.is_active ? "Active" : "Archived"}
+                                                            </span>
+                                                        </td>
+                                                        <td className="pe-3 text-end">
+                                                            <Link to={`/school/classrooms/${c.id}`} className="btn btn-sm btn-outline-primary py-1 px-2 text-xs">
+                                                                Manage Classroom
+                                                            </Link>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </>
+                ) : null}
             </div>
-
-            {previewSrc && (
-                <div
-                    className="position-fixed top-0 start-0 w-100 h-100"
-                    style={{
-                        background: "rgba(0,0,0,0.75)",
-                        zIndex: 1055,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        padding: 16,
-                    }}
-                    onClick={closePreview}
-                    role="dialog"
-                    aria-modal="true"
-                >
-                    <img
-                        src={previewSrc}
-                        alt="Photo Preview"
-                        style={{
-                            maxWidth: "95vw",
-                            maxHeight: "90vh",
-                            borderRadius: 12,
-                            cursor: "default",
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                    />
-                </div>
-            )}
         </SchoolLayout>
-    );
-};
-
-const InfoItem = ({ label, value }) => {
-    const v = value === null || value === undefined || value === "" ? "—" : value;
-    return (
-        <div className="col-12 col-md-6 col-lg-4">
-            <div className="p-12 border radius-8 h-100">
-                <div className="text-muted small">{label}</div>
-                <div className="fw-medium" style={{ wordBreak: "break-word" }}>
-                    {v}
-                </div>
-            </div>
-        </div>
-    );
-};
-
-const MiniRow = ({ label, value }) => {
-    const v = value === null || value === undefined || value === "" ? "—" : value;
-    return (
-        <div className="d-flex justify-content-between gap-2 py-6 border-bottom">
-            <div className="text-muted small">{label}</div>
-            <div className="fw-medium">{v}</div>
-        </div>
     );
 };
 

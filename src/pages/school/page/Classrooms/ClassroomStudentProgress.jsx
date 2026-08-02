@@ -12,7 +12,7 @@ const formatDate = (d) => {
     if (!d) return "—";
     const dt = new Date(d);
     if (Number.isNaN(dt.getTime())) return String(d);
-    return dt.toLocaleDateString();
+    return dt.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 };
 
 const toYMD = (d) => {
@@ -21,7 +21,6 @@ const toYMD = (d) => {
     const day = String(d.getDate()).padStart(2, "0");
     return `${y}-${m}-${day}`;
 };
-
 
 const startOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
 
@@ -157,7 +156,7 @@ export default function ClassroomStudentProgress() {
         } catch (err) {
             if (myReqId !== reqIdRef.current) return;
             console.error("Fetch student progress failed:", err);
-            setError(err?.response?.data?.message || "Failed to load progress.");
+            setError(err?.response?.data?.message || "Failed to load student progress.");
         } finally {
             if (myReqId === reqIdRef.current) setLoading(false);
         }
@@ -176,11 +175,9 @@ export default function ClassroomStudentProgress() {
         return buildWeeksForMonth(selectedYear, selectedMonth);
     }, [selectedYear, selectedMonth]);
 
-
     useEffect(() => {
         fetchProgress();
     }, [classroomId, studentId]);
-
 
     useEffect(() => {
         setSelectedWeekIndex(0);
@@ -188,9 +185,7 @@ export default function ClassroomStudentProgress() {
 
     const onApply = (e) => {
         e.preventDefault();
-
         const opts = { type: mode };
-
         if (mode === "day") {
             opts.date = day;
         } else if (mode === "week") {
@@ -199,16 +194,15 @@ export default function ClassroomStudentProgress() {
             opts.year = selectedYear;
             opts.month = selectedMonth;
         }
-
         fetchProgress(opts);
     };
 
     const statusBadge = (status) => {
         const s = String(status || "").toLowerCase();
-        if (s === "enrolled") return <span className="badge bg-success">Enrolled</span>;
-        if (s === "completed") return <span className="badge bg-info">Completed</span>;
-        if (s === "removed") return <span className="badge bg-danger">Removed</span>;
-        return <span className="badge bg-secondary">—</span>;
+        if (s === "enrolled") return <span className="badge bg-success-subtle text-success">Enrolled</span>;
+        if (s === "completed") return <span className="badge bg-info-subtle text-info">Completed</span>;
+        if (s === "removed") return <span className="badge bg-danger-subtle text-danger">Removed</span>;
+        return <span className="badge bg-secondary-subtle text-secondary">—</span>;
     };
 
     const summaryCards = useMemo(() => {
@@ -218,44 +212,47 @@ export default function ClassroomStudentProgress() {
             {
                 label: "Time Spent",
                 value: formatDuration(summary.time_spent_seconds ?? summary.total_time_spent_seconds ?? 0),
-                icon: "mdi:timer-outline",
+                icon: "mdi:clock-outline",
+                bgColor: "bg-primary",
+                textColor: "text-white",
             },
             {
                 label: "Accuracy",
                 value: `${accPct}%`,
                 icon: "mdi:target",
+                bgColor: accPct >= 70 ? "bg-success" : "bg-warning",
+                textColor: accPct >= 70 ? "text-white" : "text-dark",
             },
             {
-                label: "Exercises",
+                label: "Exercises Attempted",
                 value: summary.exercises_attempted ?? summary.total_exercises_attempted ?? 0,
                 icon: "mdi:clipboard-check-outline",
+                bgColor: "bg-info",
+                textColor: "text-white",
             },
             {
-                label: "Correct",
+                label: "Correct Submissions",
                 value: summary.correct_attempts ?? summary.total_correct_attempts ?? 0,
                 icon: "mdi:check-circle-outline",
+                bgColor: "bg-success",
+                textColor: "text-white",
             },
             {
-                label: "Stars",
+                label: "Stars Earned",
                 value: summary.stars_earned ?? summary.total_stars_earned ?? 0,
                 icon: "mdi:star-outline",
+                bgColor: "bg-warning",
+                textColor: "text-dark",
             },
             {
                 label: "Stages Completed",
                 value: summary.stages_completed ?? summary.total_stages_completed ?? 0,
                 icon: "mdi:flag-checkered",
+                bgColor: "bg-dark",
+                textColor: "text-white",
             },
-            ...(mode === "week"
-                ? [
-                    {
-                        label: "Practice Days",
-                        value: summary.practice_days ?? 0,
-                        icon: "mdi:calendar-check-outline",
-                    },
-                ]
-                : []),
         ];
-    }, [summary, mode]);
+    }, [summary]);
 
     const charactersList = useMemo(() => {
         if (!summary) return [];
@@ -283,7 +280,6 @@ export default function ClassroomStudentProgress() {
                 });
 
         const filtered = list.filter((c) => (Number(c.accuracyPct) || 0) >= minAccuracy);
-
         let result = filtered;
 
         if (accuracySort !== "none") {
@@ -298,518 +294,407 @@ export default function ClassroomStudentProgress() {
         return result;
     }, [summary, mode, minAccuracy, accuracySort]);
 
-
-
     const topMastered = summary?.top_mastered_characters || [];
     const toReview = summary?.characters_to_review || [];
-
     const bestChar = summary?.best_character;
     const weakChar = summary?.needs_attention;
-
     const avatar = avatarUrl(student?.avatar);
 
     return (
         <SchoolLayout>
-            <div className="col-12">
-                <div className="card">
-                    {/* Header */}
-                    <div className="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-                        <div>
-                            <h5 className="card-title mb-0">Student Progress</h5>
-                            <small className="text-muted">
-                                Classroom #{classroomId} • Student #{studentId}
-                            </small>
+            <div className="d-flex flex-column gap-4">
+                {/* Header Navigation Bar */}
+                <div className="card border-0 shadow-sm radius-12 p-3 bg-white">
+                    <div className="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                        <div className="d-flex align-items-center gap-3">
+                            <button
+                                type="button"
+                                className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 radius-8"
+                                onClick={() => navigate(-1)}
+                            >
+                                <Icon icon="mdi:arrow-left" /> Back
+                            </button>
+                            <div>
+                                <h5 className="mb-0 fw-bold text-dark">Student Progress Analysis</h5>
+                                <small className="text-muted">
+                                    Classroom: <strong>{classroom?.name || `#${classroomId}`}</strong> &bull; Student: <strong>{studentName}</strong>
+                                </small>
+                            </div>
                         </div>
 
                         <div className="d-flex gap-2 flex-wrap">
-                            <button
-                                type="button"
-                                className="btn btn-outline-secondary d-flex align-items-center"
-                                onClick={() => navigate(-1)}
-                            >
-                                <Icon icon="mdi:arrow-left" className="me-6" />
-                                Back
-                            </button>
-
-                            <Link
-                                to={`/school/classrooms/${classroomId}`}
-                                className="btn btn-outline-primary d-flex align-items-center"
-                            >
-                                <Icon icon="mdi:google-classroom" className="me-6" />
-                                Classroom
+                            <Link to={`/school/classrooms/${classroomId}`} className="btn btn-sm btn-outline-primary d-flex align-items-center gap-1 radius-8">
+                                <Icon icon="mdi:google-classroom" /> Classroom Details
                             </Link>
-
-                            <Link
-                                to={`/school/students/${studentId}`}
-                                className="btn btn-outline-info d-flex align-items-center"
-                            >
-                                <Icon icon="mdi:account-school" className="me-6" />
-                                Student Profile
+                            <Link to={`/school/students/${studentId}`} className="btn btn-sm btn-outline-info d-flex align-items-center gap-1 radius-8">
+                                <Icon icon="mdi:account-school" /> Student Profile
                             </Link>
                         </div>
                     </div>
+                </div>
 
-                    <div className="card-body">
-                        {error && <div className="alert alert-danger">{error}</div>}
+                {error && <div className="alert alert-danger radius-12 mb-0">{error}</div>}
 
-                        {loading ? (
-                            <div className="text-center py-40">
-                                <div className="spinner-border" role="status" />
-                                <div className="mt-12 text-muted">Loading progress...</div>
-                            </div>
-                        ) : (
-                            <>
-                                {/* Student + classroom context */}
-                                <div className="row g-3 mb-3">
-                                    <div className="col-12 col-lg-4">
-                                        <div className="card border h-100">
-                                            <div className="card-header d-flex align-items-center gap-2">
-                                                <Icon icon="mdi:account" />
-                                                <h6 className="mb-0">Student</h6>
+                {loading ? (
+                    <div className="d-flex justify-content-center align-items-center py-5" style={{ minHeight: "300px" }}>
+                        <div className="spinner-border text-primary" role="status">
+                            <span className="visually-hidden">Loading progress...</span>
+                        </div>
+                    </div>
+                ) : (
+                    <>
+                        {/* Student Profile & Filter Row */}
+                        <div className="row g-3">
+                            {/* Student Profile Card */}
+                            <div className="col-12 col-lg-5">
+                                <div className="card border-0 shadow-sm radius-12 h-100 bg-white">
+                                    <div className="card-body p-3 d-flex align-items-center">
+                                        <div className="d-flex align-items-center gap-3">
+                                            <div className="w-64-px h-64-px rounded-circle overflow-hidden bg-light border flex-shrink-0">
+                                                {avatar ? (
+                                                    <img className="w-100 h-100 object-fit-cover" src={avatar} alt={studentName} />
+                                                ) : (
+                                                    <div className="w-100 h-100 d-flex align-items-center justify-content-center text-muted">
+                                                        <Icon icon="mdi:account" className="text-2xl" />
+                                                    </div>
+                                                )}
                                             </div>
-                                            <div className="card-body">
-                                                <div className="d-flex align-items-center gap-3">
-                                                    <div
-                                                        className="border radius-12 overflow-hidden bg-neutral-50"
-                                                        style={{ width: 72, height: 72 }}
-                                                    >
-                                                        {avatar ? (
-                                                            <img
-                                                                className="w-100 h-100 object-fit-cover"
-                                                                src={avatar}
-                                                                alt={studentName}
-                                                            />
-                                                        ) : (
-                                                            <div className="w-100 h-100 d-flex align-items-center justify-content-center text-muted">
-                                                                <Icon icon="mdi:account" width={36} />
-                                                            </div>
-                                                        )}
-                                                    </div>
-
-                                                    <div className="flex-grow-1">
-                                                        <div className="fw-semibold">{studentName}</div>
-                                                        <div className="text-muted small">
-                                                            Nickname: {student?.nickname || "—"}
-                                                        </div>
-                                                        <div className="mt-6">{statusBadge(enrollment?.status)}</div>
-                                                    </div>
+                                            <div className="flex-grow-1">
+                                                <div className="d-flex align-items-center justify-content-between">
+                                                    <h6 className="mb-0 fw-bold text-dark">{studentName}</h6>
+                                                    {statusBadge(enrollment?.status)}
                                                 </div>
-
-                                                <div className="mt-12 text-muted small">
-                                                    Enrolled: {formatDate(enrollment?.enrolled_at || enrollment?.created_at)}
-                                                    <br />
-                                                    Left: {enrollment?.left_at ? formatDate(enrollment.left_at) : "—"}
+                                                <div className="text-muted text-xs mt-1">
+                                                    Nickname: <strong>{student?.nickname || "—"}</strong>
+                                                </div>
+                                                <div className="text-muted text-xs mt-1">
+                                                    Enrolled: <strong>{formatDate(enrollment?.enrolled_at || enrollment?.created_at)}</strong>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
+                                </div>
+                            </div>
 
-                                    <div className="col-12 col-lg-8">
-                                        <div className="card border h-100">
-                                            <div className="card-header d-flex align-items-center gap-2">
-                                                <Icon icon="mdi:google-classroom" />
-                                                <h6 className="mb-0">Classroom</h6>
-                                            </div>
-                                            <div className="card-body">
-                                                <div className="d-flex justify-content-between align-items-start flex-wrap gap-2">
-                                                    <div>
-                                                        <div className="fw-semibold">{classroom?.name || "—"}</div>
-                                                        <div className="text-muted small">
-                                                            Date Range: {formatDate(classroom?.start_date)} -{" "}
-                                                            {formatDate(classroom?.end_date)}
-                                                        </div>
-                                                    </div>
-
-                                                    <span
-                                                        className={`badge ${classroom?.is_active ? "bg-success" : "bg-warning text-dark"
-                                                            }`}
+                            {/* Date Filter Control Card */}
+                            <div className="col-12 col-lg-7">
+                                <div className="card border-0 shadow-sm radius-12 h-100 bg-white">
+                                    <div className="card-body p-3">
+                                        <form onSubmit={onApply}>
+                                            <div className="d-flex align-items-center justify-content-between mb-2">
+                                                <span className="fw-bold text-dark text-sm">Timeframe Filter:</span>
+                                                <div className="btn-group btn-group-sm" role="group">
+                                                    <button
+                                                        type="button"
+                                                        className={`btn ${mode === "day" ? "btn-primary" : "btn-outline-secondary"}`}
+                                                        onClick={() => setMode("day")}
                                                     >
-                                                        {classroom?.is_active ? "Active" : "Archived"}
-                                                    </span>
+                                                        Day
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        className={`btn ${mode === "week" ? "btn-primary" : "btn-outline-secondary"}`}
+                                                        onClick={() => setMode("week")}
+                                                    >
+                                                        Week
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        className={`btn ${mode === "month" ? "btn-primary" : "btn-outline-secondary"}`}
+                                                        onClick={() => setMode("month")}
+                                                    >
+                                                        Month
+                                                    </button>
                                                 </div>
+                                            </div>
 
-                                                {/* Filters */}
-                                                <form className="mt-14" onSubmit={onApply}>
-                                                    {/* FILTER ROW */}
-                                                    <div className="row g-2">
-                                                        {/* View */}
-                                                        <div className="col-12 col-md-3">
-                                                            <label className="form-label">View</label>
-                                                            <select
-                                                                className="form-select"
-                                                                value={mode}
-                                                                onChange={(e) => setMode(e.target.value)}
-                                                            >
-                                                                <option value="day">Day</option>
-                                                                <option value="week">Week</option>
-                                                                <option value="month">Month</option>
+                                            <div className="row g-2 align-items-end mt-1">
+                                                {mode === "day" && (
+                                                    <div className="col">
+                                                        <label className="form-label text-xs mb-1">Select Date</label>
+                                                        <input type="date" className="form-control form-control-sm" value={day} onChange={(e) => setDay(e.target.value)} />
+                                                    </div>
+                                                )}
+
+                                                {mode === "week" && (
+                                                    <>
+                                                        <div className="col-4">
+                                                            <label className="form-label text-xs mb-1">Month</label>
+                                                            <select className="form-select form-select-sm" value={selectedMonth} onChange={(e) => setSelectedMonth(parseInt(e.target.value, 10))}>
+                                                                {monthOptions.map((m) => (
+                                                                    <option key={m} value={m}>{monthName(m)}</option>
+                                                                ))}
                                                             </select>
                                                         </div>
-
-                                                        {/* DAILY */}
-                                                        {mode === "day" && (
-                                                            <div className="col-12 col-md-4">
-                                                                <label className="form-label">Day</label>
-                                                                <input
-                                                                    type="date"
-                                                                    className="form-control"
-                                                                    value={day}
-                                                                    onChange={(e) => setDay(e.target.value)}
-                                                                />
-                                                            </div>
-                                                        )}
-
-                                                        {/* WEEKLY */}
-                                                        {mode === "week" && (
-                                                            <>
-                                                                <div className="col-6 col-md-3">
-                                                                    <label className="form-label">Month</label>
-                                                                    <select
-                                                                        className="form-select"
-                                                                        value={selectedMonth}
-                                                                        onChange={(e) => setSelectedMonth(parseInt(e.target.value, 10))}
-                                                                    >
-                                                                        {monthOptions.map((m) => (
-                                                                            <option key={m} value={m}>
-                                                                                {monthName(m)}
-                                                                            </option>
-                                                                        ))}
-                                                                    </select>
-                                                                </div>
-
-                                                                <div className="col-6 col-md-2">
-                                                                    <label className="form-label">Year</label>
-                                                                    <select
-                                                                        className="form-select"
-                                                                        value={selectedYear}
-                                                                        onChange={(e) => setSelectedYear(parseInt(e.target.value, 10))}
-                                                                    >
-                                                                        {yearOptions.map((y) => (
-                                                                            <option key={y} value={y}>
-                                                                                {y}
-                                                                            </option>
-                                                                        ))}
-                                                                    </select>
-                                                                </div>
-
-                                                                <div className="col-12 col-md-4">
-                                                                    <label className="form-label">Week</label>
-                                                                    <select
-                                                                        className="form-select"
-                                                                        value={selectedWeekIndex}
-                                                                        onChange={(e) => setSelectedWeekIndex(parseInt(e.target.value, 10))}
-                                                                    >
-                                                                        {weeksInSelectedMonth.map((w, idx) => (
-                                                                            <option key={`${w.from}-${w.to}`} value={idx}>
-                                                                                {w.label}
-                                                                            </option>
-                                                                        ))}
-                                                                    </select>
-                                                                </div>
-                                                            </>
-                                                        )}
-
-                                                        {/* MONTHLY */}
-                                                        {mode === "month" && (
-                                                            <>
-                                                                <div className="col-6 col-md-3">
-                                                                    <label className="form-label">Month</label>
-                                                                    <select
-                                                                        className="form-select"
-                                                                        value={selectedMonth}
-                                                                        onChange={(e) => setSelectedMonth(parseInt(e.target.value, 10))}
-                                                                    >
-                                                                        {monthOptions.map((m) => (
-                                                                            <option key={m} value={m}>
-                                                                                {monthName(m)}
-                                                                            </option>
-                                                                        ))}
-                                                                    </select>
-                                                                </div>
-
-                                                                <div className="col-6 col-md-2">
-                                                                    <label className="form-label">Year</label>
-                                                                    <select
-                                                                        className="form-select"
-                                                                        value={selectedYear}
-                                                                        onChange={(e) => setSelectedYear(parseInt(e.target.value, 10))}
-                                                                    >
-                                                                        {yearOptions.map((y) => (
-                                                                            <option key={y} value={y}>
-                                                                                {y}
-                                                                            </option>
-                                                                        ))}
-                                                                    </select>
-                                                                </div>
-                                                            </>
-                                                        )}
-                                                    </div>
-
-                                                    {/* APPLY ROW (ALWAYS SAME POSITION) */}
-                                                    <div className="row mt-3">
-                                                        <div className="col-12 col-md-3">
-                                                            <button
-                                                                type="submit"
-                                                                className="btn btn-primary w-100 d-flex align-items-center justify-content-center"
-                                                                disabled={loading}
-                                                            >
-                                                                <Icon icon="mdi:filter" className="me-6" />
-                                                                Apply
-                                                            </button>
+                                                        <div className="col-3">
+                                                            <label className="form-label text-xs mb-1">Year</label>
+                                                            <select className="form-select form-select-sm" value={selectedYear} onChange={(e) => setSelectedYear(parseInt(e.target.value, 10))}>
+                                                                {yearOptions.map((y) => (
+                                                                    <option key={y} value={y}>{y}</option>
+                                                                ))}
+                                                            </select>
                                                         </div>
-                                                    </div>
-
-                                                    {/* RANGE INFO */}
-                                                    {summary?.range && (
-                                                        <div className="text-muted small mt-10">
-                                                            {mode === "day" && (
-                                                                <>
-                                                                    Date: <b>{summary.range.used_date || "—"}</b>
-                                                                </>
-                                                            )}
-
-                                                            {mode !== "day" && (
-                                                                <>
-                                                                    Range: <b>{summary.range.used_from || "—"}</b> →{" "}
-                                                                    <b>{summary.range.used_to || "—"}</b>
-                                                                </>
-                                                            )}
+                                                        <div className="col-5">
+                                                            <label className="form-label text-xs mb-1">Week Range</label>
+                                                            <select className="form-select form-select-sm" value={selectedWeekIndex} onChange={(e) => setSelectedWeekIndex(parseInt(e.target.value, 10))}>
+                                                                {weeksInSelectedMonth.map((w, idx) => (
+                                                                    <option key={`${w.from}-${w.to}`} value={idx}>{w.label}</option>
+                                                                ))}
+                                                            </select>
                                                         </div>
-                                                    )}
-                                                </form>
+                                                    </>
+                                                )}
 
+                                                {mode === "month" && (
+                                                    <>
+                                                        <div className="col-6">
+                                                            <label className="form-label text-xs mb-1">Month</label>
+                                                            <select className="form-select form-select-sm" value={selectedMonth} onChange={(e) => setSelectedMonth(parseInt(e.target.value, 10))}>
+                                                                {monthOptions.map((m) => (
+                                                                    <option key={m} value={m}>{monthName(m)}</option>
+                                                                ))}
+                                                            </select>
+                                                        </div>
+                                                        <div className="col-6">
+                                                            <label className="form-label text-xs mb-1">Year</label>
+                                                            <select className="form-select form-select-sm" value={selectedYear} onChange={(e) => setSelectedYear(parseInt(e.target.value, 10))}>
+                                                                {yearOptions.map((y) => (
+                                                                    <option key={y} value={y}>{y}</option>
+                                                                ))}
+                                                            </select>
+                                                        </div>
+                                                    </>
+                                                )}
 
+                                                <div className="col-auto">
+                                                    <button type="submit" className="btn btn-sm btn-primary d-flex align-items-center gap-1" disabled={loading}>
+                                                        <Icon icon="mdi:filter" /> Filter
+                                                    </button>
+                                                </div>
                                             </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* KPI Metric Cards */}
+                        <div className="row row-cols-xxl-6 row-cols-lg-3 row-cols-sm-2 row-cols-1 g-3">
+                            {summaryCards.map((c) => (
+                                <div className="col" key={c.label}>
+                                    <div className="card shadow-none border bg-white h-100 radius-12">
+                                        <div className="card-body p-3">
+                                            <div className="d-flex align-items-center justify-content-between mb-2">
+                                                <span className="text-muted text-xs fw-medium text-truncate">{c.label}</span>
+                                                <div className={`w-36-px h-36-px ${c.bgColor} ${c.textColor} rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 shadow-sm`}>
+                                                    <Icon icon={c.icon} className="text-lg" />
+                                                </div>
+                                            </div>
+                                            <h5 className="mb-0 fw-bold">{c.value}</h5>
                                         </div>
                                     </div>
                                 </div>
+                            ))}
+                        </div>
 
-                                {/* Summary cards */}
-                                <div className="row g-3 mb-3">
-                                    {summaryCards.map((c) => (
-                                        <div className="col-12 col-sm-6 col-lg-3" key={c.label}>
-                                            <div className="card border h-100">
-                                                <div className="card-body">
-                                                    <div className="d-flex align-items-center justify-content-between">
-                                                        <div>
-                                                            <div className="text-muted small">{c.label}</div>
-                                                            <div className="fw-semibold">{c.value}</div>
-                                                        </div>
-                                                        <Icon icon={c.icon} width={28} className="text-muted" />
+                        {/* Daily Learning Highlights */}
+                        {mode === "day" && (bestChar || weakChar) && (
+                            <div className="row g-3">
+                                {bestChar && (
+                                    <div className="col-12 col-md-6">
+                                        <div className="card border-0 shadow-sm radius-12 bg-success-subtle p-3">
+                                            <div className="d-flex align-items-center justify-content-between">
+                                                <div className="d-flex align-items-center gap-3">
+                                                    <div className="w-48-px h-48-px rounded bg-success text-white font-mono fw-bold fs-4 d-flex align-items-center justify-content-center shadow-sm">
+                                                        {bestChar.character}
+                                                    </div>
+                                                    <div>
+                                                        <span className="badge bg-success mb-1">Top Mastered</span>
+                                                        <div className="fw-bold text-dark text-sm">Best Accuracy Character</div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-
-                                {/* Daily insights (best/needs attention) */}
-                                {mode === "day" && (bestChar || weakChar) && (
-                                    <div className="row g-3 mb-3">
-                                        <div className="col-12 col-lg-6">
-                                            <div className="card border h-100">
-                                                <div className="card-header d-flex align-items-center gap-2">
-                                                    <Icon icon="mdi:star" />
-                                                    <h6 className="mb-0">Best Character</h6>
-                                                </div>
-                                                <div className="card-body">
-                                                    {bestChar ? (
-                                                        <div className="d-flex justify-content-between align-items-center">
-                                                            <div className="fw-semibold">{bestChar.character}</div>
-                                                            <span className="badge bg-success">
-                                                                {Math.round((bestChar.accuracy || 0) * 100)}%
-                                                            </span>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="text-muted">—</div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="col-12 col-lg-6">
-                                            <div className="card border h-100">
-                                                <div className="card-header d-flex align-items-center gap-2">
-                                                    <Icon icon="mdi:alert-circle-outline" />
-                                                    <h6 className="mb-0">Needs Attention</h6>
-                                                </div>
-                                                <div className="card-body">
-                                                    {weakChar ? (
-                                                        <div className="d-flex justify-content-between align-items-center">
-                                                            <div className="fw-semibold">{weakChar.character}</div>
-                                                            <span className="badge bg-warning text-dark">
-                                                                {Math.round((weakChar.accuracy || 0) * 100)}%
-                                                            </span>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="text-muted">—</div>
-                                                    )}
-                                                </div>
+                                                <h4 className="mb-0 fw-bold text-success">
+                                                    {Math.round((bestChar.accuracy || 0) * 100)}%
+                                                </h4>
                                             </div>
                                         </div>
                                     </div>
                                 )}
 
-                                {/* Weekly highlight lists */}
-                                {mode === "week" && (topMastered.length > 0 || toReview.length > 0) && (
-                                    <div className="row g-3 mb-3">
-                                        <div className="col-12 col-lg-6">
-                                            <div className="card border h-100">
-                                                <div className="card-header d-flex align-items-center gap-2">
-                                                    <Icon icon="mdi:thumb-up-outline" />
-                                                    <h6 className="mb-0">Top Mastered</h6>
+                                {weakChar && (
+                                    <div className="col-12 col-md-6">
+                                        <div className="card border-0 shadow-sm radius-12 bg-warning-subtle p-3">
+                                            <div className="d-flex align-items-center justify-content-between">
+                                                <div className="d-flex align-items-center gap-3">
+                                                    <div className="w-48-px h-48-px rounded bg-warning text-dark font-mono fw-bold fs-4 d-flex align-items-center justify-content-center shadow-sm">
+                                                        {weakChar.character}
+                                                    </div>
+                                                    <div>
+                                                        <span className="badge bg-warning text-dark mb-1">Needs Attention</span>
+                                                        <div className="fw-bold text-dark text-sm">Lowest Accuracy Character</div>
+                                                    </div>
                                                 </div>
-                                                <div className="card-body">
-                                                    {topMastered.length === 0 ? (
-                                                        <div className="text-muted">—</div>
-                                                    ) : (
-                                                        <div className="d-flex flex-wrap gap-2">
-                                                            {topMastered.map((c, idx) => (
-                                                                <span className="badge bg-success" key={`${c.character}-${idx}`}>
-                                                                    {c.character} • {Math.round((c.accuracy || 0) * 100)}%
-                                                                </span>
-                                                            ))}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="col-12 col-lg-6">
-                                            <div className="card border h-100">
-                                                <div className="card-header d-flex align-items-center gap-2">
-                                                    <Icon icon="mdi:repeat" />
-                                                    <h6 className="mb-0">Characters to Review</h6>
-                                                </div>
-                                                <div className="card-body">
-                                                    {toReview.length === 0 ? (
-                                                        <div className="text-muted">—</div>
-                                                    ) : (
-                                                        <div className="d-flex flex-wrap gap-2">
-                                                            {toReview.map((c, idx) => (
-                                                                <span className="badge bg-warning text-dark" key={`${c.character}-${idx}`}>
-                                                                    {c.character} • {Math.round((c.accuracy || 0) * 100)}%
-                                                                </span>
-                                                            ))}
-                                                        </div>
-                                                    )}
-                                                </div>
+                                                <h4 className="mb-0 fw-bold text-warning-emphasis">
+                                                    {Math.round((weakChar.accuracy || 0) * 100)}%
+                                                </h4>
                                             </div>
                                         </div>
                                     </div>
                                 )}
-
-                                {/* Characters table */}
-                                <div className="card border">
-                                    <div className="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-                                        <h6 className="mb-0">Character Breakdown</h6>
-
-                                        <div className="d-flex align-items-center gap-2 flex-wrap">
-                                            <div className="d-flex align-items-center gap-2">
-                                                <span className="text-muted small">Min Accuracy</span>
-                                                <select
-                                                    className="form-select form-select-sm"
-                                                    style={{ width: 140 }}
-                                                    value={minAccuracy}
-                                                    onChange={(e) => setMinAccuracy(parseInt(e.target.value, 10))}
-                                                >
-                                                    <option value={0}>All</option>
-                                                    <option value={50}>≥ 50%</option>
-                                                    <option value={60}>≥ 60%</option>
-                                                    <option value={70}>≥ 70%</option>
-                                                    <option value={80}>≥ 80%</option>
-                                                    <option value={90}>≥ 90%</option>
-                                                </select>
-                                            </div>
-
-                                            <span className="text-muted small">{charactersList.length} characters</span>
-                                        </div>
-                                    </div>
-
-
-                                    <div className="card-body">
-                                        {charactersList.length === 0 ? (
-                                            <div className="text-center text-muted py-20">No character data found for this period.</div>
-                                        ) : (
-                                            <div className="table-responsive">
-                                                <table className="table bordered-table mb-0">
-                                                    <thead>
-                                                        <tr>
-                                                            <th>#</th>
-                                                            <th>Character</th>
-                                                            <th>Attempts</th>
-                                                            <th>Correct</th>
-                                                            <th
-                                                                role="button"
-                                                                onClick={() =>
-                                                                    setAccuracySort((prev) =>
-                                                                        prev === "none" ? "desc" : prev === "desc" ? "asc" : "none"
-                                                                    )
-                                                                }
-                                                                style={{ cursor: "pointer", userSelect: "none", whiteSpace: "nowrap" }}
-                                                                title="Sort by accuracy"
-                                                            >
-                                                                <span className="d-inline-flex align-items-center gap-2">
-                                                                    Accuracy
-
-                                                                    <span className="d-inline-flex flex-column" style={{ lineHeight: 1 }}>
-                                                                        <Icon
-                                                                            icon="mdi:chevron-up"
-                                                                            style={{
-                                                                                opacity: accuracySort === "asc" ? 1 : 0.25,
-                                                                                transform: "translateY(2px)",
-                                                                            }}
-                                                                        />
-                                                                        <Icon
-                                                                            icon="mdi:chevron-down"
-                                                                            style={{
-                                                                                opacity: accuracySort === "desc" ? 1 : 0.25,
-                                                                                transform: "translateY(-2px)",
-                                                                            }}
-                                                                        />
-                                                                    </span>
-                                                                </span>
-                                                            </th>
-
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        {charactersList.map((c, idx) => {
-                                                            const attempts = Number(c.attempts || 0);
-                                                            const correct = Number(c.correct_attempts || 0);
-                                                            const accuracy = attempts > 0 ? Math.round((correct / attempts) * 100) : 0;
-
-                                                            return (
-                                                                <tr key={`${c.character}-${idx}`}>
-                                                                    <td>{idx + 1}</td>
-                                                                    <td className="fw-semibold">{c.character || "—"}</td>
-                                                                    <td>{attempts}</td>
-                                                                    <td>{correct}</td>
-                                                                    <td>
-                                                                        <span
-                                                                            className={`badge ${accuracy >= 80
-                                                                                ? "bg-success"
-                                                                                : accuracy >= 50
-                                                                                    ? "bg-info"
-                                                                                    : "bg-warning text-dark"
-                                                                                }`}
-                                                                        >
-                                                                            {accuracy}%
-                                                                        </span>
-                                                                    </td>
-                                                                </tr>
-                                                            );
-                                                        })}
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            </>
+                            </div>
                         )}
-                    </div>
-                </div>
+
+                        {/* Weekly Highlight Lists */}
+                        {mode === "week" && (topMastered.length > 0 || toReview.length > 0) && (
+                            <div className="row g-3">
+                                <div className="col-12 col-lg-6">
+                                    <div className="card border-0 shadow-sm radius-12 h-100">
+                                        <div className="card-header bg-white border-bottom py-3 d-flex align-items-center gap-2">
+                                            <Icon icon="mdi:thumb-up-outline" className="text-success text-xl" />
+                                            <h6 className="mb-0 fw-bold">Top Mastered Characters</h6>
+                                        </div>
+                                        <div className="card-body">
+                                            {topMastered.length === 0 ? (
+                                                <div className="text-muted small">—</div>
+                                            ) : (
+                                                <div className="d-flex flex-wrap gap-2">
+                                                    {topMastered.map((c, idx) => (
+                                                        <span className="badge bg-success-subtle text-success border border-success-subtle p-2 text-sm" key={`${c.character}-${idx}`}>
+                                                            <strong className="font-mono fs-6 me-1">{c.character}</strong> &bull; {Math.round((c.accuracy || 0) * 100)}%
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="col-12 col-lg-6">
+                                    <div className="card border-0 shadow-sm radius-12 h-100">
+                                        <div className="card-header bg-white border-bottom py-3 d-flex align-items-center gap-2">
+                                            <Icon icon="mdi:repeat" className="text-warning text-xl" />
+                                            <h6 className="mb-0 fw-bold">Characters to Review</h6>
+                                        </div>
+                                        <div className="card-body">
+                                            {toReview.length === 0 ? (
+                                                <div className="text-muted small">—</div>
+                                            ) : (
+                                                <div className="d-flex flex-wrap gap-2">
+                                                    {toReview.map((c, idx) => (
+                                                        <span className="badge bg-warning-subtle text-warning border border-warning-subtle p-2 text-sm" key={`${c.character}-${idx}`}>
+                                                            <strong className="font-mono fs-6 me-1">{c.character}</strong> &bull; {Math.round((c.accuracy || 0) * 100)}%
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Character Breakdown Table */}
+                        <div className="card border-0 shadow-sm radius-12">
+                            <div className="card-header bg-white border-bottom py-3 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                                <div className="d-flex align-items-center gap-2">
+                                    <Icon icon="mdi:alphabetical" className="text-primary text-xl" />
+                                    <h6 className="mb-0 fw-bold">Character Practice Breakdown</h6>
+                                </div>
+
+                                <div className="d-flex align-items-center gap-3 flex-wrap">
+                                    <div className="d-flex align-items-center gap-2">
+                                        <span className="text-muted text-xs">Min Accuracy:</span>
+                                        <select
+                                            className="form-select form-select-sm"
+                                            style={{ width: 120 }}
+                                            value={minAccuracy}
+                                            onChange={(e) => setMinAccuracy(parseInt(e.target.value, 10))}
+                                        >
+                                            <option value={0}>All</option>
+                                            <option value={50}>&ge; 50%</option>
+                                            <option value={60}>&ge; 60%</option>
+                                            <option value={70}>&ge; 70%</option>
+                                            <option value={80}>&ge; 80%</option>
+                                            <option value={90}>&ge; 90%</option>
+                                        </select>
+                                    </div>
+                                    <span className="badge bg-light text-dark border text-xs">{charactersList.length} characters</span>
+                                </div>
+                            </div>
+
+                            <div className="card-body p-0">
+                                {charactersList.length === 0 ? (
+                                    <div className="d-flex flex-column align-items-center justify-content-center py-5 text-muted small text-center">
+                                        <Icon icon="mdi:script-text-outline" className="text-2xl text-muted mb-1" />
+                                        No character practice data recorded for this timeframe.
+                                    </div>
+                                ) : (
+                                    <div className="table-responsive">
+                                        <table className="table align-middle mb-0">
+                                            <thead className="table-light text-xs text-uppercase text-muted">
+                                                <tr>
+                                                    <th className="ps-3" style={{ width: "60px" }}>#</th>
+                                                    <th>Character</th>
+                                                    <th>Attempts</th>
+                                                    <th>Correct Submissions</th>
+                                                    <th
+                                                        role="button"
+                                                        onClick={() =>
+                                                            setAccuracySort((prev) =>
+                                                                prev === "none" ? "desc" : prev === "desc" ? "asc" : "none"
+                                                            )
+                                                        }
+                                                        style={{ cursor: "pointer", userSelect: "none" }}
+                                                        title="Sort by accuracy"
+                                                    >
+                                                        <span className="d-inline-flex align-items-center gap-1">
+                                                            Accuracy Rate
+                                                            <Icon icon={accuracySort === "asc" ? "mdi:sort-ascending" : accuracySort === "desc" ? "mdi:sort-descending" : "mdi:sort"} />
+                                                        </span>
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="text-sm">
+                                                {charactersList.map((c, idx) => {
+                                                    const attempts = Number(c.attempts || 0);
+                                                    const correct = Number(c.correct_attempts || 0);
+                                                    const accuracy = attempts > 0 ? Math.round((correct / attempts) * 100) : 0;
+
+                                                    return (
+                                                        <tr key={`${c.character}-${idx}`}>
+                                                            <td className="ps-3 text-muted text-xs">{idx + 1}</td>
+                                                            <td>
+                                                                <div className="w-36-px h-36-px rounded bg-primary-subtle text-primary border border-primary-subtle font-mono fw-bold fs-5 d-flex align-items-center justify-content-center shadow-sm">
+                                                                    {c.character || "—"}
+                                                                </div>
+                                                            </td>
+                                                            <td className="fw-medium">{attempts}</td>
+                                                            <td className="fw-medium text-success">{correct}</td>
+                                                            <td style={{ width: "220px" }}>
+                                                                <div className="d-flex align-items-center gap-2">
+                                                                    <div className="progress flex-grow-1" style={{ height: "6px" }}>
+                                                                        <div
+                                                                            className={`progress-bar ${accuracy >= 70 ? "bg-success" : accuracy >= 50 ? "bg-info" : "bg-warning"}`}
+                                                                            role="progressbar"
+                                                                            style={{ width: `${accuracy}%` }}
+                                                                        />
+                                                                    </div>
+                                                                    <span className={`fw-bold text-xs ${accuracy >= 70 ? "text-success" : "text-warning"}`}>
+                                                                        {accuracy}%
+                                                                    </span>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </>
+                )}
             </div>
         </SchoolLayout>
     );

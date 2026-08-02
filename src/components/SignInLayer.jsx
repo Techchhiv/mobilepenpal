@@ -13,14 +13,18 @@ const AdminSignInLayer = () => {
   const [submitting, setSubmitting] = useState(false);
 
   const navigate = useNavigate();
-  const { isAuthenticated, login } = useAuth();
+  const { isAuthenticated, login, user } = useAuth();
 
   // Redirect if already logged in
   useEffect(() => {
     if (isAuthenticated) {
-      navigate("/admin", { replace: true });
+      if (user?.school_id || user?.roles?.some(r => r.name.toLowerCase().includes("manager") || r.name.toLowerCase().includes("school"))) {
+        navigate("/school", { replace: true });
+      } else {
+        navigate("/admin", { replace: true });
+      }
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, user, navigate]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -38,14 +42,13 @@ const AdminSignInLayer = () => {
       login(data.user, data.token);
 
       // Determine redirect dynamically based on role/permissions
-      const roles = (data.user.roles || []).map(r => r.name);
-      const perms = (data.user.permissions || []).map(p => (typeof p === "string" ? p : p?.name));
+      const hasSchoolId = Boolean(data.user?.school_id);
+      const roles = (data.user.roles || []).map(r => r.name.toLowerCase());
 
-      if (roles.includes("super-admin")) {
-        navigate("/admin");
-      
+      if (hasSchoolId || roles.includes("school-admin") || roles.includes("teacher") || roles.some(r => r.includes("manager"))) {
+        navigate("/school", { replace: true });
       } else {
-        navigate("/admin"); // fallback
+        navigate("/admin", { replace: true });
       }
     } catch (err) {
       const status = err?.response?.status;

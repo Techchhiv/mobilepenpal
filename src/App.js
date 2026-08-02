@@ -150,7 +150,16 @@ export default function App() {
 
         <Route
           element={
-            <Gate anyPerm={["world.view, world.create, world.delete"]} />
+            <Gate
+              anyPerm={[
+                "worlds.view",
+                "worlds.create",
+                "worlds.delete",
+                "world.view",
+                "world.create",
+                "world.delete",
+              ]}
+            />
           }
         >
           <Route path="/admin/worlds" element={<WorldList />} />
@@ -161,7 +170,16 @@ export default function App() {
 
         <Route
           element={
-            <Gate anyPerm={["level.view, level.create, level.delete"]} />
+            <Gate
+              anyPerm={[
+                "levels.view",
+                "levels.create",
+                "levels.delete",
+                "level.view",
+                "level.create",
+                "level.delete",
+              ]}
+            />
           }
         >
           {/* <Route path="/admin/levels" element={<LevelList />} /> */}
@@ -172,7 +190,16 @@ export default function App() {
 
         <Route
           element={
-            <Gate anyPerm={["stage.view, stage.create, stage.delete"]} />
+            <Gate
+              anyPerm={[
+                "stages.view",
+                "stages.create",
+                "stages.delete",
+                "stage.view",
+                "stage.create",
+                "stage.delete",
+              ]}
+            />
           }
         >
           <Route path="/admin/stages" element={<StageList />} />
@@ -243,9 +270,10 @@ export default function App() {
             <Gate
               anyPerm={[
                 "teachers.view",
-                "classroom.view",
                 "teachers.update",
                 "teachers.create",
+                "classrooms.view",
+                "classroom.view",
               ]}
             />
           }

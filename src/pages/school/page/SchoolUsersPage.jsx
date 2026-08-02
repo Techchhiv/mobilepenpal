@@ -5,6 +5,7 @@ import { Icon } from "@iconify/react";
 import { Link } from "react-router-dom";
 import API from "../../../helper/api";
 import SchoolLayout from "../masterLayout/SchoolLayout";
+import { useAuth } from "../../../context/AuthContext";
 
 // Helper to normalize response
 const normalizeList = (payload) =>
@@ -135,6 +136,7 @@ function UserFormModal({ open, onClose, onSubmit, allRoles, initial, saving }) {
 }
 
 const SchoolUsersPage = () => {
+  const { user: currentUser } = useAuth();
   const [rows, setRows] = useState([]);
   const [allRoles, setAllRoles] = useState([]);
   const [message, setMessage] = useState("");
@@ -152,13 +154,15 @@ const SchoolUsersPage = () => {
   // Fetch only users/roles for this school
   const fetchUsers = async () => {
     const { data } = await API.get("/school/users");
-    return normalizeList(data).map((u) => ({
-      id: u.id,
-      name: u.name,
-      email: u.email,
-      roles: (u.roles || []).map((r) => r.name),
-      created_at: u.created_at,
-    }));
+    return normalizeList(data)
+      .filter((u) => !currentUser || (u.id !== currentUser.id && u.email !== currentUser.email))
+      .map((u) => ({
+        id: u.id,
+        name: u.name,
+        email: u.email,
+        roles: (u.roles || []).map((r) => r.name),
+        created_at: u.created_at,
+      }));
   };
 
  const fetchRoles = async () => {

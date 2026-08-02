@@ -16,7 +16,13 @@ function deriveAuth(userObj) {
   const isSuperAdmin = roleNames.includes("super-admin");
   const isSchoolAdmin = roleNames.includes("school-admin");
   const isTeacher = roleNames.includes("teacher");
-  const isSchoolUser = isSchoolAdmin || isTeacher || roleNames.includes("student") || roleNames.includes("parent");
+  const isSchoolUser =
+    isSchoolAdmin ||
+    isTeacher ||
+    Boolean(userObj?.school_id) ||
+    roleNames.includes("student") ||
+    roleNames.includes("parent") ||
+    roleNames.some(r => r.includes("manager") || r.includes("school"));
 
   const hasRole = role => roleNames.includes(role.toLowerCase());
   const hasPermission = perm => isSuperAdmin || permNames.includes(perm.toLowerCase());

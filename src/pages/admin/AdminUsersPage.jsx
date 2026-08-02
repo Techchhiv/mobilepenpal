@@ -6,6 +6,7 @@ import { Icon } from "@iconify/react";
 import { Link } from "react-router-dom";
 import API from "../../helper/api";
 import MasterLayout from "../../masterLayout/MasterLayout";
+import { useAuth } from "../../context/AuthContext";
 
 // Accept [] or {data:[]}
 const normalizeList = (payload) =>
@@ -135,6 +136,7 @@ function UserFormModal({
 }
 
 const AdminUsersPage = () => {
+  const { user: currentUser } = useAuth();
   const [rows, setRows] = useState([]);
   const [allRoles, setAllRoles] = useState([]);
   const [message, setMessage] = useState("");
@@ -153,25 +155,27 @@ const AdminUsersPage = () => {
     setTimeout(() => (isErr ? setErr("") : setMessage("")), 2500);
   };
 
-const fetchUsers = async () => {
-  const { data } = await API.get("/admin/users");
-  const list = normalizeList(data);
+  const fetchUsers = async () => {
+    const { data } = await API.get("/admin/users");
+    const list = normalizeList(data);
 
-  return list.map((u) => ({
-    id: u.id,
-    name: u.name,
-    email: u.email,
-    roles: (u.roles || []).map((r) => r.name),
-    created_at: u.created_at,
+    return list
+      .filter((u) => !currentUser || (u.id !== currentUser.id && u.email !== currentUser.email))
+      .map((u) => ({
+        id: u.id,
+        name: u.name,
+        email: u.email,
+        roles: (u.roles || []).map((r) => r.name),
+        created_at: u.created_at,
 
-    // keep what the API sends
-    is_online: u.is_online,           // 0/1 or true/false
-    last_seen_at: u.last_seen_at,     // timestamp
+        // keep what the API sends
+        is_online: u.is_online,           // 0/1 or true/false
+        last_seen_at: u.last_seen_at,     // timestamp
 
-    // add a derived field your table will use
-    online: computeOnline(u),         // <-- THIS is what you render
-  }));
-};
+        // add a derived field your table will use
+        online: computeOnline(u),         // <-- THIS is what you render
+      }));
+  };
 
   const fetchRoles = async () => {
     const { data } = await API.get("/admin/roles");

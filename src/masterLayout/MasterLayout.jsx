@@ -22,8 +22,8 @@ const MasterLayout = ({ children }) => {
   const showManageUsers = isSuperAdmin || hasPermission("users.manage");
   const showRoles = isSuperAdmin || hasPermission("roles.manage");
   const showPermissions = isSuperAdmin || hasPermission("permissions.manage");
-  const showWorldManage = isSuperAdmin
-  const showStudents = isSuperAdmin || hasPermission("student.view");
+  const showWorldManage = isSuperAdmin || hasPermission("worlds.view") || hasPermission("world.view");
+  const showStudents = isSuperAdmin || hasPermission("student.view") || hasPermission("children.view");
 
   useEffect(() => {
     const p = location.pathname;
