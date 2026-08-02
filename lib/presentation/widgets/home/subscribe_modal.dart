@@ -74,21 +74,7 @@ class SubscribeModal extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(height: 14),
-
-          Text(
-            'school_subscription_message'.tr,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontFamily: 'Kantumruy Pro',
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: Color(0xFF475569),
-              height: 1.6,
-            ),
-          ),
-
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
 
           // Info box
           Container(

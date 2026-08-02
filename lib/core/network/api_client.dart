@@ -38,12 +38,13 @@ class ApiClient {
       InterceptorsWrapper(
         onRequest: (options, handler) async {
           final token = await _secureStorage.read(key: Env.accessToken);
+          final currentLocale = Get.locale?.languageCode;
           final storedLocale = _box.read('locale');
-          
-          final languageCode = storedLocale != null && storedLocale['languageCode'] != null 
-              ? storedLocale['languageCode'] 
-              : 'en';
-              
+
+          final languageCode = storedLocale != null && storedLocale['languageCode'] != null
+              ? storedLocale['languageCode']
+              : (currentLocale ?? 'en');
+
           options.headers['Accept-Language'] = languageCode;
 
           if (token != null && token.isNotEmpty) {

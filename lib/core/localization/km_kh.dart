@@ -463,7 +463,7 @@ final Map<String, String> kmKH = {
   'school_subscription_title': 'មាតិកាពិសេស',
   'school_subscription_message':
       'មាតិកានេះត្រូវការការបើកប្រាក់ប្រីមៀម។ សូមទាក់ទងអ្នកគ្រប់គ្រងសាលារៀនរបស់អ្នកដើម្បីដំណើរការ។',
-  'contact_school_admin': 'ទាក់ទងអ្នកគ្រប់គ្រង',
+  'contact_school_admin': 'សូមទាក់ទងអ្នកគ្រប់គ្រងសាលារៀនរបស់អ្នកដើម្បីដំណើរការ។',
   'unlock_unlimited_title': 'ធ្វើការជាវដើម្បីទទួលបានមុខងារបន្ថែម',
   'unlock_unlimited_subtitle':
       'ទទួលបានសិទ្ធិពេញលេញក្នុងការរៀនអក្សរខ្មែរ AI និងហ្គេមអប់រំ។',
@@ -616,5 +616,11 @@ final Map<String, String> kmKH = {
   'nav_lessons': 'មេរៀន',
   'nav_games': 'ហ្គេម',
   'nav_quests': 'បេសកកម្ម',
-  'nav_shop': 'ហាងទំនិញ',
+  'nav_shop': 'ហាង',
+
+  // ===== Classroom Page =====
+  'archived': 'ប័ណ្ណសារ',
+  'enrolled': 'បានចូលរៀន',
+  'no_classmates_yet': 'មិនទាន់មានមិត្តរួមថ្នាក់ទេ',
+  'no_classroom_details': 'រកមិនឃើញព័ត៌មានលម្អិតនៃថ្នាក់រៀនទេ',
 };

@@ -467,7 +467,8 @@ final Map<String, String> enUS = {
   'school_subscription_title': 'Premium Content',
   'school_subscription_message':
       'This content requires a premium subscription. Please contact your school administrator to activate access for your account.',
-  'contact_school_admin': 'Contact School Admin',
+  'contact_school_admin':
+      'Please contact your school administrator to activate access for your account.',
   'unlock_unlimited_title': 'Subscribe to unlock more features',
   'unlock_unlimited_subtitle':
       'Get full access to all handwriting levels, AI feedback, and mini-games.',
@@ -619,4 +620,10 @@ final Map<String, String> enUS = {
   'nav_games': 'Games',
   'nav_quests': 'Quests',
   'nav_shop': 'Shop',
+
+  // ===== Classroom Page =====
+  'archived': 'Archived',
+  'enrolled': 'Enrolled',
+  'no_classmates_yet': 'No classmates enrolled yet.',
+  'no_classroom_details': 'No classroom details found.',
 };

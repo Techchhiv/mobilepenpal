@@ -283,12 +283,6 @@ class HomeController extends GetxController {
     }
     if (isClassroomLoading.value) return;
 
-    final userId = student.value?.id.toString() ?? '0';
-    final attemptKey = 'classroom_attempted_$userId';
-    final attempted = _box.read(attemptKey) == true;
-
-    if (!force && attempted) return;
-
     isClassroomLoading.value = true;
     try {
       final res = await _homeService.getClassrooms();
@@ -305,7 +299,6 @@ class HomeController extends GetxController {
       );
     } finally {
       isClassroomLoading.value = false;
-      await _box.write(attemptKey, true);
     }
   }
 

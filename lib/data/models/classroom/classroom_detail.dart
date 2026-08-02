@@ -31,6 +31,29 @@ class ClassroomEnrollment {
   }
 }
 
+class ClassroomMyStats {
+  final int totalAttempts;
+  final int correctAttempts;
+  final int accuracy;
+  final int starsEarned;
+
+  ClassroomMyStats({
+    required this.totalAttempts,
+    required this.correctAttempts,
+    required this.accuracy,
+    required this.starsEarned,
+  });
+
+  factory ClassroomMyStats.fromJson(Map<String, dynamic> json) {
+    return ClassroomMyStats(
+      totalAttempts: (json['total_attempts'] ?? 0) as int,
+      correctAttempts: (json['correct_attempts'] ?? 0) as int,
+      accuracy: (json['accuracy'] ?? 0) as int,
+      starsEarned: (json['stars_earned'] ?? 0) as int,
+    );
+  }
+}
+
 class Classmate {
   final int id;
   final String firstName;
@@ -61,25 +84,29 @@ class Classmate {
     if (nick.isNotEmpty) return nick;
     final ln = (lastName ?? '').trim();
     return ln.isEmpty ? firstName : '$firstName $ln';
-    }
+  }
 }
 
 class ClassroomDetail {
   final int id;
   final String name;
+  final String? joinCode;
   final bool isActive;
   final int studentsCount;
   final ClassroomTeacher? teacher;
   final ClassroomEnrollment? enrollment;
+  final ClassroomMyStats? myStats;
   final List<Classmate> classmates;
 
   ClassroomDetail({
     required this.id,
     required this.name,
+    this.joinCode,
     required this.isActive,
     required this.studentsCount,
     required this.teacher,
     required this.enrollment,
+    this.myStats,
     required this.classmates,
   });
 
@@ -87,6 +114,7 @@ class ClassroomDetail {
     return ClassroomDetail(
       id: (json['id'] ?? 0) as int,
       name: (json['name'] ?? '').toString(),
+      joinCode: json['join_code']?.toString(),
       isActive: (json['is_active'] ?? false) == true,
       studentsCount: (json['students_count'] ?? 0) as int,
       teacher: json['teacher'] is Map<String, dynamic>
@@ -94,6 +122,9 @@ class ClassroomDetail {
           : null,
       enrollment: json['enrollment'] is Map<String, dynamic>
           ? ClassroomEnrollment.fromJson(json['enrollment'])
+          : null,
+      myStats: json['my_stats'] is Map<String, dynamic>
+          ? ClassroomMyStats.fromJson(json['my_stats'])
           : null,
       classmates: (json['classmates'] is List)
           ? (json['classmates'] as List)

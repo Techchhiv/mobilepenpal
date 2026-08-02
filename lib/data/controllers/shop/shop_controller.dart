@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
 import 'package:mobilepenpal/data/models/student/student.dart';
+import 'package:mobilepenpal/data/services/home_service.dart';
 import 'package:mobilepenpal/data/services/shop_service.dart';
 
 class ShopAvatar {
@@ -322,10 +323,22 @@ class ShopController extends GetxController {
     }
   }
 
-  void selectAvatar(String avatarId) {
+  void selectAvatar(String avatarId) async {
     if (!isUnlocked(avatarId)) return;
     selectedAvatarId.value = avatarId;
     _box.write(_selectedKey, avatarId);
+
+    try {
+      final homeService = HomeService();
+      final response = await homeService.updateStudentProfile({'avatar': avatarId});
+      if (response.code == 200 && response.data != null) {
+        if (Get.isRegistered<HomeController>()) {
+          Get.find<HomeController>().student.value = response.data;
+        }
+      }
+    } catch (e) {
+      debugPrint('ShopController: Failed to sync avatar to backend: $e');
+    }
   }
 
   ShopAvatar get currentAvatar {

@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:mobilepenpal/core/config/env.dart';
 import 'package:mobilepenpal/core/theme/app_colors.dart';
-import 'package:mobilepenpal/core/utils/number_format_utils.dart';
 import 'package:mobilepenpal/data/controllers/classroom/classroom_controller.dart';
+import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
+import 'package:mobilepenpal/data/controllers/shop/shop_controller.dart';
 import 'package:mobilepenpal/data/models/classroom/classroom_detail.dart';
-import 'package:shimmer/shimmer.dart';
-import 'package:mobilepenpal/core/utils/report_format.dart';
 
 class ClassroomPage extends GetView<ClassroomController> {
   final int classroomId;
@@ -31,6 +29,18 @@ class ClassroomPage extends GetView<ClassroomController> {
         final detail = c.detail.value;
         final err = c.errorText.value;
 
+        if (loading && detail == null) {
+          return const Center(
+            child: CircularProgressIndicator(color: _brand),
+          );
+        }
+
+        if (detail == null) {
+          return Center(
+            child: Text('no_classroom_details'.tr, style: const TextStyle(color: Colors.black54)),
+          );
+        }
+
         return RefreshIndicator(
           color: _brand,
           onRefresh: () async => c.fetchDetail(),
@@ -38,20 +48,17 @@ class ClassroomPage extends GetView<ClassroomController> {
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
             children: [
-              if (loading && detail == null) _HeaderShimmer(),
-              if (!loading && detail != null) _HeaderCard(detail: detail),
+              _HeaderCard(detail: detail),
 
               const SizedBox(height: 14),
 
               _sectionTitle('classmates'.tr),
               const SizedBox(height: 10),
 
-              if (loading && detail == null)
-                ...List.generate(6, (_) => _RowShimmer()),
-              if (!loading && err.isNotEmpty)
+              if (err.isNotEmpty)
                 _errorBox(err, onRetry: c.fetchDetail),
-              if (!loading && detail != null)
-                _ClassmateList(classmates: detail.classmates),
+
+              _ClassmateList(classmates: detail.classmates),
             ],
           ),
         );
@@ -99,99 +106,93 @@ class ClassroomPage extends GetView<ClassroomController> {
 
 class _HeaderCard extends StatelessWidget {
   final ClassroomDetail detail;
+
   const _HeaderCard({required this.detail});
 
   static const Color _brand = Color(0xFF00897B);
 
   @override
   Widget build(BuildContext context) {
-    final t = detail.teacher?.name ?? '—';
-    final enrolled = detail.enrollment?.enrolledAt;
+    final teacherName = detail.teacher?.name ?? '—';
 
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
           ),
         ],
-        border: Border.all(color: Colors.black.withValues(alpha: 0.03)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                width: 6,
-                height: 54,
+                width: 44,
+                height: 44,
                 decoration: BoxDecoration(
-                  color: _brand.withValues(alpha: 0.18),
-                  borderRadius: BorderRadius.circular(99),
+                  color: _brand.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(14),
                 ),
+                child: const Icon(Icons.school_rounded, color: _brand, size: 24),
               ),
               const SizedBox(width: 12),
-
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            detail.name,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w900,
-                              color: Colors.black87,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        _statusBadge(detail.isActive),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
                     Text(
-                      '${'teacher'.tr}: $t',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                      detail.name,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${'teacher'.tr}: $teacherName',
                       style: TextStyle(
                         fontSize: 13,
+                        color: Colors.grey.shade700,
                         fontWeight: FontWeight.w600,
-                        color: Colors.grey[700],
                       ),
                     ),
-                    const SizedBox(height: 6),
-                    Text(
-                      '${'student'.tr}: ${NumberFormatUtils.intText(detail.studentsCount)}',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.grey[700],
-                      ),
-                    ),
-                    if (enrolled != null) ...[
-                      const SizedBox(height: 6),
-                      Text(
-                        '${'joined'.tr}: ${detail.enrollment?.enrolledAt?.toJoinDateLabel() ?? '—'}',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                    ],
                   ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          const Divider(height: 1),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '${detail.studentsCount} ${'student'.tr}',
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black54),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: detail.isActive ? Colors.green.withValues(alpha: 0.1) : Colors.grey.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  detail.isActive ? 'active'.tr : 'archived'.tr,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: detail.isActive ? Colors.green[700] : Colors.grey[700],
+                  ),
                 ),
               ),
             ],
@@ -200,136 +201,118 @@ class _HeaderCard extends StatelessWidget {
       ),
     );
   }
-
-  Widget _statusBadge(bool active) {
-    final bg = (active ? const Color(0xFF22C55E) : const Color(0xFF9CA3AF))
-        .withValues(alpha: 0.14);
-    final fg = active ? const Color(0xFF16A34A) : const Color(0xFF6B7280);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(99),
-      ),
-      child: Text(
-        active ? 'active'.tr : 'inactive'.tr,
-        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: fg),
-      ),
-    );
-  }
 }
 
 class _ClassmateList extends StatelessWidget {
   final List<Classmate> classmates;
+
   const _ClassmateList({required this.classmates});
 
   @override
   Widget build(BuildContext context) {
     if (classmates.isEmpty) {
       return Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.03),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
-        ),
-        child: Text(
-          'no_classmates'.tr,
-          style: const TextStyle(fontWeight: FontWeight.w700),
-        ),
+        padding: const EdgeInsets.all(24),
+        alignment: Alignment.center,
+        child: Text('no_classmates_yet'.tr, style: const TextStyle(color: Colors.black54)),
       );
     }
 
-    return Column(
-      children: classmates.map((s) => _ClassmateRow(s: s)).toList(),
-    );
-  }
-}
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: classmates.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 8),
+      itemBuilder: (context, idx) {
+        final item = classmates[idx];
 
-class _ClassmateRow extends StatelessWidget {
-  final Classmate s;
-  const _ClassmateRow({required this.s});
-
-  @override
-  Widget build(BuildContext context) {
-    final avatar = (s.avatar ?? '').trim();
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
-        border: Border.all(color: Colors.black.withValues(alpha: 0.03)),
-      ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 22,
-            backgroundColor: Colors.grey[200],
-            backgroundImage: avatar.isNotEmpty
-                ? NetworkImage(Env.backendUrl + avatar)
-                : null,
-            child: avatar.isEmpty
-                ? const Icon(Icons.person, color: Colors.white)
-                : null,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              s.displayName,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _HeaderShimmer extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Shimmer.fromColors(
-      baseColor: Colors.grey.shade200,
-      highlightColor: Colors.grey.shade100,
-      child: Container(
-        height: 110,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(22),
-        ),
-      ),
-    );
-  }
-}
-
-class _RowShimmer extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Shimmer.fromColors(
-        baseColor: Colors.grey.shade200,
-        highlightColor: Colors.grey.shade100,
-        child: Container(
-          height: 64,
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: Colors.black.withValues(alpha: 0.04)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
-        ),
-      ),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                ),
+                child: ClipOval(
+                  child: _buildClassmateAvatar(item.avatar),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  item.displayName,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.teal.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  'enrolled'.tr,
+                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.teal),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
+  }
+
+  Widget _buildClassmateAvatar(String? avatar) {
+    if (avatar != null && avatar.isNotEmpty) {
+      if (avatar.startsWith('assets/')) {
+        return Image.asset(avatar, fit: BoxFit.cover);
+      }
+      if (avatar.startsWith('http')) {
+        return Image.network(
+          avatar,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => const Icon(Icons.person_rounded, color: AppColors.primary),
+        );
+      }
+
+      // Check if avatar string matches a shop avatar ID
+      if (Get.isRegistered<ShopController>()) {
+        final shopCtrl = Get.find<ShopController>();
+        final matchedAvatar = shopCtrl.allAvatars.firstWhereOrNull((a) => a.id == avatar);
+        if (matchedAvatar?.assetPath != null) {
+          return Image.asset(matchedAvatar!.assetPath!, fit: BoxFit.cover);
+        }
+      }
+    }
+
+    if (Get.isRegistered<HomeController>()) {
+      final homeController = Get.find<HomeController>();
+      final shopAvatar = homeController.currentShopAvatar;
+      if (shopAvatar?.assetPath != null) {
+        return Image.asset(shopAvatar!.assetPath!, fit: BoxFit.cover);
+      }
+    }
+
+    return const Icon(Icons.person_rounded, color: AppColors.primary);
   }
 }
