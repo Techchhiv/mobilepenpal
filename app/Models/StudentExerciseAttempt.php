@@ -20,6 +20,11 @@ class StudentExerciseAttempt extends Model
         return $this->belongsTo(Exercise::class);
     }
 
+    public function student()
+    {
+        return $this->belongsTo(Student::class);
+    }
+
     public function scopeForStudent($query, int $studentId)
     {
         return $query->where('student_id', $studentId);
