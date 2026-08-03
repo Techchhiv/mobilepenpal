@@ -28,7 +28,7 @@ const AdminDashboardUnitCount = ({ summary }) => {
                         <div className="d-flex flex-wrap align-items-center justify-content-between gap-3">
                             <div>
                                 <p className="fw-medium text-primary-light mb-1">Active Schools</p>
-                                <h6 className="mb-0">{summary.total_active_schools || 0}</h6>
+                                <h6 className="mb-0">{summary.active_schools ?? summary.total_active_schools ?? 0}</h6>
                             </div>
                             <div className="w-50-px h-50-px bg-purple rounded-circle d-flex justify-content-center align-items-center">
                                 <Icon icon="ph:check-circle-fill" className="text-white text-2xl mb-0" />

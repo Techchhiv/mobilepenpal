@@ -1,5 +1,5 @@
-// src/pages/admin/Subscriptions/UserSubscriptionsPage.jsx
 import React, { useEffect, useState, useMemo } from "react";
+import { useLocation } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import MasterLayout from "../../../masterLayout/MasterLayout";
 import API from "../../../helper/api";
@@ -54,10 +54,20 @@ export default function UserSubscriptionsPage() {
         }
     };
 
+    const location = useLocation();
+
     useEffect(() => {
         load();
         loadSettings();
-    }, []);
+
+        const query = new URLSearchParams(location.search);
+        const modalType = query.get("modal") || query.get("open");
+        if (modalType === "settings" || modalType === "global") {
+            openSettings();
+        } else if (modalType === "feature_locks" || modalType === "features") {
+            openFeatureLocks();
+        }
+    }, [location.search]);
 
     const getDefaultAmount = (currentPlan, currentSettings) => {
         const price = parseFloat(currentSettings.price) || 0;
