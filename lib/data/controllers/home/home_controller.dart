@@ -65,8 +65,6 @@ class HomeController extends GetxController {
 
   String get avatarUrl => student.value?.avatar ?? '';
 
-  bool get isAdventureUnlocked => isConsonantsWorldCompleted;
-
   bool _isWorldCompleted(bool Function(StudentProgress) testFunc) {
     return studentProgress
         .where(testFunc)

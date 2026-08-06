@@ -25,10 +25,6 @@ class AppRoutes {
 
   static const miniGame = '/mini-game';
 
-  static const adventure = '/mini-game/adventure';
-  static const adventureStage = '/mini-game/adventure/stage';
-  static const adventureSummary = '/mini-game/adventure/summary';
-
   static const dynamicMiniGame = '/mini-game/play';
   static const dynamicMiniGameSummary = '/mini-game/play/summary';
 }
