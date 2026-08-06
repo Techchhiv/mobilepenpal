@@ -20,6 +20,9 @@ return new class extends Migration
             $table->integer('quantity')->default(1);
             $table->decimal('price', 8, 2)->nullable(); // Price at the time of order
             $table->timestamps();
+
+            $table->index('order_id');
+            $table->index('product_id');
         });
     }
 

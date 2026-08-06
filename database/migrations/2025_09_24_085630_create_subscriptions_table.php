@@ -15,13 +15,15 @@ return new class extends Migration {
         Schema::create('subscriptions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('school_id')->nullable()->constrained()->onDelete('cascade');
-            $table->foreignId('student_id')->nullable();
+            $table->foreignId('student_id')->nullable()->index();
             $table->enum('plan', ['monthly', 'yearly']);
             $table->decimal('amount', 10, 2);
             $table->date('start_date');
-            $table->date('end_date');
+            $table->date('end_date')->index();
             $table->boolean('active')->default(true);
             $table->timestamps();
+
+            $table->index(['school_id', 'active']);
         });
     }
 

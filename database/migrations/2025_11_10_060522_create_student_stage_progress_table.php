@@ -26,6 +26,7 @@ return new class extends Migration
 
             $table->unique(['student_id', 'stage_id']);
             $table->index(['student_id', 'status']);
+            $table->index('stage_id');
         });
     }
 

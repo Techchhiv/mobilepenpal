@@ -20,7 +20,7 @@ return new class extends Migration {
             $table->text('description_kh')->nullable();
             $table->string('display_type');
             $table->string('input_type');
-            $table->boolean('is_active')->default(true);
+            $table->boolean('is_active')->default(true)->index();
             $table->string('cover_image_url')->nullable();
             $table->json('config')->nullable();
             $table->timestamps();

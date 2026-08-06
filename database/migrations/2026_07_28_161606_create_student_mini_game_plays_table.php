@@ -24,6 +24,8 @@ return new class extends Migration
             $table->unique(['student_id', 'mini_game_id', 'played_at']);
             $table->foreign('student_id')->references('id')->on('students')->onDelete('cascade');
             $table->foreign('mini_game_id')->references('id')->on('mini_games')->onDelete('cascade');
+            $table->index('mini_game_id');
+            $table->index('played_at');
         });
     }
 

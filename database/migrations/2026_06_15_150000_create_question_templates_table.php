@@ -18,6 +18,8 @@ return new class extends Migration {
             $table->enum('difficulty', ['easy', 'medium', 'hard'])->default('easy');
             $table->boolean('is_active')->default(true);
             $table->timestamps();
+
+            $table->index(['operation', 'difficulty', 'is_active']);
         });
     }
 

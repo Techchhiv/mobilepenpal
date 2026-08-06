@@ -21,6 +21,8 @@ return new class extends Migration
             $table->enum('status', ['pending', 'processing', 'completed', 'cancelled'])->default('pending');
             $table->decimal('total_price', 8, 2);
             $table->timestamps();
+
+            $table->index(['user_id', 'status']);
         });
     }
 

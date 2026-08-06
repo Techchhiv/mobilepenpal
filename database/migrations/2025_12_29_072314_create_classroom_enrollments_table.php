@@ -34,6 +34,8 @@ return new class extends Migration
             $table->timestamps();
 
             $table->unique(['student_id']);
+            $table->index('classroom_id');
+            $table->index(['classroom_id', 'status']);
         });
     }
 

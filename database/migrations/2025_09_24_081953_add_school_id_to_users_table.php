@@ -13,6 +13,7 @@ return new class extends Migration
 
             // optional: add FK if you want DB-level integrity
             $table->foreign('school_id')->references('id')->on('schools')->onDelete('cascade');
+            $table->index('school_id');
         });
     }
 

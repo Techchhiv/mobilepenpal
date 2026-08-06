@@ -19,6 +19,8 @@ return new class extends Migration
             $table->integer('product_id')->nullable();
             $table->integer('quantity')->default(1);
             $table->timestamps();
+
+            $table->index(['user_id', 'product_id']);
         });
     }
 

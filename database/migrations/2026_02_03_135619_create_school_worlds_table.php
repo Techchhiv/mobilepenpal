@@ -32,6 +32,7 @@ return new class extends Migration
             $table->unique(['school_id', 'world_id']);
             $table->index(['school_id', 'is_enabled']);
             $table->index(['school_id', 'order_index']);
+            $table->index('world_id');
         });
     }
 

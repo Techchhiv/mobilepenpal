@@ -31,6 +31,10 @@ return new class extends Migration
             $table->timestamp('ended_at')->nullable();
 
             $table->timestamps();
+
+            $table->index('student_id');
+            $table->index('stage_id');
+            $table->index(['student_id', 'started_at']);
         });
     }
 

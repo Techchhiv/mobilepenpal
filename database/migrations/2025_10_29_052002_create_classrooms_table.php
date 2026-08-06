@@ -28,6 +28,9 @@ return new class extends Migration
             $table->date('end_date')->nullable();
             $table->boolean('is_active')->default(true)->index();
             $table->timestamps();
+
+            $table->index(['school_id', 'is_active']);
+            $table->index(['teacher_id', 'is_active']);
         });
     }
 

@@ -24,6 +24,8 @@ return new class extends Migration
             $table->timestamps();
 
             $table->foreign('school_id')->references('id')->on('schools')->onDelete('cascade');
+            $table->index(['school_id', 'is_active']);
+            $table->index('school_key');
         });
     }
 

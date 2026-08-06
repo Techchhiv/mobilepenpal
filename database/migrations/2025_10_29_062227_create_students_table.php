@@ -52,6 +52,11 @@ return new class extends Migration
             $table->year('enrollment_year')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
+
+            $table->index(['school_id', 'is_active']);
+            $table->index('xp');
+            $table->index('coin');
+            $table->index('streak');
         });
     }
 

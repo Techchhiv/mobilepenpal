@@ -22,6 +22,8 @@ return new class extends Migration
             $table->json('image')->nullable(); // No need for change()
             $table->boolean('status')->nullable();
             $table->timestamps();
+
+            $table->index(['category_id', 'status']);
         });
     }
 

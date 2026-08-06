@@ -25,6 +25,8 @@ return new class extends Migration
             $table->boolean('is_unlocked')->default(false);
 
             $table->timestamps();
+
+            $table->index('world_id');
         });
     }
 

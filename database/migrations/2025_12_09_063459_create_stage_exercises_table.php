@@ -24,6 +24,7 @@ return new class extends Migration
 
             $table->unique(['stage_id', 'exercise_id']);
             $table->index(['stage_id', 'is_active', 'order_index']);
+            $table->index('exercise_id');
             $table->timestamps();
         });
     }

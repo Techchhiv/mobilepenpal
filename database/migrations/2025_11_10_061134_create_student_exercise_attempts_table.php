@@ -33,6 +33,9 @@ return new class extends Migration
             $table->index(['student_id', 'exercise_id']);
             $table->index(['student_id', 'created_at']);
             $table->index(['student_id', 'is_correct', 'created_at']);
+            $table->index('exercise_id');
+            $table->index('created_at');
+            $table->index(['created_at', 'is_correct']);
         });
     }
 
