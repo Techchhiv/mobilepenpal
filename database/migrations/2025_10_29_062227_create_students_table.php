@@ -35,7 +35,7 @@ return new class extends Migration
             $table->string('parent_first_name')->nullable();
             $table->string('parent_last_name')->nullable();
             $table->string('email')->unique();
-            $table->string('phone')->unique();
+            $table->string('phone')->nullable()->unique();
             $table->string('password');
 
             // $table->integer('level')->default(1);

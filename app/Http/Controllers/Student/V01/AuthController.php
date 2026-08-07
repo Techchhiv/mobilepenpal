@@ -38,6 +38,7 @@ class AuthController extends Controller
 
         $validated['school_id'] = $validated['school_id'] ?? null;
         $validated['school_key'] = $validated['school_key'] ?? null;
+        $validated['phone'] = $validated['phone'] ?? null;
         $validated['password'] = Hash::make($validated['password']);
 
         if (!empty($validated['avatar'])) {
