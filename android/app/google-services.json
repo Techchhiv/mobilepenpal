@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "580128964866",
-    "project_id": "analytics-f8d29",
-    "storage_bucket": "analytics-f8d29.firebasestorage.app"
+    "project_number": "653298491460",
+    "project_id": "email-verification-4abfe",
+    "storage_bucket": "email-verification-4abfe.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:580128964866:android:62d0b764ca94442acc421b",
+        "mobilesdk_app_id": "1:653298491460:android:b419fd209b2dbb4fbc5c11",
         "android_client_info": {
-          "package_name": "app.khmerpenpal.mobilepenpal"
+          "package_name": "com.khmerpenpal.mobilepenpal"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyDNAQQboEVQS08aroOp4kell7S9wQX-fWk"
+          "current_key": "AIzaSyDyFKXA5FbQHCLf7xP03sNzvz95yO0xhUs"
         }
       ],
       "services": {

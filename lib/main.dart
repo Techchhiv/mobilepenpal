@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get.dart' hide Condition;
 import 'package:get_storage/get_storage.dart';
-// import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:mobilepenpal/core/bindings/app_binding.dart';
 import 'package:mobilepenpal/core/config/app_constants.dart';
 import 'package:mobilepenpal/core/config/env.dart';
@@ -13,6 +13,7 @@ import 'package:responsive_framework/responsive_framework.dart';
 import 'package:mobilepenpal/core/theme/app_theme.dart';
 import 'package:mobilepenpal/core/theme/theme_controller.dart';
 import 'package:mobilepenpal/data/services/onnx_inference_service.dart';
+import 'package:mobilepenpal/firebase_options.dart';
 import 'package:mobilepenpal/presentation/routes/app_pages.dart';
 import 'package:mobilepenpal/presentation/routes/app_routes.dart';
 import 'package:mobilepenpal/presentation/widgets/app_snackbar.dart';
@@ -20,7 +21,13 @@ import 'core/localization/app_translations.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // await Firebase.initializeApp();
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (e) {
+    debugPrint('Firebase init error: $e');
+  }
 
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,

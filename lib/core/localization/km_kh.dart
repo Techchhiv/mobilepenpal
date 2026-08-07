@@ -80,6 +80,10 @@ final Map<String, String> kmKH = {
   'already_logged_in_title': 'គណនីកំពុងប្រើប្រាស់នៅឧបករណ៍ផ្សេង',
   'already_logged_in_message':
       'គណនីនេះកំពុងចូលប្រើប្រាស់នៅលើឧបករណ៍ផ្សេងទៀត។ ការចូលនៅទីនេះនឹងធ្វើឱ្យឧបករណ៍ផ្សេងទៀតចាកចេញពីគណនី។ តើអ្នកចង់បន្តដែរឬទេ?',
+  'email_not_verified': 'អ៊ីមែលមិនទាន់បានផ្ទៀងផ្ទាត់នៅឡើយទេ។ សូមពិនិត្យមើលសាររបស់អ្នក និងចុចលើតំណភ្ជាប់ផ្ទៀងផ្ទាត់។',
+  'verification_email_sent': 'អ៊ីមែលផ្ទៀងផ្ទាត់ត្រូវបានផ្ញើទៅ @email។ សូមពិនិត្យមើលសារ និងផ្ទៀងផ្ទាត់មុនពេលចូលប្រើប្រាស់។',
+  'firebase_warning': 'ការព្រមាន Firebase',
+  'firebase_error_msg': 'កំហុស Firebase: @error។ សូមពិនិត្យការកំណត់ក្នុង Firebase Console។',
 
   // ===== OTP Verfication =====
   'otp_verification': 'ការផ្ទៀងផ្ទាត់ OTP',

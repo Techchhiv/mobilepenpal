@@ -108,13 +108,7 @@ class AuthService {
       },
     );
 
-    if (result.code == 200) {
-      final token = result.data?['token'];
-      if (token is String && token.trim().isNotEmpty) {
-        await _apiClient.saveToken(token);
-      }
-    }
-
+    // Do not auto-save token on registration so user must verify email and log in
     return result;
   }
 }

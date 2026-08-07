@@ -1,7 +1,7 @@
+import 'dart:developer' as dev;
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get_storage/get_storage.dart';
-import 'package:mobilepenpal/core/network/api_client.dart';
 import 'package:mobilepenpal/data/services/auth_service.dart';
 import 'package:mobilepenpal/presentation/routes/app_routes.dart';
 import 'package:mobilepenpal/presentation/widgets/app_snackbar.dart';
@@ -187,6 +187,18 @@ class RegisterController extends GetxController {
     if (pw != null) passwordError.value = pw;
   }
 
+  String? get firstLocalError {
+    if (studentFirstNameError.value.isNotEmpty) return studentFirstNameError.value;
+    if (studentLastNameError.value.isNotEmpty) return studentLastNameError.value;
+    if (parentFirstNameError.value.isNotEmpty) return parentFirstNameError.value;
+    if (parentLastNameError.value.isNotEmpty) return parentLastNameError.value;
+    if (emailError.value.isNotEmpty) return emailError.value;
+    if (phoneError.value.isNotEmpty) return phoneError.value;
+    if (passwordError.value.isNotEmpty) return passwordError.value;
+    if (confirmPasswordError.value.isNotEmpty) return confirmPasswordError.value;
+    return null;
+  }
+
   Future<void> registerParent() async {
     if (isLoading.value) return;
 
@@ -206,7 +218,7 @@ class RegisterController extends GetxController {
 
     if (hasErrors) {
       AppSnackbar.show(
-        'fill_all_fields_correctly'.tr,
+        firstLocalError ?? 'fill_all_fields_correctly'.tr,
         title: 'error'.tr,
         backgroundColor: Colors.orange,
       );
@@ -231,19 +243,45 @@ class RegisterController extends GetxController {
       if (response.code == 200) {
         FocusManager.instance.primaryFocus?.unfocus();
 
-        final token = response.data?['token'];
-        if (token is String && token.trim().isNotEmpty) {
-          await ApiClient().saveToken(token);
-        } else {
-          await GetStorage().write('is_logged_in', true);
-          await GetStorage().write('has_token', true);
+        final registeredEmail = emailController.text.trim();
+        final rawPassword = passwordController.text;
+
+        // Firebase Auth Verification Email
+        try {
+          final userCredential = await FirebaseAuth.instance
+              .createUserWithEmailAndPassword(
+            email: registeredEmail,
+            password: rawPassword,
+          );
+          await userCredential.user?.sendEmailVerification();
+        } on FirebaseAuthException catch (e) {
+          if (e.code == 'email-already-in-use') {
+            try {
+              final signInResult = await FirebaseAuth.instance
+                  .signInWithEmailAndPassword(
+                email: registeredEmail,
+                password: rawPassword,
+              );
+              await signInResult.user?.sendEmailVerification();
+            } catch (subErr) {
+              dev.log('Firebase verification resend error: $subErr', name: 'RegisterController');
+            }
+          } else {
+            dev.log('Firebase auth exception: ${e.message}', name: 'RegisterController');
+          }
+        } catch (e) {
+          dev.log('Firebase general exception: $e', name: 'RegisterController');
         }
 
         clearForm();
-        Get.offAllNamed(AppRoutes.home);
+
+        Get.offAllNamed(
+          AppRoutes.login,
+          arguments: {'email': registeredEmail},
+        );
 
         AppSnackbar.show(
-          'account_created_successfully'.tr,
+          'verification_email_sent'.trParams({'email': registeredEmail}),
           title: 'success'.tr,
           backgroundColor: Colors.green,
         );
@@ -253,9 +291,23 @@ class RegisterController extends GetxController {
       _clearFieldErrors();
       _applyServerErrors(response.fieldErrors);
 
-      final firstError = (response.errors != null && response.errors!.isNotEmpty)
-          ? response.errors!.first
-          : response.message;
+      String firstError = '';
+      if (response.fieldErrors != null && response.fieldErrors!.isNotEmpty) {
+        for (var list in response.fieldErrors!.values) {
+          if (list.isNotEmpty) {
+            firstError = list.first;
+            break;
+          }
+        }
+      }
+
+      if (firstError.isEmpty && response.errors != null && response.errors!.isNotEmpty) {
+        firstError = response.errors!.first;
+      }
+
+      if (firstError.isEmpty) {
+        firstError = response.message;
+      }
 
       AppSnackbar.show(
         firstError,

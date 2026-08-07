@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -41,10 +42,12 @@ class AuthController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    if (kDebugMode) {
+    final args = Get.arguments;
+    if (args is Map && args['email'] != null) {
+      emailController.text = args['email'].toString();
+    } else if (kDebugMode) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         emailController.text = 'amara@gmail.com';
-        // phoneController.text = '069558076';
         passwordController.text = 'password123';
       });
     }
@@ -119,6 +122,12 @@ class AuthController extends GetxController {
     isPasswordVisible.value = !isPasswordVisible.value;
   }
 
+  String? get firstLocalError {
+    if (emailError.value.isNotEmpty) return emailError.value;
+    if (passwordError.value.isNotEmpty) return passwordError.value;
+    return null;
+  }
+
   Future<void> login({bool confirm = false}) async {
     if (!confirm && isLoading.value) return;
 
@@ -131,7 +140,7 @@ class AuthController extends GetxController {
         // schoolIdError.value.isNotEmpty ||
         passwordError.value.isNotEmpty) {
       AppSnackbar.show(
-        "fill_all_fields_correctly".tr,
+        firstLocalError ?? "fill_all_fields_correctly".tr,
         title: "error".tr,
         backgroundColor: Colors.orange,
       );
@@ -153,12 +162,39 @@ class AuthController extends GetxController {
     try {
       isLoading.value = true;
 
+      // Check Firebase Email Verification
+      try {
+        User? fbUser = FirebaseAuth.instance.currentUser;
+        if (fbUser == null || fbUser.email != emailController.text.trim()) {
+          final cred = await FirebaseAuth.instance.signInWithEmailAndPassword(
+            email: emailController.text.trim(),
+            password: passwordController.text,
+          );
+          fbUser = cred.user;
+        }
+
+        if (fbUser != null) {
+          await fbUser.reload();
+          fbUser = FirebaseAuth.instance.currentUser;
+
+          if (fbUser != null && !fbUser.emailVerified) {
+            isLoading.value = false;
+            AppSnackbar.show(
+              'email_not_verified'.tr,
+              title: 'error'.tr,
+              backgroundColor: Colors.orange,
+            );
+            return;
+          }
+        }
+      } catch (fbErr) {
+        // Continue if Firebase user check fails or is not required for dev accounts
+      }
+
       final response = await _authService.loginStudent(
         email: emailController.text.trim(),
-        // phone: fullPhoneNumber,
         password: passwordController.text,
         confirm: confirm,
-        // schoolKey: schoolIdController.text.trim(),
       );
 
       if (response.code == 200) {
@@ -212,8 +248,20 @@ class AuthController extends GetxController {
           await login(confirm: true);
         }
       } else {
+        String errorMsg = response.message;
+        if (response.fieldErrors != null && response.fieldErrors!.isNotEmpty) {
+          for (var list in response.fieldErrors!.values) {
+            if (list.isNotEmpty) {
+              errorMsg = list.first;
+              break;
+            }
+          }
+        } else if (response.errors != null && response.errors!.isNotEmpty) {
+          errorMsg = response.errors!.first;
+        }
+
         AppSnackbar.show(
-          response.message,
+          errorMsg,
           title: "error".tr,
           backgroundColor: Colors.red,
         );

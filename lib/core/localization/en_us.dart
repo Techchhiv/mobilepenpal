@@ -80,6 +80,10 @@ final Map<String, String> enUS = {
   'already_logged_in_title': 'Account Logged In Elsewhere',
   'already_logged_in_message':
       'This account is currently logged in on another device. Logging in here will log you out from other devices. Do you want to proceed?',
+  'email_not_verified': 'Email not verified yet. Please check your inbox and click the verification link.',
+  'verification_email_sent': 'Verification email sent to @email. Please check your inbox and verify before logging in.',
+  'firebase_warning': 'Firebase Warning',
+  'firebase_error_msg': 'Firebase Error: @error. Please check Firebase Console settings.',
 
   // ===== OTP Verfication =====
   'otp_verification': 'OTP Verification',
