@@ -32,18 +32,9 @@ class AuthController extends Controller
     {
         $validated = $request->validated();
 
-        if (!isValidPhone($validated['phone'])) {
+        if (!empty($validated['phone']) && !isValidPhone($validated['phone'])) {
             return $this->returnError(__('messages.valid_phone_number'), 422);
         }
-
-        // $userInfo = [
-        //     'phoneNumber' => ChangePhoneNumberFormat::toE164GlobalFormat($validated['phone']),
-        //     'displayName' => $validated['first_name'] . ' ' . $validated['last_name'] ?? null,
-        // ];
-
-        // $firebaseUser = $this->firebaseAuth->createUser($userInfo);
-        // $firebaseUid = $firebaseUser->uid;
-        // $validated['firebase_uid'] = $firebaseUid;
 
         $validated['school_id'] = $validated['school_id'] ?? null;
         $validated['school_key'] = $validated['school_key'] ?? null;
@@ -71,6 +62,10 @@ class AuthController extends Controller
     {
         $validated = $request->validated();
 
+        $email = strtolower(trim($validated['email']));
+        $student = Student::where('email', $email)->first();
+
+        /* Phone login logic commented out:
         $phone = $validated['phone'];
         $student = Student::where(function ($query) use ($phone) {
             $query->where('phone', $phone);
@@ -87,6 +82,7 @@ class AuthController extends Controller
                 // Ignore
             }
         })->first();
+        */
 
         if (!$student || !Hash::check($validated['password'], $student->password)) {
             return $this->returnError(__('messages.credentials_incorrect'), 401);
@@ -120,7 +116,7 @@ class AuthController extends Controller
             ->where(function ($query) use ($validated) {
                 $identifier = $validated['identifier'];
                 $query->where('email', $identifier)
-                      ->orWhere('phone', $identifier);
+                    ->orWhere('phone', $identifier);
                 try {
                     $phoneUtil = \libphonenumber\PhoneNumberUtil::getInstance();
                     $proto = $phoneUtil->parse($identifier, 'KH');
@@ -128,7 +124,7 @@ class AuthController extends Controller
                         $e164 = $phoneUtil->format($proto, \libphonenumber\PhoneNumberFormat::E164);
                         $national = '0' . $proto->getNationalNumber();
                         $query->orWhere('phone', $e164)
-                              ->orWhere('phone', $national);
+                            ->orWhere('phone', $national);
                     }
                 } catch (\Exception $e) {
                     // Ignore

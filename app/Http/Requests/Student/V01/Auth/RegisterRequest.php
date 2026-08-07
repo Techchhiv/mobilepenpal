@@ -27,9 +27,8 @@ class RegisterRequest extends FormRequest
             'parent_first_name' => 'required|string|max:100',
             'parent_last_name'  => 'required|string|max:100',
 
-            'email' => 'nullable|email|unique:students,email',
-
-            'phone' => 'required|string|unique:students,phone',
+            'email' => 'required|string|email|max:255|unique:students,email',
+            'phone' => 'nullable|string', // 'phone' => 'required|string|unique:students,phone',
             'password' => 'required|string|min:6',
 
             'address' => 'nullable|string|max:255',

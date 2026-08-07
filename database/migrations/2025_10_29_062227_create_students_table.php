@@ -34,7 +34,7 @@ return new class extends Migration
 
             $table->string('parent_first_name')->nullable();
             $table->string('parent_last_name')->nullable();
-            $table->string('email')->unique()->nullable();
+            $table->string('email')->unique();
             $table->string('phone')->unique();
             $table->string('password');
 
@@ -42,7 +42,7 @@ return new class extends Migration
             // $table->integer('streak')->default(0);
             // $table->integer('time_spent')->default(0);
             // $table->timestamp('last_played')->nullable();
-                        
+
             $table->integer('coin')->default(0);
             $table->integer('xp')->default(0);
             $table->integer('streak')->default(0);

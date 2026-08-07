@@ -119,14 +119,18 @@ class WorldController extends Controller
     {
         $studentId = auth()->id();
         $attempts = $request->input('attempts', []);
+        $stageId = (int) $request->input('stage_id', 0);
         $isDailyChallenge = filter_var($request->input('is_daily_challenge', false), FILTER_VALIDATE_BOOLEAN);
-        $isStagelessSession = $isDailyChallenge;
+        $isStagelessSession = $isDailyChallenge || ($stageId <= 0);
 
-        if (empty($attempts)) {
+        $coinsEarned = (int) $request->input('coins_earned', 0);
+        $xpEarned = (int) $request->input('xp_earned', 0);
+        $durationSeconds = (int) $request->input('duration_seconds', 0);
+
+        if (empty($attempts) && $coinsEarned <= 0 && $xpEarned <= 0 && $durationSeconds <= 0) {
             return $this->returnError(__('messages.no_attempts_provided'), 400);
         }
 
-        $stageId = (int) $request->input('stage_id', 0);
         if (!$isStagelessSession && $stageId <= 0) {
             return $this->returnError(__('messages.missing_stage_id'), 422);
         }
@@ -152,8 +156,6 @@ class WorldController extends Controller
             }
         }
 
-        $durationSeconds = (int) $request->input('duration_seconds', 0);
-
         $summary = [];
         $currentCoin = 0;
         $currentXp = 0;
@@ -166,70 +168,74 @@ class WorldController extends Controller
             $durationSeconds,
             $stageId,
             $isStagelessSession,
+            $coinsEarned,
+            $xpEarned,
             &$summary,
             &$currentCoin,
             &$currentXp,
             $request
         ) {
-            $firstAttempt = collect($attempts)->first();
-            if (!is_array($firstAttempt) || !isset($firstAttempt['exercise_id'])) {
-                throw new InvalidArgumentException('Invalid attempts payload: missing exercise_id');
-            }
-
-            $exerciseIds = collect($attempts)
-                ->pluck('exercise_id')
-                ->map(fn($v) => (int) $v)
-                ->unique()
-                ->values();
-
-            if ($isStagelessSession) {
-                $existingCount = Exercise::query()
-                    ->whereIn('id', $exerciseIds)
-                    ->count();
-
-                if ($existingCount !== $exerciseIds->count()) {
-                    throw new InvalidArgumentException('One or more exercises are invalid');
-                }
-            } else {
-                $mappedCount = StageExercise::query()
-                    ->where('stage_id', $stageId)
-                    ->where('is_active', true)
-                    ->whereIn('exercise_id', $exerciseIds)
-                    ->count();
-
-                if ($mappedCount !== $exerciseIds->count()) {
-                    throw new InvalidArgumentException('One or more exercises do not belong to this stage');
-                }
-            }
-
             $totalExercises = 0;
             $correctAttempts = 0;
             $attemptsData = [];
             $now = Carbon::now();
 
-            foreach ($attempts as $attempt) {
-                $isCorrect = !empty($attempt['is_correct']);
-                $attemptsData[] = [
-                    'student_id' => $studentId,
-                    'exercise_id' => (int) $attempt['exercise_id'],
-                    'user_answer' => $attempt['user_answer'] ?? null,
-                    'is_correct' => $isCorrect,
-                    'stroke' => isset($attempt['stroke']) ? (is_string($attempt['stroke']) ? $attempt['stroke'] : json_encode($attempt['stroke'])) : null,
-                    'label' => $attempt['label'] ?? null,
-                    'math_op' => $attempt['math_op'] ?? null,
-                    'device_type' => $attempt['device_type'] ?? null,
-                    'created_at' => $now,
-                    'updated_at' => $now,
-                ];
+            if (!empty($attempts)) {
+                $exerciseIds = collect($attempts)
+                    ->pluck('exercise_id')
+                    ->filter(fn($v) => !empty($v))
+                    ->map(fn($v) => (int) $v)
+                    ->unique()
+                    ->values();
 
-                $totalExercises++;
-                if ($isCorrect) {
-                    $correctAttempts++;
+                if (!$exerciseIds->isEmpty()) {
+                    if ($isStagelessSession) {
+                        $existingCount = Exercise::query()
+                            ->whereIn('id', $exerciseIds)
+                            ->count();
+                        if ($existingCount !== $exerciseIds->count()) {
+                            Log::warning('Some exercise IDs in stageless submission were invalid', ['ids' => $exerciseIds]);
+                        }
+                    } else {
+                        $mappedCount = StageExercise::query()
+                            ->where('stage_id', $stageId)
+                            ->where('is_active', true)
+                            ->whereIn('exercise_id', $exerciseIds)
+                            ->count();
+
+                        if ($mappedCount !== $exerciseIds->count()) {
+                            throw new InvalidArgumentException('One or more exercises do not belong to this stage');
+                        }
+                    }
                 }
-            }
 
-            if (!empty($attemptsData)) {
-                StudentExerciseAttempt::insert($attemptsData);
+                foreach ($attempts as $attempt) {
+                    if (!is_array($attempt) || empty($attempt['exercise_id'])) {
+                        continue;
+                    }
+                    $isCorrect = !empty($attempt['is_correct']);
+                    $attemptsData[] = [
+                        'student_id' => $studentId,
+                        'exercise_id' => (int) $attempt['exercise_id'],
+                        'user_answer' => $attempt['user_answer'] ?? null,
+                        'is_correct' => $isCorrect,
+                        'stroke' => isset($attempt['stroke']) ? (is_string($attempt['stroke']) ? $attempt['stroke'] : json_encode($attempt['stroke'])) : null,
+                        'label' => $attempt['label'] ?? null,
+                        'math_op' => $attempt['math_op'] ?? null,
+                        'device_type' => $attempt['device_type'] ?? null,
+                        'created_at' => $now,
+                        'updated_at' => $now,
+                    ];
+
+                    $totalExercises++;
+                    if ($isCorrect) {
+                        $correctAttempts++;
+                    }
+                }
+
+                if (!empty($attemptsData)) {
+                    StudentExerciseAttempt::insert($attemptsData);
+                }
             }
 
             if ($durationSeconds > 0) {
