@@ -55,7 +55,7 @@ class HomeController extends GetxController {
   var subscriptionDiscount = 50.obs;
   var subscriptionBillingCycle = 'month'.obs;
   var contactPhone = '+855 935 248 60'.obs;
-  var contactEmail = 'contact@khmerpenpal.com'.obs;
+  var contactEmail = 'info@khmerpenpal.com'.obs;
 
   // Feature lock settings (dynamic from backend)
   var featureLocksEnabled = true.obs;
@@ -507,7 +507,7 @@ class HomeController extends GetxController {
         contactPhone.value =
             s['contact_phone']?.toString() ?? '+855 935 248 60';
         contactEmail.value =
-            s['contact_email']?.toString() ?? 'contact@khmerpenpal.com';
+            s['contact_email']?.toString() ?? 'info@khmerpenpal.com';
       }
     } catch (_) {
       // Keep defaults on error

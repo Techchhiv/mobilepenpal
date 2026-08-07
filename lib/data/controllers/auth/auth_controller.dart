@@ -10,20 +10,23 @@ import 'package:mobilepenpal/presentation/widgets/confirm_modal.dart';
 class AuthController extends GetxController {
   final AuthService _authService = AuthService();
 
-  final phoneController = TextEditingController();
+  final emailController = TextEditingController();
+  // final phoneController = TextEditingController();
   // final schoolIdController = TextEditingController();
   final passwordController = TextEditingController();
 
   var isPasswordVisible = false.obs;
   var isLoading = false.obs;
 
-  var phoneError = ''.obs;
+  var emailError = ''.obs;
+  // var phoneError = ''.obs;
   var schoolIdError = ''.obs;
   var passwordError = ''.obs;
   var isSubmitted = false.obs;
 
-  var selectedCountryCode = '+855'.obs;
+  // var selectedCountryCode = '+855'.obs;
 
+  /*
   String get fullPhoneNumber {
     final number = phoneController.text.trim().replaceAll(' ', '');
     if (number.isEmpty) return '';
@@ -33,18 +36,40 @@ class AuthController extends GetxController {
     final sanitized = number.startsWith('0') ? number.substring(1) : number;
     return '${selectedCountryCode.value}$sanitized';
   }
+  */
 
   @override
   void onInit() {
     super.onInit();
     if (kDebugMode) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        phoneController.text = '069558076';
+        emailController.text = 'amara@gmail.com';
+        // phoneController.text = '069558076';
         passwordController.text = 'password123';
       });
     }
   }
 
+  void validateEmail(String value) {
+    if (!isSubmitted.value) {
+      emailError.value = '';
+      return;
+    }
+
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) {
+      emailError.value = 'email_required'.tr;
+      return;
+    }
+
+    if (!GetUtils.isEmail(trimmed)) {
+      emailError.value = 'invalid_email'.tr;
+    } else {
+      emailError.value = '';
+    }
+  }
+
+  /*
   void validatePhone(String value) {
     if (!isSubmitted.value) {
       phoneError.value = '';
@@ -63,6 +88,7 @@ class AuthController extends GetxController {
       phoneError.value = '';
     }
   }
+  */
 
   // void validateSchoolId(String value) {
   //   if (value.isEmpty) {
@@ -97,10 +123,11 @@ class AuthController extends GetxController {
     if (!confirm && isLoading.value) return;
 
     isSubmitted.value = true;
-    validatePhone(phoneController.text);
+    validateEmail(emailController.text);
     validatePassword(passwordController.text);
 
-    if (phoneError.value.isNotEmpty ||
+    if (emailError.value.isNotEmpty ||
+        // phoneError.value.isNotEmpty ||
         // schoolIdError.value.isNotEmpty ||
         passwordError.value.isNotEmpty) {
       AppSnackbar.show(
@@ -111,7 +138,8 @@ class AuthController extends GetxController {
       return;
     }
 
-    if (phoneController.text.isEmpty ||
+    if (emailController.text.trim().isEmpty ||
+        // phoneController.text.isEmpty ||
         // schoolIdController.text.isEmpty ||
         passwordController.text.isEmpty) {
       AppSnackbar.show(
@@ -126,7 +154,8 @@ class AuthController extends GetxController {
       isLoading.value = true;
 
       final response = await _authService.loginStudent(
-        phone: fullPhoneNumber,
+        email: emailController.text.trim(),
+        // phone: fullPhoneNumber,
         password: passwordController.text,
         confirm: confirm,
         // schoolKey: schoolIdController.text.trim(),

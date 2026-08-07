@@ -7,7 +7,8 @@ class AuthService {
   final ApiClient _apiClient = ApiClient();
 
   Future<ApiResponse<Map<String, dynamic>>> loginStudent({
-    required String phone,
+    required String email,
+    // String? phone,
     required String password,
     bool? confirm,
     // required String schoolKey,
@@ -16,7 +17,8 @@ class AuthService {
       method: 'POST',
       path: AuthEndpoints.login,
       data: {
-        "phone": phone,
+        "email": email,
+        // "phone": phone,
         "password": password,
         if (confirm != null) "confirm": confirm,
         // "school_key": schoolKey,
@@ -81,9 +83,9 @@ class AuthService {
     String? studentLastName,
     required String parentFirstName,
     required String parentLastName,
-    required String phone,
+    required String email,
+    String? phone,
     required String password,
-    String? email,
   }) async {
     final result = await _apiClient.request<Map<String, dynamic>>(
       method: 'POST',
@@ -95,10 +97,9 @@ class AuthService {
         "parent_first_name": parentFirstName,
         "parent_last_name": parentLastName,
 
-        "phone": phone,
+        "email": email,
+        if (phone != null && phone.trim().isNotEmpty) "phone": phone,
         "password": password,
-
-        if (email != null && email.trim().isNotEmpty) "email": email.trim(),
       },
       fromData: (data) {
         final token = data['token'];

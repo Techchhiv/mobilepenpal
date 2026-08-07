@@ -15,7 +15,6 @@ import 'package:mobilepenpal/core/utils/stroke_transform_util.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_animation_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/stage_audio_controller.dart';
 import 'package:mobilepenpal/core/utils/challenge_generator.dart';
-import 'package:mobilepenpal/data/models/api_response.dart';
 import 'package:mobilepenpal/data/models/mini_game/mini_game_model.dart';
 import 'package:mobilepenpal/data/models/mini_game/question_template_model.dart';
 import 'package:mobilepenpal/data/services/onnx_inference_service.dart';
@@ -520,13 +519,13 @@ class DynamicMiniGameController extends GetxController
         attempts,
         coinsEarned: coins,
         xpEarned: score.value,
-      ).catchError((e) {
+        isDailyChallenge: true,
+      ).then((res) {
+        if (res.code == 200 && Get.isRegistered<HomeController>()) {
+          Get.find<HomeController>().fetchStudentProfile();
+        }
+      }).catchError((e) {
         dev.log('Failed to submit mini-game progress: $e', name: 'DynamicMiniGameController');
-        return ApiResponse<Map<String, dynamic>>(
-          code: 500,
-          message: 'Failed to submit progress: $e',
-          data: {},
-        );
       });
     }
 

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobilepenpal/data/controllers/auth/register_controller.dart';
 import 'package:mobilepenpal/presentation/routes/app_routes.dart';
-import 'package:mobilepenpal/core/utils/phone_number_utils.dart';
 
 class RegisterPage extends GetView<RegisterController> {
   const RegisterPage({super.key});
@@ -123,9 +122,26 @@ class RegisterPage extends GetView<RegisterController> {
                         children: [
                           Obx(
                             () => _buildTextField(
+                              icon: Icons.email_outlined,
+                              iconColor: const Color(0xFF8E24AA),
+                              label: 'email'.tr,
+                              hintText: 'enter_your_email'.tr,
+                              textController: controller.emailController,
+                              errorText: controller.isSubmitted.value
+                                  ? controller.emailError.value
+                                  : null,
+                              isLoading: controller.isLoading.value,
+                              onChanged: controller.validateEmail,
+                              keyboardType: TextInputType.emailAddress,
+                              required: true,
+                            ),
+                          ),
+                          const _CardDivider(),
+                          Obx(
+                            () => _buildTextField(
                               icon: Icons.phone_outlined,
                               iconColor: const Color(0xFF43A047),
-                              label: 'phone_number'.tr,
+                              label: '${'phone_number'.tr} (${'optional'.tr})',
                               hintText: 'enter_your_phone_number'.tr,
                               textController: controller.phoneController,
                               errorText: controller.isSubmitted.value
@@ -134,56 +150,7 @@ class RegisterPage extends GetView<RegisterController> {
                               isLoading: controller.isLoading.value,
                               onChanged: controller.validatePhone,
                               keyboardType: TextInputType.phone,
-                              required: true,
-                              prefixWidget: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFF5F6FA),
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: Colors.transparent),
-                                ),
-                                child: DropdownButtonHideUnderline(
-                                  child: DropdownButton<String>(
-                                    value: controller.selectedCountryCode.value,
-                                    isDense: true,
-                                    alignment: Alignment.center,
-                                    menuMaxHeight: 250,
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.black87,
-                                    ),
-                                    onChanged: (String? newValue) {
-                                      if (newValue != null) {
-                                        controller.selectedCountryCode.value = newValue;
-                                        controller.validatePhone(controller.phoneController.text);
-                                      }
-                                    },
-                                    items: PhoneNumberUtils.countryFlags.entries.map<DropdownMenuItem<String>>((entry) {
-                                      return DropdownMenuItem<String>(
-                                        value: entry.key,
-                                        child: Text('${entry.value}  ${entry.key}'),
-                                      );
-                                    }).toList(),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          const _CardDivider(),
-                          Obx(
-                            () => _buildTextField(
-                              icon: Icons.email_outlined,
-                              iconColor: const Color(0xFF8E24AA),
-                              label: '${'email'.tr} (${'optional'.tr})',
-                              hintText: 'enter_your_email_or_phone'.tr,
-                              textController: controller.emailController,
-                              errorText: controller.isSubmitted.value
-                                  ? controller.emailError.value
-                                  : null,
-                              isLoading: controller.isLoading.value,
-                              onChanged: controller.validateEmail,
-                              keyboardType: TextInputType.emailAddress,
+                              required: false,
                             ),
                           ),
                           const _CardDivider(),

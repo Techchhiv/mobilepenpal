@@ -44,6 +44,7 @@ final Map<String, String> kmKH = {
   'all': 'ទាំងអស់',
 
   // ===== Authentication =====
+  'enter_your_email': 'បញ្ចូលអ៊ីមែលរបស់អ្នក',
   'enter_your_email_or_phone': 'បញ្ចូលអ៊ីមែល ឬ លេខទូរស័ព្ទរបស់អ្នក',
   'enter_your_phone_number': 'បញ្ចូលលេខទូរស័ព្ទរបស់អ្នក',
   'enter_your_password': 'បញ្ចូលពាក្យសម្ងាត់របស់អ្នក',
@@ -204,6 +205,7 @@ final Map<String, String> kmKH = {
 
   // ===== Error & Success Messages =====
   'invalid_credentials': 'ព័ត៌មានសម្ងាត់មិនត្រឹមត្រូវ',
+  'email_required': 'ត្រូវការអ៊ីមែល',
   'email_or_phone_required': 'ត្រូវការអ៊ីមែល ឬ លេខទូរស័ព្ទ',
   'phone_required': "ត្រូវការលេខទូរស័ព្ទ",
   'invalid_email_or_phone': 'អ៊ីមែល ឬ លេខទូរស័ព្ទមិនត្រឹមត្រូវ',

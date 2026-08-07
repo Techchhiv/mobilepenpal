@@ -44,6 +44,7 @@ final Map<String, String> enUS = {
   'all': 'All',
 
   // ===== Authentication =====
+  'enter_your_email': 'Enter your email',
   'enter_your_email_or_phone': 'Enter your email or phone number',
   'enter_your_phone_number': 'Enter your phone number',
   'enter_your_password': 'Enter your password',
@@ -206,6 +207,7 @@ final Map<String, String> enUS = {
 
   // ===== Error & Success Messages =====
   'invalid_credentials': 'Invalid credentials',
+  'email_required': 'Email is required',
   'email_or_phone_required': 'Email or phone number is required',
   'phone_required': "Phone number is required",
   'invalid_email_or_phone': 'Invalid email or phone number',
