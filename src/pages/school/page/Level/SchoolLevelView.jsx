@@ -70,6 +70,18 @@ const SchoolLevelView = () => {
     const [exerciseRows, setExerciseRows] = useState([]);
     const [selectedExercises, setSelectedExercises] = useState([]);
 
+    // Edit stage modal
+    const [editOpen, setEditOpen] = useState(false);
+    const [editStageId, setEditStageId] = useState(null);
+    const [editLoading, setEditLoading] = useState(false);
+    const [editError, setEditError] = useState("");
+    const [editName, setEditName] = useState("");
+    const [editNameEn, setEditNameEn] = useState("");
+    const [editDescription, setEditDescription] = useState("");
+    const [editDescriptionEn, setEditDescriptionEn] = useState("");
+    const [editActive, setEditActive] = useState(true);
+    const [toggleStageLoading, setToggleStageLoading] = useState(null); // stage id being toggled
+
     const fetchLevel = async () => {
         setLoading(true);
         setError("");
@@ -283,6 +295,76 @@ const SchoolLevelView = () => {
         setCreateOpen(false);
         setCreateError("");
         setExError("");
+    };
+
+    const openEditStage = (stage) => {
+        setEditStageId(stage.id);
+        setEditName(stage.name ?? "");
+        setEditNameEn(stage.name_en ?? "");
+        setEditDescription(stage.description ?? "");
+        setEditDescriptionEn(stage.description_en ?? "");
+        setEditActive(boolish(stage.is_active));
+        setEditError("");
+        setEditOpen(true);
+    };
+
+    const closeEditStage = () => {
+        if (editLoading) return;
+        setEditOpen(false);
+        setEditError("");
+    };
+
+    const submitEditStage = async () => {
+        if (!canEdit) return;
+        const name = (editName || "").trim();
+        if (!name) {
+            setEditError("Stage name (KH) is required.");
+            return;
+        }
+        setEditLoading(true);
+        setEditError("");
+        try {
+            await API.put(`/school/stages/${editStageId}`, {
+                name,
+                name_en: (editNameEn || "").trim() || null,
+                description: (editDescription || "").trim() || null,
+                description_en: (editDescriptionEn || "").trim() || null,
+                is_active: !!editActive,
+            });
+            setMessage("Stage updated successfully.");
+            closeEditStage();
+            await fetchLevel();
+        } catch (err) {
+            console.error("Update stage failed:", err);
+            const errors = err?.response?.data?.errors || {};
+            setEditError(
+                errors?.name?.[0] ||
+                errors?.name_en?.[0] ||
+                errors?.description?.[0] ||
+                errors?.description_en?.[0] ||
+                err?.response?.data?.message ||
+                "Failed to update stage."
+            );
+        } finally {
+            setEditLoading(false);
+        }
+    };
+
+    const handleToggleStage = async (stage) => {
+        if (!canEdit) return;
+        setToggleStageLoading(stage.id);
+        setError("");
+        setMessage("");
+        try {
+            await API.put(`/school/stages/${stage.id}/toggle`);
+            setMessage("Stage status updated.");
+            await fetchLevel();
+        } catch (err) {
+            console.error("Toggle stage failed:", err);
+            setError(err?.response?.data?.message || "Failed to toggle stage.");
+        } finally {
+            setToggleStageLoading(null);
+        }
     };
 
     const createStageAndAttach = async () => {
@@ -588,8 +670,8 @@ const SchoolLevelView = () => {
                                                             <th style={{ width: 140 }} className="text-center">
                                                                 Status
                                                             </th>
-                                                            <th style={{ width: 80 }} className="text-center">
-                                                                View
+                                                            <th style={{ width: 120 }} className="text-center">
+                                                                Actions
                                                             </th>
                                                         </tr>
                                                     </thead>
@@ -640,15 +722,40 @@ const SchoolLevelView = () => {
                                                                         </td>
 
                                                                         <td className="text-center align-middle">
-                                                                            <Link
-                                                                                to={`/school/stages/${s.id}`}
-                                                                                state={{ from: `/school/levels/${levelId}` }}
-                                                                                title="View Stage"
-                                                                                className="w-32-px h-32-px bg-primary-focus text-primary-main rounded-circle d-inline-flex align-items-center justify-content-center border-0"
-                                                                                style={{ textDecoration: "none" }}
-                                                                            >
-                                                                                <Icon icon="mdi:eye-outline" />
-                                                                            </Link>
+                                                                            <div className="d-flex align-items-center justify-content-center gap-6">
+                                                                                <Link
+                                                                                    to={`/school/stages/${s.id}`}
+                                                                                    state={{ from: `/school/levels/${levelId}` }}
+                                                                                    title="View Stage"
+                                                                                    className="w-32-px h-32-px bg-primary-focus text-primary-main rounded-circle d-inline-flex align-items-center justify-content-center border-0"
+                                                                                    style={{ textDecoration: "none" }}
+                                                                                >
+                                                                                    <Icon icon="mdi:eye-outline" />
+                                                                                </Link>
+
+                                                                                {canEdit && normalized.owned_by_school && (
+                                                                                    <button
+                                                                                        type="button"
+                                                                                        title="Edit Stage"
+                                                                                        className="w-32-px h-32-px bg-success-focus text-success-main rounded-circle d-inline-flex align-items-center justify-content-center border-0"
+                                                                                        onClick={() => openEditStage(s)}
+                                                                                    >
+                                                                                        <Icon icon="lucide:edit" />
+                                                                                    </button>
+                                                                                )}
+
+                                                                                {canToggle && normalized.owned_by_school && (
+                                                                                    <button
+                                                                                        type="button"
+                                                                                        title={sActive ? "Disable Stage" : "Enable Stage"}
+                                                                                        className={`w-32-px h-32-px rounded-circle d-inline-flex align-items-center justify-content-center border-0 ${sActive ? "bg-warning-focus text-warning-main" : "bg-info-focus text-info-main"}`}
+                                                                                        onClick={() => handleToggleStage(s)}
+                                                                                        disabled={toggleStageLoading === s.id}
+                                                                                    >
+                                                                                        <Icon icon={sActive ? "mdi:toggle-switch" : "mdi:toggle-switch-off-outline"} />
+                                                                                    </button>
+                                                                                )}
+                                                                            </div>
                                                                         </td>
                                                                     </tr>
                                                                 );
@@ -1003,6 +1110,131 @@ const SchoolLevelView = () => {
                                                         {createLoading ? "Saving..." : "Create Stage"}
                                                     </button>
                                                 </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Edit Stage Modal */}
+                                {editOpen && (
+                                    <div
+                                        className="position-fixed top-0 start-0 w-100 h-100"
+                                        style={{
+                                            background: "rgba(0,0,0,0.55)",
+                                            zIndex: 1055,
+                                            display: "flex",
+                                            alignItems: "center",
+                                            justifyContent: "center",
+                                            padding: 16,
+                                        }}
+                                        onClick={closeEditStage}
+                                        role="dialog"
+                                        aria-modal="true"
+                                    >
+                                        <div
+                                            className="card"
+                                            style={{ width: "min(620px, 96vw)", maxHeight: "92vh", overflow: "hidden" }}
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
+                                            <div className="card-header d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <h6 className="mb-0">Edit Stage</h6>
+                                                    <small className="text-muted">ID: {editStageId}</small>
+                                                </div>
+                                                <button
+                                                    className="btn btn-light d-flex align-items-center justify-content-center w-32-px h-32-px p-0 border-0 radius-3"
+                                                    type="button"
+                                                    onClick={closeEditStage}
+                                                    title="Close"
+                                                    disabled={editLoading}
+                                                >
+                                                    <Icon icon="radix-icons:cross-2" />
+                                                </button>
+                                            </div>
+
+                                            <div className="card-body" style={{ overflow: "auto" }}>
+                                                {editError && <div className="alert alert-danger">{editError}</div>}
+
+                                                <div className="row g-3">
+                                                    <div className="col-12 col-md-6">
+                                                        <label className="form-label">Stage Name (KH) *</label>
+                                                        <input
+                                                            className="form-control"
+                                                            value={editName}
+                                                            onChange={(e) => setEditName(e.target.value)}
+                                                            placeholder="ឧ. រៀនអក្សរ ក"
+                                                            disabled={editLoading}
+                                                        />
+                                                    </div>
+
+                                                    <div className="col-12 col-md-6">
+                                                        <label className="form-label">Stage Name (EN)</label>
+                                                        <input
+                                                            className="form-control"
+                                                            value={editNameEn}
+                                                            onChange={(e) => setEditNameEn(e.target.value)}
+                                                            placeholder="e.g. Learn letter KA"
+                                                            disabled={editLoading}
+                                                        />
+                                                    </div>
+
+                                                    <div className="col-12 col-md-6">
+                                                        <label className="form-label">Description (KH)</label>
+                                                        <input
+                                                            className="form-control"
+                                                            value={editDescription}
+                                                            onChange={(e) => setEditDescription(e.target.value)}
+                                                            placeholder="Optional (KH)"
+                                                            disabled={editLoading}
+                                                        />
+                                                    </div>
+
+                                                    <div className="col-12 col-md-6">
+                                                        <label className="form-label">Description (EN)</label>
+                                                        <input
+                                                            className="form-control"
+                                                            value={editDescriptionEn}
+                                                            onChange={(e) => setEditDescriptionEn(e.target.value)}
+                                                            placeholder="Optional (EN)"
+                                                            disabled={editLoading}
+                                                        />
+                                                    </div>
+
+                                                    <div className="col-12">
+                                                        <div className="form-check">
+                                                            <input
+                                                                className="form-check-input"
+                                                                type="checkbox"
+                                                                id="editStActive"
+                                                                checked={!!editActive}
+                                                                onChange={(e) => setEditActive(e.target.checked)}
+                                                                disabled={editLoading}
+                                                            />
+                                                            <label className="form-check-label" htmlFor="editStActive">
+                                                                Active
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="card-footer d-flex justify-content-end gap-2">
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-secondary"
+                                                    onClick={closeEditStage}
+                                                    disabled={editLoading}
+                                                >
+                                                    Cancel
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-primary"
+                                                    onClick={submitEditStage}
+                                                    disabled={editLoading}
+                                                >
+                                                    {editLoading ? "Saving..." : "Save Changes"}
+                                                </button>
                                             </div>
                                         </div>
                                     </div>

@@ -287,12 +287,6 @@ const SchoolLevelEdit = () => {
                                 >
                                   {form.is_unlocked_by_default ? "Default Unlock" : "Not Default"}
                                 </span>
-                                {normalized?.owned_by_school && (
-                                  <span className="px-16 py-4 rounded-pill fw-medium text-sm bg-warning-focus text-warning-main" title="Levels created by your school are always premium">
-                                    <Icon icon="mdi:crown" className="me-1" />
-                                    Premium (Always Included)
-                                  </span>
-                                )}
                               </div>
                             </div>
                           </div>

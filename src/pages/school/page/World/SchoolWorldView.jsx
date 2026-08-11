@@ -249,6 +249,7 @@ const SchoolWorldView = () => {
             {canEdit && normalized?.owned_by_school && (
               <Link
                 to={`/school/worlds/${id}/edit`}
+                state={{ from: `/school/worlds/${id}` }}
                 className="d-flex align-items-center btn btn-success radius-3 px-20 py-11"
               >
                 <Icon icon="lucide:edit" className="me-6" />

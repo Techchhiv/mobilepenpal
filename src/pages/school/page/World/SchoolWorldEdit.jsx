@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Icon } from "@iconify/react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 
 import API from "../../../../helper/api";
 import { useAuth } from "../../../../context/AuthContext";
@@ -12,7 +12,10 @@ const boolish = (v) => v === true || String(v ?? "0") === "1";
 const SchoolWorldEdit = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
     const { hasPermission } = useAuth();
+
+    const from = location.state?.from || `/school/worlds/${id}`;
 
     const canEdit = hasPermission("worlds.update");
 
@@ -114,11 +117,7 @@ const SchoolWorldEdit = () => {
 
             await API.put(`/school/worlds/${id}`, payload);
 
-            if (window.history.length > 1) {
-                navigate(-1, { replace: true });
-            } else {
-                navigate("/school/worlds", { replace: true });
-            }
+            navigate(from, { replace: true });
         } catch (err) {
             console.error("Update world failed:", err);
 
@@ -159,12 +158,7 @@ const SchoolWorldEdit = () => {
                         </div>
 
                         <div className="d-flex gap-2">
-                            <Link onClick={() =>
-                                window.history.length > 1
-                                    ? navigate(-1)
-                                    : navigate("/school/worlds")
-                            }
-                                className="btn btn-outline-secondary">
+                            <Link to={from} className="btn btn-outline-secondary">
                                 <Icon icon="mdi:arrow-left" className="me-6" />
                                 Back
                             </Link>
@@ -223,11 +217,6 @@ const SchoolWorldEdit = () => {
                                                             }`}
                                                     >
                                                         {form.is_unlocked_by_default ? "Default Unlock" : "Not Default"}
-                                                    </span>
-
-                                                    <span className="badge bg-warning text-dark" title="Worlds created by your school are always premium">
-                                                        <Icon icon="mdi:crown" className="me-1" />
-                                                        Premium (Always Included)
                                                     </span>
                                                 </div>
 

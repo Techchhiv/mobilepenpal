@@ -68,6 +68,7 @@ import SchoolWorldEdit from "./pages/school/page/World/SchoolWorldEdit";
 import SchoolLevelList from "./pages/school/page/Level/SchoolLevelList";
 import SchoolLevelEdit from "./pages/school/page/Level/SchoolLevelEdit";
 import SchoolLevelView from "./pages/school/page/Level/SchoolLevelView";
+import SchoolStageView from "./pages/school/page/Stage/SchoolStageView";
 import AdminSchoolReportsPage from "./pages/admin/AdminSchoolReportsPage";
 import QuestionTemplateList from "./pages/admin/QuestionTemplate/QuestionTemplateList";
 import QuestionTemplateCreate from "./pages/admin/QuestionTemplate/QuestionTemplateCreate";
@@ -336,6 +337,8 @@ export default function App() {
 
           <Route path="/school/levels/:id/edit" element={<SchoolLevelEdit />} />
           <Route path="/school/levels/:id" element={<SchoolLevelView />} />
+
+          <Route path="/school/stages/:id" element={<SchoolStageView />} />
         </Route>
 
         <Route path="/" element={<Navigate to="/sign-in-school" replace />} />
