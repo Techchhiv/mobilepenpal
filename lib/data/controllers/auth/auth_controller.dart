@@ -1,3 +1,4 @@
+import 'dart:developer' as dev;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -6,6 +7,7 @@ import 'package:get_storage/get_storage.dart';
 import 'package:mobilepenpal/data/services/auth_service.dart';
 import 'package:mobilepenpal/presentation/routes/app_routes.dart';
 import 'package:mobilepenpal/presentation/widgets/app_snackbar.dart';
+import 'package:mobilepenpal/presentation/widgets/auth/unverified_email_dialog.dart';
 import 'package:mobilepenpal/presentation/widgets/confirm_modal.dart';
 
 class AuthController extends GetxController {
@@ -179,10 +181,14 @@ class AuthController extends GetxController {
 
           if (fbUser != null && !fbUser.emailVerified) {
             isLoading.value = false;
-            AppSnackbar.show(
-              'email_not_verified'.tr,
-              title: 'error'.tr,
-              backgroundColor: Colors.orange,
+            final email = emailController.text.trim();
+            final password = passwordController.text;
+            showUnverifiedEmailDialog(
+              email: email,
+              onResend: () => resendVerificationEmail(
+                email: email,
+                password: password,
+              ),
             );
             return;
           }
@@ -270,6 +276,80 @@ class AuthController extends GetxController {
       if (!confirm || isLoading.value) {
         isLoading.value = false;
       }
+    }
+  }
+  /// Resends the Firebase email verification link to [email].
+  /// Returns `true` if the email was sent successfully, `false` otherwise.
+  Future<bool> resendVerificationEmail({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      User? fbUser = FirebaseAuth.instance.currentUser;
+
+      // Sign in silently if no current user or different email
+      if (fbUser == null || fbUser.email != email) {
+        final cred = await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: email,
+          password: password,
+        );
+        fbUser = cred.user;
+      }
+
+      if (fbUser == null) {
+        AppSnackbar.show(
+          'an_error_occurred'.tr,
+          title: 'error'.tr,
+          backgroundColor: Colors.red,
+        );
+        return false;
+      }
+
+      await fbUser.reload();
+      fbUser = FirebaseAuth.instance.currentUser;
+
+      // Already verified — no need to resend
+      if (fbUser != null && fbUser.emailVerified) {
+        AppSnackbar.show(
+          'email_already_verified'.tr,
+          title: 'success'.tr,
+          backgroundColor: Colors.green,
+        );
+        return false;
+      }
+
+      await fbUser?.sendEmailVerification();
+
+      AppSnackbar.show(
+        'verification_email_resent'.tr,
+        title: 'success'.tr,
+        backgroundColor: Colors.green,
+      );
+      return true;
+    } on FirebaseAuthException catch (e) {
+      dev.log('Resend verification error: ${e.code} - ${e.message}', name: 'AuthController');
+      if (e.code == 'too-many-requests') {
+        AppSnackbar.show(
+          'too_many_requests'.tr,
+          title: 'error'.tr,
+          backgroundColor: Colors.red,
+        );
+      } else {
+        AppSnackbar.show(
+          e.message ?? 'an_error_occurred'.tr,
+          title: 'error'.tr,
+          backgroundColor: Colors.red,
+        );
+      }
+      return false;
+    } catch (e) {
+      dev.log('Resend verification general error: $e', name: 'AuthController');
+      AppSnackbar.show(
+        'an_error_occurred'.tr,
+        title: 'error'.tr,
+        backgroundColor: Colors.red,
+      );
+      return false;
     }
   }
 }
