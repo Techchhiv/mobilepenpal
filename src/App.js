@@ -71,6 +71,7 @@ import AdminSchoolReportsPage from "./pages/admin/AdminSchoolReportsPage";
 import QuestionTemplateList from "./pages/admin/QuestionTemplate/QuestionTemplateList";
 import QuestionTemplateCreate from "./pages/admin/QuestionTemplate/QuestionTemplateCreate";
 import QuestionTemplateEdit from "./pages/admin/QuestionTemplate/QuestionTemplateEdit";
+import AuditLogPage from "./pages/admin/AuditLogPage";
 
 export default function App() {
   return (
@@ -336,6 +337,16 @@ export default function App() {
         </Route>
 
         <Route path="/" element={<Navigate to="/sign-in-school" replace />} />
+
+        {/* ---------- Super Admin: Audit Logs ---------- */}
+        <Route
+          path="/admin/audit-logs"
+          element={
+            <Gate>
+              <AuditLogPage />
+            </Gate>
+          }
+        />
 
         {/* ---------- Fallback ---------- */}
         <Route path="*" element={<Navigate to="/access-denied" replace />} />

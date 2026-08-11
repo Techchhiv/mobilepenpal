@@ -278,14 +278,14 @@ const ClassroomView = () => {
                       <div className="text-center text-muted py-20">No enrolled students.</div>
                     ) : (
                       <div className="table-responsive">
-                        <table className="table bordered-table mb-0">
+                        <table className="table bordered-table align-middle mb-0">
                           <thead>
                             <tr>
                               <th>#</th>
                               <th>Avatar</th>
                               <th>Name</th>
                               <th>Nickname</th>
-                              <th>Action</th>
+                              <th className="text-end">Action</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -325,32 +325,34 @@ const ClassroomView = () => {
                                   </td>
                                   <td>{name}</td>
                                   <td>{s?.nickname || "—"}</td>
-                                  <td>
-                                    <Link
-                                      to={`/school/students/${s?.id}`}
-                                      className="w-32-px h-32-px me-8 bg-primary-light text-primary-600 rounded-circle d-inline-flex align-items-center justify-content-center"
-                                      title="View Student"
-                                    >
-                                      <Icon icon="iconamoon:eye-light" />
-                                    </Link>
-                                    <Link
-                                      to={`/school/classrooms/${id}/students/${s?.id}/progress`}
-                                      className="w-32-px h-32-px me-8 bg-success-light text-success rounded-circle d-inline-flex align-items-center justify-content-center"
-                                      title="View Progress"
-                                    >
-                                      <Icon icon="mdi:chart-line" />
-                                    </Link>
-
-                                    {!!(canEdit && classroom?.is_active) && (
-                                      <button
-                                        type="button"
-                                        onClick={() => removeStudent(s?.id)}
-                                        className="w-32-px h-32-px bg-danger-light text-danger rounded-circle d-inline-flex align-items-center justify-content-center border-0"
-                                        title="Remove Student"
+                                  <td className="text-end">
+                                    <div className="d-inline-flex align-items-center gap-2 justify-content-end">
+                                      <Link
+                                        to={`/school/students/${s?.id}`}
+                                        className="w-32-px h-32-px bg-primary-light text-primary-600 rounded-circle d-inline-flex align-items-center justify-content-center"
+                                        title="View Student"
                                       >
-                                        <Icon icon="mingcute:delete-2-line" />
-                                      </button>
-                                    )}
+                                        <Icon icon="iconamoon:eye-light" />
+                                      </Link>
+                                      <Link
+                                        to={`/school/classrooms/${id}/students/${s?.id}/progress`}
+                                        className="w-32-px h-32-px bg-success-focus text-success-main rounded-circle d-inline-flex align-items-center justify-content-center"
+                                        title="View Progress"
+                                      >
+                                        <Icon icon="mdi:chart-line" />
+                                      </Link>
+
+                                      {!!(canEdit && classroom?.is_active) && (
+                                        <button
+                                          type="button"
+                                          onClick={() => removeStudent(s?.id)}
+                                          className="w-32-px h-32-px bg-danger-focus text-danger-main rounded-circle d-inline-flex align-items-center justify-content-center border-0"
+                                          title="Remove Student"
+                                        >
+                                          <Icon icon="mingcute:delete-2-line" />
+                                        </button>
+                                      )}
+                                    </div>
                                   </td>
                                 </tr>
                               );

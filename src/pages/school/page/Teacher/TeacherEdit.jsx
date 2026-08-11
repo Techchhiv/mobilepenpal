@@ -130,209 +130,223 @@ export default function TeacherEdit() {
 
     return (
         <SchoolLayout>
-            <div className="d-flex flex-column gap-4">
-                {/* Header Card */}
-                <div className="card border-0 shadow-sm radius-12 p-3 bg-white">
-                    <div className="d-flex align-items-center justify-content-between flex-wrap gap-3">
-                        <div className="d-flex align-items-center gap-3">
-                            <button
-                                type="button"
-                                className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 radius-8"
-                                onClick={() => navigate(-1)}
-                            >
-                                <Icon icon="mdi:arrow-left" /> Back
-                            </button>
-                            <div>
-                                <h5 className="mb-0 fw-bold text-dark">Edit Teacher Profile</h5>
-                                <small className="text-muted">Update instructor details and credentials for {name || "Teacher"}</small>
-                            </div>
+            <div className="col-lg-12">
+                <div className="card">
+                    <div className="card-header d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 className="card-title mb-0">Edit Teacher Profile</h3>
+                            <small className="text-muted">Update instructor details and credentials for {name || "Teacher"}</small>
                         </div>
-
                         <div className="d-flex gap-2">
-                            <Link to={`/school/teachers/${id}`} className="btn btn-sm btn-outline-info d-flex align-items-center gap-1 radius-8">
-                                <Icon icon="mdi:eye" /> View Profile
+                            <Link to={`/school/teachers/${id}`} className="btn btn-outline-info d-flex align-items-center">
+                                <Icon icon="mdi:eye" className="me-2" /> View Profile
                             </Link>
-                            <Link to="/school/teachers" className="btn btn-sm btn-outline-primary d-flex align-items-center gap-1 radius-8">
-                                <Icon icon="mdi:format-list-bulleted" /> All Teachers
+                            <Link to="/school/teachers" className="btn btn-secondary d-flex align-items-center">
+                                <Icon icon="mdi:arrow-left" className="me-2" /> Back
                             </Link>
                         </div>
                     </div>
-                </div>
 
-                {error && (
-                    <div className="alert alert-danger alert-dismissible fade show radius-12 mb-0" role="alert">
-                        <Icon icon="mdi:alert-circle-outline" className="me-2 text-lg" />
-                        {error}
-                        <button type="button" className="btn-close" onClick={() => setError("")} />
-                    </div>
-                )}
+                    <div className="card-body">
+                        {error && (
+                            <div className="alert alert-danger">
+                                <Icon icon="mdi:alert-circle" className="me-2" />
+                                {error}
+                            </div>
+                        )}
 
-                {loading ? (
-                    <div className="d-flex justify-content-center align-items-center py-5" style={{ minHeight: "300px" }}>
-                        <div className="spinner-border text-primary" role="status">
-                            <span className="visually-hidden">Loading teacher details...</span>
-                        </div>
-                    </div>
-                ) : (
-                    <form onSubmit={handleSubmit}>
-                        <div className="row g-4">
-                            {/* Left Column: Avatar Photo & Info */}
-                            <div className="col-12 col-lg-4">
-                                <div className="card border-0 shadow-sm radius-12 bg-white h-100 p-4 d-flex flex-column align-items-center text-center">
-                                    <h6 className="fw-bold text-dark w-100 text-start mb-3">Teacher Photo</h6>
-
-                                    <div className="position-relative mb-3">
-                                        <div className="w-120-px h-120-px rounded-circle overflow-hidden bg-light border d-flex align-items-center justify-content-center shadow-sm">
-                                            {previewImageSrc ? (
-                                                <img src={previewImageSrc} alt="Preview" className="w-100 h-100 object-fit-cover" />
-                                            ) : (
-                                                <Icon icon="mdi:account" className="text-secondary text-5xl opacity-50" />
-                                            )}
-                                        </div>
-                                        {uploadedImage && (
-                                            <button
-                                                type="button"
-                                                className="btn btn-sm btn-danger rounded-circle p-1 position-absolute top-0 end-0 shadow-sm"
-                                                onClick={removeNewImage}
-                                                title="Remove New Photo"
-                                            >
-                                                <Icon icon="mdi:close" className="text-white text-xs d-block" />
-                                            </button>
-                                        )}
-                                    </div>
-
-                                    <label className="btn btn-outline-primary btn-sm radius-8 cursor-pointer mb-2">
-                                        <Icon icon="mdi:camera" className="me-1" /> Change Photo
-                                        <input type="file" accept="image/*" className="d-none" onChange={handleFileChange} />
-                                    </label>
-                                    <small className="text-muted text-xs">JPG, PNG or GIF up to 5MB</small>
-
-                                    <div className="mt-4 p-3 bg-light radius-8 w-100 text-start">
-                                        <div className="d-flex align-items-center gap-2 text-primary fw-bold text-xs mb-1">
-                                            <Icon icon="mdi:information-outline" /> Account Info
-                                        </div>
-                                        <p className="text-muted text-xs mb-0">
-                                            Modifying email address will update the login credentials for this teacher account.
-                                        </p>
-                                    </div>
+                        {loading ? (
+                            <div className="text-center py-5">
+                                <div className="spinner-border text-primary" role="status">
+                                    <span className="visually-hidden">Loading teacher details...</span>
                                 </div>
                             </div>
+                        ) : (
+                            <form onSubmit={handleSubmit}>
+                                <div className="row gy-4">
+                                    {/* Left Column: Avatar Photo & Info */}
+                                    <div className="col-md-4">
+                                        <div className="card h-100">
+                                            <div className="card-header bg-light">
+                                                <h6 className="mb-0">Teacher Photo</h6>
+                                            </div>
+                                            <div className="card-body text-center d-flex flex-column justify-content-center gap-2">
+                                                <div className="mb-3">
+                                                    {previewImageSrc ? (
+                                                        <div className="position-relative mx-auto" style={{ width: "150px", height: "150px" }}>
+                                                            {uploadedImage && (
+                                                                <button
+                                                                    type="button"
+                                                                    className="position-absolute top-0 end-0 z-1 text-danger btn btn-sm btn-light"
+                                                                    style={{ margin: "5px" }}
+                                                                    onClick={removeNewImage}
+                                                                    title="Remove New Photo"
+                                                                >
+                                                                    <Icon icon="radix-icons:cross-2" />
+                                                                </button>
+                                                            )}
+                                                            <img
+                                                                src={previewImageSrc}
+                                                                alt="Preview"
+                                                                className="w-100 h-100 object-fit-cover rounded-circle border"
+                                                            />
+                                                        </div>
+                                                    ) : (
+                                                        <div
+                                                            className="mx-auto rounded-circle border d-flex align-items-center justify-content-center bg-light overflow-hidden"
+                                                            style={{ width: "150px", height: "150px" }}
+                                                        >
+                                                            <Icon icon="mdi:account-circle" className="text-secondary" width="100%" height="100%" />
+                                                        </div>
+                                                    )}
+                                                </div>
 
-                            {/* Right Column: Edit Form */}
-                            <div className="col-12 col-lg-8">
-                                <div className="card border-0 shadow-sm radius-12 bg-white p-4 d-flex flex-column gap-4">
-                                    <div>
-                                        <h6 className="fw-bold text-dark mb-3 pb-2 border-bottom">Personal Information</h6>
-                                        <div className="row g-3">
-                                            <div className="col-12 col-md-6">
-                                                <label className="form-label text-xs fw-semibold">
-                                                    Full Name <Required />
+                                                <label className="d-flex align-items-center justify-content-center btn btn-outline-primary w-100">
+                                                    <Icon icon="solar:camera-outline" className="me-3" />
+                                                    Change Photo
+                                                    <input type="file" accept="image/*" className="d-none" onChange={handleFileChange} />
                                                 </label>
-                                                <input
-                                                    type="text"
-                                                    className="form-control form-control-sm radius-8"
-                                                    value={name}
-                                                    onChange={(e) => setName(e.target.value)}
-                                                    required
-                                                />
-                                            </div>
+                                                <small className="text-muted d-block">JPG, PNG or GIF up to 5MB</small>
 
-                                            <div className="col-12 col-md-6">
-                                                <label className="form-label text-xs fw-semibold">
-                                                    Email Address <Required />
-                                                </label>
-                                                <input
-                                                    type="email"
-                                                    className="form-control form-control-sm radius-8"
-                                                    value={email}
-                                                    onChange={(e) => setEmail(e.target.value)}
-                                                    required
-                                                />
-                                            </div>
-
-                                            <div className="col-12 col-md-6">
-                                                <label className="form-label text-xs fw-semibold">Phone Number</label>
-                                                <input
-                                                    type="text"
-                                                    className="form-control form-control-sm radius-8"
-                                                    value={phone}
-                                                    onChange={(e) => setPhone(e.target.value)}
-                                                />
-                                            </div>
-
-                                            <div className="col-12 col-md-6">
-                                                <label className="form-label text-xs fw-semibold">Subject / Department</label>
-                                                <input
-                                                    type="text"
-                                                    className="form-control form-control-sm radius-8"
-                                                    value={subject}
-                                                    onChange={(e) => setSubject(e.target.value)}
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <div className="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
-                                            <h6 className="fw-bold text-dark mb-0">Reset Password (Optional)</h6>
-                                            <small className="text-muted">Leave blank to keep current password</small>
-                                        </div>
-                                        <div className="row g-3">
-                                            <div className="col-12 col-md-6">
-                                                <label className="form-label text-xs fw-semibold">New Password</label>
-                                                <div className="position-relative">
-                                                    <input
-                                                        type={showPassword ? "text" : "password"}
-                                                        className="form-control form-control-sm radius-8 pe-5"
-                                                        placeholder="Leave empty to keep unchanged"
-                                                        value={password}
-                                                        onChange={(e) => setPassword(e.target.value)}
-                                                    />
-                                                    <button
-                                                        type="button"
-                                                        className="btn btn-sm btn-link position-absolute top-50 end-0 translate-middle-y text-muted pe-3 text-decoration-none"
-                                                        onClick={() => setShowPassword(!showPassword)}
-                                                    >
-                                                        <Icon icon={showPassword ? "mdi:eye-off" : "mdi:eye"} />
-                                                    </button>
+                                                <div className="mt-3 p-3 bg-light rounded text-start">
+                                                    <div className="d-flex align-items-center gap-2 text-primary fw-bold mb-1">
+                                                        <Icon icon="mdi:information-outline" /> Account Info
+                                                    </div>
+                                                    <small className="text-muted d-block">
+                                                        Modifying email address will update the login credentials for this teacher account.
+                                                    </small>
                                                 </div>
                                             </div>
-
-                                            <div className="col-12 col-md-6">
-                                                <label className="form-label text-xs fw-semibold">Confirm New Password</label>
-                                                <input
-                                                    type={showPassword ? "text" : "password"}
-                                                    className="form-control form-control-sm radius-8"
-                                                    placeholder="Re-enter new password"
-                                                    value={confirmPassword}
-                                                    onChange={(e) => setConfirmPassword(e.target.value)}
-                                                />
-                                            </div>
                                         </div>
                                     </div>
 
-                                    {/* Form Actions */}
-                                    <div className="d-flex align-items-center justify-content-end gap-2 pt-3 border-top">
-                                        <Link to="/school/teachers" className="btn btn-sm btn-light radius-8 px-3">
-                                            Cancel
-                                        </Link>
-                                        <button type="submit" className="btn btn-sm btn-primary radius-8 px-4 d-flex align-items-center gap-1" disabled={submitting}>
-                                            {submitting ? (
-                                                <>
-                                                    <span className="spinner-border spinner-border-sm me-1" role="status" /> Saving...
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <Icon icon="mdi:check" /> Save Changes
-                                                </>
-                                            )}
-                                        </button>
+                                    {/* Right Column: Edit Form */}
+                                    <div className="col-md-8">
+                                        <div className="card mb-4">
+                                            <div className="card-header bg-light">
+                                                <h6 className="d-flex align-content-center mb-0">
+                                                    <Icon icon="mdi:account" className="me-3" />
+                                                    Personal Details
+                                                </h6>
+                                            </div>
+                                            <div className="card-body">
+                                                <div className="row g-3">
+                                                    <div className="col-md-6">
+                                                        <label className="form-label">
+                                                            Full Name <Required />
+                                                        </label>
+                                                        <input
+                                                            type="text"
+                                                            className="form-control"
+                                                            value={name}
+                                                            onChange={(e) => setName(e.target.value)}
+                                                            required
+                                                        />
+                                                    </div>
+
+                                                    <div className="col-md-6">
+                                                        <label className="form-label">
+                                                            Email Address <Required />
+                                                        </label>
+                                                        <input
+                                                            type="email"
+                                                            className="form-control"
+                                                            value={email}
+                                                            onChange={(e) => setEmail(e.target.value)}
+                                                            required
+                                                        />
+                                                    </div>
+
+                                                    <div className="col-md-6">
+                                                        <label className="form-label">Phone Number</label>
+                                                        <input
+                                                            type="text"
+                                                            className="form-control"
+                                                            value={phone}
+                                                            onChange={(e) => setPhone(e.target.value)}
+                                                        />
+                                                    </div>
+
+                                                    <div className="col-md-6">
+                                                        <label className="form-label">Subject / Department</label>
+                                                        <input
+                                                            type="text"
+                                                            className="form-control"
+                                                            value={subject}
+                                                            onChange={(e) => setSubject(e.target.value)}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="card mb-4">
+                                            <div className="card-header bg-light d-flex align-items-center justify-content-between">
+                                                <h6 className="d-flex align-content-center mb-0">
+                                                    <Icon icon="mdi:lock" className="me-3" />
+                                                    Reset Password (Optional)
+                                                </h6>
+                                                <small className="text-muted">Leave blank to keep current password</small>
+                                            </div>
+                                            <div className="card-body">
+                                                <div className="row g-3">
+                                                    <div className="col-md-6">
+                                                        <label className="form-label">New Password</label>
+                                                        <div className="position-relative">
+                                                            <input
+                                                                type={showPassword ? "text" : "password"}
+                                                                className="form-control pe-5"
+                                                                placeholder="Leave empty to keep unchanged"
+                                                                value={password}
+                                                                onChange={(e) => setPassword(e.target.value)}
+                                                            />
+                                                            <button
+                                                                type="button"
+                                                                className="btn btn-link position-absolute top-50 end-0 translate-middle-y text-muted pe-3 text-decoration-none"
+                                                                onClick={() => setShowPassword(!showPassword)}
+                                                            >
+                                                                <Icon icon={showPassword ? "mdi:eye-off" : "mdi:eye"} />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="col-md-6">
+                                                        <label className="form-label">Confirm New Password</label>
+                                                        <input
+                                                            type={showPassword ? "text" : "password"}
+                                                            className="form-control"
+                                                            placeholder="Re-enter new password"
+                                                            value={confirmPassword}
+                                                            onChange={(e) => setConfirmPassword(e.target.value)}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Form Actions */}
+                                        <div className="d-flex justify-content-end gap-2">
+                                            <button type="submit" className="d-flex align-items-center btn btn-primary" disabled={submitting}>
+                                                {submitting ? (
+                                                    <>
+                                                        <span className="spinner-border spinner-border-sm me-2" role="status" /> Saving...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Icon icon="mdi:content-save" className="me-2" /> Save Changes
+                                                    </>
+                                                )}
+                                            </button>
+                                            <Link to="/school/teachers" className="d-flex align-items-center btn btn-secondary">
+                                                Cancel
+                                            </Link>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                    </form>
-                )}
+                            </form>
+                        )}
+                    </div>
+                </div>
             </div>
         </SchoolLayout>
     );

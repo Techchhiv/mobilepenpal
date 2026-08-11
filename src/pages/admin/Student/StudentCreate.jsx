@@ -90,8 +90,12 @@ export default function AdminStudentCreate() {
       setError("Date of birth is required");
       return;
     }
-    if (!phone.trim()) {
-      setError("Phone number is required");
+    if (!email.trim()) {
+      setError("Email address is required");
+      return;
+    }
+    if (!/\S+@\S+\.\S+/.test(email.trim())) {
+      setError("Please enter a valid email address");
       return;
     }
     if (!password || password.length < 6) {
@@ -100,10 +104,6 @@ export default function AdminStudentCreate() {
     }
     if (password !== confirmPassword) {
       setError("Passwords do not match");
-      return;
-    }
-    if (email && !/\S+@\S+\.\S+/.test(email)) {
-      setError("Please enter a valid email address");
       return;
     }
 
@@ -115,13 +115,13 @@ export default function AdminStudentCreate() {
         age,
         date_of_birth: dateOfBirth,
         gender,
-        phone: phone.trim(),
+        email: email.trim(),
         password,
         enrollment_year: enrollmentYear,
       };
 
       if (nickname.trim()) payload.nickname = nickname.trim();
-      if (email) payload.email = email.trim();
+      if (phone.trim()) payload.phone = phone.trim();
       if (parentFirstName) payload.parent_first_name = parentFirstName.trim();
       if (parentLastName) payload.parent_last_name = parentLastName.trim();
       if (address) payload.address = address.trim();
@@ -273,8 +273,8 @@ export default function AdminStudentCreate() {
                         <input type="date" className="form-control" value={dateOfBirth} onChange={(e) => setDateOfBirth(e.target.value)} max={new Date().toISOString().split('T')[0]} required />
                       </div>
                       <div className="col-md-6">
-                        <label className="form-label">Phone Number <Required /></label>
-                        <input type="tel" className="form-control" placeholder="e.g., 0123456789" value={phone} onChange={(e) => setPhone(e.target.value)} required />
+                        <label className="form-label">Email <Required /></label>
+                        <input type="email" className="form-control" placeholder="student@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
                         <small className="text-muted">Used for login and must be unique</small>
                       </div>
                       <div className="col-md-6">
@@ -332,8 +332,9 @@ export default function AdminStudentCreate() {
                         <input className="form-control" placeholder="Parent's last name" value={parentLastName} onChange={(e) => setParentLastName(e.target.value)} />
                       </div>
                       <div className="col-md-4">
-                        <label className="form-label">Email</label>
-                        <input type="email" className="form-control" placeholder="student@example.com" value={email} onChange={(e) => setEmail(e.target.value)} />
+                        <label className="form-label">Phone Number</label>
+                        <input type="tel" className="form-control" placeholder="e.g., 0123456789" value={phone} onChange={(e) => setPhone(e.target.value)} />
+                        <small className="text-muted">Optional contact number</small>
                       </div>
                       <div className="col-12">
                         <label className="form-label">Address</label>

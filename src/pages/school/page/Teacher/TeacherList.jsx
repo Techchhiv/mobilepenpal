@@ -109,55 +109,44 @@ const TeacherList = () => {
 
   return (
     <SchoolLayout>
-      <div className="d-flex flex-column gap-4">
-        {/* Header Card */}
-        <div className="card border-0 shadow-sm radius-12 p-3 bg-white">
-          <div className="d-flex align-items-center justify-content-between flex-wrap gap-3">
-            <div className="d-flex align-items-center gap-3">
-              <div className="w-44-px h-44-px bg-purple-50 text-purple rounded-circle d-flex align-items-center justify-content-center">
-                <Icon icon="mdi:teach" className="text-xl" />
-              </div>
-              <div>
-                <h5 className="mb-0 fw-bold text-dark">Teacher Directory</h5>
-                <small className="text-muted">Manage teaching staff and course instructors</small>
-              </div>
+      <div className="col-lg-12">
+        <div className="card basic-data-table">
+          <div className="card-header d-flex justify-content-between align-items-center">
+            <div>
+              <h3 className="card-title mb-0">Teacher Directory</h3>
+              <small className="text-muted">Manage teaching staff and course instructors</small>
             </div>
 
             {canCreate && (
-              <Link to="/school/teachers/create" className="btn btn-primary d-flex align-items-center gap-1 radius-8 shadow-sm">
-                <Icon icon="mdi:plus" /> Add New Teacher
+              <Link to="/school/teachers/create" className="d-flex align-items-center btn btn-primary">
+                <Icon icon="mdi:plus" className="me-2" /> Add New Teacher
               </Link>
             )}
           </div>
-        </div>
 
-        {message && (
-          <div className="alert alert-success alert-dismissible fade show radius-12 mb-0" role="alert">
-            <Icon icon="mdi:check-circle-outline" className="me-2 text-lg" />
-            {message}
-            <button type="button" className="btn-close" onClick={() => setMessage("")} />
-          </div>
-        )}
+          <div className="card-body">
+            {message && (
+              <div className="alert alert-success mb-3" role="alert">
+                <Icon icon="mdi:check-circle-outline" className="me-2 text-lg" />
+                {message}
+              </div>
+            )}
 
-        {error && (
-          <div className="alert alert-danger alert-dismissible fade show radius-12 mb-0" role="alert">
-            <Icon icon="mdi:alert-circle-outline" className="me-2 text-lg" />
-            {error}
-            <button type="button" className="btn-close" onClick={() => setError("")} />
-          </div>
-        )}
+            {error && (
+              <div className="alert alert-danger mb-3" role="alert">
+                <Icon icon="mdi:alert-circle-outline" className="me-2 text-lg" />
+                {error}
+              </div>
+            )}
 
-        {/* Table Card */}
-        <div className="card border-0 shadow-sm radius-12 bg-white">
-          {/* Controls Header */}
-          <div className="card-header bg-white border-bottom py-3">
-            <div className="d-flex align-items-center justify-content-between flex-wrap gap-3">
+            {/* Controls Header */}
+            <div className="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
               {/* Search */}
               <div className="position-relative" style={{ minWidth: "260px" }}>
                 <Icon icon="mdi:magnify" className="position-absolute top-50 start-0 translate-middle-y ms-3 text-muted text-lg" />
                 <input
                   type="text"
-                  className="form-control form-control-sm ps-5 radius-8"
+                  className="form-control ps-5"
                   placeholder="Search teacher by name, email, subject..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
@@ -167,10 +156,10 @@ const TeacherList = () => {
               {/* Status Filter & Count Badge */}
               <div className="d-flex align-items-center gap-3">
                 <div className="d-flex align-items-center gap-2">
-                  <span className="text-muted text-xs">Status:</span>
+                  <span className="text-muted text-sm">Status:</span>
                   <select
-                    className="form-select form-select-sm radius-8"
-                    style={{ width: "130px" }}
+                    className="form-select"
+                    style={{ width: "150px" }}
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
                   >
@@ -180,15 +169,13 @@ const TeacherList = () => {
                   </select>
                 </div>
 
-                <span className="badge bg-light text-dark border text-xs">
+                <span className="badge bg-light text-dark border text-sm px-3 py-2">
                   {filteredTeachers.length} {filteredTeachers.length === 1 ? "Teacher" : "Teachers"}
                 </span>
               </div>
             </div>
-          </div>
 
-          {/* Table Body */}
-          <div className="card-body p-0">
+            {/* Table Body */}
             {loading ? (
               <div className="d-flex justify-content-center align-items-center py-5" style={{ minHeight: "240px" }}>
                 <div className="spinner-border text-primary" role="status">
@@ -196,31 +183,31 @@ const TeacherList = () => {
                 </div>
               </div>
             ) : filteredTeachers.length === 0 ? (
-              <div className="d-flex flex-column align-items-center justify-content-center py-5 text-muted small text-center">
+              <div className="d-flex flex-column align-items-center justify-content-center py-5 text-muted text-center">
                 <Icon icon="mdi:account-off-outline" className="text-3xl text-muted mb-2" />
                 <span className="fw-medium text-dark">No teachers found</span>
-                <span className="text-xs text-muted mt-1">Try adjusting your search query or status filter</span>
+                <span className="text-muted small mt-1">Try adjusting your search query or status filter</span>
               </div>
             ) : (
               <div className="table-responsive">
-                <table className="table align-middle mb-0">
-                  <thead className="table-light text-xs text-uppercase text-muted">
+                <table className="table bordered-table align-middle mb-0">
+                  <thead className="table-light">
                     <tr>
-                      <th className="ps-3" style={{ width: "50px" }}>#</th>
+                      <th style={{ width: "50px" }}>#</th>
                       <th>Teacher Name & Email</th>
                       <th>Teacher ID</th>
                       <th>Subject / Department</th>
                       <th>Phone Number</th>
                       <th>Status</th>
-                      <th className="pe-3 text-end">Actions</th>
+                      <th className="text-end">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="text-sm">
+                  <tbody>
                     {filteredTeachers.map((t, idx) => {
                       const pUrl = photoUrl(t.photo);
                       return (
                         <tr key={t.id}>
-                          <td className="ps-3 text-muted text-xs">{idx + 1}</td>
+                          <td className="text-muted">{idx + 1}</td>
                           <td>
                             <div className="d-flex align-items-center gap-3">
                               <div
@@ -244,18 +231,18 @@ const TeacherList = () => {
                               </div>
                               <div>
                                 <div className="fw-semibold text-dark">{t.name}</div>
-                                <div className="text-muted text-xs">{t.email || "—"}</div>
+                                <div className="text-muted small">{t.email || "—"}</div>
                               </div>
                             </div>
                           </td>
                           <td>
-                            <span className="badge bg-light text-dark font-mono text-xs border">
+                            <span className="badge bg-light text-dark font-mono border px-2 py-1">
                               {t.teacher_id || `#${t.id}`}
                             </span>
                           </td>
                           <td>
                             {t.subject ? (
-                              <span className="badge bg-purple-subtle text-purple border border-purple-subtle">
+                              <span className="badge bg-purple-subtle text-purple border border-purple-subtle px-2 py-1">
                                 {t.subject}
                               </span>
                             ) : (
@@ -264,38 +251,38 @@ const TeacherList = () => {
                           </td>
                           <td>{t.phone || <span className="text-muted">—</span>}</td>
                           <td>
-                            <span className={`badge ${t.active ? "bg-success-subtle text-success" : "bg-secondary-subtle text-secondary"}`}>
+                            <span className={`badge ${t.active ? "bg-success-subtle text-success" : "bg-secondary-subtle text-secondary"} px-2 py-1`}>
                               {t.active ? "Active" : "Inactive"}
                             </span>
                           </td>
-                          <td className="pe-3 text-end">
-                            <div className="d-inline-flex gap-1">
+                          <td className="text-end">
+                            <div className="d-inline-flex align-items-center gap-2">
                               {canView && (
                                 <Link
                                   to={`/school/teachers/${t.id}`}
-                                  className="btn btn-sm btn-outline-primary p-1 text-xs"
+                                  className="w-32-px h-32-px bg-primary-light text-primary-600 rounded-circle d-inline-flex align-items-center justify-content-center"
                                   title="View Teacher Profile"
                                 >
-                                  <Icon icon="mdi:eye" className="text-base" />
+                                  <Icon icon="iconamoon:eye-light" />
                                 </Link>
                               )}
                               {canUpdate && (
                                 <Link
                                   to={`/school/teachers/${t.id}/edit`}
-                                  className="btn btn-sm btn-outline-info p-1 text-xs"
+                                  className="w-32-px h-32-px bg-success-focus text-success-main rounded-circle d-inline-flex align-items-center justify-content-center"
                                   title="Edit Teacher"
                                 >
-                                  <Icon icon="mdi:pencil" className="text-base" />
+                                  <Icon icon="lucide:edit" />
                                 </Link>
                               )}
                               {canDelete && (
                                 <button
                                   type="button"
-                                  className="btn btn-sm btn-outline-danger p-1 text-xs"
+                                  className="w-32-px h-32-px bg-danger-focus text-danger-main rounded-circle d-inline-flex align-items-center justify-content-center border-0"
                                   title="Delete Teacher"
                                   onClick={() => deleteTeacher(t.id, t.name)}
                                 >
-                                  <Icon icon="mdi:trash-can-outline" className="text-base" />
+                                  <Icon icon="mingcute:delete-2-line" />
                                 </button>
                               )}
                             </div>

@@ -138,6 +138,14 @@ export default function AdminStudentEdit() {
       setError("First name and last name are required");
       return;
     }
+    if (!email.trim()) {
+      setError("Email address is required");
+      return;
+    }
+    if (!/\S+@\S+\.\S+/.test(email.trim())) {
+      setError("Please enter a valid email address");
+      return;
+    }
     if (password && password.length < 6) {
       setError("Password must be at least 6 characters");
       return;
@@ -177,9 +185,10 @@ export default function AdminStudentEdit() {
       console.error("Update student error:", err);
       const errors = err?.response?.data?.errors;
       setError(
-        errors?.first_name?.[0] ||
-        errors?.phone?.[0] ||
         errors?.email?.[0] ||
+        errors?.phone?.[0] ||
+        errors?.first_name?.[0] ||
+        errors?.last_name?.[0] ||
         errors?.password?.[0] ||
         err?.response?.data?.message ||
         "Failed to update student."
@@ -309,9 +318,9 @@ export default function AdminStudentEdit() {
                         <input type="date" className="form-control" value={dateOfBirth} onChange={(e) => setDateOfBirth(e.target.value)} max={new Date().toISOString().split('T')[0]} />
                       </div>
                       <div className="col-md-6">
-                        <label className="form-label">Phone Number</label>
-                        <input type="tel" className="form-control" value={phone} onChange={(e) => setPhone(e.target.value)} />
-                        <small className="text-muted">Used for login</small>
+                        <label className="form-label">Email <Required /></label>
+                        <input type="email" className="form-control" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                        <small className="text-muted">Used for login and must be unique</small>
                       </div>
                       <div className="col-md-6">
                         <label className="form-label">Enrollment Year</label>
@@ -368,8 +377,9 @@ export default function AdminStudentEdit() {
                         <input className="form-control" value={parentLastName} onChange={(e) => setParentLastName(e.target.value)} />
                       </div>
                       <div className="col-md-4">
-                        <label className="form-label">Email</label>
-                        <input type="email" className="form-control" value={email} onChange={(e) => setEmail(e.target.value)} />
+                        <label className="form-label">Phone Number</label>
+                        <input type="tel" className="form-control" value={phone} onChange={(e) => setPhone(e.target.value)} />
+                        <small className="text-muted">Optional contact number</small>
                       </div>
                       <div className="col-12">
                         <label className="form-label">Address</label>

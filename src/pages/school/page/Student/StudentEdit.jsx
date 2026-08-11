@@ -21,6 +21,7 @@ export default function StudentEdit() {
   const [age, setAge] = useState("");
   const [gender, setGender] = useState("male");
   const [dateOfBirth, setDateOfBirth] = useState("");
+  const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
 
   const [parentFirstName, setParentFirstName] = useState("");
@@ -99,6 +100,7 @@ export default function StudentEdit() {
       const dob = s?.date_of_birth ? String(s.date_of_birth).slice(0, 10) : "";
       setDateOfBirth(dob);
 
+      setEmail(s?.email ?? "");
       setPhone(s?.phone ?? "");
       setParentFirstName(s?.parent_first_name ?? "");
       setParentLastName(s?.parent_last_name ?? "");
@@ -132,6 +134,15 @@ export default function StudentEdit() {
       return;
     }
 
+    if (!email.trim()) {
+      setError("Email address is required.");
+      return;
+    }
+    if (!/\S+@\S+\.\S+/.test(email.trim())) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+
     if (password || confirmPassword) {
       if (password !== confirmPassword) {
         setError("Passwords do not match.");
@@ -153,6 +164,8 @@ export default function StudentEdit() {
       formData.append("age", age === "" ? "" : String(age));
       formData.append("gender", gender || "");
       formData.append("date_of_birth", dateOfBirth || "");
+      formData.append("email", email.trim());
+      formData.append("phone", phone.trim());
       formData.append("parent_first_name", parentFirstName || "");
       formData.append("parent_last_name", parentLastName || "");
       formData.append("address", address || "");
@@ -173,6 +186,8 @@ export default function StudentEdit() {
       });
     } catch (err) {
       setError(
+        err?.response?.data?.errors?.email?.[0] ||
+        err?.response?.data?.errors?.phone?.[0] ||
         err?.response?.data?.errors?.first_name?.[0] ||
         err?.response?.data?.errors?.last_name?.[0] ||
         err?.response?.data?.message ||
@@ -366,17 +381,15 @@ export default function StudentEdit() {
 
                           <div className="col-md-6">
                             <label className="form-label">
-                              Phone{" "}
-                              <span className="text-muted small">
-                                (read-only)
-                              </span>
+                              Email <Required />
                             </label>
                             <input
+                              type="email"
                               className="form-control"
-                              value={phone}
-                              onChange={(e) => setPhone(e.target.value)}
-                              disabled
-                              title="Phone editing is disabled (not in UpdateUserRequest)."
+                              value={email}
+                              onChange={(e) => setEmail(e.target.value)}
+                              placeholder="student@example.com"
+                              required
                             />
                           </div>
                         </div>
@@ -411,13 +424,14 @@ export default function StudentEdit() {
                             />
                           </div>
 
-                          <div className="col-12">
-                            <label className="form-label">Address</label>
+                          <div className="col-md-6">
+                            <label className="form-label">Phone Number</label>
                             <input
+                              type="tel"
                               className="form-control"
-                              value={address}
-                              onChange={(e) => setAddress(e.target.value)}
-                              placeholder="Village / Commune / District / Province"
+                              value={phone}
+                              onChange={(e) => setPhone(e.target.value)}
+                              placeholder="Optional"
                             />
                           </div>
 
@@ -429,6 +443,16 @@ export default function StudentEdit() {
                               onChange={(e) => setEnrollmentYear(e.target.value)}
                               placeholder="e.g. 2024"
                               maxLength={10}
+                            />
+                          </div>
+
+                          <div className="col-12">
+                            <label className="form-label">Address</label>
+                            <input
+                              className="form-control"
+                              value={address}
+                              onChange={(e) => setAddress(e.target.value)}
+                              placeholder="Village / Commune / District / Province"
                             />
                           </div>
                         </div>

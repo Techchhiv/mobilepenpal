@@ -7,7 +7,7 @@ import penLogo from "../assets/images/pen_logo.png";
 import "../assets/css/Layout.css";
 
 const MasterLayout = ({ children }) => {
-  const { user, loading, logout, hasRole, hasPermission, isSuperAdmin } = useAuth();
+  const { user, loading, logout, hasPermission, isSuperAdmin } = useAuth();
   const location = useLocation();
 
   const [sidebarActive, setSidebarActive] = useState(false);
@@ -338,6 +338,16 @@ const MasterLayout = ({ children }) => {
                     </li>
                   )}
                 </ul>
+              </li>
+            )}
+
+            {/* ── Super Admin Only: System Audit Logs ── */}
+            {isSuperAdmin && (
+              <li>
+                <NavLink to="/admin/audit-logs">
+                  <Icon icon="mdi:shield-lock-outline" className="menu-icon" />
+                  <span>System Audit Logs</span>
+                </NavLink>
               </li>
             )}
           </ul>

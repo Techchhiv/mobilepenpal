@@ -83,8 +83,13 @@ export default function StudentCreate() {
             return;
         }
 
-        if (!phone.trim()) {
-            setError("Phone number is required");
+        if (!email.trim()) {
+            setError("Email address is required");
+            return;
+        }
+
+        if (!/\S+@\S+\.\S+/.test(email.trim())) {
+            setError("Please enter a valid email address");
             return;
         }
 
@@ -98,11 +103,6 @@ export default function StudentCreate() {
             return;
         }
 
-        if (email && !/\S+@\S+\.\S+/.test(email)) {
-            setError("Please enter a valid email address");
-            return;
-        }
-
         try {
             const payload = {
                 first_name: firstName.trim(),
@@ -110,12 +110,12 @@ export default function StudentCreate() {
                 age,
                 date_of_birth: dateOfBirth,
                 gender,
-                phone: phone.trim(),
+                email: email.trim(),
                 password,
                 enrollment_year: enrollmentYear,
             };
 
-            if (email) payload.email = email.trim();
+            if (phone.trim()) payload.phone = phone.trim();
             if (parentFirstName) payload.parent_first_name = parentFirstName.trim();
             if (parentLastName) payload.parent_last_name = parentLastName.trim();
             if (address) payload.address = address.trim();
@@ -327,15 +327,15 @@ export default function StudentCreate() {
 
                                             <div className="col-md-6">
                                                 <label className="form-label">
-                                                    Phone Number <Required />
+                                                    Email <Required />
                                                 </label>
                                                 <input
-                                                    name="khphone"
-                                                    type="tel"
+                                                    name="email"
+                                                    type="email"
                                                     className="form-control"
-                                                    placeholder="e.g., 0123456789"
-                                                    value={phone}
-                                                    onChange={(e) => setPhone(e.target.value)}
+                                                    placeholder="student@example.com"
+                                                    value={email}
+                                                    onChange={(e) => setEmail(e.target.value)}
                                                     required
                                                 />
                                                 <small className="text-muted">Used for login and must be unique</small>
@@ -393,15 +393,16 @@ export default function StudentCreate() {
                                             </div>
 
                                             <div className="col-md-4">
-                                                <label className="form-label">Email</label>
+                                                <label className="form-label">Phone Number</label>
                                                 <input
-                                                    name="email"
-                                                    type="email"
+                                                    name="khphone"
+                                                    type="tel"
                                                     className="form-control"
-                                                    placeholder="student@example.com"
-                                                    value={email}
-                                                    onChange={(e) => setEmail(e.target.value)}
+                                                    placeholder="e.g., 0123456789"
+                                                    value={phone}
+                                                    onChange={(e) => setPhone(e.target.value)}
                                                 />
+                                                <small className="text-muted">Optional contact number</small>
                                             </div>
 
                                             <div className="col-12">
