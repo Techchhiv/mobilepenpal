@@ -219,7 +219,7 @@ class WorldLevelStageSeeder extends Seeder
                     'chars' => $consonants,
                     'character_type' => 'consonants',
                     'chunk' => 5,
-                    'is_premium' => true,
+                    'is_premium' => false,
                 ],
                 [
                     'key' => 'schools_digits',
@@ -232,7 +232,7 @@ class WorldLevelStageSeeder extends Seeder
                     'chars' => $digits,
                     'character_type' => 'digits',
                     'chunk' => 5,
-                    'is_premium' => true,
+                    'is_premium' => false,
                 ],
                 [
                     'key' => 'schools_dependent_vowels',
@@ -245,7 +245,7 @@ class WorldLevelStageSeeder extends Seeder
                     'chars' => $dependentVowels,
                     'character_type' => 'dependent_vowels',
                     'chunk' => 5,
-                    'is_premium' => true,
+                    'is_premium' => false,
                 ],
                 [
                     'key' => 'schools_independent_vowels',
@@ -258,7 +258,7 @@ class WorldLevelStageSeeder extends Seeder
                     'chars' => $independentVowels,
                     'character_type' => 'independent_vowels',
                     'chunk' => 5,
-                    'is_premium' => true,
+                    'is_premium' => false,
                 ],
                 [
                     'key' => 'schools_diacritics',
@@ -271,7 +271,7 @@ class WorldLevelStageSeeder extends Seeder
                     'chars' => $diacritics,
                     'character_type' => 'diacritics',
                     'chunk' => 3,
-                    'is_premium' => true,
+                    'is_premium' => false,
                 ],
                 // [
                 //     'key' => 'schools_math',

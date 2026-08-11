@@ -307,14 +307,17 @@ class UserController extends Controller
             if ($latestStage) {
                 $levelId = $latestStage->level_id;
 
-                // Get all exercises from that level's stages (no math)
-                $levelStageIds = DB::table('stages')
-                    ->where('level_id', $levelId)
-                    ->where('is_active', true)
-                    ->pluck('id');
+                // Get all exercises from that level's COMPLETED stages (no math)
+                $completedLevelStageIds = DB::table('student_stage_progress')
+                    ->where('student_id', $studentId)
+                    ->where('status', 'completed')
+                    ->whereIn('stage_id', function ($q) use ($levelId) {
+                        $q->select('id')->from('stages')->where('level_id', $levelId)->where('is_active', true);
+                    })
+                    ->pluck('stage_id');
 
                 $recentExerciseIds = DB::table('stage_exercises')
-                    ->whereIn('stage_id', $levelStageIds)
+                    ->whereIn('stage_id', $completedLevelStageIds)
                     ->where('is_active', true)
                     ->pluck('exercise_id')
                     ->unique();

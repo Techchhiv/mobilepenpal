@@ -62,6 +62,7 @@ class Level extends Model
             return true;
         }
 
+        /*
         $limit = isset($settings['learning_free_stage_limit'])
             ? (int) $settings['learning_free_stage_limit']
             : (int) ($settings['learning_free_char_limit'] ?? 10);
@@ -81,5 +82,8 @@ class Level extends Model
         $globalStartStageNumber = $priorStagesCount + $sameWorldPriorStagesCount + 1;
 
         return $globalStartStageNumber > $limit;
+        */
+
+        return false;
     }
 }

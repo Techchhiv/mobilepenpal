@@ -144,6 +144,22 @@ class ClassroomController extends Controller
             return $this->returnError(__('messages.classroom_inactive'), 400);
         }
 
+        // 1. Verify school membership: If student belongs to a school, classroom must belong to that school
+        if ($student->school_id && (int) $student->school_id !== (int) $classroom->school_id) {
+            return $this->returnError(__('messages.different_school_classroom'), 403);
+        }
+
+        // 2. Verify single active classroom restriction: Check if student is already enrolled in a different active classroom
+        $existingActiveEnrollment = ClassroomEnrollment::where('student_id', $student->id)
+            ->where('status', 'enrolled')
+            ->whereHas('classroom', fn($q) => $q->where('is_active', true))
+            ->where('classroom_id', '!=', $classroom->id)
+            ->first();
+
+        if ($existingActiveEnrollment) {
+            return $this->returnError(__('messages.already_enrolled'), 400);
+        }
+
         $enrollment = ClassroomEnrollment::where('classroom_id', $classroom->id)
             ->where('student_id', $student->id)
             ->first();
@@ -167,7 +183,11 @@ class ClassroomController extends Controller
 
         // Associate student with the school if not set
         if (!$student->school_id) {
-            $student->update(['school_id' => $classroom->school_id]);
+            $schoolKey = \App\Models\School::where('id', $classroom->school_id)->value('school_key');
+            $student->update([
+                'school_id'  => $classroom->school_id,
+                'school_key' => $schoolKey,
+            ]);
         }
 
         $classroom->load([

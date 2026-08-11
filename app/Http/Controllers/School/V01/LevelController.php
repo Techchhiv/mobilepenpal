@@ -100,7 +100,7 @@ class LevelController extends Controller
             $data['world_id'] = $worldId;
             $data['is_active'] = $data['is_active'] ?? true;
             $data['is_unlocked_by_default'] = $data['is_unlocked_by_default'] ?? false;
-            $data['is_premium'] = true;
+            $data['is_premium'] = false;
 
             return Level::create($data);
         });
