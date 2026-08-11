@@ -1,26 +1,59 @@
 {
   "project_info": {
-    "project_number": "653298491460",
-    "project_id": "email-verification-4abfe",
-    "storage_bucket": "email-verification-4abfe.firebasestorage.app"
+    "project_number": "297443227129",
+    "project_id": "email-verification-f9443",
+    "storage_bucket": "email-verification-f9443.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:653298491460:android:b419fd209b2dbb4fbc5c11",
+        "mobilesdk_app_id": "1:297443227129:android:88324b5f9e84d637863928",
         "android_client_info": {
           "package_name": "com.khmerpenpal.mobilepenpal"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "297443227129-l48lnelinjhphtq0e0upamam6je8dlo3.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.khmerpenpal.mobilepenpal",
+            "certificate_hash": "65e099311956a29d460f64e43132b40c467d7261"
+          }
+        },
+        {
+          "client_id": "297443227129-tqg2jd6pem7dsfu7p4smrjmgat8pdo6f.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.khmerpenpal.mobilepenpal",
+            "certificate_hash": "2ab3c2e9290949f95d9d2b21a184cc7d1c6592b0"
+          }
+        },
+        {
+          "client_id": "297443227129-ag0h5n4ftjs28iqd73q4i9cljusn0jae.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
-          "current_key": "AIzaSyDyFKXA5FbQHCLf7xP03sNzvz95yO0xhUs"
+          "current_key": "AIzaSyBZhxblKHVgSIzP9UOLVkvRpcz-dJM0q58"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "297443227129-ag0h5n4ftjs28iqd73q4i9cljusn0jae.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "297443227129-cim6qeb7bh35kbls8sjg4ccijqj4f5gn.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.mobilepenpal"
+              }
+            }
+          ]
         }
       }
     }

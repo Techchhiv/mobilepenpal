@@ -41,36 +41,40 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyDk3ENAKD8I-IfGjg0Y5FXoK0Lwvo8WGvw',
-    appId: '1:653298491460:web:32ab73d0ebc14be3bc5c11',
-    messagingSenderId: '653298491460',
-    projectId: 'email-verification-4abfe',
-    authDomain: 'email-verification-4abfe.firebaseapp.com',
-    storageBucket: 'email-verification-4abfe.firebasestorage.app',
-    measurementId: 'G-TE0PY41FW8',
+    apiKey: 'AIzaSyBI9igmWottbOY699grJ3bP8qtcBEK18Tk',
+    appId: '1:297443227129:web:80642fe07d23d6e3863928',
+    messagingSenderId: '297443227129',
+    projectId: 'email-verification-f9443',
+    authDomain: 'email-verification-f9443.firebaseapp.com',
+    storageBucket: 'email-verification-f9443.firebasestorage.app',
+    measurementId: 'G-1FTDL6RP4E',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyDyFKXA5FbQHCLf7xP03sNzvz95yO0xhUs',
-    appId: '1:653298491460:android:b419fd209b2dbb4fbc5c11',
-    messagingSenderId: '653298491460',
-    projectId: 'email-verification-4abfe',
-    storageBucket: 'email-verification-4abfe.firebasestorage.app',
+    apiKey: 'AIzaSyBZhxblKHVgSIzP9UOLVkvRpcz-dJM0q58',
+    appId: '1:297443227129:android:88324b5f9e84d637863928',
+    messagingSenderId: '297443227129',
+    projectId: 'email-verification-f9443',
+    storageBucket: 'email-verification-f9443.firebasestorage.app',
   );
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyArOw-olXUNVDUMTj-EvdBDRmxj1Dm-nsA',
-    appId: '1:653298491460:ios:03f5cfa3ea279776bc5c11',
-    messagingSenderId: '653298491460',
-    projectId: 'email-verification-4abfe',
-    storageBucket: 'email-verification-4abfe.firebasestorage.app',
+    apiKey: 'AIzaSyBoDWt3gSetyJxSBHpRvVMXOuM959QtOqM',
+    appId: '1:297443227129:ios:54dd13c31c1989ca863928',
+    messagingSenderId: '297443227129',
+    projectId: 'email-verification-f9443',
+    storageBucket: 'email-verification-f9443.firebasestorage.app',
+    androidClientId: '297443227129-l48lnelinjhphtq0e0upamam6je8dlo3.apps.googleusercontent.com',
+    iosClientId: '297443227129-cim6qeb7bh35kbls8sjg4ccijqj4f5gn.apps.googleusercontent.com',
     iosBundleId: 'com.example.mobilepenpal',
   );
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyArOw-olXUNVDUMTj-EvdBDRmxj1Dm-nsA',
-    appId: '1:653298491460:ios:03f5cfa3ea279776bc5c11',
-    messagingSenderId: '653298491460',
-    projectId: 'email-verification-4abfe',
-    storageBucket: 'email-verification-4abfe.firebasestorage.app',
+    apiKey: 'AIzaSyBoDWt3gSetyJxSBHpRvVMXOuM959QtOqM',
+    appId: '1:297443227129:ios:54dd13c31c1989ca863928',
+    messagingSenderId: '297443227129',
+    projectId: 'email-verification-f9443',
+    storageBucket: 'email-verification-f9443.firebasestorage.app',
+    androidClientId: '297443227129-l48lnelinjhphtq0e0upamam6je8dlo3.apps.googleusercontent.com',
+    iosClientId: '297443227129-cim6qeb7bh35kbls8sjg4ccijqj4f5gn.apps.googleusercontent.com',
     iosBundleId: 'com.example.mobilepenpal',
   );
   static const FirebaseOptions windows = FirebaseOptions(
