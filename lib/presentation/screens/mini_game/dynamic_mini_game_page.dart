@@ -75,6 +75,8 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
     return Stack(
       children: [
         const GameBackground(),
+        // Hanuman character — behind all UI, does not intercept touches
+        const HanumanOverlay(),
         SafeArea(
           child: Center(
             child: ConstrainedBox(

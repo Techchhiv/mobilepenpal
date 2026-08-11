@@ -27,6 +27,7 @@ class _MiniGamePageState extends State<MiniGamePage>
   final GetStorage _box = GetStorage();
   late final AnimationController _pulseCtrl;
   late final AnimationController _floatCtrl;
+  late final AnimationController _rotateCtrl;
   final RxSet<int> _selectedGames = <int>{}.obs;
   final RxnString _selectedInputType = RxnString(null);
   final RxBool _isDetailView = false.obs;
@@ -46,6 +47,11 @@ class _MiniGamePageState extends State<MiniGamePage>
       vsync: this,
       duration: const Duration(milliseconds: 3000),
     )..repeat(reverse: true);
+
+    _rotateCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 25),
+    )..repeat();
 
     if (Get.isRegistered<MiniGameHubController>()) {
       final hubCtrl = Get.find<MiniGameHubController>();
@@ -67,6 +73,7 @@ class _MiniGamePageState extends State<MiniGamePage>
   void dispose() {
     _pulseCtrl.dispose();
     _floatCtrl.dispose();
+    _rotateCtrl.dispose();
     super.dispose();
   }
 
@@ -77,7 +84,7 @@ class _MiniGamePageState extends State<MiniGamePage>
         children: [
           Positioned.fill(
             child: Image.asset(
-              'assets/images/backgrounds/hub_cartoon_background.png',
+              'assets/images/backgrounds/chab_kon_kleng_bg.jpg',
               fit: BoxFit.cover,
             ),
           ),
@@ -125,8 +132,8 @@ class _MiniGamePageState extends State<MiniGamePage>
                               : 'hero_profile_header_tab_1',
                           subtitle: subtitleText,
                           gradientColors: const [
-                            Color(0xFFFF9F43),
-                            Color(0xFFFF793F),
+                            Color(0xFF109E8B),
+                            Color(0xFF0C7365),
                           ],
                           trailing: const SizedBox.shrink(),
                         );
@@ -183,52 +190,65 @@ class _MiniGamePageState extends State<MiniGamePage>
       }
     }
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFF9F43),
-        borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: Colors.white, width: 4),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFFFF9F43).withValues(alpha: 0.5),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Text(
-            'highest_score'.tr,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w900,
-              color: Colors.white,
-              letterSpacing: Get.locale?.languageCode == 'km' ? 0 : 2,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            '$maxHighScore',
-            style: const TextStyle(
-              fontSize: 36,
-              fontWeight: FontWeight.w900,
-              color: Colors.white,
-              height: 1.1,
-              shadows: [
-                Shadow(
-                  color: Colors.black26,
-                  offset: Offset(2, 2),
-                  blurRadius: 4,
+    return AnimatedBuilder(
+      animation: Listenable.merge([_rotateCtrl, _floatCtrl]),
+      builder: (context, child) {
+        final floatOffset = (_floatCtrl.value - 0.5) * 16; // -8 to +8 px
+        return Transform.translate(
+          offset: Offset(0, floatOffset),
+          child: Transform.rotate(
+            angle: _rotateCtrl.value * 2 * pi,
+            child: SizedBox(
+              width: 160,
+              height: 160,
+              child: CustomPaint(
+                painter: _StarburstPainter(),
+                child: Transform.rotate(
+                  // Counter-rotate content so text stays upright
+                  angle: -_rotateCtrl.value * 2 * pi,
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'highest_score'.tr,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                            letterSpacing: Get.locale?.languageCode == 'km' ? 0 : 1,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '$maxHighScore',
+                          style: const TextStyle(
+                            fontSize: 36,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                            height: 1.1,
+                            shadows: [
+                              Shadow(
+                                color: Colors.black26,
+                                offset: Offset(1, 1),
+                                blurRadius: 3,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ],
+              ),
             ),
           ),
-        ],
-      ),
+        );
+      },
     );
   }
+
 
   Widget _buildCentralPlayArea() {
     if (!Get.isRegistered<MiniGameHubController>()) {
@@ -249,7 +269,7 @@ class _MiniGamePageState extends State<MiniGamePage>
             limit,
           );
           final isLimitReached = !hasSub && locksEnabled && remaining <= 0;
-          final btnColor = isLimitReached ? Colors.grey.shade400 : const Color(0xFFFF9F43);
+          final btnColor = isLimitReached ? Colors.grey.shade400 : const Color(0xFF109E8B);
 
           return GestureDetector(
             onTap: () {
@@ -281,7 +301,7 @@ class _MiniGamePageState extends State<MiniGamePage>
                         BoxShadow(
                           color: isLimitReached
                               ? Colors.black26
-                              : const Color(0xFFFF9F43).withValues(alpha: 0.6),
+                              : const Color(0xFF109E8B).withValues(alpha: 0.6),
                           blurRadius: isLimitReached ? 8 : 20,
                           offset: const Offset(0, 10),
                         ),
@@ -1215,4 +1235,63 @@ class _FloatingStarState extends State<_FloatingStar>
       },
     );
   }
+}
+
+/// Draws the starburst polygon matching the start.zip SVG design.
+/// Points are normalised to a 100×100 viewBox then scaled to the canvas size.
+class _StarburstPainter extends CustomPainter {
+  // SVG polygon points from start.html (100×100 viewBox)
+  static const List<double> _rawPoints = [
+    50.00, 2.00,  54.96, 12.33, 62.42, 3.64,  64.54, 14.89,
+    74.00, 8.43,  73.13, 19.85, 83.94, 16.06, 80.15, 26.87,
+    91.57, 26.00, 85.11, 35.46, 96.36, 37.58, 87.67, 45.04,
+    98.00, 50.00, 87.67, 54.96, 96.36, 62.42, 85.11, 64.54,
+    91.57, 74.00, 80.15, 73.13, 83.94, 83.94, 73.13, 80.15,
+    74.00, 91.57, 64.54, 85.11, 62.42, 96.36, 54.96, 87.67,
+    50.00, 98.00, 45.04, 87.67, 37.58, 96.36, 35.46, 85.11,
+    26.00, 91.57, 26.87, 80.15, 16.06, 83.94, 19.85, 73.13,
+    8.43,  74.00, 14.89, 64.54, 3.64,  62.42, 12.33, 54.96,
+    2.00,  50.00, 12.33, 45.04, 3.64,  37.58, 14.89, 35.46,
+    8.43,  26.00, 19.85, 26.87, 16.06, 16.06, 26.87, 19.85,
+    26.00, 8.43,  35.46, 14.89, 37.58, 3.64,  45.04, 12.33,
+  ];
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final scaleX = size.width / 100.0;
+    final scaleY = size.height / 100.0;
+
+    final path = Path();
+    for (int i = 0; i < _rawPoints.length; i += 2) {
+      final x = _rawPoints[i] * scaleX;
+      final y = _rawPoints[i + 1] * scaleY;
+      if (i == 0) {
+        path.moveTo(x, y);
+      } else {
+        path.lineTo(x, y);
+      }
+    }
+    path.close();
+
+    // Fill
+    canvas.drawPath(
+      path,
+      Paint()
+        ..color = const Color(0xFF109E8B)
+        ..style = PaintingStyle.fill,
+    );
+
+    // White stroke
+    canvas.drawPath(
+      path,
+      Paint()
+        ..color = Colors.white
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.5
+        ..strokeJoin = StrokeJoin.round,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_StarburstPainter old) => false;
 }

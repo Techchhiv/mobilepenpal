@@ -49,7 +49,7 @@ class DashboardPage extends StatelessWidget {
 
     final List<Color> navColors = [
       const Color(0xFFFF6347), // Lessons (tomato red)
-      const Color(0xFFFF793F), // Games (dark orange)
+      const Color(0xFF109E8B), // Games (teal)
       const Color(0xFF845EF7), // Quests (purple)
       const Color(0xFFF57C00), // Shop (amber)
     ];
@@ -385,7 +385,7 @@ class DashboardPage extends StatelessWidget {
   Widget _buildNavItem(int index, IconData icon, String labelKey) {
     final List<Color> navColors = [
       const Color(0xFFFF6347), // Lessons (tomato red)
-      const Color(0xFFFF793F), // Games (dark orange)
+      const Color(0xFF109E8B), // Games (teal)
       const Color(0xFF845EF7), // Quests (purple)
       const Color(0xFFF57C00), // Shop (amber)
     ];

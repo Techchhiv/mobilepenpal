@@ -41,7 +41,7 @@ class GameColors {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-//  GAME BACKGROUND — Sky gradient + soft clouds + floating Khmer letters
+//  GAME BACKGROUND — math_bg.png with blur + teal overlay
 // ═══════════════════════════════════════════════════════════════════════════
 class GameBackground extends StatelessWidget {
   const GameBackground({super.key});
@@ -50,121 +50,43 @@ class GameBackground extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        // Gradient sky
+        // Background photo — slightly softened opacity
         Positioned.fill(
-          child: Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  GameColors.skyTop,
-                  GameColors.skyMid,
-                  GameColors.skyBot,
-                ],
-                stops: [0.0, 0.55, 1.0],
-              ),
+          child: Opacity(
+            opacity: 0.65,
+            child: Image.asset(
+              'assets/images/backgrounds/math_bg.png',
+              fit: BoxFit.cover,
             ),
           ),
         ),
-        // Soft hill shapes at bottom
-        Positioned(
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: 140,
-          child: CustomPaint(painter: _HillsPainter()),
-        ),
-        // Clouds
-        const Positioned(
-          top: 40,
-          left: 20,
-          child: _Cloud(width: 80, opacity: 0.25),
-        ),
-        const Positioned(
-          top: 80,
-          right: 30,
-          child: _Cloud(width: 60, opacity: 0.18),
-        ),
-        const Positioned(
-          top: 180,
-          left: 60,
-          child: _Cloud(width: 50, opacity: 0.12),
-        ),
-        // Floating Khmer letters
+        // Soft floating Khmer letters
         const FloatingKhmerDecoration(),
       ],
     );
   }
 }
 
-class _Cloud extends StatelessWidget {
-  const _Cloud({required this.width, required this.opacity});
-  final double width;
-  final double opacity;
+// ═══════════════════════════════════════════════════════════════════════════
+//  HANUMAN OVERLAY — decorative character behind all UI content
+// ═══════════════════════════════════════════════════════════════════════════
+class HanumanOverlay extends StatelessWidget {
+  const HanumanOverlay({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Opacity(
-      opacity: opacity,
-      child: Container(
-        width: width,
-        height: width * 0.45,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(width),
+    return Positioned(
+      bottom: -40,
+      right: -20,
+      child: IgnorePointer(
+        child: Image.asset(
+          'assets/images/illustrations/hanuman.png',
+          width: 260,
+          fit: BoxFit.contain,
         ),
       ),
     );
   }
-}
-
-class _HillsPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final p1 = Paint()..color = const Color(0xFF8FCE9E).withValues(alpha: 0.45);
-    final path1 = Path()
-      ..moveTo(0, size.height * 0.6)
-      ..quadraticBezierTo(
-        size.width * 0.25,
-        0,
-        size.width * 0.5,
-        size.height * 0.4,
-      )
-      ..quadraticBezierTo(
-        size.width * 0.75,
-        size.height * 0.8,
-        size.width,
-        size.height * 0.3,
-      )
-      ..lineTo(size.width, size.height)
-      ..lineTo(0, size.height)
-      ..close();
-    canvas.drawPath(path1, p1);
-
-    final p2 = Paint()..color = const Color(0xFFA8D8B5).withValues(alpha: 0.4);
-    final path2 = Path()
-      ..moveTo(0, size.height * 0.8)
-      ..quadraticBezierTo(
-        size.width * 0.35,
-        size.height * 0.2,
-        size.width * 0.65,
-        size.height * 0.65,
-      )
-      ..quadraticBezierTo(
-        size.width * 0.85,
-        size.height * 0.9,
-        size.width,
-        size.height * 0.5,
-      )
-      ..lineTo(size.width, size.height)
-      ..lineTo(0, size.height)
-      ..close();
-    canvas.drawPath(path2, p2);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -526,7 +448,7 @@ class TimerBar extends StatelessWidget {
     return Row(
       children: [
         Icon(
-          Icons.schedule_rounded,
+          Icons.access_time_rounded,
           color: barColor.withValues(alpha: 0.7),
           size: 18,
         ),
@@ -650,26 +572,33 @@ class GameActionButton extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(20),
         onTap: onTap,
         child: Ink(
-          height: 54,
+          height: 56,
           decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: color.withValues(alpha: 0.4), width: 2),
+            color: color,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.white, width: 2.5),
+            boxShadow: [
+              BoxShadow(
+                color: color.withValues(alpha: 0.5),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: color, size: 24),
+              Icon(icon, color: Colors.white, size: 24),
               const SizedBox(width: 8),
               Text(
                 label,
-                style: TextStyle(
-                  color: color,
-                  fontSize: 17,
-                  fontWeight: FontWeight.w800,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
                 ),
               ),
             ],
@@ -889,10 +818,7 @@ class GamePauseDialog extends StatelessWidget {
     return Dialog(
       elevation: 0,
       backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(
-        horizontal: 18,
-        vertical: 18,
-      ),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
       child: Container(
         constraints: const BoxConstraints(maxWidth: 400),
         decoration: BoxDecoration(
@@ -923,10 +849,7 @@ class GamePauseDialog extends StatelessWidget {
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [
-                      Colors.orange.shade200,
-                      Colors.orange.shade500,
-                    ],
+                    colors: [Colors.orange.shade200, Colors.orange.shade500],
                   ),
                   boxShadow: [
                     BoxShadow(
@@ -1136,8 +1059,7 @@ class ChoiceCard extends StatefulWidget {
   State<ChoiceCard> createState() => _ChoiceCardState();
 }
 
-class _ChoiceCardState extends State<ChoiceCard>
-    with TickerProviderStateMixin {
+class _ChoiceCardState extends State<ChoiceCard> with TickerProviderStateMixin {
   // ── Entrance animation (pop-in with overshoot) ──
   late final AnimationController _entranceCtrl;
   late final Animation<double> _entranceScale;
@@ -1156,8 +1078,13 @@ class _ChoiceCardState extends State<ChoiceCard>
 
   bool _wasWrong = false;
 
-  // Pastel emoji decorations per index for visual fun
-  static const _cardEmojis = ['🌟', '🎈', '🌸', '🦋', '🍎', '⭐', '🎨', '🌈'];
+  // Corner icon assets per index (from math.zip design)
+  static const _cornerIcons = [
+    'assets/images/minigames/icon011.png',
+    'assets/images/minigames/icon012.png',
+    'assets/images/minigames/icon013.png',
+    'assets/images/minigames/icon014.png',
+  ];
 
   @override
   void initState() {
@@ -1168,9 +1095,10 @@ class _ChoiceCardState extends State<ChoiceCard>
       vsync: this,
       duration: const Duration(milliseconds: 500),
     );
-    _entranceScale = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _entranceCtrl, curve: Curves.elasticOut),
-    );
+    _entranceScale = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _entranceCtrl, curve: Curves.elasticOut));
     _entranceOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _entranceCtrl,
@@ -1195,18 +1123,24 @@ class _ChoiceCardState extends State<ChoiceCard>
     );
     _tapScale = TweenSequence<double>([
       TweenSequenceItem(
-        tween: Tween(begin: 1.0, end: 0.85)
-            .chain(CurveTween(curve: Curves.easeOut)),
+        tween: Tween(
+          begin: 1.0,
+          end: 0.85,
+        ).chain(CurveTween(curve: Curves.easeOut)),
         weight: 40,
       ),
       TweenSequenceItem(
-        tween: Tween(begin: 0.85, end: 1.08)
-            .chain(CurveTween(curve: Curves.easeInOut)),
+        tween: Tween(
+          begin: 0.85,
+          end: 1.08,
+        ).chain(CurveTween(curve: Curves.easeInOut)),
         weight: 35,
       ),
       TweenSequenceItem(
-        tween: Tween(begin: 1.08, end: 1.0)
-            .chain(CurveTween(curve: Curves.easeIn)),
+        tween: Tween(
+          begin: 1.08,
+          end: 1.0,
+        ).chain(CurveTween(curve: Curves.easeIn)),
         weight: 25,
       ),
     ]).animate(_tapCtrl);
@@ -1267,11 +1201,11 @@ class _ChoiceCardState extends State<ChoiceCard>
         : GameColors.pastels[widget.colorIndex % GameColors.pastels.length];
     final borderColor = widget.isWrong
         ? GameColors.textMuted
-        : GameColors.pastelBorders[
-            widget.colorIndex % GameColors.pastelBorders.length];
-    final textColor =
-        widget.isWrong ? GameColors.textMuted : GameColors.textDark;
-    final emoji = _cardEmojis[widget.colorIndex % _cardEmojis.length];
+        : GameColors.pastelBorders[widget.colorIndex %
+              GameColors.pastelBorders.length];
+    final textColor = widget.isWrong
+        ? GameColors.textMuted
+        : GameColors.textDark;
 
     return AnimatedBuilder(
       animation: Listenable.merge([
@@ -1296,10 +1230,7 @@ class _ChoiceCardState extends State<ChoiceCard>
           opacity: _entranceOpacity.value,
           child: Transform.translate(
             offset: Offset(dx, 0),
-            child: Transform.scale(
-              scale: combinedScale,
-              child: child,
-            ),
+            child: Transform.scale(scale: combinedScale, child: child),
           ),
         );
       },
@@ -1323,15 +1254,17 @@ class _ChoiceCardState extends State<ChoiceCard>
           ),
           child: Stack(
             children: [
-              // Tiny emoji badge in the top-left corner
+              // Corner icon from assets (top-left)
               Positioned(
                 top: 6,
                 left: 8,
                 child: Opacity(
-                  opacity: widget.isWrong ? 0.2 : 0.5,
-                  child: Text(
-                    emoji,
-                    style: const TextStyle(fontSize: 14),
+                  opacity: widget.isWrong ? 0.15 : 0.85,
+                  child: Image.asset(
+                    _cornerIcons[widget.colorIndex % _cornerIcons.length],
+                    width: 22,
+                    height: 22,
+                    fit: BoxFit.contain,
                   ),
                 ),
               ),
@@ -1382,7 +1315,7 @@ class MatchCard extends StatefulWidget {
 class _MatchCardState extends State<MatchCard> with TickerProviderStateMixin {
   late final AnimationController _entranceCtrl;
   late final Animation<double> _entranceScale;
-  
+
   late final AnimationController _shakeCtrl;
   late final Animation<double> _shakeOffset;
 
@@ -1399,9 +1332,10 @@ class _MatchCardState extends State<MatchCard> with TickerProviderStateMixin {
       vsync: this,
       duration: const Duration(milliseconds: 500),
     );
-    _entranceScale = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _entranceCtrl, curve: Curves.elasticOut),
-    );
+    _entranceScale = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _entranceCtrl, curve: Curves.elasticOut));
     Future.delayed(Duration(milliseconds: widget.colorIndex * 80), () {
       if (mounted) _entranceCtrl.forward();
     });
@@ -1490,8 +1424,10 @@ class _MatchCardState extends State<MatchCard> with TickerProviderStateMixin {
       borderColor = GameColors.softRed;
       textColor = GameColors.softRed;
     } else {
-      bgColor = GameColors.pastels[widget.colorIndex % GameColors.pastels.length];
-      borderColor = GameColors.pastelBorders[widget.colorIndex % GameColors.pastelBorders.length];
+      bgColor =
+          GameColors.pastels[widget.colorIndex % GameColors.pastels.length];
+      borderColor = GameColors
+          .pastelBorders[widget.colorIndex % GameColors.pastelBorders.length];
     }
 
     Widget innerContent;
@@ -1565,12 +1501,17 @@ class _MatchCardState extends State<MatchCard> with TickerProviderStateMixin {
     return GestureDetector(
       onTap: (state == 'matched' || state == 'wrong') ? null : widget.onTap,
       child: AnimatedBuilder(
-        animation: Listenable.merge([_entranceCtrl, _shakeCtrl, _popCtrl, _breatheCtrl]),
+        animation: Listenable.merge([
+          _entranceCtrl,
+          _shakeCtrl,
+          _popCtrl,
+          _breatheCtrl,
+        ]),
         builder: (context, child) {
           final entranceVal = _entranceScale.value;
           final shakeVal = _shakeCtrl.isAnimating ? _shakeOffset.value : 0.0;
           final popVal = _popCtrl.isAnimating ? _popScale.value : 1.0;
-          
+
           final breatheVal = state == 'selected'
               ? 1.0 + (_breatheCtrl.value * 0.03)
               : 1.0;
@@ -1579,10 +1520,7 @@ class _MatchCardState extends State<MatchCard> with TickerProviderStateMixin {
 
           return Transform.translate(
             offset: Offset(shakeVal, 0),
-            child: Transform.scale(
-              scale: combinedScale,
-              child: child,
-            ),
+            child: Transform.scale(scale: combinedScale, child: child),
           );
         },
         child: AnimatedContainer(
