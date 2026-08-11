@@ -22,6 +22,7 @@ class StageSummaryController extends GetxController
   late final bool isLast;
 
   final isContinuing = false.obs;
+  final isRetrying = false.obs;
   late final List<AnimationController> starControllers;
 
   @override
@@ -130,33 +131,42 @@ class StageSummaryController extends GetxController
   }
 
   Future<void> retryStage() async {
-    final heartController = Get.isRegistered<HeartController>()
-        ? HeartController.to
-        : Get.put(HeartController());
-
-    if (!heartController.isUnlimited.value && heartController.currentHearts.value <= 0) {
-      Get.dialog(const OutOfHeartsModal());
-      return;
-    }
-
-    final canPlay = await heartController.useHeart();
-    if (!canPlay) {
-      Get.dialog(const OutOfHeartsModal());
-      return;
-    }
+    if (isRetrying.value) return;
+    isRetrying.value = true;
 
     try {
-      final stageController = Get.find<StageController>();
-      stageController.resetForRetry();
-    } catch (_) {}
+      final heartController = Get.isRegistered<HeartController>()
+          ? HeartController.to
+          : Get.put(HeartController());
 
-    final stageRoute = RouteBuilder.build(AppRoutes.stage, {
-      'worldId': worldId.toString(),
-      'levelId': levelId.toString(),
-      'stageId': stageId.toString(),
-    });
+      if (!heartController.isUnlimited.value && heartController.currentHearts.value <= 0) {
+        Get.dialog(const OutOfHeartsModal());
+        return;
+      }
 
-    Get.offNamed(stageRoute);
+      final canPlay = await heartController.useHeart();
+      if (!canPlay) {
+        Get.dialog(const OutOfHeartsModal());
+        return;
+      }
+
+      try {
+        final stageController = Get.find<StageController>();
+        stageController.resetForRetry();
+      } catch (_) {}
+
+      final stageRoute = RouteBuilder.build(AppRoutes.stage, {
+        'worldId': worldId.toString(),
+        'levelId': levelId.toString(),
+        'stageId': stageId.toString(),
+      });
+
+      Get.offNamed(stageRoute);
+    } finally {
+      if (Get.isRegistered<StageSummaryController>()) {
+        isRetrying.value = false;
+      }
+    }
   }
 
   Future<void> continueNext() async {

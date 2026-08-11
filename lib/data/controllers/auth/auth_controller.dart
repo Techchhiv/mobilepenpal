@@ -4,6 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:mobilepenpal/core/network/api_client.dart';
+import 'package:mobilepenpal/data/models/student/student.dart';
 import 'package:mobilepenpal/data/services/auth_service.dart';
 import 'package:mobilepenpal/presentation/routes/app_routes.dart';
 import 'package:mobilepenpal/presentation/widgets/app_snackbar.dart';
@@ -164,39 +166,6 @@ class AuthController extends GetxController {
     try {
       isLoading.value = true;
 
-      // Check Firebase Email Verification
-      try {
-        User? fbUser = FirebaseAuth.instance.currentUser;
-        if (fbUser == null || fbUser.email != emailController.text.trim()) {
-          final cred = await FirebaseAuth.instance.signInWithEmailAndPassword(
-            email: emailController.text.trim(),
-            password: passwordController.text,
-          );
-          fbUser = cred.user;
-        }
-
-        if (fbUser != null) {
-          await fbUser.reload();
-          fbUser = FirebaseAuth.instance.currentUser;
-
-          if (fbUser != null && !fbUser.emailVerified) {
-            isLoading.value = false;
-            final email = emailController.text.trim();
-            final password = passwordController.text;
-            showUnverifiedEmailDialog(
-              email: email,
-              onResend: () => resendVerificationEmail(
-                email: email,
-                password: password,
-              ),
-            );
-            return;
-          }
-        }
-      } catch (fbErr) {
-        // Continue if Firebase user check fails or is not required for dev accounts
-      }
-
       final response = await _authService.loginStudent(
         email: emailController.text.trim(),
         password: passwordController.text,
@@ -204,30 +173,53 @@ class AuthController extends GetxController {
       );
 
       if (response.code == 200) {
-        // final firebaseService = Get.find<FirebaseService>();
-        // String phoneNumber = phoneController.text.trim();
+        final studentObj = response.data?['student'];
+        final Student? student = studentObj is Student ? studentObj : null;
 
-        // final error = await firebaseService.sendOtp(phoneNumber);
+        // If the account is created by or associated with a school, bypass email verification.
+        final isSchoolUser = student != null && student.isSchoolAccount;
 
-        // if (error == null) {
-        //   Get.snackbar(
-        //     "success".tr,
-        //     "otp_sent_successfully".tr,
-        //     backgroundColor: Colors.green,
-        //     colorText: Colors.white,
-        //   );
+        if (!isSchoolUser) {
+          // Check Firebase Email Verification for regular accounts
+          try {
+            User? fbUser = FirebaseAuth.instance.currentUser;
+            if (fbUser == null || fbUser.email != emailController.text.trim()) {
+              final cred = await FirebaseAuth.instance.signInWithEmailAndPassword(
+                email: emailController.text.trim(),
+                password: passwordController.text,
+              );
+              fbUser = cred.user;
+            }
+
+            if (fbUser != null) {
+              await fbUser.reload();
+              fbUser = FirebaseAuth.instance.currentUser;
+
+              if (fbUser != null && !fbUser.emailVerified) {
+                // Clear the token saved by loginStudent so the session is not kept active
+                await ApiClient().clearToken();
+                isLoading.value = false;
+                final email = emailController.text.trim();
+                final password = passwordController.text;
+                showUnverifiedEmailDialog(
+                  email: email,
+                  onResend: () => resendVerificationEmail(
+                    email: email,
+                    password: password,
+                  ),
+                );
+                return;
+              }
+            }
+          } catch (fbErr) {
+            // Continue if Firebase user check fails or is not required for dev accounts
+          }
+        }
+
         FocusManager.instance.primaryFocus?.unfocus();
         await GetStorage().write('is_logged_in', true);
         await GetStorage().write('has_token', true);
         Get.offAllNamed(AppRoutes.home);
-        // } else {
-        //   Get.snackbar(
-        //     "error".tr,
-        //     error,
-        //     backgroundColor: Colors.red,
-        //     colorText: Colors.white,
-        //   );
-        // }
       } else if (response.code == 409) {
         isLoading.value = false;
         final proceed = await showConfirmModal<bool>(

@@ -217,8 +217,12 @@ class QuestController extends GetxController {
       );
     }
 
-    if (summary.recentCharacters.isNotEmpty) {
-      final shuffled = List<String>.from(summary.recentCharacters)..shuffle(rng);
+    final validRecent = summary.recentCharacters
+        .where((c) => summary.allLearnedCharacters.contains(c))
+        .toList();
+
+    if (validRecent.isNotEmpty) {
+      final shuffled = List<String>.from(validRecent)..shuffle(rng);
       // Pick up to 5 unique characters (no repeating here)
       final chars = shuffled.take(5).toList();
       

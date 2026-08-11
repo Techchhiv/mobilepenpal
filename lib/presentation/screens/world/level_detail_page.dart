@@ -26,6 +26,7 @@ class LevelDetailPage extends StatefulWidget {
 class _LevelDetailPageState extends State<LevelDetailPage> {
   late PageController _pageController;
   int _currentIndex = 0;
+  bool _isNavigatingToStage = false;
 
   @override
   void initState() {
@@ -231,6 +232,7 @@ class _LevelDetailPageState extends State<LevelDetailPage> {
 
   Widget _buildStageView(LevelStage stage, int stageNumber, int totalStages) {
     final lc = Get.find<LocaleController>();
+    final controller = Get.find<LevelController>();
     final isUnlocked =
         stage.status == 'unlocked' || stage.status == 'completed';
 
@@ -319,7 +321,7 @@ class _LevelDetailPageState extends State<LevelDetailPage> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: isUnlocked
+                        onPressed: (isUnlocked && !_isNavigatingToStage && !controller.isLoading.value)
                             ? () => _navigateToStage(stage.id)
                             : null,
                         style: ElevatedButton.styleFrom(
@@ -419,6 +421,8 @@ class _LevelDetailPageState extends State<LevelDetailPage> {
   }
 
   Future<void> _navigateToStage(int stageId) async {
+    if (_isNavigatingToStage) return;
+
     final heartController = Get.isRegistered<HeartController>()
         ? HeartController.to
         : Get.put(HeartController());
@@ -426,6 +430,14 @@ class _LevelDetailPageState extends State<LevelDetailPage> {
     if (!heartController.isUnlimited.value && heartController.currentHearts.value <= 0) {
       Get.dialog(const OutOfHeartsModal());
       return;
+    }
+
+    if (mounted) {
+      setState(() {
+        _isNavigatingToStage = true;
+      });
+    } else {
+      _isNavigatingToStage = true;
     }
 
     final controller = Get.find<LevelController>();
@@ -483,6 +495,13 @@ class _LevelDetailPageState extends State<LevelDetailPage> {
       Get.toNamed(route);
     } finally {
       controller.isLoading.value = false;
+      if (mounted) {
+        setState(() {
+          _isNavigatingToStage = false;
+        });
+      } else {
+        _isNavigatingToStage = false;
+      }
     }
   }
 }

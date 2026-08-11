@@ -60,6 +60,9 @@ class Student {
     this.unlockedAvatars = const [],
   });
 
+  bool get isSchoolAccount =>
+      schoolId != null || (schoolKey != null && schoolKey!.trim().isNotEmpty);
+
   static int? _toInt(dynamic v) {
     if (v == null) return null;
     if (v is int) return v;
