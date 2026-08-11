@@ -53,6 +53,7 @@ class StudentSeeder extends Seeder
                 'address' => 'Phnom Penh, Cambodia',
                 'enrollment_year' => '2024',
                 'is_active' => true,
+                'coin' => 1000,
             ],
         ];
 

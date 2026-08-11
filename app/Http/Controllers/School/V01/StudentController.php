@@ -86,7 +86,7 @@ class StudentController extends Controller
         $validated['school_id'] = $schoolId;
         $validated['school_key'] = $school->school_key;
 
-        if (!isValidPhone($validated['phone'])) {
+        if (!empty($validated['phone']) && !isValidPhone($validated['phone'])) {
             return response()->json([
                 'message' => __('messages.valid_phone_number')
             ], 422);

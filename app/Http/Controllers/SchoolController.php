@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use App\Services\AuditService;
 
 class SchoolController extends Controller
 {
@@ -51,6 +52,14 @@ class SchoolController extends Controller
 
         $user->assignRole('school-admin');
 
+        AuditService::record(
+            action: 'school.created',
+            target: $school,
+            new: ['name' => $school->name, 'school_key' => '[REDACTED]', 'admin_email' => $school->admin_email],
+            description: "School created: {$school->name}",
+            severity: 'info'
+        );
+
         return response()->json([
             'message' => 'School created successfully',
             'school'  => $school,
@@ -70,6 +79,9 @@ class SchoolController extends Controller
             'is_active' => 'boolean',
         ]);
 
+        // Track what changed
+        $oldValues = ['name' => $school->getOriginal('name'), 'is_active' => $school->getOriginal('is_active')];
+
         if ($request->has('name')) {
             $school->name = $request->name;
             $school->slug = Str::slug($request->name);
@@ -80,6 +92,19 @@ class SchoolController extends Controller
         }
 
         $school->save();
+        $newValues = ['name' => $school->name, 'is_active' => $school->is_active];
+
+        $action   = ($oldValues['is_active'] !== $newValues['is_active']) ? 'school.status.changed' : 'school.updated';
+        $severity = ($action === 'school.status.changed') ? 'warning' : 'info';
+
+        AuditService::record(
+            action: $action,
+            target: $school,
+            old: $oldValues,
+            new: $newValues,
+            description: "School updated: {$school->name}",
+            severity: $severity
+        );
 
         return response()->json([
             'message' => 'School updated',
@@ -89,6 +114,17 @@ class SchoolController extends Controller
 
     public function destroy(School $school)
     {
+        $snapshot = ['name' => $school->name, 'admin_email' => $school->admin_email, 'is_active' => $school->is_active];
+
+        AuditService::record(
+            action: 'school.deleted',
+            target: $school,
+            old: $snapshot,
+            description: "School deleted: {$school->name}",
+            severity: 'warning',
+            metadata: $snapshot
+        );
+
         $school->delete();
 
         return response()->json([

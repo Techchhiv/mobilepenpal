@@ -10,6 +10,7 @@ use Illuminate\Validation\Rules\Password;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
+use App\Services\AuditService;
 
 class AuthController extends Controller
 {
@@ -34,6 +35,14 @@ class AuthController extends Controller
             $payload = $user->load('roles')->toArray();
             $payload['permissions'] = $permissionsPayload;
 
+            AuditService::record(
+                action: 'account.registration',
+                target: $user,
+                new: ['name' => $user->name, 'email' => $user->email],
+                description: "New account registered: {$user->name} ({$user->email})",
+                severity: 'info'
+            );
+
             return response()->json([
                 'message'   => 'Registered successfully',
                 'token'     => $token,
@@ -50,19 +59,25 @@ class AuthController extends Controller
     {
         try {
             $data = $request->validate([
-                'email'      => ['required','email'],
-                'password'   => ['required','min:6'],
-                'school_key' => ['nullable','string'],
+                'email'      => ['required', 'email'],
+                'password'   => ['required', 'min:6'],
+                'school_key' => ['nullable', 'string'],
             ]);
 
             $user = User::where('email', $data['email'])->first();
             if (!$user || !Hash::check($data['password'], $user->password)) {
+                AuditService::record(
+                    action: 'auth.login.failed',
+                    description: "Failed login attempt for email: {$data['email']}",
+                    severity: 'warning',
+                    metadata: ['attempted_email' => $data['email']]
+                );
                 return response()->json(['message' => 'Invalid credentials'], 422);
             }
 
             // If user is school-based, enforce school_key
             $roles = $user->roles->pluck('name')->toArray();
-            if (collect($roles)->intersect(['school-admin','teacher','parent'])->isNotEmpty()) {
+            if (collect($roles)->intersect(['school-admin', 'teacher', 'parent'])->isNotEmpty()) {
                 if (empty($data['school_key'])) {
                     return response()->json(['message' => 'School key is required for school accounts'], 422);
                 }
@@ -84,13 +99,20 @@ class AuthController extends Controller
             $payload = $user->load('roles')->toArray();
             $payload['permissions'] = $permissionsPayload;
 
+            AuditService::record(
+                action: 'auth.login.success',
+                target: $user,
+                description: "User logged in: {$user->name} ({$user->email})",
+                severity: 'info'
+            );
+
             return response()->json([
                 'token'     => $token,
                 'user'      => $payload,
                 'abilities' => $abilities,
             ]);
         } catch (\Throwable $e) {
-            \Log::error('LOGIN_ERROR', ['msg' => $e->getMessage()]);
+            Log::error('LOGIN_ERROR', ['msg' => $e->getMessage()]);
             return response()->json(['message' => 'Server error during login.'], 500);
         }
     }
@@ -98,9 +120,9 @@ class AuthController extends Controller
     public function teacherLogin(Request $request)
     {
         $data = $request->validate([
-            'teacher_id' => ['required','string'],
-            'password'   => ['required','string'],
-            'school_key' => ['required','string'],
+            'teacher_id' => ['required', 'string'],
+            'password'   => ['required', 'string'],
+            'school_key' => ['required', 'string'],
         ]);
 
         // 1) Validate school
@@ -163,6 +185,13 @@ class AuthController extends Controller
     public function logout(Request $request)
     {
         if ($user = $request->user()) {
+            AuditService::record(
+                action: 'auth.logout',
+                target: $user,
+                description: "User logged out: {$user->name} ({$user->email})",
+                severity: 'info'
+            );
+
             // delete current token only
             $user->currentAccessToken()?->delete();
 

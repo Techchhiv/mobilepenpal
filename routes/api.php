@@ -28,6 +28,7 @@ use App\Http\Controllers\Admin\V01\ExerciseController;
 use App\Http\Controllers\Admin\V01\StageController;
 use App\Http\Controllers\Admin\V01\StageExerciseController;
 use App\Http\Controllers\Admin\V01\QuestionTemplateController;
+use App\Http\Controllers\Admin\V01\AuditLogController;
 
 /* -------------------------------
    Public Routes
@@ -178,11 +179,26 @@ Route::middleware('auth:api')->group(function () {
         });
     });
 
+    /* -------------------------------
+       Super Admin — Audit Logs (read-only)
+    --------------------------------*/
+    Route::prefix('admin/audit-logs')
+        ->middleware(['auth:api', 'super_admin'])
+        ->group(function () {
+            Route::get('/export', [AuditLogController::class, 'export']);
+            Route::get('/{id}', [AuditLogController::class, 'show']);
+            Route::get('/', [AuditLogController::class, 'index']);
+        });
+
 
     Route::prefix('school')->name('school.')->middleware('auth:api')->group(function () {
 
         // School dashboard (any school-admin)
         Route::get('/dashboard', [\App\Http\Controllers\School\V01\DashboardController::class, 'index']);
+
+        // My Profile (any school user)
+        Route::get('/profile', [\App\Http\Controllers\School\V01\SchoolProfileController::class, 'show']);
+        Route::put('/profile', [\App\Http\Controllers\School\V01\SchoolProfileController::class, 'update']);
 
         // Manage teachers (school-admin only)
         Route::middleware('permission:teachers.view|teachers.create|teachers.update|teachers.delete')->group(function () {

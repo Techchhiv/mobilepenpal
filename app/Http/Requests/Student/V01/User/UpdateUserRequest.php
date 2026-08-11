@@ -13,7 +13,8 @@ class UpdateUserRequest extends FormRequest
 
     public function rules(): array
     {
-        $studentId = $this->route('student') ?? auth()->id();
+        $rawStudentId = $this->route('student') ?? $this->route('id') ?? auth()->id();
+        $studentId = is_object($rawStudentId) ? $rawStudentId->id : $rawStudentId;
 
         return [
             'first_name' => 'sometimes|string|max:100',
@@ -29,8 +30,8 @@ class UpdateUserRequest extends FormRequest
             'address' => 'sometimes|nullable|string',
             'enrollment_year' => 'sometimes|nullable|string',
 
-            'email' => 'sometimes|nullable|email|unique:students,email,' . $studentId,
-            'phone' => 'sometimes|required|string|unique:students,phone,' . $studentId,
+            'email' => 'sometimes|required|email|max:255|unique:students,email,' . $studentId,
+            'phone' => 'sometimes|nullable|string|unique:students,phone,' . $studentId,
             'password' => 'sometimes|nullable|string|min:6',
         ];
     }

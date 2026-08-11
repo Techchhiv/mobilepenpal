@@ -25,8 +25,8 @@ class UpdateStudentRequest extends FormRequest
             'parent_last_name'  => ['sometimes', 'required', 'string', 'max:100'],
             'parent_pin'        => ['sometimes', 'nullable', 'string', 'max:20'],
 
-            'email' => ['sometimes', 'nullable', 'email', 'unique:students,email,' . $studentId],
-            'phone' => ['sometimes', 'required', 'string', 'unique:students,phone,' . $studentId],
+            'email' => ['sometimes', 'required', 'email', 'max:255', 'unique:students,email,' . $studentId],
+            'phone' => ['sometimes', 'nullable', 'string', 'unique:students,phone,' . $studentId],
             'password' => ['sometimes', 'nullable', 'string', 'min:6'],
 
             'address' => ['sometimes', 'nullable', 'string', 'max:255'],

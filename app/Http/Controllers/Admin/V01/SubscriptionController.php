@@ -7,6 +7,7 @@ use App\Models\Student;
 use App\Models\Subscription;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use App\Services\AuditService;
 
 class SubscriptionController extends Controller
 {
@@ -31,13 +32,28 @@ class SubscriptionController extends Controller
             : $start->copy()->addYear();
 
         $subscription = Subscription::create([
-            'school_id' => $school->id,
-            'plan' => $validated['plan'],
-            'amount' => $validated['amount'],
+            'school_id'  => $school->id,
+            'plan'       => $validated['plan'],
+            'amount'     => $validated['amount'],
             'start_date' => $start,
-            'end_date' => $end,
-            'active' => true,
+            'end_date'   => $end,
+            'active'     => true,
         ]);
+
+        AuditService::record(
+            action: 'subscription.activated',
+            target: $school,
+            new: [
+                'plan'       => $validated['plan'],
+                'amount'     => $validated['amount'],
+                'start_date' => $start->toDateString(),
+                'end_date'   => $end->toDateString(),
+                'active'     => true,
+            ],
+            description: "School subscription activated for: {$school->name} (Plan: {$validated['plan']})",
+            severity: 'info',
+            metadata: ['school_name' => $school->name, 'subscription_id' => $subscription->id]
+        );
 
         $this->setCode(201);
         $this->setMessage('School subscription activated successfully');
@@ -67,12 +83,27 @@ class SubscriptionController extends Controller
 
         $subscription = Subscription::create([
             'student_id' => $student->id,
-            'plan' => $validated['plan'],
-            'amount' => $validated['amount'],
+            'plan'       => $validated['plan'],
+            'amount'     => $validated['amount'],
             'start_date' => $start,
-            'end_date' => $end,
-            'active' => true,
+            'end_date'   => $end,
+            'active'     => true,
         ]);
+
+        AuditService::record(
+            action: 'subscription.activated',
+            target: $student,
+            new: [
+                'plan'       => $validated['plan'],
+                'amount'     => $validated['amount'],
+                'start_date' => $start->toDateString(),
+                'end_date'   => $end->toDateString(),
+                'active'     => true,
+            ],
+            description: "Student subscription activated for: {$student->first_name} {$student->last_name} (Plan: {$validated['plan']})",
+            severity: 'info',
+            metadata: ['student_name' => "{$student->first_name} {$student->last_name}", 'subscription_id' => $subscription->id]
+        );
 
         $this->setCode(201);
         $this->setMessage('Student subscription activated successfully');
@@ -106,13 +137,31 @@ class SubscriptionController extends Controller
             : $start->copy()->addYear();
 
         $subscription = Subscription::create([
-            'school_id' => $school->id,
-            'plan' => $validated['plan'],
-            'amount' => $validated['amount'],
+            'school_id'  => $school->id,
+            'plan'       => $validated['plan'],
+            'amount'     => $validated['amount'],
             'start_date' => $start,
-            'end_date' => $end,
-            'active' => true,
+            'end_date'   => $end,
+            'active'     => true,
         ]);
+
+        AuditService::record(
+            action: 'subscription.renewed',
+            target: $school,
+            old: $latestSubscription ? [
+                'plan'     => $latestSubscription->plan,
+                'end_date' => $latestSubscription->end_date?->toDateString(),
+            ] : null,
+            new: [
+                'plan'       => $validated['plan'],
+                'amount'     => $validated['amount'],
+                'start_date' => $start->toDateString(),
+                'end_date'   => $end->toDateString(),
+            ],
+            description: "School subscription renewed for: {$school->name} (New Plan: {$validated['plan']})",
+            severity: 'info',
+            metadata: ['school_name' => $school->name, 'subscription_id' => $subscription->id]
+        );
 
         $this->setCode(201);
         $this->setMessage('School subscription renewed successfully');
@@ -147,12 +196,30 @@ class SubscriptionController extends Controller
 
         $subscription = Subscription::create([
             'student_id' => $student->id,
-            'plan' => $validated['plan'],
-            'amount' => $validated['amount'],
+            'plan'       => $validated['plan'],
+            'amount'     => $validated['amount'],
             'start_date' => $start,
-            'end_date' => $end,
-            'active' => true,
+            'end_date'   => $end,
+            'active'     => true,
         ]);
+
+        AuditService::record(
+            action: 'subscription.renewed',
+            target: $student,
+            old: $latestSubscription ? [
+                'plan'     => $latestSubscription->plan,
+                'end_date' => $latestSubscription->end_date?->toDateString(),
+            ] : null,
+            new: [
+                'plan'       => $validated['plan'],
+                'amount'     => $validated['amount'],
+                'start_date' => $start->toDateString(),
+                'end_date'   => $end->toDateString(),
+            ],
+            description: "Student subscription renewed for: {$student->first_name} {$student->last_name} (New Plan: {$validated['plan']})",
+            severity: 'info',
+            metadata: ['student_name' => "{$student->first_name} {$student->last_name}", 'subscription_id' => $subscription->id]
+        );
 
         $this->setCode(201);
         $this->setMessage('Student subscription renewed successfully');
