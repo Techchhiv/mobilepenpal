@@ -308,7 +308,7 @@ const ClassRoomsList = () => {
         {message && <div className="alert alert-success">{message}</div>}
 
         <div className="card-body">
-          <table className="table bordered-table mb-0" id="classroomTable" data-page-length={10}>
+          <table className="table bordered-table align-middle mb-0" id="classroomTable" data-page-length={10}>
             <thead>
               <tr>
                 <th>#</th>
@@ -318,7 +318,7 @@ const ClassRoomsList = () => {
                 <th>Teacher</th>
                 <th>Students</th>
                 <th>Status</th>
-                {canAnyAction && <th>Action</th>}
+                {canAnyAction && <th className="text-center">Action</th>}
               </tr>
             </thead>
 
@@ -358,7 +358,6 @@ const ClassRoomsList = () => {
                         </div>
                       </td>
 
-                      {/* ✅ Click-to-copy badge with hover effect + temporary text */}
                       <td>
                         {c.join_code && c.join_code !== "—" ? (
                           <button
@@ -427,48 +426,50 @@ const ClassRoomsList = () => {
                       </td>
 
                       {canAnyAction && (
-                        <td>
-                          {hasPermission("classrooms.view") && (
-                            <Link
-                              to={`/school/classrooms/${c.id}`}
-                              className="w-32-px h-32-px me-8 bg-primary-light text-primary-600 rounded-circle d-inline-flex align-items-center justify-content-center"
-                              title="View"
-                            >
-                              <Icon icon="iconamoon:eye-light" />
-                            </Link>
-                          )}
+                        <td className="text-end">
+                          <div className="d-inline-flex align-items-center gap-2 justify-content-start">
+                            {hasPermission("classrooms.view") && (
+                              <Link
+                                to={`/school/classrooms/${c.id}`}
+                                className="w-32-px h-32-px bg-primary-light text-primary-600 rounded-circle d-inline-flex align-items-center justify-content-center"
+                                title="View"
+                              >
+                                <Icon icon="iconamoon:eye-light" />
+                              </Link>
+                            )}
 
-                          {hasPermission("classrooms.update") && c.is_active && (
-                            <Link
-                              to={`/school/classrooms/${c.id}/edit`}
-                              className="w-32-px h-32-px me-8 bg-success-focus text-success-main rounded-circle d-inline-flex align-items-center justify-content-center"
-                              title="Edit"
-                            >
-                              <Icon icon="lucide:edit" />
-                            </Link>
-                          )}
+                            {hasPermission("classrooms.update") && c.is_active && (
+                              <Link
+                                to={`/school/classrooms/${c.id}/edit`}
+                                className="w-32-px h-32-px bg-success-focus text-success-main rounded-circle d-inline-flex align-items-center justify-content-center"
+                                title="Edit"
+                              >
+                                <Icon icon="lucide:edit" />
+                              </Link>
+                            )}
 
-                          {hasPermission("classrooms.delete") && c.is_active && (
-                            <button
-                              type="button"
-                              onClick={() => deleteClassroom(c.id)}
-                              className="w-32-px h-32-px me-8 bg-danger-focus text-danger-main rounded-circle d-inline-flex align-items-center justify-content-center border-0"
-                              title="Archive"
-                            >
-                              <Icon icon="mingcute:delete-2-line" />
-                            </button>
-                          )}
+                            {hasPermission("classrooms.delete") && c.is_active && (
+                              <button
+                                type="button"
+                                onClick={() => deleteClassroom(c.id)}
+                                className="w-32-px h-32-px bg-danger-focus text-danger-main rounded-circle d-inline-flex align-items-center justify-content-center border-0"
+                                title="Archive"
+                              >
+                                <Icon icon="mingcute:delete-2-line" />
+                              </button>
+                            )}
 
-                          {c.is_active && (
-                            <button
-                              type="button"
-                              onClick={() => openQr(c)}
-                              className="w-32-px h-32-px me-8 bg-info-focus text-info-main rounded-circle d-inline-flex align-items-center justify-content-center border-0"
-                              title="QR Code"
-                            >
-                              <Icon icon="mdi:qrcode" />
-                            </button>
-                          )}
+                            {c.is_active && (
+                              <button
+                                type="button"
+                                onClick={() => openQr(c)}
+                                className="w-32-px h-32-px bg-info-focus text-info-main rounded-circle d-inline-flex align-items-center justify-content-center border-0"
+                                title="QR Code"
+                              >
+                                <Icon icon="mdi:qrcode" />
+                              </button>
+                            )}
+                          </div>
                         </td>
                       )}
                     </tr>
@@ -480,84 +481,80 @@ const ClassRoomsList = () => {
         </div>
       </div>
 
-      {/* ✅ QR Modal + copy shows "Copied!" for 1s */}
+      {/* ✅ QR Code Modal */}
       {qrModal.open && (
         <div
-          className="position-fixed top-0 start-0 w-100 h-100"
-          style={{
-            background: "rgba(0,0,0,0.75)",
-            zIndex: 1055,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: 16,
-          }}
+          className="modal fade show d-block bg-dark bg-opacity-75"
+          tabIndex="-1"
+          style={{ zIndex: 1055 }}
           onClick={closeQr}
           role="dialog"
           aria-modal="true"
         >
           <div
-            className="bg-white radius-12 p-16"
-            style={{ width: "min(420px, 95vw)" }}
+            className="modal-dialog modal-dialog-centered"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="d-flex justify-content-between align-items-center mb-12">
-              <div className="fw-semibold">QR Code</div>
-              <button
-                type="button"
-                className="d-flex align-items-center btn btn-sm btn-outline-secondary"
-                onClick={closeQr}
-                title="Close"
-              >
-                <Icon icon="mdi:close" />
-              </button>
-            </div>
-
-            <div
-              className="d-flex align-items-center justify-content-center border radius-12 p-16 my-24"
-              style={{ background: "#fff" }}
-            >
-              <QRCode id="classroom-qr-svg" value={qrModal.value || ""} size={220} />
-            </div>
-
-            <div className="d-flex align-items-center gap-2 flex-nowrap">
-              <button
-                type="button"
-                className="btn btn-primary flex-grow-1 text-truncate"
-                style={{ minWidth: 0 }}
-                onClick={downloadQrPng}
-              >
-                <Icon icon="mdi:download" className="me-6" />
-                Download
-              </button>
-
-              {hasPermission("classrooms.update") && (
+            <div className="modal-content border-0 radius-12 shadow-lg">
+              <div className="modal-header border-bottom p-3 d-flex justify-content-between align-items-center">
+                <h5 className="modal-title mb-0 fw-bold">Classroom QR Code</h5>
                 <button
                   type="button"
-                  className=" btn btn-warning flex-shrink-0"
-                  style={{ whiteSpace: "nowrap" }}
-                  onClick={regenerateJoinCode}
-                  disabled={regenLoading}
-                  title="Regenerate join code"
+                  className="btn-close"
+                  onClick={closeQr}
+                  aria-label="Close"
+                />
+              </div>
+
+              <div className="modal-body text-center p-4">
+                <h6 className="fw-semibold mb-3 text-dark">{qrModal.title}</h6>
+                <div
+                  className="d-inline-flex align-items-center justify-content-center p-3 bg-light border radius-12 mb-3 shadow-sm"
                 >
-                  <Icon icon={regenLoading ? "mdi:loading" : "mdi:refresh"} className="me-6" />
-                  {regenLoading ? "..." : "Regenerate"}
+                  <QRCode id="classroom-qr-svg" value={qrModal.value || ""} size={200} />
+                </div>
+                {qrModal.value && (
+                  <div className="badge bg-light text-dark font-mono border px-3 py-2 text-base mb-2">
+                    {qrModal.value}
+                  </div>
+                )}
+                <small className="text-muted d-block">Students can scan this QR code or enter join code to join classroom.</small>
+              </div>
+
+              <div className="modal-footer border-top p-3 d-flex justify-content-end gap-2">
+                <button
+                  type="button"
+                  className="btn btn-primary d-flex align-items-center gap-1"
+                  onClick={downloadQrPng}
+                >
+                  <Icon icon="mdi:download" /> Download
                 </button>
-              )}
 
-              <button
-                type="button"
-                className={`btn flex-shrink-0 ${qrCopied ? "btn-success" : "btn-outline-secondary"}`}
-                style={{ whiteSpace: "nowrap" }}
-                onClick={copyQrValue}
-                disabled={!qrModal.value}
-                title="Copy join code"
-              >
-                <Icon icon={qrCopied ? "mdi:check" : "mdi:content-copy"} className="me-6" />
-                {qrCopied ? "Copied!" : "Copy"}
-              </button>
+                {hasPermission("classrooms.update") && (
+                  <button
+                    type="button"
+                    className="btn btn-warning d-flex align-items-center gap-1"
+                    onClick={regenerateJoinCode}
+                    disabled={regenLoading}
+                    title="Regenerate join code"
+                  >
+                    <Icon icon={regenLoading ? "mdi:loading" : "mdi:refresh"} />
+                    {regenLoading ? "Regenerating..." : "Regenerate"}
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  className={`btn d-flex align-items-center gap-1 ${qrCopied ? "btn-success" : "btn-outline-secondary"}`}
+                  onClick={copyQrValue}
+                  disabled={!qrModal.value}
+                  title="Copy join code"
+                >
+                  <Icon icon={qrCopied ? "mdi:check" : "mdi:content-copy"} />
+                  {qrCopied ? "Copied!" : "Copy"}
+                </button>
+              </div>
             </div>
-
           </div>
         </div>
       )}

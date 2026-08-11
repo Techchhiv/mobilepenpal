@@ -183,16 +183,23 @@ export default function AdminStudentEdit() {
       });
     } catch (err) {
       console.error("Update student error:", err);
-      const errors = err?.response?.data?.errors;
-      setError(
-        errors?.email?.[0] ||
-        errors?.phone?.[0] ||
-        errors?.first_name?.[0] ||
-        errors?.last_name?.[0] ||
-        errors?.password?.[0] ||
-        err?.response?.data?.message ||
-        "Failed to update student."
-      );
+      const errData = err?.response?.data;
+      const errObj = errData?.error || errData?.errors;
+      let msg = "";
+      if (errObj && typeof errObj === "object") {
+        const messages = Object.values(errObj)
+          .map((item) => (Array.isArray(item) ? item[0] : item))
+          .filter(Boolean);
+        if (messages.length > 0) {
+          msg = messages.join(" | ");
+        }
+      }
+      if (!msg) {
+        msg = (errData?.message && errData.message !== "Validation Error")
+          ? errData.message
+          : "Failed to update student.";
+      }
+      setError(msg);
     } finally {
       setSubmitting(false);
     }
@@ -225,9 +232,9 @@ export default function AdminStudentEdit() {
 
           <div className="card-body">
             {error && (
-              <div className="alert alert-danger">
-                <Icon icon="mdi:alert-circle" className="me-2" />
-                {error}
+              <div className="alert alert-danger d-flex align-items-center gap-2 mb-4">
+                <Icon icon="mdi:alert-circle" className="text-xl flex-shrink-0" />
+                <div>{error}</div>
               </div>
             )}
 

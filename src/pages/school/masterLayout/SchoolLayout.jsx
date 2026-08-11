@@ -262,15 +262,26 @@ const SchoolLayout = ({ children }) => {
                 {/* Profile dropdown */}
                 <div className="dropdown">
                   <button
-                    className="d-flex justify-content-center align-items-center rounded-circle"
+                    className="d-flex justify-content-center align-items-center rounded-circle border-0 p-0"
                     type="button"
                     data-bs-toggle="dropdown"
+                    title={user?.name || "Profile"}
                   >
-                    <img
-                      src={penLogo}
-                      alt="user"
-                      className="w-40-px h-40-px object-fit-cover rounded-circle"
-                    />
+                    <div
+                      className="w-40-px h-40-px rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-sm"
+                      style={{
+                        background: "linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)",
+                        fontSize: "14px",
+                        letterSpacing: "0.5px",
+                      }}
+                    >
+                      {(() => {
+                        const name = user?.name || "User";
+                        const parts = name.trim().split(/\s+/).filter(Boolean);
+                        if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+                        return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+                      })()}
+                    </div>
                   </button>
 
                   <div className="dropdown-menu to-top dropdown-menu-sm">

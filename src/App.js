@@ -27,6 +27,7 @@ import AdminStudentView from "./pages/admin/Student/StudentView";
 // ---------- School Pages ----------
 import SchoolSignInLayer from "./pages/school/page/SchoolSignin";
 import SchoolDashboard from "./pages/school/page/SchoolDashboard";
+import SchoolProfilePage from "./pages/school/page/SchoolProfilePage";
 import ManageTeacher from "./pages/school/page/ManageTeacher";
 import SchoolUsersPage from "./pages/school/page/SchoolUsersPage";
 import SchoolRolesPage from "./pages/school/page/SchoolRolesPage";
@@ -250,6 +251,7 @@ export default function App() {
             </Gate>
           }
         />
+        <Route path="/school/profile" element={<SchoolProfilePage />} />
 
         {/* ---------- School Routes ---------- */}
         <Route
