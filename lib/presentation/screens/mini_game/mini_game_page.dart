@@ -189,6 +189,10 @@ class _MiniGamePageState extends State<MiniGamePage>
         if (score > maxHighScore) maxHighScore = score;
       }
     }
+    final customMixScore = _box.read<int>('custom_mix_high_score') ?? 0;
+    if (customMixScore > maxHighScore) maxHighScore = customMixScore;
+    final globalScore = _box.read<int>('global_mini_game_high_score') ?? 0;
+    if (globalScore > maxHighScore) maxHighScore = globalScore;
 
     return AnimatedBuilder(
       animation: Listenable.merge([_rotateCtrl, _floatCtrl]),

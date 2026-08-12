@@ -1413,16 +1413,17 @@ class _MatchCardState extends State<MatchCard> with TickerProviderStateMixin {
     Color textColor = GameColors.textDark;
 
     if (state == 'selected') {
-      bgColor = GameColors.teal.withValues(alpha: 0.15);
-      borderColor = GameColors.teal;
+      bgColor = const Color(0xFFE0F7F6);
+      borderColor = const Color(0xFF00897B);
+      textColor = const Color(0xFF004D40);
     } else if (state == 'matched') {
-      bgColor = GameColors.green.withValues(alpha: 0.2);
-      borderColor = GameColors.green;
-      textColor = GameColors.green;
+      bgColor = const Color(0xFFDCFCE7);
+      borderColor = const Color(0xFF16A34A);
+      textColor = const Color(0xFF15803D);
     } else if (state == 'wrong') {
-      bgColor = GameColors.softRed.withValues(alpha: 0.15);
-      borderColor = GameColors.softRed;
-      textColor = GameColors.softRed;
+      bgColor = const Color(0xFFFEE2E2);
+      borderColor = const Color(0xFFEF4444);
+      textColor = const Color(0xFFB91C1C);
     } else {
       bgColor =
           GameColors.pastels[widget.colorIndex % GameColors.pastels.length];
@@ -1539,20 +1540,38 @@ class _MatchCardState extends State<MatchCard> with TickerProviderStateMixin {
             boxShadow: state == 'selected'
                 ? [
                     BoxShadow(
-                      color: borderColor.withValues(alpha: 0.45),
-                      blurRadius: 12,
-                      spreadRadius: 2,
+                      color: borderColor.withValues(alpha: 0.55),
+                      blurRadius: 16,
+                      spreadRadius: 3,
                       offset: const Offset(0, 4),
                     ),
                   ]
-                : [
-                    BoxShadow(
-                      color: borderColor.withValues(alpha: 0.25),
-                      blurRadius: 6,
-                      spreadRadius: 1,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
+                : state == 'matched'
+                    ? [
+                        BoxShadow(
+                          color: borderColor.withValues(alpha: 0.45),
+                          blurRadius: 12,
+                          spreadRadius: 2,
+                          offset: const Offset(0, 3),
+                        ),
+                      ]
+                    : state == 'wrong'
+                        ? [
+                            BoxShadow(
+                              color: borderColor.withValues(alpha: 0.45),
+                              blurRadius: 12,
+                              spreadRadius: 2,
+                              offset: const Offset(0, 3),
+                            ),
+                          ]
+                        : [
+                            BoxShadow(
+                              color: borderColor.withValues(alpha: 0.3),
+                              blurRadius: 8,
+                              spreadRadius: 1,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
           ),
           child: Stack(
             children: [

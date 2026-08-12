@@ -264,7 +264,16 @@ class DynamicMiniGameController extends GetxController
     }
 
     // Load saved stats
-    highScore.value = _box.read<int>(_highScoreKey) ?? 0;
+    int currentBest = _box.read<int>(_highScoreKey) ?? 0;
+    for (var g in miniGames) {
+      final gScore =
+          _box.read<int>('dynamic_minigame_${g.id}_high_score') ?? 0;
+      if (gScore > currentBest) currentBest = gScore;
+    }
+    final globalBest = _box.read<int>('global_mini_game_high_score') ?? 0;
+    if (globalBest > currentBest) currentBest = globalBest;
+
+    highScore.value = currentBest;
 
     // Initialize Animation Controllers
     feedbackAnimCtrl = AnimationController(
@@ -482,10 +491,29 @@ class DynamicMiniGameController extends GetxController
     isGameActive.value = false;
     isGameOver.value = true;
 
-    // Update high score
+    // Update high score across all keys
     if (score.value > highScore.value) {
       highScore.value = score.value;
-      _box.write(_highScoreKey, highScore.value);
+    }
+
+    if (score.value > 0) {
+      final keyBest = _box.read<int>(_highScoreKey) ?? 0;
+      if (score.value > keyBest) {
+        _box.write(_highScoreKey, score.value);
+      }
+
+      for (var g in miniGames) {
+        final gKey = 'dynamic_minigame_${g.id}_high_score';
+        final gScore = _box.read<int>(gKey) ?? 0;
+        if (score.value > gScore) {
+          _box.write(gKey, score.value);
+        }
+      }
+
+      final globalScore = _box.read<int>('global_mini_game_high_score') ?? 0;
+      if (score.value > globalScore) {
+        _box.write('global_mini_game_high_score', score.value);
+      }
     }
 
     // Submit progress to backend (coins accumulated during gameplay)

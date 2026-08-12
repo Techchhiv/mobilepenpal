@@ -887,7 +887,12 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
                 children: [
                   Text(
                     leftLabel,
-                    style: TextStyle(color: GameColors.textDark.withValues(alpha: 0.6), fontSize: 12, fontWeight: FontWeight.w800),
+                    style: TextStyle(
+                      color: GameColors.textDark,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w900,
+                      shadows: const [Shadow(color: Colors.white, blurRadius: 4)],
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Expanded(
@@ -930,9 +935,9 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
                               feedback: Material(
                                 color: Colors.transparent,
                                 child: Opacity(
-                                  opacity: 0.85,
+                                  opacity: 0.98,
                                   child: SizedBox(
-                                    width: MediaQuery.of(context).size.width * 0.4,
+                                    width: MediaQuery.of(context).size.width * 0.42,
                                     child: MatchCard(
                                       key: ValueKey('match_card_feedback_${pair.id}'),
                                       content: pair.source,
@@ -944,7 +949,7 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
                                 ),
                               ),
                               childWhenDragging: Opacity(
-                                opacity: 0.3,
+                                opacity: 0.35,
                                 child: card,
                               ),
                               onDragStarted: () => controller.selectDragSource(pair.source),
@@ -967,7 +972,12 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
                 children: [
                   Text(
                     rightLabel,
-                    style: TextStyle(color: GameColors.textDark.withValues(alpha: 0.6), fontSize: 12, fontWeight: FontWeight.w800),
+                    style: TextStyle(
+                      color: GameColors.textDark,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w900,
+                      shadows: const [Shadow(color: Colors.white, blurRadius: 4)],
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Expanded(
@@ -998,7 +1008,7 @@ class DynamicMiniGamePage extends GetView<DynamicMiniGameController> {
                                     borderRadius: BorderRadius.circular(20),
                                     boxShadow: isHovering && !isMatched
                                         ? [
-                                            BoxShadow(color: GameColors.teal.withValues(alpha: 0.4), blurRadius: 12, spreadRadius: 2),
+                                            BoxShadow(color: const Color(0xFF00897B).withValues(alpha: 0.65), blurRadius: 18, spreadRadius: 4),
                                           ]
                                         : const [],
                                   ),
