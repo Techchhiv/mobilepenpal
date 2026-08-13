@@ -63,10 +63,11 @@ class AuthController extends Controller
     {
         $validated = $request->validated();
 
+        /* Email login logic commented out:
         $email = strtolower(trim($validated['email']));
         $student = Student::where('email', $email)->first();
+        */
 
-        /* Phone login logic commented out:
         $phone = $validated['phone'];
         $student = Student::where(function ($query) use ($phone) {
             $query->where('phone', $phone);
@@ -83,7 +84,6 @@ class AuthController extends Controller
                 // Ignore
             }
         })->first();
-        */
 
         if (!$student || !Hash::check($validated['password'], $student->password)) {
             return $this->returnError(__('messages.credentials_incorrect'), 401);

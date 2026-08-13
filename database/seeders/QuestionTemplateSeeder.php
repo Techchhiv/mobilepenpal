@@ -9,8 +9,6 @@ class QuestionTemplateSeeder extends Seeder
 {
     public function run(): void
     {
-        QuestionTemplate::truncate();
-
         $templates = [
             // ── Addition (add) ──────────────────────────────────────
             [
@@ -114,7 +112,10 @@ class QuestionTemplateSeeder extends Seeder
         ];
 
         foreach ($templates as $template) {
-            QuestionTemplate::create(array_merge($template, ['is_active' => true]));
+            QuestionTemplate::firstOrCreate(
+                ['question_en' => $template['question_en']],
+                array_merge($template, ['is_active' => true])
+            );
         }
     }
 }

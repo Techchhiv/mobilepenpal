@@ -10,9 +10,6 @@ class MiniGameSeeder extends Seeder
 {
     public function run(): void
     {
-        Schema::disableForeignKeyConstraints();
-        MiniGame::truncate();
-        Schema::enableForeignKeyConstraints();
 
         // 1. Consonant Sprint
         MiniGame::updateOrCreate(
