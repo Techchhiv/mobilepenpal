@@ -3,6 +3,7 @@ import hljs from "highlight.js";
 import ReactQuill from "react-quill-new";
 import { useNavigate, useParams } from "react-router-dom";
 import API from "../helper/api";
+import API_BASE_URL from "../helper/Base_urls";
 
 const EditProductLayer = () => {
   const { id } = useParams();
@@ -68,7 +69,7 @@ const EditProductLayer = () => {
       setStatus(data.status ? "1" : "0"); // normalize to "1"/"0"
 
       if (Array.isArray(data.image) && data.image.length) {
-        const baseUrl = "http://127.0.0.1:8000/storage/";
+        const baseUrl = `${API_BASE_URL}/storage/`;
         setFilePreviews(data.image.map((p) => `${baseUrl}${p}`));
       }
     } catch (error) {
