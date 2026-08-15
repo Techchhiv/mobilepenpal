@@ -4,6 +4,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get.dart' hide Condition;
 import 'package:get_storage/get_storage.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:mobilepenpal/core/bindings/app_binding.dart';
 import 'package:mobilepenpal/core/config/app_constants.dart';
 import 'package:mobilepenpal/core/config/env.dart';
@@ -166,6 +167,11 @@ class MyApp extends StatelessWidget {
 
       // Initialize global dependencies
       initialBinding: AppBinding(),
+
+      // Firebase Analytics Route Observer
+      navigatorObservers: [
+        FirebaseAnalyticsObserver(analytics: FirebaseAnalytics.instance),
+      ],
 
       // ========= Theme ==========
       theme: AppTheme.lightTheme(localeController.locale.languageCode),

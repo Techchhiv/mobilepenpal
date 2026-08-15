@@ -4,12 +4,14 @@ import 'package:mobilepenpal/core/network/api_client.dart';
 // import 'package:mobilepenpal/core/utils/ai_handwriting_engine.dart';
 import 'package:mobilepenpal/data/controllers/auth/network_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/world_controller.dart';
+import 'package:mobilepenpal/data/services/analytics_service.dart';
 // import 'package:mobilepenpal/data/services/firebase_service.dart';
 
 class AppBinding extends Bindings {
   @override
   void dependencies() {
     Get.put<GetStorage>(GetStorage(), permanent: true);
+    Get.put(AnalyticsService(), permanent: true);
     Get.put(NetworkController(), permanent: true);
     Get.put(WorldController(), permanent: true);
     Get.lazyPut<ApiClient>(() => ApiClient(), fenix: true);

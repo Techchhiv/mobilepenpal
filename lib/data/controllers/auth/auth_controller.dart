@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:mobilepenpal/core/network/api_client.dart';
 import 'package:mobilepenpal/data/models/student/student.dart';
+import 'package:mobilepenpal/data/services/analytics_service.dart';
 import 'package:mobilepenpal/data/services/auth_service.dart';
 import 'package:mobilepenpal/presentation/routes/app_routes.dart';
 import 'package:mobilepenpal/presentation/widgets/app_snackbar.dart';
@@ -219,6 +220,15 @@ class AuthController extends GetxController {
         FocusManager.instance.primaryFocus?.unfocus();
         await GetStorage().write('is_logged_in', true);
         await GetStorage().write('has_token', true);
+
+        if (Get.isRegistered<AnalyticsService>()) {
+          final analytics = Get.find<AnalyticsService>();
+          analytics.logLogin(loginMethod: 'email');
+          if (student != null) {
+            analytics.setUserId(student.id.toString());
+          }
+        }
+
         Get.offAllNamed(AppRoutes.home);
       } else if (response.code == 409) {
         isLoading.value = false;

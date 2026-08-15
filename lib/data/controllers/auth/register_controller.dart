@@ -2,6 +2,7 @@ import 'dart:developer' as dev;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:mobilepenpal/data/services/analytics_service.dart';
 import 'package:mobilepenpal/data/services/auth_service.dart';
 import 'package:mobilepenpal/presentation/routes/app_routes.dart';
 import 'package:mobilepenpal/presentation/widgets/app_snackbar.dart';
@@ -271,6 +272,10 @@ class RegisterController extends GetxController {
           }
         } catch (e) {
           dev.log('Firebase general exception: $e', name: 'RegisterController');
+        }
+
+        if (Get.isRegistered<AnalyticsService>()) {
+          Get.find<AnalyticsService>().logSignUp(signUpMethod: 'email');
         }
 
         clearForm();
