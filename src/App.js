@@ -74,6 +74,8 @@ import QuestionTemplateList from "./pages/admin/QuestionTemplate/QuestionTemplat
 import QuestionTemplateCreate from "./pages/admin/QuestionTemplate/QuestionTemplateCreate";
 import QuestionTemplateEdit from "./pages/admin/QuestionTemplate/QuestionTemplateEdit";
 import AuditLogPage from "./pages/admin/AuditLogPage";
+import AdminInvoiceListPage from "./pages/admin/Invoices/AdminInvoiceListPage";
+import AdminInvoiceDetailPage from "./pages/admin/Invoices/AdminInvoiceDetailPage";
 
 export default function App() {
   return (
@@ -145,10 +147,16 @@ export default function App() {
           />
         </Route>
 
-        {/* ---------- Subscriptions ---------- */}
-        <Route element={<Gate anyPerm={["menu.subscription"]} />}>
+        {/* ---------- Subscriptions (payment-manager or subscription menu) ---------- */}
+        <Route element={<Gate anyPerm={["menu.payments", "menu.subscription", "billing.view"]} />}>
           <Route path="/admin/subscriptions/schools" element={<SchoolSubscriptionsPage />} />
           <Route path="/admin/subscriptions/users" element={<UserSubscriptionsPage />} />
+        </Route>
+
+        {/* ---------- Invoices (billing.view or menu.payments) ---------- */}
+        <Route element={<Gate anyPerm={["billing.view", "menu.payments"]} />}>
+          <Route path="/admin/invoices" element={<AdminInvoiceListPage />} />
+          <Route path="/admin/invoices/:id" element={<AdminInvoiceDetailPage />} />
         </Route>
 
         <Route
