@@ -17,6 +17,7 @@ class Subscription extends Model
         'start_date',
         'end_date',
         'active',
+        'idempotency_key',
     ];
 
     protected $casts = [
@@ -34,5 +35,10 @@ class Subscription extends Model
     public function student()
     {
         return $this->belongsTo(Student::class);
+    }
+
+    public function invoice()
+    {
+        return $this->hasOne(Invoice::class);
     }
 }

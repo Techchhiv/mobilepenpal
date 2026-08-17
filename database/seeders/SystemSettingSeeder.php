@@ -20,6 +20,7 @@ class SystemSettingSeeder extends Seeder
                 'value' => json_encode([
                     'price' => 5.0,
                     'discount' => 50,
+                    'tax_rate' => 0,
                     'billing_cycle' => 'month',
                     'contact_phone' => '+855 935 248 60',
                     'contact_email' => 'info@khmerpenpal.com',

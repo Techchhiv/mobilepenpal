@@ -14,7 +14,8 @@ class UpdateSystemSettingRequest extends FormRequest
 
         if ($this->route('key') === 'subscription') {
             $rules['value.price'] = ['required', 'numeric', 'min:0'];
-            $rules['value.discount'] = ['required', 'integer', 'between:0,100'];
+            $rules['value.discount'] = ['required', 'numeric', 'between:0,100'];
+            $rules['value.tax_rate'] = ['nullable', 'numeric', 'between:0,100'];
             $rules['value.billing_cycle'] = ['required', 'in:month,year'];
             $rules['value.contact_phone'] = ['required', 'string'];
             $rules['value.contact_email'] = ['required', 'email'];

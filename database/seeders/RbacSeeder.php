@@ -124,8 +124,21 @@ class RbacSeeder extends Seeder
             'menu.payments',
             'menu.analytics',
             'menu.reports',
+            'menu.subscription',   // ← was missing; controls subscription page visibility
+            'menu.invoices',       // ← new invoice menu item
             // Optional if your frontend wants it; safe to seed even if unused:
             'menu.curriculum',
+        ]);
+
+        // Billing / invoice permissions
+        $perms = array_merge($perms, [
+            'billing.view',
+            'billing.activate_subscription',
+            'billing.renew_subscription',
+            'billing.deactivate_subscription',
+            'billing.download_invoice',
+            'billing.void_invoice',
+            'billing.override_price',
         ]);
 
         // unique & reindex
@@ -178,6 +191,13 @@ class RbacSeeder extends Seeder
             'payment-manager' => [
                 ...$this->crud('payments'),
                 'menu.payments',
+                'menu.subscription',
+                'menu.invoices',
+                'billing.view',
+                'billing.activate_subscription',
+                'billing.renew_subscription',
+                'billing.download_invoice',
+                // billing.void_invoice and billing.override_price are super-admin only
             ],
 
             'teacher' => [

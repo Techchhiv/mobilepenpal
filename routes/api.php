@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\V01\LevelController;
 use App\Http\Controllers\Admin\V01\ReportController;
 use App\Http\Controllers\Admin\V01\SubscriptionController as AdminSubscriptionController;
+use App\Http\Controllers\Admin\V01\InvoiceController;
 use App\Http\Controllers\Admin\V01\StudentController as AdminStudentController;
 use App\Http\Controllers\Admin\V01\SystemSettingController;
 use App\Http\Controllers\Admin\V01\WorldController;
@@ -71,7 +72,7 @@ Route::middleware('auth:api')->group(function () {
         });
 
         Route::middleware(['permission:menu.payments'])->group(function () {
-            // New manual activation routes (using the new Admin V01 controller)
+            // Subscription activation / renewal (now also creates invoices via SubscriptionBillingService)
             Route::post('/subscriptions/school/{schoolId}/activate', [AdminSubscriptionController::class, 'activateSchool']);
             Route::post('/subscriptions/student/{studentId}/activate', [AdminSubscriptionController::class, 'activateStudent']);
 
@@ -79,18 +80,43 @@ Route::middleware('auth:api')->group(function () {
             Route::post('/subscriptions/school/{schoolId}/renew', [AdminSubscriptionController::class, 'renewSchool']);
             Route::post('/subscriptions/student/{studentId}/renew', [AdminSubscriptionController::class, 'renewStudent']);
 
+            // Deactivation / cancellation routes
+            Route::post('/subscriptions/school/{schoolId}/deactivate', [AdminSubscriptionController::class, 'deactivateSchool']);
+            Route::post('/subscriptions/student/{studentId}/deactivate', [AdminSubscriptionController::class, 'deactivateStudent']);
+
             // Listing routes
             Route::get('/subscriptions/schools', [AdminSubscriptionController::class, 'schools']);
             Route::get('/subscriptions/students', [AdminSubscriptionController::class, 'students']);
-
             Route::get('/subscriptions/active', [AdminSubscriptionController::class, 'active']);
 
-            // Existing routes (you can keep or remove depending on if you want to use the new one exclusively)
+            // Legacy route — now proxied through billing service so it also creates invoices
             Route::get('/schools/{school}/subscriptions', [SubscriptionController::class, 'index']);
             Route::post('/schools/{school}/subscriptions', [SubscriptionController::class, 'store']);
         });
 
+        // ── Invoice Routes (billing.view / billing.void_invoice) ──────────────
+        Route::middleware(['permission:billing.view|menu.payments'])->group(function () {
+            // Plan prices for React activation modal
+            Route::get('/invoices/prices', [InvoiceController::class, 'prices']);
+            // Paginated list with filters
+            Route::get('/invoices', [InvoiceController::class, 'index']);
+            // Detail
+            Route::get('/invoices/{invoice}', [InvoiceController::class, 'show']);
+            // PDF download (authenticated, private)
+            Route::get('/invoices/{invoice}/pdf', [InvoiceController::class, 'downloadPdf']);
+        });
+
+        // Void requires higher privilege (super-admin or billing.void_invoice)
+        Route::middleware(['permission:billing.void_invoice'])->group(function () {
+            Route::post('/invoices/{invoice}/void', [InvoiceController::class, 'void']);
+        });
+
         Route::middleware(['permission:menu.subscription'])->group(function () {
+            // menu.subscription permission reserved for subscription page visibility
+        });
+
+        // System settings — accessible by payment managers and user managers
+        Route::middleware(['permission:menu.payments|users.manage'])->group(function () {
             Route::get('/system-settings/{key}', [SystemSettingController::class, 'show']);
             Route::post('/system-settings/{key}', [SystemSettingController::class, 'update']);
             Route::get('/feature-locks', [SystemSettingController::class, 'showFeatureLocks']);
