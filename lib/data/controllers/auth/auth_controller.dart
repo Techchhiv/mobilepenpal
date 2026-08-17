@@ -58,6 +58,11 @@ class AuthController extends GetxController {
     }
   }
 
+  bool _isPhone(String value) {
+    final digitsOnly = value.replaceAll(RegExp(r'\D'), '');
+    return digitsOnly.length >= 7 && digitsOnly.length <= 15;
+  }
+
   void validateEmail(String value) {
     if (!isSubmitted.value) {
       emailError.value = '';
@@ -66,12 +71,15 @@ class AuthController extends GetxController {
 
     final trimmed = value.trim();
     if (trimmed.isEmpty) {
-      emailError.value = 'email_required'.tr;
+      emailError.value = 'email_or_phone_required'.tr;
       return;
     }
 
-    if (!GetUtils.isEmail(trimmed)) {
-      emailError.value = 'invalid_email'.tr;
+    final isEmail = GetUtils.isEmail(trimmed);
+    final isPhone = GetUtils.isPhoneNumber(trimmed) || _isPhone(trimmed);
+
+    if (!isEmail && !isPhone) {
+      emailError.value = 'invalid_email_or_phone'.tr;
     } else {
       emailError.value = '';
     }
@@ -167,8 +175,11 @@ class AuthController extends GetxController {
     try {
       isLoading.value = true;
 
+      final input = emailController.text.trim();
+      final isEmailInput = input.contains('@');
+
       final response = await _authService.loginStudent(
-        email: emailController.text.trim(),
+        login: input,
         password: passwordController.text,
         confirm: confirm,
       );
@@ -177,16 +188,16 @@ class AuthController extends GetxController {
         final studentObj = response.data?['student'];
         final Student? student = studentObj is Student ? studentObj : null;
 
-        // If the account is created by or associated with a school, bypass email verification.
+        // If account is school user or phone login, bypass Firebase email verification check
         final isSchoolUser = student != null && student.isSchoolAccount;
 
-        if (!isSchoolUser) {
-          // Check Firebase Email Verification for regular accounts
+        if (!isSchoolUser && isEmailInput) {
+          // Check Firebase Email Verification for regular email accounts
           try {
             User? fbUser = FirebaseAuth.instance.currentUser;
-            if (fbUser == null || fbUser.email != emailController.text.trim()) {
+            if (fbUser == null || fbUser.email != input) {
               final cred = await FirebaseAuth.instance.signInWithEmailAndPassword(
-                email: emailController.text.trim(),
+                email: input,
                 password: passwordController.text,
               );
               fbUser = cred.user;
@@ -197,10 +208,10 @@ class AuthController extends GetxController {
               fbUser = FirebaseAuth.instance.currentUser;
 
               if (fbUser != null && !fbUser.emailVerified) {
-                // Clear the token saved by loginStudent so the session is not kept active
+                // Clear token saved by loginStudent so session is not kept active
                 await ApiClient().clearToken();
                 isLoading.value = false;
-                final email = emailController.text.trim();
+                final email = input;
                 final password = passwordController.text;
                 showUnverifiedEmailDialog(
                   email: email,

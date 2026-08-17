@@ -118,41 +118,150 @@ class RegisterPage extends GetView<RegisterController> {
                       // Account section
                       _buildSectionLabel('account'.tr),
                       const SizedBox(height: 10),
+
+                      // Segmented Tab Selector
+                      Obx(
+                        () => Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF0F2F5),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: _buildSegmentTab(
+                                  title: 'register_via_phone'.tr,
+                                  icon: Icons.phone_android_rounded,
+                                  isSelected: controller.registerMethod.value == 'phone',
+                                  onTap: () => controller.setRegisterMethod('phone'),
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: _buildSegmentTab(
+                                  title: 'register_via_email'.tr,
+                                  icon: Icons.email_outlined,
+                                  isSelected: controller.registerMethod.value == 'email',
+                                  onTap: () => controller.setRegisterMethod('email'),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+
                       _FormCard(
                         children: [
-                          Obx(
-                            () => _buildTextField(
-                              icon: Icons.email_outlined,
-                              iconColor: const Color(0xFF8E24AA),
-                              label: 'email'.tr,
-                              hintText: 'enter_your_email'.tr,
-                              textController: controller.emailController,
-                              errorText: controller.isSubmitted.value
-                                  ? controller.emailError.value
-                                  : null,
-                              isLoading: controller.isLoading.value,
-                              onChanged: controller.validateEmail,
-                              keyboardType: TextInputType.emailAddress,
-                              required: true,
-                            ),
-                          ),
-                          const _CardDivider(),
-                          Obx(
-                            () => _buildTextField(
-                              icon: Icons.phone_outlined,
-                              iconColor: const Color(0xFF43A047),
-                              label: '${'phone_number'.tr} (${'optional'.tr})',
-                              hintText: 'enter_your_phone_number'.tr,
-                              textController: controller.phoneController,
-                              errorText: controller.isSubmitted.value
-                                  ? controller.phoneError.value
-                                  : null,
-                              isLoading: controller.isLoading.value,
-                              onChanged: controller.validatePhone,
-                              keyboardType: TextInputType.phone,
-                              required: false,
-                            ),
-                          ),
+                          Obx(() {
+                            final isPhoneTab = controller.registerMethod.value == 'phone';
+                            final showSecondary = controller.showSecondaryContact.value;
+
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (isPhoneTab) ...[
+                                  _buildTextField(
+                                    icon: Icons.phone_outlined,
+                                    iconColor: const Color(0xFF43A047),
+                                    label: 'phone_number'.tr,
+                                    hintText: 'enter_your_phone_number'.tr,
+                                    textController: controller.phoneController,
+                                    errorText: controller.isSubmitted.value
+                                        ? controller.phoneError.value
+                                        : null,
+                                    isLoading: controller.isLoading.value,
+                                    onChanged: controller.validatePhone,
+                                    keyboardType: TextInputType.phone,
+                                    required: true,
+                                  ),
+                                  if (showSecondary) ...[
+                                    const _CardDivider(),
+                                    _buildTextField(
+                                      icon: Icons.email_outlined,
+                                      iconColor: const Color(0xFF8E24AA),
+                                      label: '${'email'.tr} (${'optional'.tr})',
+                                      hintText: 'enter_your_email'.tr,
+                                      textController: controller.emailController,
+                                      errorText: controller.isSubmitted.value
+                                          ? controller.emailError.value
+                                          : null,
+                                      isLoading: controller.isLoading.value,
+                                      onChanged: controller.validateEmail,
+                                      keyboardType: TextInputType.emailAddress,
+                                      required: false,
+                                    ),
+                                  ],
+                                ] else ...[
+                                  _buildTextField(
+                                    icon: Icons.email_outlined,
+                                    iconColor: const Color(0xFF8E24AA),
+                                    label: 'email'.tr,
+                                    hintText: 'enter_your_email'.tr,
+                                    textController: controller.emailController,
+                                    errorText: controller.isSubmitted.value
+                                        ? controller.emailError.value
+                                        : null,
+                                    isLoading: controller.isLoading.value,
+                                    onChanged: controller.validateEmail,
+                                    keyboardType: TextInputType.emailAddress,
+                                    required: true,
+                                  ),
+                                  if (showSecondary) ...[
+                                    const _CardDivider(),
+                                    _buildTextField(
+                                      icon: Icons.phone_outlined,
+                                      iconColor: const Color(0xFF43A047),
+                                      label: '${'phone_number'.tr} (${'optional'.tr})',
+                                      hintText: 'enter_your_phone_number'.tr,
+                                      textController: controller.phoneController,
+                                      errorText: controller.isSubmitted.value
+                                          ? controller.phoneError.value
+                                          : null,
+                                      isLoading: controller.isLoading.value,
+                                      onChanged: controller.validatePhone,
+                                      keyboardType: TextInputType.phone,
+                                      required: false,
+                                    ),
+                                  ],
+                                ],
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                  child: InkWell(
+                                    onTap: controller.toggleSecondaryContact,
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            showSecondary ? Icons.remove_circle_outline : Icons.add_circle_outline,
+                                            size: 16,
+                                            color: _brand,
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            showSecondary
+                                                ? 'remove_secondary_contact'.tr
+                                                : (isPhoneTab
+                                                    ? 'add_optional_email'.tr
+                                                    : 'add_optional_phone'.tr),
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w600,
+                                              color: _brand,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
+                          }),
                           const _CardDivider(),
                           Obx(
                             () => _buildPasswordField(
@@ -689,6 +798,55 @@ class RegisterPage extends GetView<RegisterController> {
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSegmentTab({
+    required String title,
+    required IconData icon,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    final bool isKhmer = Get.locale?.languageCode == 'km';
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.white : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.06),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : [],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 18,
+              color: isSelected ? _brand : Colors.grey[600],
+            ),
+            const SizedBox(width: 6),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: isKhmer ? 13 : 12,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                color: isSelected ? _brand : Colors.grey[700],
+              ),
+            ),
+          ],
         ),
       ),
     );

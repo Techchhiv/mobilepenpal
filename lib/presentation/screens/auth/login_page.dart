@@ -84,7 +84,7 @@ class LoginPage extends StatelessWidget {
               const SizedBox(height: 48),
 
               Text(
-                'email'.tr,
+                'email_or_phone'.tr,
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -100,14 +100,14 @@ class LoginPage extends StatelessWidget {
                   enabled: !authController.isLoading.value,
                   decoration: InputDecoration(
                     prefixIcon: const Icon(
-                      Icons.email_outlined,
+                      Icons.person_outline_rounded,
                       color: AppColors.primary,
                     ),
                     filled: true,
                     fillColor: authController.isLoading.value
                         ? Colors.grey[300]
                         : Colors.grey[100],
-                    hintText: 'enter_your_email'.tr,
+                    hintText: 'enter_your_email_or_phone'.tr,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,

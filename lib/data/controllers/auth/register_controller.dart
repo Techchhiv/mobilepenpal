@@ -2,6 +2,7 @@ import 'dart:developer' as dev;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:mobilepenpal/data/services/analytics_service.dart';
 import 'package:mobilepenpal/data/services/auth_service.dart';
 import 'package:mobilepenpal/presentation/routes/app_routes.dart';
@@ -26,6 +27,9 @@ class RegisterController extends GetxController {
   final isConfirmPasswordVisible = false.obs;
   final isSubmitted = false.obs;
 
+  final registerMethod = 'phone'.obs; // 'phone' or 'email'
+  final showSecondaryContact = false.obs;
+
   final studentFirstNameError = ''.obs;
   final studentLastNameError = ''.obs;
 
@@ -36,6 +40,25 @@ class RegisterController extends GetxController {
   final emailError = ''.obs;
   final passwordError = ''.obs;
   final confirmPasswordError = ''.obs;
+
+  void setRegisterMethod(String method) {
+    registerMethod.value = method;
+    showSecondaryContact.value = false;
+    _clearFieldErrors();
+  }
+
+  void toggleSecondaryContact() {
+    showSecondaryContact.value = !showSecondaryContact.value;
+    if (!showSecondaryContact.value) {
+      if (registerMethod.value == 'phone') {
+        emailController.clear();
+        emailError.value = '';
+      } else {
+        phoneController.clear();
+        phoneError.value = '';
+      }
+    }
+  }
 
   void togglePasswordVisibility() {
     isPasswordVisible.value = !isPasswordVisible.value;
@@ -83,8 +106,14 @@ class RegisterController extends GetxController {
       return;
     }
     final value = v.trim().replaceAll(' ', '');
+    final isPrimary = registerMethod.value == 'phone';
+
     if (value.isEmpty) {
-      phoneError.value = ''; // Optional
+      if (isPrimary && emailController.text.trim().isEmpty) {
+        phoneError.value = 'phone_required'.tr;
+      } else {
+        phoneError.value = '';
+      }
       return;
     }
     final digitsOnly = value.replaceAll(RegExp(r'\D'), '');
@@ -101,8 +130,14 @@ class RegisterController extends GetxController {
       return;
     }
     final value = v.trim();
+    final isPrimary = registerMethod.value == 'email';
+
     if (value.isEmpty) {
-      emailError.value = 'email_required'.tr;
+      if (isPrimary && phoneController.text.trim().isEmpty) {
+        emailError.value = 'email_required'.tr;
+      } else {
+        emailError.value = '';
+      }
       return;
     }
     emailError.value = GetUtils.isEmail(value) ? '' : 'invalid_email'.tr;
@@ -229,6 +264,10 @@ class RegisterController extends GetxController {
     try {
       isLoading.value = true;
 
+      final registeredEmail = emailController.text.trim();
+      final registeredPhone = phoneController.text.trim();
+      final rawPassword = passwordController.text;
+
       final response = await _authService.registerParent(
         studentFirstName: studentFirstNameController.text.trim(),
         studentLastName: studentLastNameController.text.trim().isEmpty
@@ -236,46 +275,48 @@ class RegisterController extends GetxController {
             : studentLastNameController.text.trim(),
         parentFirstName: parentFirstNameController.text.trim(),
         parentLastName: parentLastNameController.text.trim(),
-        email: emailController.text.trim(),
-        phone: phoneController.text.trim().isEmpty ? null : phoneController.text.trim(),
-        password: passwordController.text,
+        email: registeredEmail.isEmpty ? null : registeredEmail,
+        phone: registeredPhone.isEmpty ? null : registeredPhone,
+        password: rawPassword,
       );
 
       if (response.code == 200) {
         FocusManager.instance.primaryFocus?.unfocus();
 
-        final registeredEmail = emailController.text.trim();
-        final rawPassword = passwordController.text;
-
-        // Firebase Auth Verification Email
-        try {
-          final userCredential = await FirebaseAuth.instance
-              .createUserWithEmailAndPassword(
-            email: registeredEmail,
-            password: rawPassword,
-          );
-          await userCredential.user?.sendEmailVerification();
-        } on FirebaseAuthException catch (e) {
-          if (e.code == 'email-already-in-use') {
-            try {
-              final signInResult = await FirebaseAuth.instance
-                  .signInWithEmailAndPassword(
-                email: registeredEmail,
-                password: rawPassword,
-              );
-              await signInResult.user?.sendEmailVerification();
-            } catch (subErr) {
-              dev.log('Firebase verification resend error: $subErr', name: 'RegisterController');
-            }
-          } else {
-            dev.log('Firebase auth exception: ${e.message}', name: 'RegisterController');
+        // If email was provided, create Firebase account in background without sending verification email yet
+        if (registeredEmail.isNotEmpty) {
+          try {
+            await FirebaseAuth.instance.createUserWithEmailAndPassword(
+              email: registeredEmail,
+              password: rawPassword,
+            );
+          } catch (e) {
+            dev.log('Firebase user creation background info: $e', name: 'RegisterController');
           }
-        } catch (e) {
-          dev.log('Firebase general exception: $e', name: 'RegisterController');
         }
 
         if (Get.isRegistered<AnalyticsService>()) {
-          Get.find<AnalyticsService>().logSignUp(signUpMethod: 'email');
+          Get.find<AnalyticsService>().logSignUp(
+            signUpMethod: registeredPhone.isNotEmpty ? 'phone' : 'email',
+          );
+        }
+
+        final bool hasPhone = registeredPhone.isNotEmpty;
+
+        // Prioritize phone: auto-login immediately if phone was provided or auth token is present
+        if (hasPhone || response.data?['token'] != null) {
+          await GetStorage().write('is_logged_in', true);
+          await GetStorage().write('has_token', true);
+
+          clearForm();
+
+          Get.offAllNamed(AppRoutes.home);
+          AppSnackbar.show(
+            'welcome'.tr,
+            title: 'success'.tr,
+            backgroundColor: Colors.green,
+          );
+          return;
         }
 
         clearForm();

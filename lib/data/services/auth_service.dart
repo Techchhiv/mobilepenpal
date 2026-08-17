@@ -7,22 +7,34 @@ class AuthService {
   final ApiClient _apiClient = ApiClient();
 
   Future<ApiResponse<Map<String, dynamic>>> loginStudent({
-    required String email,
-    // String? phone,
+    String? email,
+    String? phone,
+    String? login,
     required String password,
     bool? confirm,
     // required String schoolKey,
   }) async {
+    final String? loginInput = (login ?? email ?? phone)?.trim();
+    final bool isEmail = loginInput != null && loginInput.contains('@');
+
+    final Map<String, dynamic> payload = {
+      "password": password,
+      if (confirm != null) "confirm": confirm,
+    };
+
+    if (loginInput != null && loginInput.isNotEmpty) {
+      payload["login"] = loginInput;
+      if (isEmail) {
+        payload["email"] = loginInput;
+      } else {
+        payload["phone"] = loginInput;
+      }
+    }
+
     final result = await _apiClient.request<Map<String, dynamic>>(
       method: 'POST',
       path: AuthEndpoints.login,
-      data: {
-        "email": email,
-        // "phone": phone,
-        "password": password,
-        if (confirm != null) "confirm": confirm,
-        // "school_key": schoolKey,
-      },
+      data: payload,
       fromData: (data) {
         final token = data['token'];
         final student = Student.fromJson(data['student']);
@@ -83,7 +95,7 @@ class AuthService {
     String? studentLastName,
     required String parentFirstName,
     required String parentLastName,
-    required String email,
+    String? email,
     String? phone,
     required String password,
   }) async {
@@ -97,8 +109,8 @@ class AuthService {
         "parent_first_name": parentFirstName,
         "parent_last_name": parentLastName,
 
-        "email": email,
-        if (phone != null && phone.trim().isNotEmpty) "phone": phone,
+        if (email != null && email.trim().isNotEmpty) "email": email.trim(),
+        if (phone != null && phone.trim().isNotEmpty) "phone": phone.trim(),
         "password": password,
       },
       fromData: (data) {
@@ -108,7 +120,10 @@ class AuthService {
       },
     );
 
-    // Do not auto-save token on registration so user must verify email and log in
+    if (result.code == 200 && result.data?['token'] != null) {
+      await _apiClient.saveToken(result.data?['token']);
+    }
+
     return result;
   }
 }
