@@ -63,27 +63,42 @@ class AuthController extends Controller
     {
         $validated = $request->validated();
 
-        /* Email login logic commented out:
-        $email = strtolower(trim($validated['email']));
-        $student = Student::where('email', $email)->first();
-        */
+        $loginInput = trim($validated['login'] ?? $validated['email'] ?? $validated['phone'] ?? '');
 
-        $phone = $validated['phone'];
-        $student = Student::where(function ($query) use ($phone) {
-            $query->where('phone', $phone);
-            try {
-                $phoneUtil = \libphonenumber\PhoneNumberUtil::getInstance();
-                $proto = $phoneUtil->parse($phone, 'KH');
-                if ($phoneUtil->isValidNumber($proto)) {
-                    $e164 = $phoneUtil->format($proto, \libphonenumber\PhoneNumberFormat::E164);
-                    $national = '0' . $proto->getNationalNumber();
-                    $query->orWhere('phone', $e164)
-                          ->orWhere('phone', $national);
-                }
-            } catch (\Exception $e) {
-                // Ignore
+        $student = null;
+
+        if (!empty($loginInput)) {
+            // If identifier contains '@', try email lookup first
+            if (str_contains($loginInput, '@')) {
+                $email = strtolower($loginInput);
+                $student = Student::where('email', $email)->first();
+            } else {
+                // Otherwise try phone lookup first
+                $phone = $loginInput;
+                $student = Student::where(function ($query) use ($phone) {
+                    $query->where('phone', $phone);
+                    try {
+                        $phoneUtil = \libphonenumber\PhoneNumberUtil::getInstance();
+                        $proto = $phoneUtil->parse($phone, 'KH');
+                        if ($phoneUtil->isValidNumber($proto)) {
+                            $e164 = $phoneUtil->format($proto, \libphonenumber\PhoneNumberFormat::E164);
+                            $national = '0' . $proto->getNationalNumber();
+                            $query->orWhere('phone', $e164)
+                                  ->orWhere('phone', $national);
+                        }
+                    } catch (\Exception $e) {
+                        // Ignore parsing errors
+                    }
+                })->first();
             }
-        })->first();
+
+            // Fallback lookup across both columns if specific lookup yielded no student
+            if (!$student) {
+                $student = Student::where('email', strtolower($loginInput))
+                    ->orWhere('phone', $loginInput)
+                    ->first();
+            }
+        }
 
         if (!$student || !Hash::check($validated['password'], $student->password)) {
             return $this->returnError(__('messages.credentials_incorrect'), 401);
