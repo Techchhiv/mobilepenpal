@@ -477,6 +477,9 @@ final Map<String, String> enUS = {
   'feedback_incomplete': 'Please complete the drawing!',
   'feedback_wrong_direction': 'Wrong direction!',
   'feedback_wrong_order': 'Wrong order!',
+  'feedback_wrong_character': "That doesn't match the letter!",
+  'feedback_scribble_detected': 'Please draw the character carefully!',
+  'feedback_off_track': 'Please follow the character shape!',
   'please_follow_guide': 'Please follow the guide!',
 
   // ===== Praise =====

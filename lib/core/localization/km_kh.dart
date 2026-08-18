@@ -80,19 +80,23 @@ final Map<String, String> kmKH = {
   'already_logged_in_title': 'គណនីកំពុងប្រើប្រាស់នៅឧបករណ៍ផ្សេង',
   'already_logged_in_message':
       'គណនីនេះកំពុងចូលប្រើប្រាស់នៅលើឧបករណ៍ផ្សេងទៀត។ ការចូលនៅទីនេះនឹងធ្វើឱ្យឧបករណ៍ផ្សេងទៀតចាកចេញពីគណនី។ តើអ្នកចង់បន្តដែរឬទេ?',
-  'email_not_verified': 'អ៊ីមែលមិនទាន់បានផ្ទៀងផ្ទាត់នៅឡើយទេ។ សូមពិនិត្យមើលសាររបស់អ្នក និងចុចលើតំណភ្ជាប់ផ្ទៀងផ្ទាត់។',
-  'verification_email_sent': 'អ៊ីមែលផ្ទៀងផ្ទាត់ត្រូវបានផ្ញើទៅ @email។ សូមពិនិត្យមើលសារ និងផ្ទៀងផ្ទាត់មុនពេលចូលប្រើប្រាស់។',
+  'email_not_verified':
+      'អ៊ីមែលមិនទាន់បានផ្ទៀងផ្ទាត់នៅឡើយទេ។ សូមពិនិត្យមើលសាររបស់អ្នក និងចុចលើតំណភ្ជាប់ផ្ទៀងផ្ទាត់។',
+  'verification_email_sent':
+      'អ៊ីមែលផ្ទៀងផ្ទាត់ត្រូវបានផ្ញើទៅ @email។ សូមពិនិត្យមើលសារ និងផ្ទៀងផ្ទាត់មុនពេលចូលប្រើប្រាស់។',
   'email_verification_required': 'ត្រូវការផ្ទៀងផ្ទាត់អ៊ីមែល',
   'verification_sent_to': 'តំណភ្ជាប់ផ្ទៀងផ្ទាត់ត្រូវបានផ្ញើទៅ',
   'check_spam_folder': 'សូមពិនិត្យប្រអប់ Spam ឬ Junk ផងដែរ។',
   'resend_verification_email': 'ផ្ញើអ៊ីមែលផ្ទៀងផ្ទាត់ម្ដងទៀត',
-  'verification_email_resent': 'បានផ្ញើអ៊ីមែលផ្ទៀងផ្ទាត់ម្ដងទៀត! សូមពិនិត្យប្រអប់សំបុត្ររបស់អ្នក។',
-  'email_already_verified': 'អ៊ីមែលរបស់អ្នកត្រូវបានផ្ទៀងផ្ទាត់រួចហើយ។ សូមព្យាយាមចូលប្រើ។',
+  'verification_email_resent':
+      'បានផ្ញើអ៊ីមែលផ្ទៀងផ្ទាត់ម្ដងទៀត! សូមពិនិត្យប្រអប់សំបុត្ររបស់អ្នក។',
+  'email_already_verified':
+      'អ៊ីមែលរបស់អ្នកត្រូវបានផ្ទៀងផ្ទាត់រួចហើយ។ សូមព្យាយាមចូលប្រើ។',
   'too_many_requests': 'ព្យាយាមច្រើនពេក។ សូមរង់ចាំបន្តិចហើយព្យាយាមម្ដងទៀត។',
   'back_to_login': 'ត្រឡប់ទៅចូលប្រើ',
   'firebase_warning': 'ការព្រមាន Firebase',
-  'firebase_error_msg': 'កំហុស Firebase: @error។ សូមពិនិត្យការកំណត់ក្នុង Firebase Console។',
-
+  'firebase_error_msg':
+      'កំហុស Firebase: @error។ សូមពិនិត្យការកំណត់ក្នុង Firebase Console។',
 
   // ===== OTP Verfication =====
   'otp_verification': 'ការផ្ទៀងផ្ទាត់ OTP',
@@ -474,6 +478,9 @@ final Map<String, String> kmKH = {
   'feedback_incomplete': 'សូមគូរឲ្យតាមស្រមោល!',
   'feedback_wrong_direction': 'គូរខុសទិសដៅ!',
   'feedback_wrong_order': 'គូរខុសលំដាប់!',
+  'feedback_wrong_character': 'គូរមិនត្រូវតាមអក្សរនេះទេ!',
+  'feedback_scribble_detected': 'សូមគូរអក្សរឲ្យបានច្បាស់លាស់!',
+  'feedback_off_track': 'សូមគូរតាមទម្រង់អក្សរ!',
   'please_follow_guide': 'សូមគូរតាមការណែនាំ!',
 
   // ===== Praise =====
@@ -484,7 +491,8 @@ final Map<String, String> kmKH = {
   'school_subscription_title': 'មាតិកាពិសេស',
   'school_subscription_message':
       'មាតិកានេះត្រូវការការបើកប្រាក់ប្រីមៀម។ សូមទាក់ទងអ្នកគ្រប់គ្រងសាលារៀនរបស់អ្នកដើម្បីដំណើរការ។',
-  'contact_school_admin': 'សូមទាក់ទងអ្នកគ្រប់គ្រងសាលារៀនរបស់អ្នកដើម្បីដំណើរការ។',
+  'contact_school_admin':
+      'សូមទាក់ទងអ្នកគ្រប់គ្រងសាលារៀនរបស់អ្នកដើម្បីដំណើរការ។',
   'unlock_unlimited_title': 'ធ្វើការជាវដើម្បីទទួលបានមុខងារបន្ថែម',
   'unlock_unlimited_subtitle':
       'ទទួលបានសិទ្ធិពេញលេញក្នុងការរៀនអក្សរខ្មែរ AI និងហ្គេមអប់រំ។',

@@ -124,8 +124,6 @@ class AuthController extends GetxController {
 
     if (value.isEmpty) {
       passwordError.value = 'password_required'.tr;
-    } else if (value.length < 6) {
-      passwordError.value = 'password_min_6_cha'.tr;
     } else {
       passwordError.value = '';
     }

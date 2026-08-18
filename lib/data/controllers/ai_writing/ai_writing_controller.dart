@@ -6,8 +6,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_drawing_board/flutter_drawing_board.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:mobilepenpal/core/utils/ai_stroke_feedback_util.dart';
 import 'package:mobilepenpal/core/utils/drawing_points_util.dart';
-import 'package:mobilepenpal/core/utils/stroke_feedback_util.dart';
 import 'package:mobilepenpal/core/utils/stroke_transform_util.dart';
 import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
 import 'package:mobilepenpal/data/controllers/shop/shop_controller.dart';
@@ -15,7 +15,9 @@ import 'package:mobilepenpal/data/controllers/world/stage_audio_controller.dart'
 import 'package:mobilepenpal/data/controllers/world/stage_animation_controller.dart';
 import 'package:mobilepenpal/data/models/api_response.dart';
 import 'package:mobilepenpal/data/models/student/student.dart';
+import 'package:mobilepenpal/data/services/drawing_evaluation_service.dart';
 import 'package:mobilepenpal/data/services/next_stroke_predictor_service.dart';
+import 'package:mobilepenpal/data/services/onnx_inference_service.dart';
 import 'package:mobilepenpal/data/services/world_service.dart';
 import 'package:mobilepenpal/presentation/widgets/ai_writing/stitch_debug_painter.dart';
 
@@ -50,6 +52,7 @@ class AiWritingController extends GetxController
 
   final GetStorage _box = GetStorage();
   final WorldService _worldService = WorldService();
+  final DrawingEvaluationService _evalService = DrawingEvaluationService();
 
   // ── Drawing state ──────────────────────────────────────────────────────
   final drawingController = DrawingController();
@@ -526,27 +529,11 @@ class AiWritingController extends GetxController
   void showHint() {
     autoPredict.value = true;
     predictNextStrokes();
-    if (_rawStrokes.isNotEmpty) {
-      final validStrokes = _filterValidStrokes();
-      if (validStrokes.isEmpty || validStrokes.length < _rawStrokes.length) {
-        hintMessage.value = 'please_follow_guide'.tr;
-      } else {
-        hintMessage.value = '';
-      }
-    } else {
-      hintMessage.value = '';
-    }
+    _validateRealtimeHandwriting();
   }
 
   Future<void> predictNextStrokes() async {
     final validStrokes = _filterValidStrokes();
-
-    if (_rawStrokes.isNotEmpty &&
-        (validStrokes.isEmpty || validStrokes.length < _rawStrokes.length)) {
-      hintMessage.value = 'please_follow_guide'.tr;
-    } else {
-      hintMessage.value = '';
-    }
 
     if (validStrokes.isEmpty) {
       predictedSegments.clear();
@@ -1037,8 +1024,106 @@ class AiWritingController extends GetxController
     autoPredict.value = false;
     predictedSegments.clear();
 
-    // Trigger background ONNX AI prediction & smooth guide sync
+    // Trigger background ONNX AI prediction, smooth guide sync, and real-time validation
     predictNextStrokes();
+    _validateRealtimeHandwriting();
+  }
+
+  // ── Real-time Handwriting Validation ──────────────────────────────────
+  String? _getStrokeIssueReason(
+    List<Map<String, dynamic>> userStroke,
+    int templateIdx,
+  ) {
+    if (canvasTemplateStrokesPx.isEmpty) return null;
+    if (templateIdx >= canvasTemplateStrokesPx.length) {
+      return 'feedback_wrong_count'.tr;
+    }
+    final tStroke = canvasTemplateStrokesPx[templateIdx];
+    if (tStroke.length < 2 || userStroke.length < 2) return null;
+
+    final uPts = userStroke
+        .map(
+          (p) => Offset(
+            (p['x'] as num).toDouble(),
+            (p['y'] as num).toDouble(),
+          ),
+        )
+        .toList();
+
+    // Resample points for LDTW shape analysis
+    final uResampled = AiStrokeFeedbackUtil.resampleStroke(uPts, 30);
+    final tResampled = AiStrokeFeedbackUtil.resampleStroke(tStroke, 30);
+
+    final normalized = AiStrokeFeedbackUtil.normalizeStrokes([
+      uResampled,
+      tResampled,
+    ]);
+    final uNorm = normalized[0];
+    final tNorm = normalized[1];
+
+    final resFwd = AiStrokeFeedbackUtil.computeEnhancedLdtw(uNorm, tNorm);
+    final resRev = AiStrokeFeedbackUtil.computeEnhancedLdtw(
+      uNorm.reversed.toList(),
+      tNorm,
+    );
+
+    // Direction check
+    if (resRev.ldtw < resFwd.ldtw - 0.035) {
+      return 'feedback_wrong_direction'.tr;
+    }
+
+    // Check if user started drawing a different template stroke (wrong order)
+    if (canvasTemplateStrokesPx.length > 1) {
+      final uStart = uPts.first;
+      final tStart = tStroke.first;
+      for (int j = 0; j < canvasTemplateStrokesPx.length; j++) {
+        if (j != templateIdx) {
+          final otherStart = canvasTemplateStrokesPx[j].first;
+          if ((uStart - otherStart).distance <
+              (uStart - tStart).distance - 25.0) {
+            return 'feedback_wrong_order'.tr;
+          }
+        }
+      }
+    }
+
+    // Scribble or off-track check via enhanced LDTW
+    if (resFwd.ldtw > 0.18 || resFwd.maxDeviation > 0.20) {
+      return 'feedback_off_track'.tr;
+    }
+
+    if (resFwd.ldtw > 0.088 || resFwd.maxDeviation > 0.13) {
+      return 'feedback_scribble_detected'.tr;
+    }
+
+    return null;
+  }
+
+  void _validateRealtimeHandwriting() {
+    final validUserStrokes = _rawStrokes.where((s) => s.length >= 2).toList();
+    if (validUserStrokes.isEmpty || canvasTemplateStrokesPx.isEmpty) {
+      hintMessage.value = '';
+      return;
+    }
+
+    final templateCount = canvasTemplateStrokesPx.length;
+    final userCount = validUserStrokes.length;
+
+    if (userCount > templateCount) {
+      hintMessage.value = 'feedback_wrong_count'.tr;
+      return;
+    }
+
+    final validStrokes = _filterValidStrokes();
+    if (validStrokes.length < userCount) {
+      final issueIndex = validStrokes.length;
+      final issueStroke = validUserStrokes[issueIndex];
+      final reason = _getStrokeIssueReason(issueStroke, issueIndex);
+      hintMessage.value = reason ?? 'please_follow_guide'.tr;
+      return;
+    }
+
+    hintMessage.value = '';
   }
 
   // ── AI check ───────────────────────────────────────────────────────────
@@ -1130,7 +1215,6 @@ class AiWritingController extends GetxController
     return 'consonant';
   }
 
-  // ignore: unused_element
   Map<String, dynamic> _getXYStrokeWithTime(String modelType) {
     final s = canvasSize / 340.0;
     final validStrokes = _rawStrokes
@@ -1157,7 +1241,6 @@ class AiWritingController extends GetxController
     };
   }
 
-  // ignore: unused_element
   bool _isDrawingCorrect(String prediction, String expected) {
     final p = prediction.trim();
     final e = expected.trim();
@@ -1182,7 +1265,8 @@ class AiWritingController extends GetxController
   }
 
   Future<void> checkDrawingAndSubmit(VoidCallback onFinished) async {
-    if (_rawStrokes.isEmpty) {
+    final validStrokes = _rawStrokes.where((s) => s.length >= 2).toList();
+    if (validStrokes.isEmpty) {
       Get.snackbar(
         'warning'.tr,
         'Please draw the character before submitting!',
@@ -1198,36 +1282,66 @@ class AiWritingController extends GetxController
     try {
       bool isCorrect = false;
       String? strokeHint;
+      final expected = currentChar.trim();
+      final modelType = getModelTypeForChar(expected);
+      final isSupported = OnnxInferenceService.instance.supportsCharacter(
+        expected,
+        modelType,
+      );
 
-      // ── Structural Stroke Validation ─────────────────────────────────
-      // Auto-center user's free drawing onto the template for fair comparison,
-      // then check stroke count, direction, and order.
+      // ── Step 1: AI Character Recognition ────────────────────────────
+      String prediction = '';
+      bool aiRecognized = false;
+
+      if (isSupported) {
+        final evalResult = await _evalService.predictBoard(
+          modelType: modelType,
+          rawStrokes: _rawStrokes,
+          getPayload: () => _getXYStrokeWithTime(modelType),
+        );
+        prediction = (evalResult?['prediction'] ?? '').toString().trim();
+        aiRecognized = _isDrawingCorrect(prediction, expected);
+      } else {
+        // Character not present in classifier model set, rely on structural validation
+        aiRecognized = true;
+        prediction = expected;
+      }
+
+      // ── Step 2: Structural & Geometric Validation (count, direction, length, outliers)
       if (canvasTemplateStrokesPx.isNotEmpty) {
         final centered = StrokeTransformUtil.autoCenterStrokes(
           _rawStrokes,
           canvasTemplateStrokesPx,
         );
-        strokeHint = StrokeFeedbackUtil.getFeedback(
+        strokeHint = AiStrokeFeedbackUtil.getFeedback(
           userRawStrokes: centered,
           templateStrokesPx: canvasTemplateStrokesPx,
           boardWidth: _canvasSize,
           boardHeight: _canvasSize,
-          ignoreBounds: true, // no visible shadow, don't penalise position
         );
-        isCorrect = (strokeHint == null);
-      } else {
-        // No template available for this character — accept the drawing
-        isCorrect = true;
       }
 
-      final String prediction = isCorrect ? currentChar.trim() : '';
+      // ── Step 3: Combined Evaluation Decision ─────────────────────────
+      if (aiRecognized && strokeHint == null) {
+        isCorrect = true;
+      } else {
+        isCorrect = false;
+        if (!aiRecognized) {
+          // If AI says drawing is a different character or unrecognized scribble
+          strokeHint = strokeHint ?? 'feedback_wrong_character';
+        }
+      }
 
-      final int? exId = _charToExerciseId[currentChar.trim()];
+      final String recordedAnswer = isCorrect
+          ? expected
+          : (prediction.isNotEmpty ? prediction : 'unknown');
+
+      final int? exId = _charToExerciseId[expected];
       if (exId != null) {
         attempts.add({
           'exercise_id': exId,
-          'user_answer': prediction,
-          'label': currentChar.trim(),
+          'user_answer': recordedAnswer,
+          'label': expected,
           'stroke': getPointsJson(),
           'device_type': _deviceType,
           'is_correct': isCorrect,
