@@ -525,11 +525,28 @@ class AiWritingController extends GetxController
   final autoPredict = false.obs;
   final predictedSegments = <List<Offset>>[].obs;
   final hintMessage = ''.obs;
+  final isHintValid = true.obs;
+  final hintIssueReason = ''.obs;
+
+  int get rawStrokesCount => _rawStrokes.length;
 
   void showHint() {
+    _validateRealtimeHandwriting();
+
+    if (!isHintValid.value) {
+      // Drawing is messy / invalid -> do not run ONNX model, show clear guidance message
+      autoPredict.value = false;
+      predictedSegments.clear();
+      final reason = hintIssueReason.value.isNotEmpty
+          ? hintIssueReason.value.tr
+          : 'feedback_scribble_detected'.tr;
+      hintMessage.value = reason;
+      return;
+    }
+
+    // Valid drawing -> enable hint and predict next strokes
     autoPredict.value = true;
     predictNextStrokes();
-    _validateRealtimeHandwriting();
   }
 
   Future<void> predictNextStrokes() async {
@@ -607,54 +624,17 @@ class AiWritingController extends GetxController
     }
   }
 
-  // ── Progress calculation combining Valid Strokes & AI Predictions ────────
-
-  /// Returns only user strokes that are genuinely on-target along character template paths
-  /// and drawn in the correct direction matching the active character.
-  /// Matches strokes directly in canvas space against canvasTemplateStrokesPx.
-  /// If a user stroke is invalid or belongs to a different character, matching stops.
+  /// Returns user strokes that have meaningful drawn length (> 10px) and fit within
+  /// the character's template stroke count, without rigid canvas pixel constraints.
   List<List<Map<String, dynamic>>> _filterValidStrokes() {
     if (_rawStrokes.isEmpty || canvasTemplateStrokesPx.isEmpty) return [];
 
-    final double allowedDist = _canvasSize * 0.15; // ~51px on 340px board
-    final double allowedDistSq = allowedDist * allowedDist;
-
     final validStrokes = <List<Map<String, dynamic>>>[];
-    int templateIdx = 0;
+    final maxCount = canvasTemplateStrokesPx.length;
 
     for (final stroke in _rawStrokes) {
-      if (stroke.length < 2) continue;
-      if (templateIdx >= canvasTemplateStrokesPx.length) break;
-
-      final tStroke = canvasTemplateStrokesPx[templateIdx];
-      if (tStroke.length < 2) continue;
-
-      final uStart = Offset(
-        (stroke.first['x'] as num).toDouble(),
-        (stroke.first['y'] as num).toDouble(),
-      );
-      final uEnd = Offset(
-        (stroke.last['x'] as num).toDouble(),
-        (stroke.last['y'] as num).toDouble(),
-      );
-      final tStart = tStroke.first;
-      final tEnd = tStroke.last;
-
-      // 1. Direction Check: ensure user start/end points align with template stroke direction
-      if ((tStart - tEnd).distance > 15.0) {
-        final dForward = (uStart - tStart).distance + (uEnd - tEnd).distance;
-        final dReverse = (uStart - tEnd).distance + (uEnd - tStart).distance;
-        if (dReverse < dForward) {
-          // Wrong direction – stop matching
-          break;
-        }
-      }
-
-      // 2. Stroke Length Check: reject excessively long scribble loops
-      double tStrokeLen = 0.0;
-      for (int i = 1; i < tStroke.length; i++) {
-        tStrokeLen += (tStroke[i] - tStroke[i - 1]).distance;
-      }
+      if (stroke.length < 3) continue;
+      if (validStrokes.length >= maxCount) break;
 
       double uStrokeLen = 0.0;
       for (int i = 1; i < stroke.length; i++) {
@@ -665,36 +645,8 @@ class AiWritingController extends GetxController
         uStrokeLen += Offset(dx, dy).distance;
       }
 
-      if (tStrokeLen > 10.0 && uStrokeLen > tStrokeLen * 1.6) {
-        // Scribble loop – stroke is too long compared to target template stroke
-        break;
-      }
-
-      // 3. Spatial Trajectory Overlap Check against target template stroke in canvas space
-      int onTargetCount = 0;
-      for (final p in stroke) {
-        final ux = (p['x'] as num).toDouble();
-        final uy = (p['y'] as num).toDouble();
-
-        for (final tp in tStroke) {
-          final dx = tp.dx - ux;
-          final dy = tp.dy - uy;
-          if (dx * dx + dy * dy <= allowedDistSq) {
-            onTargetCount++;
-            break;
-          }
-        }
-      }
-
-      final onTargetRatio = onTargetCount / stroke.length;
-
-      // Require >= 65% of user stroke points to be near the target template stroke
-      if (onTargetRatio >= 0.65) {
+      if (uStrokeLen >= 10.0) {
         validStrokes.add(stroke);
-        templateIdx++;
-      } else {
-        // Wrong stroke drawn – stop guide progress here
-        break;
       }
     }
 
@@ -852,6 +804,8 @@ class AiWritingController extends GetxController
     completedGuideStrokeCount.value = 0;
     currentGuideStrokeFraction.value = 0.0;
     hintMessage.value = '';
+    isHintValid.value = true;
+    hintIssueReason.value = '';
     restartGuideFromStart();
   }
 
@@ -864,6 +818,8 @@ class AiWritingController extends GetxController
     completedGuideStrokeCount.value = 0;
     currentGuideStrokeFraction.value = 0.0;
     hintMessage.value = '';
+    isHintValid.value = true;
+    hintIssueReason.value = '';
     attemptLeft.value = 3;
 
     final nextRep = rep.value + 1;
@@ -1030,100 +986,33 @@ class AiWritingController extends GetxController
   }
 
   // ── Real-time Handwriting Validation ──────────────────────────────────
-  String? _getStrokeIssueReason(
-    List<Map<String, dynamic>> userStroke,
-    int templateIdx,
-  ) {
-    if (canvasTemplateStrokesPx.isEmpty) return null;
-    if (templateIdx >= canvasTemplateStrokesPx.length) {
-      return 'feedback_wrong_count'.tr;
-    }
-    final tStroke = canvasTemplateStrokesPx[templateIdx];
-    if (tStroke.length < 2 || userStroke.length < 2) return null;
-
-    final uPts = userStroke
-        .map(
-          (p) => Offset(
-            (p['x'] as num).toDouble(),
-            (p['y'] as num).toDouble(),
-          ),
-        )
-        .toList();
-
-    // Resample points for LDTW shape analysis
-    final uResampled = AiStrokeFeedbackUtil.resampleStroke(uPts, 30);
-    final tResampled = AiStrokeFeedbackUtil.resampleStroke(tStroke, 30);
-
-    final normalized = AiStrokeFeedbackUtil.normalizeStrokes([
-      uResampled,
-      tResampled,
-    ]);
-    final uNorm = normalized[0];
-    final tNorm = normalized[1];
-
-    final resFwd = AiStrokeFeedbackUtil.computeEnhancedLdtw(uNorm, tNorm);
-    final resRev = AiStrokeFeedbackUtil.computeEnhancedLdtw(
-      uNorm.reversed.toList(),
-      tNorm,
-    );
-
-    // Direction check
-    if (resRev.ldtw < resFwd.ldtw - 0.035) {
-      return 'feedback_wrong_direction'.tr;
-    }
-
-    // Check if user started drawing a different template stroke (wrong order)
-    if (canvasTemplateStrokesPx.length > 1) {
-      final uStart = uPts.first;
-      final tStart = tStroke.first;
-      for (int j = 0; j < canvasTemplateStrokesPx.length; j++) {
-        if (j != templateIdx) {
-          final otherStart = canvasTemplateStrokesPx[j].first;
-          if ((uStart - otherStart).distance <
-              (uStart - tStart).distance - 25.0) {
-            return 'feedback_wrong_order'.tr;
-          }
-        }
-      }
-    }
-
-    // Scribble or off-track check via enhanced LDTW
-    if (resFwd.ldtw > 0.18 || resFwd.maxDeviation > 0.20) {
-      return 'feedback_off_track'.tr;
-    }
-
-    if (resFwd.ldtw > 0.088 || resFwd.maxDeviation > 0.13) {
-      return 'feedback_scribble_detected'.tr;
-    }
-
-    return null;
-  }
-
   void _validateRealtimeHandwriting() {
     final validUserStrokes = _rawStrokes.where((s) => s.length >= 2).toList();
     if (validUserStrokes.isEmpty || canvasTemplateStrokesPx.isEmpty) {
       hintMessage.value = '';
+      isHintValid.value = true;
+      hintIssueReason.value = '';
       return;
     }
 
-    final templateCount = canvasTemplateStrokesPx.length;
-    final userCount = validUserStrokes.length;
+    final partialValidation = AiStrokeFeedbackUtil.validatePartialDrawing(
+      userRawStrokes: validUserStrokes,
+      templateStrokesPx: canvasTemplateStrokesPx,
+      boardWidth: canvasSize,
+      boardHeight: canvasSize,
+    );
 
-    if (userCount > templateCount) {
-      hintMessage.value = 'feedback_wrong_count'.tr;
-      return;
+    if (partialValidation.isValid) {
+      isHintValid.value = true;
+      hintIssueReason.value = '';
+      hintMessage.value = '';
+    } else {
+      isHintValid.value = false;
+      final reason = partialValidation.reason ?? 'feedback_scribble_detected';
+      hintIssueReason.value = reason;
+      // Keep canvas clean during writing; show banner only when user taps Hint button
+      hintMessage.value = '';
     }
-
-    final validStrokes = _filterValidStrokes();
-    if (validStrokes.length < userCount) {
-      final issueIndex = validStrokes.length;
-      final issueStroke = validUserStrokes[issueIndex];
-      final reason = _getStrokeIssueReason(issueStroke, issueIndex);
-      hintMessage.value = reason ?? 'please_follow_guide'.tr;
-      return;
-    }
-
-    hintMessage.value = '';
   }
 
   // ── AI check ───────────────────────────────────────────────────────────

@@ -350,6 +350,131 @@ class AiStrokeFeedbackUtil {
     return LdtwResult(ldtw: ldtw, maxDeviation: maxDeviation);
   }
 
+  /// Validates a drawing that may be completely empty, partial (mid-stroke), or multi-stroke in progress.
+  /// Used specifically for determining whether the Hint button should be active/clickable.
+  static PartialValidationResult validatePartialDrawing({
+    required List<List<Map<String, dynamic>>> userRawStrokes,
+    required List<List<Offset>> templateStrokesPx,
+    required double boardWidth,
+    required double boardHeight,
+  }) {
+    if (templateStrokesPx.isEmpty) {
+      return const PartialValidationResult(isValid: true);
+    }
+
+    // 0. Empty canvas is always valid for hint (allows guiding the very first stroke)
+    final filteredStrokes = userRawStrokes.where((stroke) {
+      if (stroke.length < 3) return false;
+      double totalLen = 0.0;
+      for (int i = 1; i < stroke.length; i++) {
+        final p1 = stroke[i - 1];
+        final p2 = stroke[i];
+        final dx = (p2['x'] as num).toDouble() - (p1['x'] as num).toDouble();
+        final dy = (p2['y'] as num).toDouble() - (p1['y'] as num).toDouble();
+        totalLen += sqrt(dx * dx + dy * dy);
+      }
+      return totalLen > 8.0;
+    }).toList();
+
+    if (filteredStrokes.isEmpty) {
+      return const PartialValidationResult(isValid: true);
+    }
+
+    final userCount = filteredStrokes.length;
+    final templateCount = templateStrokesPx.length;
+
+    // 1. Exceeded total stroke count for this character
+    if (userCount > templateCount) {
+      return const PartialValidationResult(
+        isValid: false,
+        reason: 'feedback_wrong_count',
+      );
+    }
+
+    // 2. Stroke-by-stroke Multi-Scale Prefix Shape Validation
+    for (int i = 0; i < userCount; i++) {
+      final uRaw = filteredStrokes[i];
+      final tStroke = templateStrokesPx[i];
+      if (uRaw.length < 2 || tStroke.length < 2) continue;
+
+      final uStroke = uRaw
+          .map((p) => Offset((p['x'] as num).toDouble(), (p['y'] as num).toDouble()))
+          .toList();
+
+      // Arc-length scribble check
+      double uLen = 0.0;
+      for (int j = 1; j < uStroke.length; j++) {
+        uLen += (uStroke[j] - uStroke[j - 1]).distance;
+      }
+      double tLen = 0.0;
+      for (int j = 1; j < tStroke.length; j++) {
+        tLen += (tStroke[j] - tStroke[j - 1]).distance;
+      }
+
+      if (tLen > 15.0 && uLen > tLen * 1.85) {
+        return const PartialValidationResult(
+          isValid: false,
+          reason: 'feedback_scribble_detected',
+        );
+      }
+
+      // Multi-scale prefix trajectory evaluation
+      final eval = evaluatePartialStroke(uStroke, tStroke);
+      if (eval.isWrongDirection) {
+        return const PartialValidationResult(
+          isValid: false,
+          reason: 'feedback_wrong_direction',
+        );
+      }
+
+      if (eval.score > 0.088) {
+        return const PartialValidationResult(
+          isValid: false,
+          reason: 'feedback_scribble_detected',
+        );
+      }
+    }
+
+    return const PartialValidationResult(isValid: true);
+  }
+
+  /// Evaluates an incomplete / partial stroke against a template stroke using
+  /// Multi-Scale Prefix LDTW search. Position-, scale-, and start-invariant.
+  static PrefixEvaluationResult evaluatePartialStroke(
+    List<Offset> uPts,
+    List<Offset> tPts,
+  ) {
+    if (uPts.length < 2 || tPts.length < 2) {
+      return const PrefixEvaluationResult(score: 0.0, isWrongDirection: false);
+    }
+
+    final uRes = resampleStroke(uPts, 30);
+    final uNorm = normalizeStrokes([uRes])[0];
+    final uNormRev = uNorm.reversed.toList();
+
+    final tEq = resampleStroke(tPts, 60);
+
+    double bestFwd = double.infinity;
+    double bestRev = double.infinity;
+
+    for (int m = 15; m <= 60; m += 3) {
+      final tSub = resampleStroke(tEq.sublist(0, m), 30);
+      final tNorm = normalizeStrokes([tSub])[0];
+
+      final dFwd = computeEnhancedLdtw(uNorm, tNorm).ldtw;
+      final dRev = computeEnhancedLdtw(uNormRev, tNorm).ldtw;
+
+      if (dFwd < bestFwd) bestFwd = dFwd;
+      if (dRev < bestRev) bestRev = dRev;
+    }
+
+    final isWrongDirection = (bestRev < bestFwd - 0.045);
+    return PrefixEvaluationResult(
+      score: bestFwd,
+      isWrongDirection: isWrongDirection,
+    );
+  }
+
   /// Checks stroke order for multi-stroke characters.
   static String? _checkStrokeOrder({
     required List<List<Offset>> userStrokes,
@@ -399,4 +524,21 @@ class LdtwResult {
   final double maxDeviation;
 
   const LdtwResult({required this.ldtw, required this.maxDeviation});
+}
+
+class PrefixEvaluationResult {
+  final double score;
+  final bool isWrongDirection;
+
+  const PrefixEvaluationResult({
+    required this.score,
+    required this.isWrongDirection,
+  });
+}
+
+class PartialValidationResult {
+  final bool isValid;
+  final String? reason;
+
+  const PartialValidationResult({required this.isValid, this.reason});
 }

@@ -1194,27 +1194,57 @@ class _AiWritingPracticePageState extends State<AiWritingPracticePage>
           }),
 
           // ─── Hint Button ───
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              elevation: 0,
-              backgroundColor: const Color(0xFFFFC107), // Yellow/Amber
-              foregroundColor: const Color(0xFF1E293B),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-                side: const BorderSide(color: Color(0xFF1E293B), width: 2.2),
+          Obx(() {
+            final isValid = _controller.isHintValid.value;
+
+            final bgColor = isValid
+                ? const Color(0xFFFFC107) // Active Yellow/Amber
+                : const Color(0xFFE2E8F0); // Disabled Muted Grey
+            final fgColor = isValid
+                ? const Color(0xFF1E293B) // Dark charcoal text
+                : const Color(0xFF94A3B8); // Muted grey text
+            final borderColor = isValid
+                ? const Color(0xFF1E293B)
+                : const Color(0xFFCBD5E1);
+
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  elevation: 0,
+                  backgroundColor: bgColor,
+                  foregroundColor: fgColor,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    side: BorderSide(color: borderColor, width: 2.2),
+                  ),
+                  shadowColor: const Color(0xFF1E293B),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                ),
+                onPressed: () {
+                  _controller.showHint();
+                },
+                icon: Icon(
+                  isValid
+                      ? Icons.lightbulb_rounded
+                      : Icons.lightbulb_outline_rounded,
+                  size: 20,
+                  color: fgColor,
+                ),
+                label: Text(
+                  'hint'.tr,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
+                    color: fgColor,
+                  ),
+                ),
               ),
-              shadowColor: const Color(0xFF1E293B),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            ),
-            onPressed: () {
-              _controller.showHint();
-            },
-            icon: const Icon(Icons.lightbulb_rounded, size: 20),
-            label: Text(
-              'hint'.tr,
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900),
-            ),
-          ),
+            );
+          }),
         ],
       ),
     );
