@@ -479,7 +479,7 @@ final Map<String, String> kmKH = {
   'feedback_wrong_direction': 'គូរខុសទិសដៅ!',
   'feedback_wrong_order': 'គូរខុសលំដាប់!',
   'feedback_wrong_character': 'គូរមិនត្រូវតាមអក្សរនេះទេ!',
-  'feedback_scribble_detected': 'សូមគូរអក្សរឲ្យបានច្បាស់លាស់!',
+  'feedback_scribble_detected': 'សូមគូរអក្សរឲ្យបានស្អាត!',
   'feedback_off_track': 'សូមគូរតាមទម្រង់អក្សរ!',
   'please_follow_guide': 'សូមគូរតាមការណែនាំ!',
 

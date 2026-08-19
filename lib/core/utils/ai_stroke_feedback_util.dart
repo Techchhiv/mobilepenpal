@@ -445,7 +445,11 @@ class AiStrokeFeedbackUtil {
     List<Offset> tPts,
   ) {
     if (uPts.length < 2 || tPts.length < 2) {
-      return const PrefixEvaluationResult(score: 0.0, isWrongDirection: false);
+      return const PrefixEvaluationResult(
+        score: 0.0,
+        fraction: 0.0,
+        isWrongDirection: false,
+      );
     }
 
     final uRes = resampleStroke(uPts, 30);
@@ -456,6 +460,7 @@ class AiStrokeFeedbackUtil {
 
     double bestFwd = double.infinity;
     double bestRev = double.infinity;
+    double bestFrac = 0.0;
 
     for (int m = 15; m <= 60; m += 3) {
       final tSub = resampleStroke(tEq.sublist(0, m), 30);
@@ -464,14 +469,131 @@ class AiStrokeFeedbackUtil {
       final dFwd = computeEnhancedLdtw(uNorm, tNorm).ldtw;
       final dRev = computeEnhancedLdtw(uNormRev, tNorm).ldtw;
 
-      if (dFwd < bestFwd) bestFwd = dFwd;
+      if (dFwd < bestFwd) {
+        bestFwd = dFwd;
+        bestFrac = m / 60.0;
+      }
       if (dRev < bestRev) bestRev = dRev;
     }
 
     final isWrongDirection = (bestRev < bestFwd - 0.045);
     return PrefixEvaluationResult(
       score: bestFwd,
+      fraction: bestFrac,
       isWrongDirection: isWrongDirection,
+    );
+  }
+
+  /// Evaluates overall stroke-by-stroke drawing progress and detects mistakes.
+  /// Used for synchronizing the top guide card and freezing it at the exact mistake point.
+  static StrokeProgressResult evaluateDrawingProgress({
+    required List<List<Map<String, dynamic>>> userRawStrokes,
+    required List<List<Offset>> templateStrokesPx,
+  }) {
+    if (templateStrokesPx.isEmpty) {
+      return const StrokeProgressResult(
+        completedStrokes: 0,
+        activeStrokeFraction: 0.0,
+        hasError: false,
+      );
+    }
+
+    final filteredStrokes = userRawStrokes.where((stroke) {
+      if (stroke.length < 3) return false;
+      double totalLen = 0.0;
+      for (int i = 1; i < stroke.length; i++) {
+        final p1 = stroke[i - 1];
+        final p2 = stroke[i];
+        final dx = (p2['x'] as num).toDouble() - (p1['x'] as num).toDouble();
+        final dy = (p2['y'] as num).toDouble() - (p1['y'] as num).toDouble();
+        totalLen += sqrt(dx * dx + dy * dy);
+      }
+      return totalLen > 8.0;
+    }).toList();
+
+    if (filteredStrokes.isEmpty) {
+      return const StrokeProgressResult(
+        completedStrokes: 0,
+        activeStrokeFraction: 0.0,
+        hasError: false,
+      );
+    }
+
+    final userCount = filteredStrokes.length;
+    final templateCount = templateStrokesPx.length;
+
+    // Too many strokes drawn
+    if (userCount > templateCount) {
+      return StrokeProgressResult(
+        completedStrokes: templateCount,
+        activeStrokeFraction: 1.0,
+        hasError: true,
+        errorReason: 'feedback_wrong_count',
+      );
+    }
+
+    for (int i = 0; i < userCount; i++) {
+      final uRaw = filteredStrokes[i];
+      final tStroke = templateStrokesPx[i];
+      if (uRaw.length < 2 || tStroke.length < 2) continue;
+
+      final uStroke = uRaw
+          .map((p) => Offset((p['x'] as num).toDouble(), (p['y'] as num).toDouble()))
+          .toList();
+
+      double uLen = 0.0;
+      for (int j = 1; j < uStroke.length; j++) {
+        uLen += (uStroke[j] - uStroke[j - 1]).distance;
+      }
+      double tLen = 0.0;
+      for (int j = 1; j < tStroke.length; j++) {
+        tLen += (tStroke[j] - tStroke[j - 1]).distance;
+      }
+
+      if (tLen > 15.0 && uLen > tLen * 1.85) {
+        return StrokeProgressResult(
+          completedStrokes: i,
+          activeStrokeFraction: 0.0,
+          hasError: true,
+          errorReason: 'feedback_scribble_detected',
+        );
+      }
+
+      final eval = evaluatePartialStroke(uStroke, tStroke);
+
+      if (eval.isWrongDirection) {
+        return StrokeProgressResult(
+          completedStrokes: i,
+          activeStrokeFraction: 0.0,
+          hasError: true,
+          errorReason: 'feedback_wrong_direction',
+        );
+      }
+
+      if (eval.score > 0.088) {
+        return StrokeProgressResult(
+          completedStrokes: i,
+          activeStrokeFraction: 0.0,
+          hasError: true,
+          errorReason: 'feedback_scribble_detected',
+        );
+      }
+
+      // If this is the last drawn stroke so far and it's valid
+      if (i == userCount - 1) {
+        final frac = eval.fraction.clamp(0.0, 1.0);
+        return StrokeProgressResult(
+          completedStrokes: i,
+          activeStrokeFraction: frac,
+          hasError: false,
+        );
+      }
+    }
+
+    return StrokeProgressResult(
+      completedStrokes: userCount,
+      activeStrokeFraction: 0.0,
+      hasError: false,
     );
   }
 
@@ -528,11 +650,27 @@ class LdtwResult {
 
 class PrefixEvaluationResult {
   final double score;
+  final double fraction;
   final bool isWrongDirection;
 
   const PrefixEvaluationResult({
     required this.score,
+    required this.fraction,
     required this.isWrongDirection,
+  });
+}
+
+class StrokeProgressResult {
+  final int completedStrokes;
+  final double activeStrokeFraction;
+  final bool hasError;
+  final String? errorReason;
+
+  const StrokeProgressResult({
+    required this.completedStrokes,
+    required this.activeStrokeFraction,
+    required this.hasError,
+    this.errorReason,
   });
 }
 

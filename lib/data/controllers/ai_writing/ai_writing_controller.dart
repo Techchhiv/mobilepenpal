@@ -985,32 +985,43 @@ class AiWritingController extends GetxController
     _validateRealtimeHandwriting();
   }
 
-  // ── Real-time Handwriting Validation ──────────────────────────────────
+  // ── Real-time Handwriting Validation & Top Guide Sync ────────────────
   void _validateRealtimeHandwriting() {
     final validUserStrokes = _rawStrokes.where((s) => s.length >= 2).toList();
     if (validUserStrokes.isEmpty || canvasTemplateStrokesPx.isEmpty) {
       hintMessage.value = '';
       isHintValid.value = true;
       hintIssueReason.value = '';
+      completedGuideStrokeCount.value = 0;
+      currentGuideStrokeFraction.value = 0.0;
+      _updateGuideCirclePosition();
       return;
     }
 
-    final partialValidation = AiStrokeFeedbackUtil.validatePartialDrawing(
+    final progressResult = AiStrokeFeedbackUtil.evaluateDrawingProgress(
       userRawStrokes: validUserStrokes,
       templateStrokesPx: canvasTemplateStrokesPx,
-      boardWidth: canvasSize,
-      boardHeight: canvasSize,
     );
 
-    if (partialValidation.isValid) {
+    // Synchronize top guide card progress and circle position
+    completedGuideStrokeCount.value = progressResult.completedStrokes.clamp(
+      0,
+      guideStrokesPx.length,
+    );
+    currentGuideStrokeFraction.value = progressResult.activeStrokeFraction
+        .clamp(0.0, 1.0);
+    _updateGuideCirclePosition();
+
+    if (progressResult.hasError) {
+      // Mistake detected -> freeze guide at mistake point & show guidance message
+      isHintValid.value = false;
+      final reason = progressResult.errorReason ?? 'feedback_scribble_detected';
+      hintIssueReason.value = reason;
+      hintMessage.value = reason.tr;
+    } else {
+      // Valid progress -> advance guide smoothly without error banner
       isHintValid.value = true;
       hintIssueReason.value = '';
-      hintMessage.value = '';
-    } else {
-      isHintValid.value = false;
-      final reason = partialValidation.reason ?? 'feedback_scribble_detected';
-      hintIssueReason.value = reason;
-      // Keep canvas clean during writing; show banner only when user taps Hint button
       hintMessage.value = '';
     }
   }
