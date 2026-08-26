@@ -38,8 +38,18 @@ const AdminSignInLayer = () => {
       // Set token for subsequent requests
       setAuthToken(data.token);
 
-      // Save user + token in AuthContext — redirect handled by useEffect below
+      // Save user + token in AuthContext
       login(data.user, data.token);
+
+      // Determine redirect dynamically based on role/permissions
+      const hasSchoolId = Boolean(data.user?.school_id);
+      const roles = (data.user.roles || []).map(r => r.name.toLowerCase());
+
+      if (hasSchoolId || roles.includes("school-admin") || roles.includes("teacher") || roles.some(r => r.includes("manager"))) {
+        navigate("/school", { replace: true });
+      } else {
+        navigate("/admin", { replace: true });
+      }
 
     } catch (err) {
       const status = err?.response?.status;
