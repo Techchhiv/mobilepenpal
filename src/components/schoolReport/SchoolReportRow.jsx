@@ -1,15 +1,17 @@
+import { useNavigate } from 'react-router-dom';
+
 const STATUS_BADGE = {
-  active: { bg: 'bg-success-focus', text: 'text-success-main' },
+  active:    { bg: 'bg-success-focus', text: 'text-success-main' },
   scheduled: { bg: 'bg-warning-focus', text: 'text-warning-main' },
-  expired: { bg: 'bg-danger-focus', text: 'text-danger-main' },
-  inactive: { bg: 'bg-neutral-200', text: 'text-secondary-light' },
-  none: { bg: 'bg-neutral-200', text: 'text-secondary-light' },
+  expired:   { bg: 'bg-danger-focus', text: 'text-danger-main' },
+  inactive:  { bg: 'bg-neutral-200', text: 'text-secondary-light' },
+  none:      { bg: 'bg-neutral-200', text: 'text-secondary-light' },
 };
 
 const PLAN_BADGE = {
   monthly: { bg: 'bg-primary-focus', text: 'text-primary-600' },
-  yearly: { bg: 'bg-info-focus', text: 'text-info-main' },
-  none: { bg: 'bg-neutral-200', text: 'text-secondary-light' },
+  yearly:  { bg: 'bg-info-focus', text: 'text-info-main' },
+  none:    { bg: 'bg-neutral-200', text: 'text-secondary-light' },
 };
 
 function formatDate(isoString) {
@@ -21,7 +23,8 @@ function formatDate(isoString) {
   });
 }
 
-export default function SchoolReportRow({ school, isSelected, onSelect }) {
+export default function SchoolReportRow({ school }) {
+  const navigate = useNavigate();
   const {
     schoolName,
     schoolCode,
@@ -40,8 +43,7 @@ export default function SchoolReportRow({ school, isSelected, onSelect }) {
 
   return (
     <tr
-      className={isSelected ? 'bg-primary-focus' : ''}
-      onClick={onSelect}
+      onClick={() => navigate(`/admin/reports/schools/${school.schoolId}`)}
       style={{ cursor: 'pointer' }}
     >
       <td>

@@ -1,18 +1,15 @@
-import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import MasterLayout from '../../masterLayout/MasterLayout';
 import { useSchoolReports } from '../../hook/useSchoolReports';
 import ReportFilters from '../../components/schoolReport/ReportFilters';
 import ReportSummaryCards from '../../components/schoolReport/ReportSummaryCards';
 import SchoolReportTable from '../../components/schoolReport/SchoolReportTable';
-import SchoolDetailSidebar from '../../components/schoolReport/SchoolDetailSidebar';
 import ExportCSVButton from '../../components/schoolReport/ExportCSVButton';
 import { syncFiltersToURL } from '../../utils/schoolReportUtils';
 import '../../assets/css/adminReport.css';
 
 export default function AdminSchoolReportsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [selectedSchoolId, setSelectedSchoolId] = useState(null);
   const currentPage = Number(searchParams.get('page') ?? '1');
 
   const filters = {
@@ -26,14 +23,12 @@ export default function AdminSchoolReportsPage() {
   const {
     pagedList,
     filteredList,
-    selectedSchool,
     summaryStats,
     totalPages,
     totalItems,
     loading,
-    selectedSchoolLoading,
     error,
-  } = useSchoolReports(filters, selectedSchoolId);
+  } = useSchoolReports(filters);
 
   const handleFilterChange = (partial) => {
     const next = { ...filters, ...partial, page: 1 };
@@ -43,16 +38,6 @@ export default function AdminSchoolReportsPage() {
   const handlePageChange = (page) => {
     syncFiltersToURL({ ...filters, page }, setSearchParams);
   };
-
-  const handleSelectSchool = (id) => {
-    setSelectedSchoolId(id);
-  };
-
-  const handleCloseSidebar = () => {
-    setSelectedSchoolId(null);
-  };
-
-  const isSidebarOpen = Boolean(selectedSchoolId);
 
   return (
     <MasterLayout>
@@ -74,29 +59,15 @@ export default function AdminSchoolReportsPage() {
           </div>
         )}
 
-        <div className="d-flex gap-3 mt-3">
-          <div style={{ flex: isSidebarOpen ? '0 0 60%' : '1', minWidth: 0 }}>
-            <SchoolReportTable
-              schools={pagedList}
-              selectedId={selectedSchoolId}
-              onSelect={handleSelectSchool}
-              page={filters.page}
-              totalPages={totalPages}
-              totalItems={totalItems}
-              onPageChange={handlePageChange}
-              loading={loading}
-            />
-          </div>
-
-          {isSidebarOpen && (
-            <div style={{ flex: '0 0 38%', minWidth: 0 }}>
-              <SchoolDetailSidebar
-                school={selectedSchool}
-                loading={selectedSchoolLoading}
-                onClose={handleCloseSidebar}
-              />
-            </div>
-          )}
+        <div className="mt-3">
+          <SchoolReportTable
+            schools={pagedList}
+            page={filters.page}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            onPageChange={handlePageChange}
+            loading={loading}
+          />
         </div>
       </div>
     </MasterLayout>

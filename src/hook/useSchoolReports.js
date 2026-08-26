@@ -130,7 +130,7 @@ function buildParams(filters) {
   };
 }
 
-export function useSchoolReports(filters, selectedSchoolId) {
+export function useSchoolReports(filters) {
   const {
     search = '',
     schoolStatus = '',
@@ -143,8 +143,6 @@ export function useSchoolReports(filters, selectedSchoolId) {
   const [totalPages, setTotalPages] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [selectedSchool, setSelectedSchool] = useState(null);
-  const [selectedSchoolLoading, setSelectedSchoolLoading] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -207,59 +205,13 @@ export function useSchoolReports(filters, selectedSchoolId) {
     page,
   ]);
 
-  useEffect(() => {
-    let cancelled = false;
-
-    if (!selectedSchoolId) {
-      setSelectedSchool(null);
-      setSelectedSchoolLoading(false);
-      return () => {
-        cancelled = true;
-      };
-    }
-
-    const fallbackSchool =
-      schools.find((school) => school.schoolId === String(selectedSchoolId)) ?? null;
-
-    setSelectedSchool(fallbackSchool);
-
-    async function loadSchoolDetail() {
-      setSelectedSchoolLoading(true);
-
-      try {
-        const response = await API.get(`/admin/reports/schools/${selectedSchoolId}`);
-
-        if (cancelled) return;
-
-        const detail = response.data?.data?.school;
-        setSelectedSchool(detail ? normalizeSchoolDetail(detail) : fallbackSchool);
-      } catch {
-        if (!cancelled) {
-          setSelectedSchool(fallbackSchool);
-        }
-      } finally {
-        if (!cancelled) {
-          setSelectedSchoolLoading(false);
-        }
-      }
-    }
-
-    loadSchoolDetail();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedSchoolId, schools]);
-
   return {
     filteredList: schools,
     pagedList: schools,
-    selectedSchool,
     summaryStats,
     totalPages,
     totalItems,
     loading,
-    selectedSchoolLoading,
     error,
   };
 }

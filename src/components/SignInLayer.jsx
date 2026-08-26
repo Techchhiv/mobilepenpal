@@ -50,6 +50,7 @@ const AdminSignInLayer = () => {
       } else {
         navigate("/admin", { replace: true });
       }
+
     } catch (err) {
       const status = err?.response?.status;
       let msg = err?.response?.data?.message || err?.message || "Login failed. Please try again.";
@@ -60,7 +61,6 @@ const AdminSignInLayer = () => {
       setSubmitting(false);
     }
   };
-
   return (
     <section className="auth bg-base d-flex flex-wrap">
       <div className="auth-left d-lg-block d-none">
