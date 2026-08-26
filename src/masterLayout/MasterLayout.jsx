@@ -15,9 +15,8 @@ const MasterLayout = ({ children }) => {
   const [openDropdownKey, setOpenDropdownKey] = useState(null);
 
   const showManageClients = isSuperAdmin || hasPermission("menu.manage_clients");
-  const showPayments = isSuperAdmin || hasPermission("menu.payments");
-  const showSubscriptions = isSuperAdmin || hasPermission("menu.subscription");
-  const showAnalytics = isSuperAdmin || hasPermission("menu.analytics");
+  const showSubscriptions = isSuperAdmin || hasPermission("menu.subscription") || hasPermission("menu.payments") || hasPermission("billing.view");
+  const showInvoices = isSuperAdmin || hasPermission("billing.view") || hasPermission("menu.invoices") || hasPermission("menu.payments");
   const showReports = isSuperAdmin || hasPermission("menu.reports");
   const showManageUsers = isSuperAdmin || hasPermission("users.manage");
   const showRoles = isSuperAdmin || hasPermission("roles.manage");
@@ -29,7 +28,7 @@ const MasterLayout = ({ children }) => {
     const p = location.pathname;
     if (p.startsWith("/admin/users") || p.startsWith("/admin/roles") || p.startsWith("/admin/permissions")) {
       setOpenDropdownKey("access");
-    } else if (p.startsWith("/admin/schools") || p.startsWith("/admin/payments")) {
+    } else if (p.startsWith("/admin/schools")) {
       setOpenDropdownKey("management");
     } else if (
       p.startsWith("/admin/worlds") ||
@@ -40,6 +39,8 @@ const MasterLayout = ({ children }) => {
     ) {
       setOpenDropdownKey("world");
     } else if (p.startsWith("/admin/subscriptions")) {
+      setOpenDropdownKey("subscriptions");
+    } else if (p.startsWith("/admin/invoices")) {
       setOpenDropdownKey("subscriptions");
     } else if (p.startsWith("/admin/students")) {
       setOpenDropdownKey(null);
@@ -127,7 +128,7 @@ const MasterLayout = ({ children }) => {
                   }}
                 >
                   <Icon icon="mdi:card-account-details-star" className="menu-icon" />
-                  <span>Subscriptions</span>
+                  <span>Billing</span>
                   <Icon
                     icon={openDropdownKey === "subscriptions" ? "mdi:chevron-up" : "mdi:chevron-down"}
                     className="caret ms-auto"
@@ -142,6 +143,17 @@ const MasterLayout = ({ children }) => {
                     transition: "max-height .25s ease",
                   }}
                 >
+                  {showInvoices && (
+                    <li>
+                      <NavLink
+                        to="/admin/invoices"
+                        className={({ isActive }) => (isActive ? "active-page" : "")}
+                      >
+                        <i className="ri-circle-fill circle-icon text-success-main w-auto" />
+                        Invoices
+                      </NavLink>
+                    </li>
+                  )}
                   <li>
                     <NavLink
                       to="/admin/subscriptions/schools"
@@ -240,24 +252,6 @@ const MasterLayout = ({ children }) => {
                     </NavLink>
                   </li>
                 </ul>
-              </li>
-            )}
-
-            {showPayments && (
-              <li>
-                <NavLink to="/admin/payments">
-                  <Icon icon="mdi:credit-card" className="menu-icon" />
-                  <span>Payments</span>
-                </NavLink>
-              </li>
-            )}
-
-            {showAnalytics && (
-              <li>
-                <NavLink to="/admin/analytics">
-                  <Icon icon="mdi:chart-line" className="menu-icon" />
-                  <span>Analytics</span>
-                </NavLink>
               </li>
             )}
 
