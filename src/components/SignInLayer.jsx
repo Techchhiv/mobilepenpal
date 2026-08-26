@@ -61,7 +61,6 @@ const AdminSignInLayer = () => {
       setSubmitting(false);
     }
   };
-
   return (
     <section className="auth bg-base d-flex flex-wrap">
       <div className="auth-left d-lg-block d-none">
