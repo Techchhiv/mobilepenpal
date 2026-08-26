@@ -2,8 +2,6 @@ import SchoolReportRow from './SchoolReportRow';
 
 export default function SchoolReportTable({
   schools = [],
-  selectedId,
-  onSelect,
   page,
   totalPages,
   totalItems = 0,
@@ -64,8 +62,6 @@ export default function SchoolReportTable({
                   <SchoolReportRow
                     key={school.schoolId}
                     school={school}
-                    isSelected={school.schoolId === selectedId}
-                    onSelect={() => onSelect(school.schoolId)}
                   />
                 ))
               )}

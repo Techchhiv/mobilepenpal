@@ -70,6 +70,7 @@ import SchoolLevelEdit from "./pages/school/page/Level/SchoolLevelEdit";
 import SchoolLevelView from "./pages/school/page/Level/SchoolLevelView";
 import SchoolStageView from "./pages/school/page/Stage/SchoolStageView";
 import AdminSchoolReportsPage from "./pages/admin/AdminSchoolReportsPage";
+import SchoolDetailPage from "./pages/admin/SchoolDetailPage";
 import QuestionTemplateList from "./pages/admin/QuestionTemplate/QuestionTemplateList";
 import QuestionTemplateCreate from "./pages/admin/QuestionTemplate/QuestionTemplateCreate";
 import QuestionTemplateEdit from "./pages/admin/QuestionTemplate/QuestionTemplateEdit";
@@ -109,6 +110,7 @@ export default function App() {
           <Route path="/admin/roles" element={<AdminRolesPage />} />
           <Route path="/admin/permissions" element={<AdminPermissionsPage />} />
           <Route path="/admin/reports" element={<AdminSchoolReportsPage />} />
+          <Route path="/admin/reports/schools/:id" element={<SchoolDetailPage />} />
         </Route>
 
         {/* ---------- Manage Clients (Client Manager only) ---------- */}
