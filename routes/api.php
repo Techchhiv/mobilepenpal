@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Admin\V01\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\V01\ExpenseController;
 use App\Http\Controllers\Admin\V01\LevelController;
 use App\Http\Controllers\Admin\V01\ReportController;
 use App\Http\Controllers\Admin\V01\SubscriptionController as AdminSubscriptionController;
@@ -60,6 +62,14 @@ Route::middleware('auth:api')->group(function () {
        Admin Routes
     --------------------------------*/
     Route::prefix('admin')->name('admin.')->group(function () {
+        // Admin Dashboard
+        Route::get('/dashboard', [AdminDashboardController::class, 'index']);
+
+        // Expenses CRUD
+        Route::middleware(['permission:billing.view|menu.payments'])->group(function () {
+            Route::apiResource('expenses', ExpenseController::class);
+        });
+
         Route::middleware(['permission:menu.reports|reports.view'])->prefix('reports')->group(function () {
             Route::get('/schools', [ReportController::class, 'index']);
             Route::get('/schools/{school}', [ReportController::class, 'show']);

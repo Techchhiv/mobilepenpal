@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Admin\V01;
 
+use App\Models\Expense;
+use App\Models\Payment;
 use App\Models\School;
 use App\Models\Student;
 use App\Models\Subscription;
@@ -19,6 +21,9 @@ class ReportController extends Controller
             'school_status' => 'nullable|in:active,inactive',
             'subscription_status' => 'nullable|in:active,scheduled,expired,inactive,none',
             'plan' => 'nullable|in:monthly,yearly',
+            'financial_period' => 'nullable|in:all_time,this_month,this_year,last_30_days,today',
+            'financial_from' => 'nullable|date',
+            'financial_to' => 'nullable|date',
             'sort_by' => 'nullable|in:name,created_at,students_count,teachers_count,active_students_count,active_teachers_count',
             'sort_direction' => 'nullable|in:asc,desc',
             'per_page' => 'nullable|integer|min:1|max:100',
@@ -38,8 +43,13 @@ class ReportController extends Controller
             ->map(fn(School $school) => $this->transformSchoolListItem($school, $today))
             ->values();
 
+        $financialPeriod = $request->query('financial_period', 'all_time');
+        $financialFrom = $request->query('financial_from');
+        $financialTo = $request->query('financial_to');
+
         return $this->returnSuccess('School reports fetched successfully', [
-            'summary' => $this->buildSummary($today),
+            'summary' => $this->buildSummary($today, $financialPeriod, $financialFrom, $financialTo),
+            'financial_summary' => $this->buildFinancialSummary($financialPeriod, $financialFrom, $financialTo),
             'top_schools' => $this->buildTopSchools(),
             'schools' => $schools,
             'filters' => [
@@ -206,7 +216,7 @@ class ReportController extends Controller
         }
     }
 
-    protected function buildSummary(Carbon $today): array
+    protected function buildSummary(Carbon $today, string $period = 'all_time', ?string $from = null, ?string $to = null): array
     {
         $todayString = $today->toDateString();
         $activeSchools = School::where('is_active', true)->count();
@@ -223,6 +233,110 @@ class ReportController extends Controller
             'schools_with_active_subscriptions' => School::whereHas('subscriptions', function (Builder $query) use ($todayString) {
                 $this->applyCurrentSubscriptionScope($query, $todayString);
             })->count(),
+            'financial' => $this->buildFinancialSummary($period, $from, $to),
+        ];
+    }
+
+    protected function buildFinancialSummary(string $period = 'all_time', ?string $from = null, ?string $to = null): array
+    {
+        $now = Carbon::now();
+
+        // Base queries
+        $paymentsQuery = Payment::where('status', 'completed');
+        $expensesQuery = Expense::query();
+
+        $label = 'All Time';
+
+        if ($period === 'today') {
+            $paymentsQuery->whereDate('paid_at', $now->toDateString());
+            $expensesQuery->whereDate('spent_at', $now->toDateString());
+            $label = 'Today (' . $now->format('M d, Y') . ')';
+        } elseif ($period === 'this_month') {
+            $paymentsQuery->whereMonth('paid_at', $now->month)->whereYear('paid_at', $now->year);
+            $expensesQuery->whereMonth('spent_at', $now->month)->whereYear('spent_at', $now->year);
+            $label = 'This Month (' . $now->format('F Y') . ')';
+        } elseif ($period === 'this_year') {
+            $paymentsQuery->whereYear('paid_at', $now->year);
+            $expensesQuery->whereYear('spent_at', $now->year);
+            $label = 'This Year (' . $now->year . ')';
+        } elseif ($period === 'last_30_days') {
+            $paymentsQuery->where('paid_at', '>=', $now->copy()->subDays(30));
+            $expensesQuery->where('spent_at', '>=', $now->copy()->subDays(30)->toDateString());
+            $label = 'Last 30 Days';
+        } elseif ($from || $to) {
+            if ($from && $to) {
+                $paymentsQuery->whereBetween('paid_at', [$from . ' 00:00:00', $to . ' 23:59:59']);
+                $expensesQuery->whereBetween('spent_at', [$from, $to]);
+                $label = Carbon::parse($from)->format('M d, Y') . ' – ' . Carbon::parse($to)->format('M d, Y');
+            } elseif ($from) {
+                $paymentsQuery->where('paid_at', '>=', $from . ' 00:00:00');
+                $expensesQuery->where('spent_at', '>=', $from);
+                $label = 'From ' . Carbon::parse($from)->format('M d, Y');
+            } elseif ($to) {
+                $paymentsQuery->where('paid_at', '<=', $to . ' 23:59:59');
+                $expensesQuery->where('spent_at', '<=', $to);
+                $label = 'Up to ' . Carbon::parse($to)->format('M d, Y');
+            }
+        }
+
+        // 1. Total Revenue: Sum of completed payments (exclude failed, pending, refunded)
+        $totalRevenue = (float) $paymentsQuery->sum('amount');
+
+        // 2. Total Expenses: Sum of recorded expenses in backend
+        $totalExpenses = (float) $expensesQuery->sum('amount');
+
+        // 3. Net Profit: Total Revenue - Total Expenses
+        $netProfit = round($totalRevenue - $totalExpenses, 2);
+
+        // Precalculated Comparison Breakdowns
+        $allTimeRevenue = (float) Payment::where('status', 'completed')->sum('amount');
+        $allTimeExpenses = (float) Expense::sum('amount');
+        $allTimeProfit = round($allTimeRevenue - $allTimeExpenses, 2);
+
+        $monthRevenue = (float) Payment::where('status', 'completed')
+            ->whereMonth('paid_at', $now->month)
+            ->whereYear('paid_at', $now->year)
+            ->sum('amount');
+        $monthExpenses = (float) Expense::whereMonth('spent_at', $now->month)
+            ->whereYear('spent_at', $now->year)
+            ->sum('amount');
+        $monthProfit = round($monthRevenue - $monthExpenses, 2);
+
+        $yearRevenue = (float) Payment::where('status', 'completed')
+            ->whereYear('paid_at', $now->year)
+            ->sum('amount');
+        $yearExpenses = (float) Expense::whereYear('spent_at', $now->year)
+            ->sum('amount');
+        $yearProfit = round($yearRevenue - $yearExpenses, 2);
+
+        return [
+            'period'         => $period,
+            'period_label'   => $label,
+            'total_revenue'  => round($totalRevenue, 2),
+            'total_expenses' => round($totalExpenses, 2),
+            'net_profit'     => $netProfit,
+            'currency'       => 'USD',
+            'as_of_date'     => $now->format('F d, Y - h:i A'),
+            'breakdown'      => [
+                'all_time' => [
+                    'revenue'  => round($allTimeRevenue, 2),
+                    'expenses' => round($allTimeExpenses, 2),
+                    'profit'   => $allTimeProfit,
+                    'label'    => 'All Time',
+                ],
+                'this_month' => [
+                    'revenue'  => round($monthRevenue, 2),
+                    'expenses' => round($monthExpenses, 2),
+                    'profit'   => $monthProfit,
+                    'label'    => 'This Month (' . $now->format('F Y') . ')',
+                ],
+                'this_year' => [
+                    'revenue'  => round($yearRevenue, 2),
+                    'expenses' => round($yearExpenses, 2),
+                    'profit'   => $yearProfit,
+                    'label'    => 'This Year (' . $now->year . ')',
+                ],
+            ]
         ];
     }
 
