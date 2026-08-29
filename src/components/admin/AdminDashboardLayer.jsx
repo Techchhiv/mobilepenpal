@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import API from "../../helper/api";
 import AdminDashboardHeader from "./AdminDashboardHeader";
 import AdminDashboardUnitCount from "./AdminDashboardUnitCount";
+import AdminFinancialSummary from "./AdminFinancialSummary";
 import AdminDashboardQuickActions from "./AdminDashboardQuickActions";
 import AdminDashboardPracticeChart from "./AdminDashboardPracticeChart";
 import AdminDashboardActivityStream from "./AdminDashboardActivityStream";
@@ -9,6 +10,7 @@ import AdminDashboardTopSchools from "./AdminDashboardTopSchools";
 
 const AdminDashboardLayer = () => {
     const [summary, setSummary] = useState(null);
+    const [financialSummary, setFinancialSummary] = useState(null);
     const [practiceTrend, setPracticeTrend] = useState([]);
     const [topSchools, setTopSchools] = useState([]);
     const [activities, setActivities] = useState([]);
@@ -25,6 +27,7 @@ const AdminDashboardLayer = () => {
             if (response.data && response.data.data) {
                 const d = response.data.data;
                 setSummary(d.summary || null);
+                setFinancialSummary(d.financial_summary || d.summary?.financial || null);
                 setPracticeTrend(d.practice_trend || []);
                 setTopSchools(d.top_schools || []);
                 setActivities(d.recent_activities || []);
@@ -49,6 +52,12 @@ const AdminDashboardLayer = () => {
     return (
         <>
             <AdminDashboardHeader />
+
+            {/* Financial Summary: Total Revenue | Total Expenses | Net Profit */}
+            <AdminFinancialSummary
+                financial={financialSummary}
+                onExpenseUpdated={fetchDashboardData}
+            />
 
             <div className="mb-24">
                 <AdminDashboardUnitCount summary={summary} />

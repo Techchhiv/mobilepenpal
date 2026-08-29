@@ -1,0 +1,172 @@
+/* Operating Expenses & Financial Overview Styles with full Dark Mode support */
+
+.expenses-page {
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Custom Period Select Dropdown */
+.period-select-custom {
+    min-width: 140px;
+    height: 36px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* Category Filter Tabs */
+.category-tab-btn {
+    font-size: 12px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+/* ----------------------------------------------------
+   DARK MODE SUPPORT ([data-theme='dark'])
+   ---------------------------------------------------- */
+
+[data-theme='dark'] .expenses-page,
+[data-theme='dark'] .financial-summary-card {
+    color: #f1f5f9;
+}
+
+/* Text Overrides for Dark Mode */
+[data-theme='dark'] .expenses-page .text-dark,
+[data-theme='dark'] .expenses-page h4,
+[data-theme='dark'] .expenses-page h5,
+[data-theme='dark'] .expenses-page h6,
+[data-theme='dark'] .financial-summary-card .text-dark,
+[data-theme='dark'] .financial-summary-card h4,
+[data-theme='dark'] .financial-summary-card h5,
+[data-theme='dark'] .financial-summary-card h6 {
+    color: #f8fafc !important;
+}
+
+[data-theme='dark'] .expenses-page .text-secondary-light,
+[data-theme='dark'] .expenses-page .text-secondary,
+[data-theme='dark'] .financial-summary-card .text-secondary-light,
+[data-theme='dark'] .financial-summary-card .text-secondary {
+    color: #94a3b8 !important;
+}
+
+/* Cards & Headers in Dark Mode */
+[data-theme='dark'] .expenses-page .card,
+[data-theme='dark'] .financial-summary-card {
+    background-color: #1b2431 !important;
+    border-color: #2e3a4e !important;
+}
+
+[data-theme='dark'] .expenses-page .card-header,
+[data-theme='dark'] .expenses-page .card-footer,
+[data-theme='dark'] .financial-summary-card .card-header {
+    background-color: #1e293b !important;
+    border-color: #2e3a4e !important;
+}
+
+/* Period Dropdown in Dark Mode */
+[data-theme='dark'] .expenses-page .period-select-custom,
+[data-theme='dark'] .financial-summary-card .period-select-custom {
+    background-color: #1e293b !important;
+    color: #f1f5f9 !important;
+    border-color: #374151 !important;
+    color-scheme: dark;
+}
+
+[data-theme='dark'] .expenses-page .period-select-custom option,
+[data-theme='dark'] .financial-summary-card .period-select-custom option {
+    background-color: #1e293b !important;
+    color: #f1f5f9 !important;
+}
+
+/* Category Filter Tabs in Dark Mode */
+[data-theme='dark'] .expenses-page .category-tab-btn.tab-inactive {
+    background-color: #1e293b !important;
+    color: #94a3b8 !important;
+    border-color: #334155 !important;
+}
+
+[data-theme='dark'] .expenses-page .category-tab-btn.tab-inactive:hover {
+    background-color: #273549 !important;
+    color: #f8fafc !important;
+    border-color: #475569 !important;
+}
+
+/* Form Controls & Date Pickers in Dark Mode */
+[data-theme='dark'] .expenses-page .form-control,
+[data-theme='dark'] .expenses-page .form-select,
+[data-theme='dark'] .expenses-page .input-group-text,
+[data-theme='dark'] .expense-modal .form-control,
+[data-theme='dark'] .expense-modal .form-select,
+[data-theme='dark'] .expense-modal .input-group-text {
+    background-color: #111827 !important;
+    border-color: #374151 !important;
+    color: #f1f5f9 !important;
+    color-scheme: dark;
+}
+
+[data-theme='dark'] .expenses-page .form-control::placeholder,
+[data-theme='dark'] .expense-modal .form-control::placeholder {
+    color: #64748b !important;
+}
+
+[data-theme='dark'] .expenses-page .btn-light,
+[data-theme='dark'] .expense-modal .btn-light {
+    background-color: #1f2937 !important;
+    border-color: #374151 !important;
+    color: #94a3b8 !important;
+}
+
+/* Table in Dark Mode */
+[data-theme='dark'] .expenses-page .table {
+    --bs-table-bg: #1b2431;
+    --bs-table-color: #f1f5f9;
+    --bs-table-border-color: #2e3a4e;
+}
+
+[data-theme='dark'] .expenses-page .table thead th {
+    background-color: #1e293b !important;
+    color: #f8fafc !important;
+    border-color: #2e3a4e !important;
+}
+
+[data-theme='dark'] .expenses-page .table tbody tr {
+    background-color: #1b2431 !important;
+    border-color: #2e3a4e !important;
+}
+
+[data-theme='dark'] .expenses-page .table tbody td {
+    color: #f1f5f9 !important;
+    border-color: #2e3a4e !important;
+}
+
+[data-theme='dark'] .expenses-page .table tbody tr:hover td {
+    background-color: #222e40 !important;
+}
+
+/* Modal in Dark Mode */
+[data-theme='dark'] .expense-modal .modal-content {
+    background-color: #1e293b !important;
+    border-color: #374151 !important;
+    color: #f1f5f9 !important;
+}
+
+[data-theme='dark'] .expense-modal .modal-header {
+    border-color: #374151 !important;
+    background-color: #1e293b !important;
+}
+
+[data-theme='dark'] .expense-modal .modal-body {
+    background-color: #1e293b !important;
+}
+
+[data-theme='dark'] .expense-modal .modal-footer {
+    background-color: #111827 !important;
+    border-color: #374151 !important;
+}
+
+[data-theme='dark'] .expense-modal .form-label {
+    color: #e2e8f0 !important;
+}
+
+[data-theme='dark'] .expense-modal .btn-close {
+    filter: invert(1) grayscale(100%);
+}

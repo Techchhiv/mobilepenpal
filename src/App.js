@@ -23,6 +23,7 @@ import AdminStudentList from "./pages/admin/Student/StudentList";
 import AdminStudentCreate from "./pages/admin/Student/StudentCreate";
 import AdminStudentEdit from "./pages/admin/Student/StudentEdit";
 import AdminStudentView from "./pages/admin/Student/StudentView";
+import AdminExpensesPage from "./pages/admin/AdminExpensesPage";
 
 // ---------- School Pages ----------
 import SchoolSignInLayer from "./pages/school/page/SchoolSignin";
@@ -147,6 +148,7 @@ export default function App() {
             path="/admin/schools/:schoolId/payments"
             element={<SchoolPayments />}
           />
+          <Route path="/admin/expenses" element={<AdminExpensesPage />} />
         </Route>
 
         {/* ---------- Subscriptions (payment-manager or subscription menu) ---------- */}
