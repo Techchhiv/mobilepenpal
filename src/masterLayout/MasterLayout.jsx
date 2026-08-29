@@ -14,11 +14,9 @@ const MasterLayout = ({ children }) => {
   const [mobileMenu, setMobileMenu] = useState(false);
   const [openDropdownKey, setOpenDropdownKey] = useState(null);
   const showManageClients = isSuperAdmin || hasPermission("menu.manage_clients");
-  const showPayments = isSuperAdmin || hasPermission("menu.payments");
   const showExpenses = isSuperAdmin || hasPermission("menu.payments") || hasPermission("billing.view");
   const showSubscriptions = isSuperAdmin || hasPermission("menu.subscription") || hasPermission("menu.payments") || hasPermission("billing.view");
   const showInvoices = isSuperAdmin || hasPermission("billing.view") || hasPermission("menu.invoices") || hasPermission("menu.payments");
-  const showAnalytics = isSuperAdmin || hasPermission("menu.analytics");
   const showReports = isSuperAdmin || hasPermission("menu.reports");
   const showManageUsers = isSuperAdmin || hasPermission("users.manage");
   const showRoles = isSuperAdmin || hasPermission("roles.manage");
@@ -257,29 +255,11 @@ const MasterLayout = ({ children }) => {
               </li>
             )}
 
-            {showPayments && (
-              <li>
-                <NavLink to="/admin/payments">
-                  <Icon icon="mdi:credit-card" className="menu-icon" />
-                  <span>Payments</span>
-                </NavLink>
-              </li>
-            )}
-
             {showExpenses && (
               <li>
                 <NavLink to="/admin/expenses">
                   <Icon icon="mdi:cash-multiple" className="menu-icon" />
                   <span>Expenses</span>
-                </NavLink>
-              </li>
-            )}
-
-            {showAnalytics && (
-              <li>
-                <NavLink to="/admin/analytics">
-                  <Icon icon="mdi:chart-line" className="menu-icon" />
-                  <span>Analytics</span>
                 </NavLink>
               </li>
             )}
