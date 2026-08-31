@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:lottie/lottie.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:mobilepenpal/core/theme/app_colors.dart';
 import 'package:mobilepenpal/core/utils/number_format_utils.dart';
 import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
 import 'package:mobilepenpal/data/controllers/home/home_animation_controller.dart';
@@ -79,53 +77,44 @@ class ProfileHeaderCard extends StatelessWidget {
             AnimatedContainer(
               duration: const Duration(milliseconds: 300),
               curve: Curves.easeInOut,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(24),
-                border: isStudent
-                    ? Border.all(color: const Color(0xFF1E293B), width: 3.5)
-                    : null,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: const Color(0xFF232A3B), width: 2.2),
                 gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
                   colors: gradientColors ??
-                      (isStudent
-                          ? const [Color(0xFFFFA07A), Color(0xFFFF6347)]
-                          : const [AppColors.primary, AppColors.secondary]),
-                ),
-                boxShadow: isStudent
-                    ? const [
-                        BoxShadow(
-                          color: Color(0xFF1E293B),
-                          offset: Offset(0, 6),
-                          blurRadius: 0,
-                        ),
-                      ]
-                    : [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.08),
-                          blurRadius: 18,
-                          offset: const Offset(0, 10),
-                        ),
+                      [
+                        const Color(0xFF109E8B).withValues(alpha: 0.92),
+                        const Color(0xFF0C7365).withValues(alpha: 0.92),
                       ],
+                ),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0xFF232A3B),
+                    offset: Offset(0, 4),
+                    blurRadius: 0,
+                  ),
+                ],
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Container(
-                    width: 58,
-                    height: 58,
+                    width: 46,
+                    height: 46,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Colors.white.withValues(alpha: 0.22),
+                      color: Colors.white.withValues(alpha: 0.25),
                       border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.35),
-                        width: 2,
+                        color: Colors.white.withValues(alpha: 0.5),
+                        width: 1.5,
                       ),
                     ),
                     child: ClipOval(
                       child: isLoadingProfile
-                          ? Center(child: shimmerCircle(46))
+                          ? Center(child: shimmerCircle(36))
                           : _buildAvatarContent(homeController),
                     ),
                   ),
@@ -151,12 +140,13 @@ class ProfileHeaderCard extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               fontSize: 18,
-                              fontWeight: FontWeight.w900,
+                              fontWeight: FontWeight.w800,
                               color: Colors.white,
+                              letterSpacing: 0.2,
                             ),
                           ),
                           if (subtitle != null) ...[
-                            const SizedBox(height: 4),
+                            const SizedBox(height: 2),
                             Text(
                               subtitle!,
                               maxLines: 1,
@@ -175,22 +165,23 @@ class ProfileHeaderCard extends StatelessWidget {
 
                   if (trailing != null)
                     Padding(
-                      padding: const EdgeInsets.only(right: 8.0),
+                      padding: const EdgeInsets.only(right: 4.0),
                       child: trailing!,
                     )
                   else if (showCoin)
                     Padding(
-                      padding: const EdgeInsets.only(right: 8.0),
+                      padding: const EdgeInsets.only(right: 4.0),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(30),
-                          boxShadow: [
+                          border: Border.all(color: const Color(0xFF232A3B), width: 1.5),
+                          boxShadow: const [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.08),
-                              blurRadius: 8,
-                              offset: const Offset(0, 3),
+                              color: Color(0xFF232A3B),
+                              offset: Offset(0, 2),
+                              blurRadius: 0,
                             ),
                           ],
                         ),
@@ -200,35 +191,21 @@ class ProfileHeaderCard extends StatelessWidget {
                             Icon(
                               Icons.stars_rounded,
                               color: Colors.amber.shade600,
-                              size: 22,
+                              size: 20,
                             ),
-                            const SizedBox(width: 6),
+                            const SizedBox(width: 5),
                             Obx(() {
                               final coinVal = homeController.student.value?.coin ?? 0;
                               return Text(
                                 NumberFormatUtils.intText(coinVal),
                                 style: const TextStyle(
-                                  fontSize: 16,
+                                  fontSize: 15,
                                   fontWeight: FontWeight.w900,
                                   color: Color(0xFFE67E22),
                                 ),
                               );
                             }),
                           ],
-                        ),
-                      ),
-                    )
-                  else
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8.0),
-                      child: RepaintBoundary(
-                        child: Lottie.asset(
-                          'assets/animated/cat.json',
-                          width: 58,
-                          height: 58,
-                          repeat: true,
-                          animate: true,
-                          fit: BoxFit.cover,
                         ),
                       ),
                     ),

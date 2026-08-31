@@ -254,7 +254,7 @@ class DashboardPage extends StatelessWidget {
               duration: const Duration(milliseconds: 400),
               curve: Curves.easeInOut,
               child: Image.asset(
-                'assets/images/backgrounds/home_cartoon_background.png',
+                'assets/images/backgrounds/home_background.jpg',
                 fit: BoxFit.cover,
               ),
             ),
