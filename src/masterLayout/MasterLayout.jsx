@@ -26,14 +26,13 @@ const MasterLayout = ({ children }) => {
   // Curriculum
   const showWorldManage      = isSuperAdmin || hasPermission("worlds.view") || hasPermission("world.view");
   // Billing sub-items — each matches the exact backend middleware
-  const showPayments         = isSuperAdmin || hasPermission("menu.payments");
   const showInvoices         = isSuperAdmin || hasPermission("billing.view") || hasPermission("menu.payments");
   const showSchoolSubs       = isSuperAdmin || hasPermission("menu.payments");
   const showUserSubs         = isSuperAdmin || hasPermission("menu.payments");
   const showExpenses         = isSuperAdmin || hasPermission("billing.view") || hasPermission("menu.payments");
   // Show the Access Management parent if at least one child is accessible
   const showAccessManagement = showManageUsers || showRoles || showPermissions;
-  const showBilling          = showPayments || showInvoices || showSchoolSubs || showUserSubs || showExpenses;
+  const showBilling          = showInvoices || showSchoolSubs || showUserSubs || showExpenses;
 
   useEffect(() => {
     const p = location.pathname;
@@ -50,11 +49,9 @@ const MasterLayout = ({ children }) => {
     ) {
       setOpenDropdownKey("world");
     } else if (
-      p.startsWith("/admin/payments") ||
       p.startsWith("/admin/invoices") ||
       p.startsWith("/admin/subscriptions") ||
-      p.startsWith("/admin/expenses") ||
-      p.match(/^\/admin\/schools\/\d+\/payments/)
+      p.startsWith("/admin/expenses")
     ) {
       setOpenDropdownKey("billing");
     } else if (p.startsWith("/admin/students")) {
@@ -158,17 +155,6 @@ const MasterLayout = ({ children }) => {
                     transition: "max-height .25s ease",
                   }}
                 >
-                  {showPayments && (
-                    <li>
-                      <NavLink
-                        to="/admin/payments"
-                        className={({ isActive }) => (isActive ? "active-page" : "")}
-                      >
-                        <i className="ri-circle-fill circle-icon text-primary-600 w-auto" />
-                        Payments
-                      </NavLink>
-                    </li>
-                  )}
                   {showInvoices && (
                     <li>
                       <NavLink
