@@ -72,6 +72,7 @@ Route::middleware('auth:api')->group(function () {
 
         Route::middleware(['permission:menu.reports|reports.view'])->prefix('reports')->group(function () {
             Route::get('/schools', [ReportController::class, 'index']);
+            Route::get('/schools/export', [ReportController::class, 'export']); // Must be before /{school}
             Route::get('/schools/{school}', [ReportController::class, 'show']);
         });
 

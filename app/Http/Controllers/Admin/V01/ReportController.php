@@ -11,6 +11,7 @@ use App\Models\Teacher;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ReportController extends Controller
 {
@@ -105,6 +106,80 @@ class ReportController extends Controller
             'school' => $this->transformSchoolDetail($school, $today),
         ]);
     }
+
+    public function export(Request $request): StreamedResponse
+    {
+        $filters = $request->validate([
+            'search'              => 'nullable|string|max:255',
+            'school_status'       => 'nullable|in:active,inactive',
+            'subscription_status' => 'nullable|in:active,scheduled,expired,inactive,none',
+            'plan'                => 'nullable|in:monthly,yearly',
+            'financial_period'    => 'nullable|in:all_time,this_month,this_year,last_30_days,today',
+            'financial_from'      => 'nullable|date',
+            'financial_to'        => 'nullable|date',
+            'sort_by'             => 'nullable|in:name,created_at,students_count,teachers_count,active_students_count,active_teachers_count',
+            'sort_direction'      => 'nullable|in:asc,desc',
+        ]);
+
+        $today         = Carbon::today();
+        $sortBy        = $filters['sort_by'] ?? 'created_at';
+        $sortDirection = $filters['sort_direction'] ?? ($sortBy === 'name' ? 'asc' : 'desc');
+
+        $query = $this->buildSchoolReportQuery();
+        $this->applyFilters($query, $filters, $today);
+        $this->applySorting($query, $sortBy, $sortDirection);
+
+        $filename = 'school-report-' . now()->format('Y-m-d') . '.csv';
+
+        return new StreamedResponse(function () use ($query, $today) {
+            $handle = fopen('php://output', 'w');
+
+            // UTF-8 BOM for Excel compatibility
+            fwrite($handle, "\xEF\xBB\xBF");
+
+            // Header row
+            fputcsv($handle, [
+                'School Name', 'School Key', 'Admin Email', 'School Status',
+                'Total Students', 'Active Students',
+                'Total Teachers', 'Active Teachers',
+                'Plan', 'Subscription Status',
+                'Sub Start', 'Sub End',
+                'Created At', 'Last Updated At',
+            ]);
+
+            // Stream in chunks to avoid loading everything into memory
+            $query->chunk(200, function ($schools) use ($handle, $today) {
+                foreach ($schools as $school) {
+                    $row = $this->transformSchoolListItem($school, $today);
+                    fputcsv($handle, [
+                        $row['name'],
+                        $row['school_key'],
+                        $row['admin_email'],
+                        $row['status'],
+                        $row['students_count'],
+                        $row['active_students_count'],
+                        $row['teachers_count'],
+                        $row['active_teachers_count'],
+                        $row['subscription_plan'] ?? '',
+                        $row['subscription_status'] ?? '',
+                        $row['subscription_start_date'] ?? '',
+                        $row['subscription_end_date'] ?? '',
+                        $row['created_at'] ? Carbon::parse($row['created_at'])->format('Y-m-d H:i') : '',
+                        $row['updated_at'] ? Carbon::parse($row['updated_at'])->format('Y-m-d H:i') : '',
+                    ]);
+                }
+            });
+
+            fclose($handle);
+        }, 200, [
+            'Content-Type'        => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Cache-Control'       => 'no-cache, no-store, must-revalidate',
+            'Pragma'              => 'no-cache',
+            'Expires'             => '0',
+        ]);
+    }
+
 
     protected function buildSchoolReportQuery(): Builder
     {
