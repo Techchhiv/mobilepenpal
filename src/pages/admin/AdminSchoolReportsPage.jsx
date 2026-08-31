@@ -22,7 +22,6 @@ export default function AdminSchoolReportsPage() {
 
   const {
     pagedList,
-    filteredList,
     summaryStats,
     totalPages,
     totalItems,
@@ -45,8 +44,9 @@ export default function AdminSchoolReportsPage() {
         <div className="d-flex justify-content-between align-items-center mb-3">
           <h5 className="fw-semibold mb-0">School Reports</h5>
           <ExportCSVButton
-            schools={filteredList}
-            disabled={loading || filteredList.length === 0}
+            filters={filters}
+            totalItems={totalItems}
+            disabled={loading}
           />
         </div>
 

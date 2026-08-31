@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const STATUS_BADGE = {
   active:    { bg: 'bg-success-focus', text: 'text-success-main' },
@@ -25,6 +25,7 @@ function formatDate(isoString) {
 
 export default function SchoolReportRow({ school }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const {
     schoolName,
     schoolCode,
@@ -43,7 +44,10 @@ export default function SchoolReportRow({ school }) {
 
   return (
     <tr
-      onClick={() => navigate(`/admin/reports/schools/${school.schoolId}`)}
+      onClick={() => navigate({
+        pathname: `/admin/reports/schools/${school.schoolId}`,
+        search: location.search, // preserve current filters + page for Back button
+      })}
       style={{ cursor: 'pointer' }}
     >
       <td>

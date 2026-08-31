@@ -109,6 +109,10 @@ export default function App() {
           <Route path="/admin/users" element={<AdminUsersPage />} />
           <Route path="/admin/roles" element={<AdminRolesPage />} />
           <Route path="/admin/permissions" element={<AdminPermissionsPage />} />
+        </Route>
+
+        {/* ---------- Reports (menu.reports OR reports.view) — must match backend permission ---------- */}
+        <Route element={<Gate anyPerm={["menu.reports", "reports.view"]} />}>
           <Route path="/admin/reports" element={<AdminSchoolReportsPage />} />
           <Route path="/admin/reports/schools/:id" element={<SchoolDetailPage />} />
         </Route>
@@ -138,18 +142,22 @@ export default function App() {
         </Route>
 
 
-        {/* ---------- Payments (Payment Manager only) ---------- */}
+        {/* ---------- Payments (menu.payments — matches backend) ---------- */}
         <Route element={<Gate anyPerm={["menu.payments"]} />}>
           <Route path="/admin/payments" element={<ManagePaymentsPage />} />
           <Route
             path="/admin/schools/:schoolId/payments"
             element={<SchoolPayments />}
           />
+        </Route>
+
+        {/* ---------- Expenses (billing.view OR menu.payments — matches backend) ---------- */}
+        <Route element={<Gate anyPerm={["billing.view", "menu.payments"]} />}>
           <Route path="/admin/expenses" element={<AdminExpensesPage />} />
         </Route>
 
-        {/* ---------- Subscriptions (payment-manager or subscription menu) ---------- */}
-        <Route element={<Gate anyPerm={["menu.payments", "menu.subscription", "billing.view"]} />}>
+        {/* ---------- Subscriptions (menu.payments only — backend requires menu.payments) ---------- */}
+        <Route element={<Gate anyPerm={["menu.payments"]} />}>
           <Route path="/admin/subscriptions/schools" element={<SchoolSubscriptionsPage />} />
           <Route path="/admin/subscriptions/users" element={<UserSubscriptionsPage />} />
         </Route>
@@ -352,11 +360,11 @@ export default function App() {
 
         <Route path="/" element={<Navigate to="/sign-in-school" replace />} />
 
-        {/* ---------- Super Admin: Audit Logs ---------- */}
+        {/* ---------- Super Admin: Audit Logs (superAdminOnly — backend requires super_admin middleware) ---------- */}
         <Route
           path="/admin/audit-logs"
           element={
-            <Gate>
+            <Gate superAdminOnly>
               <AuditLogPage />
             </Gate>
           }

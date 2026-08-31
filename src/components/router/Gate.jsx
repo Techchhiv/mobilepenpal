@@ -2,7 +2,16 @@ import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import LoadingSpinner from "../LoadingSpinner";
 
-export default function Gate({ anyPerm = [], allPerm = [], children }) {
+/**
+ * Gate — route permission guard.
+ *
+ * Props:
+ *   anyPerm       {string[]}  — user must have at least one of these permissions
+ *   allPerm       {string[]}  — user must have ALL of these permissions
+ *   superAdminOnly {boolean}  — only Super Admin may access; all others get redirected
+ *   children                  — used when Gate wraps a single element (not an Outlet pattern)
+ */
+export default function Gate({ anyPerm = [], allPerm = [], superAdminOnly = false, children }) {
   const { loading, isAuthenticated, user, isSuperAdmin, isSchoolAdmin, isSchoolUser, hasPermission, hasAnyPermission } = useAuth();
   const location = useLocation();
 
@@ -23,7 +32,13 @@ export default function Gate({ anyPerm = [], allPerm = [], children }) {
     return <Navigate to="/admin" replace />;
   }
 
+  // Super Admin bypasses all checks
   if (isSuperAdmin) return children || <Outlet />;
+
+  // Super Admin only routes — block everyone else
+  if (superAdminOnly) {
+    return <Navigate to="/access-denied" replace />;
+  }
 
   // Check permissions
   const anyOK = anyPerm.length === 0 || hasAnyPermission(anyPerm);

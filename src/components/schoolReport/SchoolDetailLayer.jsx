@@ -1,5 +1,6 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Icon } from '@iconify/react';
+import { useAuth } from '../../context/AuthContext';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -225,7 +226,18 @@ function SubscriptionHistorySection({ history = [] }) {
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function SchoolDetailLayer({ school, loading, error }) {
-  const navigate = useNavigate();
+  const navigate   = useNavigate();
+  const location   = useLocation();
+  const { isSuperAdmin, hasPermission } = useAuth();
+
+  // Resolve the "back" URL: use the query string stored in the current URL
+  // (placed there by SchoolReportRow when navigating here), fall back to /admin/reports
+  const backSearch = location.search || '';
+  const backTo     = `/admin/reports${backSearch}`;
+
+  // Billing shortcut permissions (mirror route gates in App.js)
+  const canViewPayments = isSuperAdmin || hasPermission('menu.payments');
+  const canViewInvoices = isSuperAdmin || hasPermission('billing.view') || hasPermission('menu.payments');
 
   if (loading) {
     return (
@@ -255,7 +267,7 @@ export default function SchoolDetailLayer({ school, loading, error }) {
         <button
           type="button"
           className="btn btn-sm btn-outline-primary radius-8 d-inline-flex align-items-center gap-8"
-          onClick={() => navigate('/admin/reports')}
+          onClick={() => navigate(backTo)}
         >
           <Icon icon="mdi:arrow-left" />
           Back to School Reports
@@ -276,7 +288,35 @@ export default function SchoolDetailLayer({ school, loading, error }) {
               </p>
             </div>
           </div>
-          <StatusBadge status={school.status} />
+
+          {/* Right side: Status badge + Billing Shortcuts */}
+          <div className="d-flex align-items-center gap-12 flex-wrap">
+            <StatusBadge status={school.status} />
+
+            {/* Billing Shortcuts — only visible when user has permission */}
+            {canViewPayments && (
+              <button
+                type="button"
+                className="btn btn-sm btn-outline-primary radius-8 d-inline-flex align-items-center gap-6"
+                onClick={() => navigate(`/admin/schools/${school.schoolId}/payments`)}
+                title="View school payments"
+              >
+                <Icon icon="mdi:cash-multiple" className="text-sm" />
+                View Payments
+              </button>
+            )}
+            {canViewInvoices && (
+              <button
+                type="button"
+                className="btn btn-sm btn-outline-secondary radius-8 d-inline-flex align-items-center gap-6"
+                onClick={() => navigate('/admin/invoices')}
+                title="View invoices"
+              >
+                <Icon icon="mdi:file-document-outline" className="text-sm" />
+                View Invoices
+              </button>
+            )}
+          </div>
         </div>
       </div>
 

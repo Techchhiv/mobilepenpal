@@ -13,22 +13,32 @@ const MasterLayout = ({ children }) => {
   const [sidebarActive, setSidebarActive] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
   const [openDropdownKey, setOpenDropdownKey] = useState(null);
-  const showManageClients = isSuperAdmin || hasPermission("menu.manage_clients");
-  const showExpenses = isSuperAdmin || hasPermission("menu.payments") || hasPermission("billing.view");
-  const showSubscriptions = isSuperAdmin || hasPermission("menu.subscription") || hasPermission("menu.payments") || hasPermission("billing.view");
-  const showInvoices = isSuperAdmin || hasPermission("billing.view") || hasPermission("menu.invoices") || hasPermission("menu.payments");
-  const showReports = isSuperAdmin || hasPermission("menu.reports");
-  const showManageUsers = isSuperAdmin || hasPermission("users.manage");
-  const showRoles = isSuperAdmin || hasPermission("roles.manage");
-  const showPermissions = isSuperAdmin || hasPermission("permissions.manage");
-  const showWorldManage = isSuperAdmin || hasPermission("worlds.view") || hasPermission("world.view");
-  const showStudents = isSuperAdmin || hasPermission("student.view") || hasPermission("children.view");
+
+  // ── Permission booleans aligned with backend RBAC ──────────────────────────
+  const showManageClients    = isSuperAdmin || hasPermission("menu.manage_clients");
+  const showStudents         = isSuperAdmin || hasPermission("student.view") || hasPermission("children.view");
+  // Reports: backend requires menu.reports OR reports.view
+  const showReports          = isSuperAdmin || hasPermission("menu.reports") || hasPermission("reports.view");
+  // User management
+  const showManageUsers      = isSuperAdmin || hasPermission("users.manage");
+  const showRoles            = isSuperAdmin || hasPermission("roles.manage");
+  const showPermissions      = isSuperAdmin || hasPermission("permissions.manage");
+  // Curriculum
+  const showWorldManage      = isSuperAdmin || hasPermission("worlds.view") || hasPermission("world.view");
+  // Billing sub-items — each matches the exact backend middleware
+  const showPayments         = isSuperAdmin || hasPermission("menu.payments");
+  const showInvoices         = isSuperAdmin || hasPermission("billing.view") || hasPermission("menu.payments");
+  const showSchoolSubs       = isSuperAdmin || hasPermission("menu.payments");
+  const showUserSubs         = isSuperAdmin || hasPermission("menu.payments");
+  const showExpenses         = isSuperAdmin || hasPermission("billing.view") || hasPermission("menu.payments");
+  // Show the Billing parent if at least one child is accessible
+  const showBilling          = showPayments || showInvoices || showSchoolSubs || showUserSubs || showExpenses;
 
   useEffect(() => {
     const p = location.pathname;
     if (p.startsWith("/admin/users") || p.startsWith("/admin/roles") || p.startsWith("/admin/permissions")) {
       setOpenDropdownKey("access");
-    } else if (p.startsWith("/admin/schools")) {
+    } else if (p.startsWith("/admin/schools") && !p.includes("/payments")) {
       setOpenDropdownKey("management");
     } else if (
       p.startsWith("/admin/worlds") ||
@@ -38,10 +48,14 @@ const MasterLayout = ({ children }) => {
       p.startsWith("/admin/question-templates")
     ) {
       setOpenDropdownKey("world");
-    } else if (p.startsWith("/admin/subscriptions")) {
-      setOpenDropdownKey("subscriptions");
-    } else if (p.startsWith("/admin/invoices")) {
-      setOpenDropdownKey("subscriptions");
+    } else if (
+      p.startsWith("/admin/payments") ||
+      p.startsWith("/admin/invoices") ||
+      p.startsWith("/admin/subscriptions") ||
+      p.startsWith("/admin/expenses") ||
+      p.match(/^\/admin\/schools\/\d+\/payments/)
+    ) {
+      setOpenDropdownKey("billing");
     } else if (p.startsWith("/admin/students")) {
       setOpenDropdownKey(null);
     } else {
@@ -117,20 +131,20 @@ const MasterLayout = ({ children }) => {
               </li>
             )}
 
-            {showSubscriptions && (
-              <li className={`dropdown ${openDropdownKey === "subscriptions" ? "open" : ""}`}>
+            {showBilling && (
+              <li className={`dropdown ${openDropdownKey === "billing" ? "open" : ""}`}>
                 <a
-                  href="#subscriptions"
-                  className={`menu-trigger ${openDropdownKey === "subscriptions" ? "active-page" : ""}`}
+                  href="#billing"
+                  className={`menu-trigger ${openDropdownKey === "billing" ? "active-page" : ""}`}
                   onClick={(e) => {
                     e.preventDefault();
-                    setOpenDropdownKey((prev) => (prev === "subscriptions" ? null : "subscriptions"));
+                    setOpenDropdownKey((prev) => (prev === "billing" ? null : "billing"));
                   }}
                 >
                   <Icon icon="mdi:card-account-details-star" className="menu-icon" />
                   <span>Billing</span>
                   <Icon
-                    icon={openDropdownKey === "subscriptions" ? "mdi:chevron-up" : "mdi:chevron-down"}
+                    icon={openDropdownKey === "billing" ? "mdi:chevron-up" : "mdi:chevron-down"}
                     className="caret ms-auto"
                   />
                 </a>
@@ -138,11 +152,22 @@ const MasterLayout = ({ children }) => {
                 <ul
                   className="sidebar-submenu"
                   style={{
-                    maxHeight: openDropdownKey === "subscriptions" ? "600px" : "0px",
+                    maxHeight: openDropdownKey === "billing" ? "600px" : "0px",
                     overflow: "hidden",
                     transition: "max-height .25s ease",
                   }}
                 >
+                  {showPayments && (
+                    <li>
+                      <NavLink
+                        to="/admin/payments"
+                        className={({ isActive }) => (isActive ? "active-page" : "")}
+                      >
+                        <i className="ri-circle-fill circle-icon text-primary-600 w-auto" />
+                        Payments
+                      </NavLink>
+                    </li>
+                  )}
                   {showInvoices && (
                     <li>
                       <NavLink
@@ -154,27 +179,52 @@ const MasterLayout = ({ children }) => {
                       </NavLink>
                     </li>
                   )}
-                  <li>
-                    <NavLink
-                      to="/admin/subscriptions/schools"
-                      className={({ isActive }) => (isActive ? "active-page" : "")}
-                    >
-                      <i className="ri-circle-fill circle-icon text-primary-600 w-auto" />
-                      School Subscriptions
-                    </NavLink>
-                  </li>
-                  <li>
-                    <NavLink
-                      to="/admin/subscriptions/users"
-                      className={({ isActive }) => (isActive ? "active-page" : "")}
-                    >
-                      <i className="ri-circle-fill circle-icon text-warning-main w-auto" />
-                      User Subscriptions
-                    </NavLink>
-                  </li>
+                  {showSchoolSubs && (
+                    <li>
+                      <NavLink
+                        to="/admin/subscriptions/schools"
+                        className={({ isActive }) => (isActive ? "active-page" : "")}
+                      >
+                        <i className="ri-circle-fill circle-icon text-info-main w-auto" />
+                        School Subscriptions
+                      </NavLink>
+                    </li>
+                  )}
+                  {showUserSubs && (
+                    <li>
+                      <NavLink
+                        to="/admin/subscriptions/users"
+                        className={({ isActive }) => (isActive ? "active-page" : "")}
+                      >
+                        <i className="ri-circle-fill circle-icon text-warning-main w-auto" />
+                        User Subscriptions
+                      </NavLink>
+                    </li>
+                  )}
+                  {showExpenses && (
+                    <li>
+                      <NavLink
+                        to="/admin/expenses"
+                        className={({ isActive }) => (isActive ? "active-page" : "")}
+                      >
+                        <i className="ri-circle-fill circle-icon text-danger-main w-auto" />
+                        Expenses
+                      </NavLink>
+                    </li>
+                  )}
                 </ul>
               </li>
             )}
+
+            {showReports && (
+              <li>
+                <NavLink to="/admin/reports">
+                  <Icon icon="mdi:file-chart" className="menu-icon" />
+                  <span>Reports</span>
+                </NavLink>
+              </li>
+            )}
+
 
             {showWorldManage && (
               <li className={`dropdown ${openDropdownKey === "world" ? "open" : ""}`}>
@@ -255,22 +305,6 @@ const MasterLayout = ({ children }) => {
               </li>
             )}
 
-            {showExpenses && (
-              <li>
-                <NavLink to="/admin/expenses">
-                  <Icon icon="mdi:cash-multiple" className="menu-icon" />
-                  <span>Expenses</span>
-                </NavLink>
-              </li>
-            )}
-            {showReports && (
-              <li>
-                <NavLink to="/admin/reports">
-                  <Icon icon="mdi:file-chart" className="menu-icon" />
-                  <span>Manage Report</span>
-                </NavLink>
-              </li>
-            )}
 
             {showManageUsers && (
               <li
