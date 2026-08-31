@@ -47,8 +47,8 @@ const AdminDashboardQuickActions = () => {
             icon: "ph:file-text-bold",
             to: "/admin/invoices",
         },
-        // Global Functions (system settings) — only for payment managers or super admin
-        (isSuperAdmin || hasAnyPermission(["menu.payments", "users.manage"])) && {
+        // Global Functions — destination requires menu.payments; do NOT show for users.manage only
+        (isSuperAdmin || hasPermission("menu.payments")) && {
             title: "Global Functions",
             desc: "Price config & feature lock modal",
             icon: "ph:gear-six-bold",
@@ -65,8 +65,8 @@ const AdminDashboardQuickActions = () => {
                     <Icon icon="solar:bolt-bold-duotone" className="text-primary-600 text-xl" />
                     <h6 className="mb-0 fw-bold">Quick Actions</h6>
                 </div>
-                {/* Feature Locks shortcut — super-admin or payment/user managers only */}
-                {(isSuperAdmin || hasAnyPermission(["menu.payments", "users.manage"])) && (
+                {/* Feature Locks shortcut — destination requires menu.payments */}
+                {(isSuperAdmin || hasPermission("menu.payments")) && (
                     <div className="d-flex align-items-center gap-2">
                         <Link
                             to="/admin/subscriptions/users?modal=feature_locks"

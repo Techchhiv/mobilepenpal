@@ -31,7 +31,8 @@ const MasterLayout = ({ children }) => {
   const showSchoolSubs       = isSuperAdmin || hasPermission("menu.payments");
   const showUserSubs         = isSuperAdmin || hasPermission("menu.payments");
   const showExpenses         = isSuperAdmin || hasPermission("billing.view") || hasPermission("menu.payments");
-  // Show the Billing parent if at least one child is accessible
+  // Show the Access Management parent if at least one child is accessible
+  const showAccessManagement = showManageUsers || showRoles || showPermissions;
   const showBilling          = showPayments || showInvoices || showSchoolSubs || showUserSubs || showExpenses;
 
   useEffect(() => {
@@ -306,7 +307,7 @@ const MasterLayout = ({ children }) => {
             )}
 
 
-            {showManageUsers && (
+            {showAccessManagement && (
               <li
                 className={`dropdown ${openDropdownKey === "access" ? "open" : ""}`}
               >

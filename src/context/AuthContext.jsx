@@ -21,8 +21,7 @@ function deriveAuth(userObj) {
     isTeacher ||
     Boolean(userObj?.school_id) ||
     roleNames.includes("student") ||
-    roleNames.includes("parent") ||
-    roleNames.some(r => r.includes("manager") || r.includes("school"));
+    roleNames.includes("parent");
 
   const hasRole = role => roleNames.includes(role.toLowerCase());
   const hasPermission = perm => isSuperAdmin || permNames.includes(perm.toLowerCase());
