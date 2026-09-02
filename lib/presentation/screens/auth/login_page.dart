@@ -18,6 +18,7 @@ class LoginPage extends StatelessWidget {
         backgroundColor: AppColors.primary,
         elevation: 0,
         automaticallyImplyLeading: false,
+        centerTitle: false,
         title: Obx(
           () => InkWell(
             onTap: authController.isLoading.value
