@@ -8,7 +8,7 @@
 PRODUCT_NAME = mobilepenpal
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.example.mobilepenpal
+PRODUCT_BUNDLE_IDENTIFIER = com.khmerpenpal.mobilepenpal
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2025 com.example. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2025 com.khmerpenpal. All rights reserved.

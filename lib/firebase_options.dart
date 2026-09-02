@@ -65,7 +65,7 @@ class DefaultFirebaseOptions {
     storageBucket: 'email-verification-f9443.firebasestorage.app',
     androidClientId: '297443227129-l48lnelinjhphtq0e0upamam6je8dlo3.apps.googleusercontent.com',
     iosClientId: '297443227129-cim6qeb7bh35kbls8sjg4ccijqj4f5gn.apps.googleusercontent.com',
-    iosBundleId: 'com.example.mobilepenpal',
+    iosBundleId: 'com.khmerpenpal.mobilepenpal',
   );
   static const FirebaseOptions macos = FirebaseOptions(
     apiKey: 'AIzaSyBoDWt3gSetyJxSBHpRvVMXOuM959QtOqM',
@@ -75,7 +75,7 @@ class DefaultFirebaseOptions {
     storageBucket: 'email-verification-f9443.firebasestorage.app',
     androidClientId: '297443227129-l48lnelinjhphtq0e0upamam6je8dlo3.apps.googleusercontent.com',
     iosClientId: '297443227129-cim6qeb7bh35kbls8sjg4ccijqj4f5gn.apps.googleusercontent.com',
-    iosBundleId: 'com.example.mobilepenpal',
+    iosBundleId: 'com.khmerpenpal.mobilepenpal',
   );
   static const FirebaseOptions windows = FirebaseOptions(
     apiKey: 'AIzaSyAZmFmDlVbq7sZGg31JDzJxO8oxVepOGRA',

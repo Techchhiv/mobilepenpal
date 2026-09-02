@@ -1,6 +1,6 @@
 {
-    "name": "mobilepenpal",
-    "short_name": "mobilepenpal",
+    "name": "Khmer PenPal",
+    "short_name": "Khmer PenPal",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
