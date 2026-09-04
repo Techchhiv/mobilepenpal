@@ -472,10 +472,10 @@ final Map<String, String> kmKH = {
   'still_offline': 'នៅតែគ្មានអ៊ីនធឺណិត។',
 
   // ===== Stroke Feedback =====
-  'feedback_draw_slowly': 'គូរយឺតៗតាមស្រមោល!',
+  'feedback_draw_slowly': 'គូរយឺតៗតាមការណែនាំ!',
   'feedback_wrong_count': 'គូរខុសចំនួនបន្ទាត់សរសេរ!',
   'feedback_out_of_bounds': 'កុំគូរចេញក្រៅ!',
-  'feedback_incomplete': 'សូមគូរឲ្យតាមស្រមោល!',
+  'feedback_incomplete': 'សូមគូរតាមការណែនាំ!',
   'feedback_wrong_direction': 'គូរខុសទិសដៅ!',
   'feedback_wrong_order': 'គូរខុសលំដាប់!',
   'feedback_wrong_character': 'គូរមិនត្រូវតាមអក្សរនេះទេ!',

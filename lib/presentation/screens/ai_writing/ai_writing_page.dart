@@ -159,8 +159,7 @@ class _AiWritingPageState extends State<AiWritingPage>
       // Check if the character is beyond the free limit
       final allChars = _getCurrentList();
       final charIndex = allChars.indexOf(ch);
-      // Only consonants category has free limit; all other categories are locked
-      if (_currentCategory != _WritingCategory.consonants || charIndex >= freeLimit) {
+      if (charIndex >= freeLimit) {
         _showSubscribeModal();
         return;
       }
@@ -192,10 +191,7 @@ class _AiWritingPageState extends State<AiWritingPage>
 
     setState(() {
       if (!hasSub && locksEnabled) {
-        if (_currentCategory == _WritingCategory.consonants) {
-          _selected.addAll(_getCurrentList().take(freeLimit));
-        }
-        // Other categories are fully locked for free users — do nothing
+        _selected.addAll(_getCurrentList().take(freeLimit));
       } else {
         _selected.addAll(_getCurrentList());
       }
@@ -484,8 +480,7 @@ class _AiWritingPageState extends State<AiWritingPage>
                         final hasSub = homeCtrl.hasSubscription;
                         final locksEnabled = homeCtrl.featureLocksEnabled.value;
                         final freeLimit = homeCtrl.aiWritingFreeCharLimit.value;
-                        final isLocked = !hasSub && locksEnabled &&
-                            (_currentCategory != _WritingCategory.consonants || i >= freeLimit);
+                        final isLocked = !hasSub && locksEnabled && (i >= freeLimit);
 
                         return _CharBlockTile(
                           character: ch,

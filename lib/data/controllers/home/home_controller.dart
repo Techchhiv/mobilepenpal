@@ -60,7 +60,7 @@ class HomeController extends GetxController {
   // Feature lock settings (dynamic from backend)
   var featureLocksEnabled = true.obs;
   var miniGameFreeDailyLimit = 3.obs;
-  var aiWritingFreeCharLimit = 4.obs;
+  var aiWritingFreeCharLimit = 80.obs;
   var learningFreeStageLimit = 10.obs;
 
   String get avatarUrl => student.value?.avatar ?? '';
@@ -527,7 +527,7 @@ class HomeController extends GetxController {
         aiWritingFreeCharLimit.value = (s['ai_writing_free_char_limit'] is num)
             ? (s['ai_writing_free_char_limit'] as num).toInt()
             : int.tryParse(s['ai_writing_free_char_limit']?.toString() ?? '') ??
-                  4;
+                  80;
         learningFreeStageLimit.value = (s['learning_free_stage_limit'] is num)
             ? (s['learning_free_stage_limit'] as num).toInt()
             : int.tryParse(s['learning_free_stage_limit']?.toString() ?? '') ??

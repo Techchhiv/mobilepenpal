@@ -15,9 +15,7 @@ import 'package:mobilepenpal/data/controllers/world/stage_audio_controller.dart'
 import 'package:mobilepenpal/data/controllers/world/stage_animation_controller.dart';
 import 'package:mobilepenpal/data/models/api_response.dart';
 import 'package:mobilepenpal/data/models/student/student.dart';
-import 'package:mobilepenpal/data/services/drawing_evaluation_service.dart';
 import 'package:mobilepenpal/data/services/next_stroke_predictor_service.dart';
-import 'package:mobilepenpal/data/services/onnx_inference_service.dart';
 import 'package:mobilepenpal/data/services/world_service.dart';
 import 'package:mobilepenpal/presentation/widgets/ai_writing/stitch_debug_painter.dart';
 
@@ -52,7 +50,6 @@ class AiWritingController extends GetxController
 
   final GetStorage _box = GetStorage();
   final WorldService _worldService = WorldService();
-  final DrawingEvaluationService _evalService = DrawingEvaluationService();
 
   // ── Drawing state ──────────────────────────────────────────────────────
   final drawingController = DrawingController();
@@ -998,8 +995,35 @@ class AiWritingController extends GetxController
       return;
     }
 
+    // Count meaningful user strokes (matching the noise filter in evaluateDrawingProgress)
+    final meaningfulCount = validUserStrokes.where((stroke) {
+      if (stroke.length < 3) return false;
+      double totalLen = 0.0;
+      for (int i = 1; i < stroke.length; i++) {
+        final p1 = stroke[i - 1];
+        final p2 = stroke[i];
+        final dx = (p2['x'] as num).toDouble() - (p1['x'] as num).toDouble();
+        final dy = (p2['y'] as num).toDouble() - (p1['y'] as num).toDouble();
+        totalLen += (dx * dx + dy * dy > 0) ? Offset(dx, dy).distance : 0.0;
+      }
+      return totalLen > 8.0;
+    }).length;
+
+    final templateCount = canvasTemplateStrokesPx.length;
+    final isPartialDrawing = meaningfulCount < templateCount;
+
+    // Only auto-center when the user has drawn all strokes. Centering a partial
+    // drawing against the full template bounding box is geometrically incorrect
+    // (e.g. drawing េ of ៀ would get skewed toward the full ៀ center).
+    final strokesToValidate = isPartialDrawing
+        ? validUserStrokes
+        : StrokeTransformUtil.autoCenterStrokes(
+            validUserStrokes,
+            canvasTemplateStrokesPx,
+          );
+
     final progressResult = AiStrokeFeedbackUtil.evaluateDrawingProgress(
-      userRawStrokes: validUserStrokes,
+      userRawStrokes: strokesToValidate,
       templateStrokesPx: canvasTemplateStrokesPx,
     );
 
@@ -1012,7 +1036,15 @@ class AiWritingController extends GetxController
         .clamp(0.0, 1.0);
     _updateGuideCirclePosition();
 
-    if (progressResult.hasError) {
+    // For compound dependent vowels (ៀ, ឿ, ោះ, etc.), suppress real-time
+    // error messages while the user hasn't drawn all required strokes yet.
+    // The partial components (e.g. េ of ៀ) look spatially different until
+    // the full character is completed, causing false positives.
+    // The final submission check (getFeedback) will still catch actual errors.
+    final isDepVowel = getModelTypeForChar(currentChar) == 'dependent_vowel';
+    final suppressError = isDepVowel && isPartialDrawing;
+
+    if (progressResult.hasError && !suppressError) {
       // Mistake detected -> freeze guide at mistake point & show guidance message
       isHintValid.value = false;
       final reason = progressResult.errorReason ?? 'feedback_scribble_detected';
@@ -1115,55 +1147,6 @@ class AiWritingController extends GetxController
     return 'consonant';
   }
 
-  Map<String, dynamic> _getXYStrokeWithTime(String modelType) {
-    final s = canvasSize / 340.0;
-    final validStrokes = _rawStrokes
-        .where((stroke) => stroke.length >= 2)
-        .toList();
-
-    return {
-      "strokes": validStrokes
-          .map(
-            (stroke) => {
-              "points": stroke
-                  .map(
-                    (p) => {
-                      "x": (p["x"] as num).toDouble() / s,
-                      "y": (p["y"] as num).toDouble() / s,
-                      "time": (p["time"] as num?)?.toInt(),
-                    },
-                  )
-                  .toList(),
-            },
-          )
-          .toList(),
-      "model_type": modelType,
-    };
-  }
-
-  bool _isDrawingCorrect(String prediction, String expected) {
-    final p = prediction.trim();
-    final e = expected.trim();
-    if (p == e) return true;
-
-    const arabicToKhmer = {
-      '0': '០',
-      '1': '១',
-      '2': '២',
-      '3': '៣',
-      '4': '៤',
-      '5': '៥',
-      '6': '៦',
-      '7': '៧',
-      '8': '៨',
-      '9': '៩',
-    };
-
-    final normP = arabicToKhmer[p] ?? p;
-    final normE = arabicToKhmer[e] ?? e;
-    return normP == normE;
-  }
-
   Future<void> checkDrawingAndSubmit(VoidCallback onFinished) async {
     final validStrokes = _rawStrokes.where((s) => s.length >= 2).toList();
     if (validStrokes.isEmpty) {
@@ -1183,31 +1166,8 @@ class AiWritingController extends GetxController
       bool isCorrect = false;
       String? strokeHint;
       final expected = currentChar.trim();
-      final modelType = getModelTypeForChar(expected);
-      final isSupported = OnnxInferenceService.instance.supportsCharacter(
-        expected,
-        modelType,
-      );
 
-      // ── Step 1: AI Character Recognition ────────────────────────────
-      String prediction = '';
-      bool aiRecognized = false;
-
-      if (isSupported) {
-        final evalResult = await _evalService.predictBoard(
-          modelType: modelType,
-          rawStrokes: _rawStrokes,
-          getPayload: () => _getXYStrokeWithTime(modelType),
-        );
-        prediction = (evalResult?['prediction'] ?? '').toString().trim();
-        aiRecognized = _isDrawingCorrect(prediction, expected);
-      } else {
-        // Character not present in classifier model set, rely on structural validation
-        aiRecognized = true;
-        prediction = expected;
-      }
-
-      // ── Step 2: Structural & Geometric Validation (count, direction, length, outliers)
+      // ── Structural & Geometric Validation (count, order, direction, length, outliers) ──
       if (canvasTemplateStrokesPx.isNotEmpty) {
         final centered = StrokeTransformUtil.autoCenterStrokes(
           _rawStrokes,
@@ -1221,20 +1181,9 @@ class AiWritingController extends GetxController
         );
       }
 
-      // ── Step 3: Combined Evaluation Decision ─────────────────────────
-      if (aiRecognized && strokeHint == null) {
-        isCorrect = true;
-      } else {
-        isCorrect = false;
-        if (!aiRecognized) {
-          // If AI says drawing is a different character or unrecognized scribble
-          strokeHint = strokeHint ?? 'feedback_wrong_character';
-        }
-      }
+      isCorrect = strokeHint == null;
 
-      final String recordedAnswer = isCorrect
-          ? expected
-          : (prediction.isNotEmpty ? prediction : 'unknown');
+      final String recordedAnswer = isCorrect ? expected : 'unknown';
 
       final int? exId = _charToExerciseId[expected];
       if (exId != null) {
