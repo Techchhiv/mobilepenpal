@@ -39,7 +39,7 @@ const SETTINGS_DEFAULTS = {
 const FEATURE_LOCKS_DEFAULTS = {
     enabled: true,
     mini_game_free_daily_limit: 1,
-    ai_writing_free_char_limit: 4,
+    ai_writing_free_char_limit: 80,
 };
 
 export default function UserSubscriptionsPage() {
