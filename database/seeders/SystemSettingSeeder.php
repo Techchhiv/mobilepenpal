@@ -36,7 +36,7 @@ class SystemSettingSeeder extends Seeder
                 'value' => json_encode([
                     'enabled' => true,
                     'mini_game_free_daily_limit' => 3,
-                    'ai_writing_free_char_limit' => 4,
+                    'ai_writing_free_char_limit' => 80,
                     'learning_free_stage_limit' => 10,
                 ]),
                 'created_at' => now(),
