@@ -11,11 +11,13 @@ class Payment extends Model
 
     public const METHOD_CASH          = 'cash';
     public const METHOD_BANK_TRANSFER = 'bank_transfer';
+    public const METHOD_BAKONG        = 'bakong';
     public const METHOD_OTHER         = 'other';
 
     public const METHODS = [
         self::METHOD_CASH          => 'Cash',
         self::METHOD_BANK_TRANSFER => 'Bank Transfer',
+        self::METHOD_BAKONG        => 'Bakong KHQR',
         self::METHOD_OTHER         => 'Other',
     ];
 

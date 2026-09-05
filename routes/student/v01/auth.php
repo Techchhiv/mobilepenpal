@@ -7,6 +7,7 @@ use App\Http\Controllers\Student\V01\QuestionTemplateController;
 use App\Http\Controllers\Student\V01\UserController;
 use App\Http\Controllers\Student\V01\WorldController;
 use App\Http\Controllers\Student\V01\ShopController;
+use App\Http\Controllers\Student\V01\SubscriptionCheckoutController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -59,4 +60,10 @@ Route::prefix('minigames')->group(function () {
     Route::put('{miniGame}', [MiniGameController::class, 'update']);
     Route::patch('{miniGame}', [MiniGameController::class, 'update']);
     Route::delete('{miniGame}', [MiniGameController::class, 'destroy']);
+});
+
+Route::prefix('subscription')->group(function () {
+    Route::get('/pricing', [SubscriptionCheckoutController::class, 'pricing']);
+    Route::post('/checkout', [SubscriptionCheckoutController::class, 'checkout']);
+    Route::post('/verify-payment', [SubscriptionCheckoutController::class, 'verifyPayment']);
 });
