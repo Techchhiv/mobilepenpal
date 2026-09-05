@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobilepenpal/data/controllers/home/home_controller.dart';
+import 'package:mobilepenpal/data/services/subscription_service.dart';
+import 'package:mobilepenpal/presentation/widgets/home/khqr_payment_dialog.dart';
 
 class SubscribeModal extends StatelessWidget {
   const SubscribeModal({super.key});
@@ -329,6 +331,14 @@ class SubscribeModal extends StatelessWidget {
                   ],
                 ),
               ),
+
+              const SizedBox(height: 18),
+
+              // ===== Bakong KHQR Checkout Button (at the bottom) =====
+              _BakongCheckoutButton(
+                discountedPrice: discountedPrice,
+                billingCycle: billingCycle,
+              ),
             ],
           ),
         ),
@@ -468,6 +478,149 @@ class _ContactRow extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _BakongCheckoutButton extends StatefulWidget {
+  final double discountedPrice;
+  final String billingCycle;
+
+  const _BakongCheckoutButton({
+    required this.discountedPrice,
+    required this.billingCycle,
+  });
+
+  @override
+  State<_BakongCheckoutButton> createState() => _BakongCheckoutButtonState();
+}
+
+class _BakongCheckoutButtonState extends State<_BakongCheckoutButton> {
+  bool _isLoading = false;
+  final SubscriptionService _subscriptionService = SubscriptionService();
+
+  Future<void> _handleCheckout() async {
+    if (_isLoading) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final response = await _subscriptionService.checkout(plan: 'monthly');
+
+      if (!mounted) return;
+
+      if (response.data != null) {
+        final success = await Get.dialog<bool>(
+          KhqrPaymentDialog(checkout: response.data!),
+          barrierDismissible: false,
+        );
+
+        if (success == true) {
+          if (Get.isDialogOpen ?? false) {
+            Get.back();
+          }
+        }
+      } else {
+        Get.snackbar(
+          'Error',
+          response.message.isNotEmpty ? response.message : 'Failed to generate KHQR',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: const Color(0xFFEF4444),
+          colorText: Colors.white,
+        );
+      }
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        e.toString(),
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: const Color(0xFFEF4444),
+        colorText: Colors.white,
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      height: 50,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        gradient: const LinearGradient(
+          colors: [Color(0xFFE11D48), Color(0xFFBE123C)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFE11D48).withValues(alpha: 0.35),
+            blurRadius: 14,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: ElevatedButton(
+        onPressed: _isLoading ? null : _handleCheckout,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
+        child: _isLoading
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: const Text(
+                      'KHQR',
+                      style: TextStyle(
+                        fontFamily: 'Kantumruy Pro',
+                        fontWeight: FontWeight.w900,
+                        fontSize: 10,
+                        color: Color(0xFFE11D48),
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'pay_with_khqr'.tr,
+                    style: const TextStyle(
+                      fontFamily: 'Kantumruy Pro',
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  const Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 16),
+                ],
+              ),
+      ),
     );
   }
 }

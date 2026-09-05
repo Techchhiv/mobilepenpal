@@ -58,12 +58,14 @@ dependencies:
   flutter_svg: ^2.2.3
   svg_path_parser: ^1.1.2
   mobile_scanner: ^7.1.4
+  qr_flutter: ^4.1.0
   http: ^1.6.0
   connectivity_plus: ^7.0.0
   onnxruntime_v2: ^1.23.2+2
   internet_connection_checker_plus: ^2.9.1+2
   path_provider: ^2.1.5
   responsive_framework: ^1.5.1
+  gal: ^2.3.3
 
 dev_dependencies:
   integration_test:
