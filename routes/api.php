@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\V01\SystemSettingController;
 use App\Http\Controllers\Admin\V01\WorldController;
 use App\Http\Controllers\School\V01\WorldController as SchoolWorldController;
 use App\Http\Controllers\School\V01\StudentController as SchoolStudentController;
+use App\Http\Controllers\School\V01\SchoolBillingController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\{
     AuthController,
@@ -236,6 +237,11 @@ Route::middleware('auth:api')->group(function () {
         // My Profile (any school user)
         Route::get('/profile', [\App\Http\Controllers\School\V01\SchoolProfileController::class, 'show']);
         Route::put('/profile', [\App\Http\Controllers\School\V01\SchoolProfileController::class, 'update']);
+
+        // Subscription & Billing History (School Admin only - strictly read-only)
+        Route::get('/billing', [SchoolBillingController::class, 'index']);
+        Route::get('/billing/invoices/{invoice}', [SchoolBillingController::class, 'showInvoice']);
+        Route::get('/billing/invoices/{invoice}/pdf', [SchoolBillingController::class, 'downloadInvoicePdf']);
 
         // Manage teachers (school-admin only)
         Route::middleware('permission:teachers.view|teachers.create|teachers.update|teachers.delete')->group(function () {
