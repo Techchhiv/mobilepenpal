@@ -446,7 +446,7 @@ class SubscriptionBillingService
         Carbon          $end,
         array           $data,
     ): Invoice {
-        $actorId = Auth::guard('api')->id();
+        $actorId = Auth::guard('sanctum')->id() ?? Auth::guard('api')->id() ?? Auth::id();
 
         // Snapshot customer info at the time of billing
         if ($customerType === 'school') {

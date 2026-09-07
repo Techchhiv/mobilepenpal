@@ -102,7 +102,7 @@ class SubscriptionCheckoutController extends Controller
         $plan = $request->input('plan', 'monthly');
         $pricing = $this->billingService->getPlanPricingDetails($plan);
         // $amount = (float) $pricing['final_price'];
-        $amount = 0.01;
+        $amount = 0.1;
         $currency = $pricing['currency'] ?? 'USD';
 
         // If student already has an active unexpired pending transaction for this plan, reuse it
@@ -217,11 +217,6 @@ class SubscriptionCheckoutController extends Controller
             return $this->returnResponse();
         }
 
-        if ($transaction->isExpired()) {
-            $transaction->update(['status' => BakongTransaction::STATUS_EXPIRED]);
-            return $this->returnError('KHQR payment request has expired. Please generate a new QR.', 400);
-        }
-
         $allowSimulate = $request->boolean('simulate');
         $bakongResult = $this->bakongService->checkTransactionByMd5($md5, $allowSimulate);
 
@@ -244,7 +239,7 @@ class SubscriptionCheckoutController extends Controller
                     $billingData = [
                         'plan'              => $lockedTx->plan,
                         'override_price'    => (float) $lockedTx->amount,
-                        'can_override'      => false,
+                        'can_override'      => true,
                         'payment_method'    => 'bakong',
                         'payment_reference' => $bakongResult['hash'] ?? ('BAKONG-' . strtoupper(substr($lockedTx->md5, 0, 16))),
                         'idempotency_key'   => 'bakong_' . $lockedTx->md5,
@@ -283,6 +278,12 @@ class SubscriptionCheckoutController extends Controller
 
                 return $this->returnError('Failed to activate subscription. Please contact support.', 500);
             }
+        }
+
+        // Only mark as expired if payment was not received on Bakong network and time elapsed
+        if ($transaction->isExpired()) {
+            $transaction->update(['status' => BakongTransaction::STATUS_EXPIRED]);
+            return $this->returnError('KHQR payment request has expired. Please generate a new QR.', 400);
         }
 
         // Still pending

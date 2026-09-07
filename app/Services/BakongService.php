@@ -15,7 +15,11 @@ class BakongService
 
     public function __construct()
     {
-        $this->apiUrl = rtrim(config('bakong.api_url', 'https://sit-api-bakong.nbc.org.kh/v1'), '/');
+        $url = rtrim(config('bakong.api_url', 'https://sit-api-bakong.nbc.org.kh/v1'), '/');
+        if (! str_ends_with($url, '/v1')) {
+            $url .= '/v1';
+        }
+        $this->apiUrl = $url;
         $this->apiToken = config('bakong.api_token');
         $this->accountId = config('bakong.account_id', 'khmerpenpal@aclb');
         $this->simulationMode = (bool) config('bakong.simulation_mode', false);
@@ -65,6 +69,21 @@ class BakongService
 
             if ($response->successful()) {
                 $json = $response->json();
+
+                // If Bakong returned non-JSON content (e.g. HTML landing page or error)
+                if (! is_array($json)) {
+                    Log::warning("Bakong: Non-JSON response received from {$url}", [
+                        'status' => $response->status(),
+                        'body'   => substr($response->body(), 0, 300),
+                        'md5'    => $md5,
+                    ]);
+
+                    return [
+                        'status'  => 'pending',
+                        'message' => 'Pending confirmation from Bakong',
+                    ];
+                }
+
                 $responseCode = $json['responseCode'] ?? null;
 
                 // NBC Bakong responseCode 0 indicates payment success
