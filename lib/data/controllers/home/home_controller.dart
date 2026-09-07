@@ -53,6 +53,11 @@ class HomeController extends GetxController {
   // Subscription settings (dynamic from backend)
   var subscriptionPrice = 5.0.obs;
   var subscriptionDiscount = 50.obs;
+  var monthlyPrice = 5.0.obs;
+  var monthlyDiscount = 50.obs;
+  var yearlyPrice = 50.0.obs;
+  var yearlyDiscount = 60.obs;
+  var selectedPlan = 'monthly'.obs;
   var subscriptionBillingCycle = 'month'.obs;
   var contactPhone = '+855 935 248 60'.obs;
   var contactEmail = 'info@khmerpenpal.com'.obs;
@@ -496,12 +501,30 @@ class HomeController extends GetxController {
       final res = await _homeService.getSubscriptionSettings();
       if (res.code == 200 && res.data != null) {
         final s = res.data!;
-        subscriptionPrice.value = (s['price'] is num)
+        final defaultPrice = (s['price'] is num)
             ? (s['price'] as num).toDouble()
             : double.tryParse(s['price']?.toString() ?? '') ?? 5.0;
-        subscriptionDiscount.value = (s['discount'] is num)
+        final defaultDiscount = (s['discount'] is num)
             ? (s['discount'] as num).toInt()
             : int.tryParse(s['discount']?.toString() ?? '') ?? 50;
+
+        subscriptionPrice.value = defaultPrice;
+        subscriptionDiscount.value = defaultDiscount;
+
+        monthlyPrice.value = (s['monthly_price'] is num)
+            ? (s['monthly_price'] as num).toDouble()
+            : double.tryParse(s['monthly_price']?.toString() ?? '') ?? defaultPrice;
+        monthlyDiscount.value = (s['monthly_discount'] is num)
+            ? (s['monthly_discount'] as num).toInt()
+            : int.tryParse(s['monthly_discount']?.toString() ?? '') ?? defaultDiscount;
+
+        yearlyPrice.value = (s['yearly_price'] is num)
+            ? (s['yearly_price'] as num).toDouble()
+            : double.tryParse(s['yearly_price']?.toString() ?? '') ?? 50.0;
+        yearlyDiscount.value = (s['yearly_discount'] is num)
+            ? (s['yearly_discount'] as num).toInt()
+            : int.tryParse(s['yearly_discount']?.toString() ?? '') ?? 60;
+
         subscriptionBillingCycle.value =
             s['billing_cycle']?.toString() ?? 'month';
         contactPhone.value =
