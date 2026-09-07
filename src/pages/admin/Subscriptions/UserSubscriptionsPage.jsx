@@ -30,6 +30,10 @@ const defaultForm = (initialAmount = "", initialTaxRate = 0) => ({
 const SETTINGS_DEFAULTS = {
     price: 5.0,
     discount: 50,
+    monthly_price: 5.0,
+    monthly_discount: 50,
+    yearly_price: 50.0,
+    yearly_discount: 60,
     tax_rate: 0,
     billing_cycle: "month",
     contact_phone: "+855 935 248 60",
@@ -674,18 +678,74 @@ export default function UserSubscriptionsPage() {
                             ) : (
                                 <form onSubmit={saveSettings}>
                                     <div className="modal-body row g-3">
+                                        {/* Monthly Plan Settings */}
+                                        <div className="col-12">
+                                            <div className="fw-bold text-dark border-bottom pb-1 mb-2 d-flex align-items-center gap-1">
+                                                <Icon icon="mdi:calendar-month" className="text-primary" />
+                                                <span>Monthly Plan Settings</span>
+                                            </div>
+                                        </div>
                                         <div className="col-12 col-sm-6">
-                                            <label className="form-label">Price ($)</label>
+                                            <label className="form-label">Monthly Price ($)</label>
                                             <input
                                                 type="number"
                                                 min="0"
                                                 step="0.01"
                                                 className="form-control"
-                                                value={settings.price}
+                                                value={settings.monthly_price ?? settings.price}
+                                                onChange={(e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    setSettings((s) => ({
+                                                        ...s,
+                                                        monthly_price: val,
+                                                        price: val,
+                                                    }));
+                                                }}
+                                                required
+                                            />
+                                            <div className="form-text">Base price per month</div>
+                                        </div>
+                                        <div className="col-12 col-sm-6">
+                                            <label className="form-label">Monthly Discount (%)</label>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                max="100"
+                                                step="1"
+                                                className="form-control"
+                                                value={settings.monthly_discount ?? settings.discount}
+                                                onChange={(e) => {
+                                                    const val = parseInt(e.target.value) || 0;
+                                                    setSettings((s) => ({
+                                                        ...s,
+                                                        monthly_discount: val,
+                                                        discount: val,
+                                                    }));
+                                                }}
+                                                required
+                                            />
+                                            <div className="form-text">e.g. 50 for 50% OFF</div>
+                                        </div>
+
+                                        {/* Yearly Plan Settings */}
+                                        <div className="col-12 pt-2">
+                                            <div className="fw-bold text-dark border-bottom pb-1 mb-2 d-flex align-items-center gap-1">
+                                                <Icon icon="mdi:star-circle" className="text-warning" />
+                                                <span>Yearly Plan Settings</span>
+                                            </div>
+                                        </div>
+                                        <div className="col-12 col-sm-6">
+                                            <label className="form-label">Yearly Base Price ($)</label>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                step="0.01"
+                                                className="form-control"
+                                                value={settings.yearly_price ?? 50.0}
                                                 onChange={(e) =>
                                                     setSettings((s) => ({
                                                         ...s,
-                                                        price: parseFloat(e.target.value) || 0,
+                                                        yearly_price: parseFloat(e.target.value) || 0,
                                                     }))
                                                 }
                                                 required
@@ -693,25 +753,33 @@ export default function UserSubscriptionsPage() {
                                             <div className="form-text">Original price before discount</div>
                                         </div>
                                         <div className="col-12 col-sm-6">
-                                            <label className="form-label">Discount (%)</label>
+                                            <label className="form-label">Yearly Discount (%)</label>
                                             <input
                                                 type="number"
                                                 min="0"
                                                 max="100"
                                                 step="1"
                                                 className="form-control"
-                                                value={settings.discount}
+                                                value={settings.yearly_discount ?? 60}
                                                 onChange={(e) =>
                                                     setSettings((s) => ({
                                                         ...s,
-                                                        discount: parseInt(e.target.value) || 0,
+                                                        yearly_discount: parseInt(e.target.value) || 0,
                                                     }))
                                                 }
                                                 required
                                             />
-                                            <div className="form-text">Set 0 for no discount</div>
+                                            <div className="form-text">e.g. 60 for 60% OFF ($50 → $20)</div>
                                         </div>
-                                        <div className="col-12 col-sm-6">
+
+                                        {/* Contact and Tax Details */}
+                                        <div className="col-12 pt-2">
+                                            <div className="fw-bold text-dark border-bottom pb-1 mb-2 d-flex align-items-center gap-1">
+                                                <Icon icon="mdi:information-outline" className="text-secondary" />
+                                                <span>Contact & Tax Details</span>
+                                            </div>
+                                        </div>
+                                        <div className="col-12 col-sm-4">
                                             <label className="form-label">Tax Rate (%)</label>
                                             <input
                                                 type="number"
@@ -728,23 +796,7 @@ export default function UserSubscriptionsPage() {
                                                 }
                                             />
                                         </div>
-                                        <div className="col-12 col-sm-6">
-                                            <label className="form-label">Billing Cycle</label>
-                                            <select
-                                                className="form-select"
-                                                value={settings.billing_cycle}
-                                                onChange={(e) =>
-                                                    setSettings((s) => ({
-                                                        ...s,
-                                                        billing_cycle: e.target.value,
-                                                    }))
-                                                }
-                                            >
-                                                <option value="month">Monthly</option>
-                                                <option value="year">Yearly</option>
-                                            </select>
-                                        </div>
-                                        <div className="col-12 col-sm-6">
+                                        <div className="col-12 col-sm-4">
                                             <label className="form-label">Contact Phone</label>
                                             <input
                                                 type="text"
@@ -759,7 +811,7 @@ export default function UserSubscriptionsPage() {
                                                 required
                                             />
                                         </div>
-                                        <div className="col-12 col-sm-6">
+                                        <div className="col-12 col-sm-4">
                                             <label className="form-label">Contact Email</label>
                                             <input
                                                 type="email"
@@ -779,34 +831,85 @@ export default function UserSubscriptionsPage() {
                                         <div className="col-12">
                                             <div className="alert alert-light border mb-0">
                                                 {(() => {
-                                                    const base = Number(settings.price) || 0;
-                                                    const discPct = Number(settings.discount) || 0;
-                                                    const discAmt = discPct > 0 ? (base * (discPct / 100)) : 0;
-                                                    const net = Math.max(0, base - discAmt);
-                                                    const taxPct = Number(settings.tax_rate) || 0;
-                                                    const taxAmt = taxPct > 0 ? (net * (taxPct / 100)) : 0;
-                                                    const finalP = net + taxAmt;
+                                                    const mBase = Number(settings.monthly_price ?? settings.price) || 0;
+                                                    const mDisc = Number(settings.monthly_discount ?? settings.discount) || 0;
+                                                    const mFinal = Math.max(0, mBase * (1 - mDisc / 100));
+
+                                                    const yBase = Number(settings.yearly_price ?? 50.0) || 0;
+                                                    const yDisc = Number(settings.yearly_discount ?? 60) || 0;
+                                                    const yFinal = Math.max(0, yBase * (1 - yDisc / 100));
+
                                                     return (
-                                                        <div className="d-flex flex-column gap-1 text-sm">
-                                                            <div className="d-flex justify-content-between">
-                                                                <span className="text-muted">Base Price:</span>
-                                                                <span>${base.toFixed(2)}</span>
+                                                        <div className="d-flex flex-column gap-3">
+                                                            {/* Monthly Plan Summary Card */}
+                                                            <div className="p-3 bg-white rounded-3 border shadow-xs">
+                                                                <div className="d-flex align-items-center justify-content-between mb-2">
+                                                                    <span className="fw-bold text-primary d-flex align-items-center gap-1">
+                                                                        <Icon icon="mdi:calendar-month" /> Monthly Plan Summary
+                                                                    </span>
+                                                                    {mDisc > 0 ? (
+                                                                        <span className="badge bg-danger text-white px-2 py-1">
+                                                                            {mDisc}% OFF
+                                                                        </span>
+                                                                    ) : (
+                                                                        <span className="badge bg-light text-secondary border px-2 py-1">
+                                                                            Standard
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                                <div className="d-flex justify-content-between text-muted text-sm mb-1">
+                                                                    <span>Base Price:</span>
+                                                                    <span>${mBase.toFixed(2)}</span>
+                                                                </div>
+                                                                {mDisc > 0 && (
+                                                                    <div className="d-flex justify-content-between text-success text-sm mb-1">
+                                                                        <span>Discount ({mDisc}%):</span>
+                                                                        <span>-${(mBase * (mDisc / 100)).toFixed(2)}</span>
+                                                                    </div>
+                                                                )}
+                                                                <div className="d-flex justify-content-between align-items-center fw-bold text-dark border-top pt-2 mt-1">
+                                                                    <span>Student Pays:</span>
+                                                                    <span className="text-primary fs-6">${mFinal.toFixed(2)} / month</span>
+                                                                </div>
                                                             </div>
-                                                            {discPct > 0 && (
-                                                                <div className="d-flex justify-content-between text-success">
-                                                                    <span>Discount ({discPct}%):</span>
-                                                                    <span>-${discAmt.toFixed(2)}</span>
+
+                                                            {/* Yearly Plan Summary Card */}
+                                                            <div className="p-3 bg-white rounded-3 border shadow-xs">
+                                                                <div className="d-flex align-items-center justify-content-between mb-2">
+                                                                    <span className="fw-bold text-dark d-flex align-items-center gap-1">
+                                                                        <Icon icon="mdi:star-circle" className="text-warning" /> Yearly Plan Summary
+                                                                    </span>
+                                                                    {yDisc > 0 ? (
+                                                                        <span className="badge bg-danger text-white px-2 py-1">
+                                                                            {yDisc}% OFF
+                                                                        </span>
+                                                                    ) : (
+                                                                        <span className="badge bg-light text-secondary border px-2 py-1">
+                                                                            Standard
+                                                                        </span>
+                                                                    )}
                                                                 </div>
-                                                            )}
-                                                            {taxPct > 0 && (
-                                                                <div className="d-flex justify-content-between text-muted">
-                                                                    <span>Tax / VAT ({taxPct}%):</span>
-                                                                    <span>+${taxAmt.toFixed(2)}</span>
+                                                                <div className="d-flex justify-content-between text-muted text-sm mb-1">
+                                                                    <span>Base Price:</span>
+                                                                    <span>${yBase.toFixed(2)}</span>
                                                                 </div>
-                                                            )}
-                                                            <div className="d-flex justify-content-between fw-bold text-primary border-top pt-2 mt-1 fs-6">
-                                                                <span>Total Payable:</span>
-                                                                <span>${finalP.toFixed(2)} / {settings.billing_cycle === "year" ? "year" : "month"}</span>
+                                                                {yDisc > 0 && (
+                                                                    <div className="d-flex justify-content-between text-success text-sm mb-1">
+                                                                        <span>Discount ({yDisc}%):</span>
+                                                                        <span>-${(yBase * (yDisc / 100)).toFixed(2)}</span>
+                                                                    </div>
+                                                                )}
+                                                                <div className="d-flex justify-content-between align-items-center fw-bold text-dark border-top pt-2 mt-1">
+                                                                    <div>
+                                                                        <span>Student Pays:</span>
+                                                                        {yDisc > 0 && (
+                                                                            <div className="text-muted text-xs fw-normal mt-0.5">
+                                                                                (Equivalent to ~${(yFinal / 12).toFixed(2)} / month)
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                    <span className="text-success fs-6">${yFinal.toFixed(2)} / year</span>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     );
