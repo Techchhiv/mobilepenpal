@@ -155,18 +155,21 @@ class SubscriptionController extends Controller
 
     public function schools(Request $request)
     {
+        $today = now()->toDateString();
         $schools = School::with([
             'subscriptions' => function ($query) {
                 $query->orderBy('end_date', 'desc');
             }
         ])->get();
 
-        $schoolsData = $schools->map(function ($school) {
+        $schoolsData = $schools->map(function ($school) use ($today) {
             $latestSubscription = $school->subscriptions->first();
             $currentlyActive = $school->subscriptions
                 ->where('active', true)
-                ->where('start_date', '<=', now())
-                ->where('end_date', '>=', now())
+                ->filter(fn ($sub) => (
+                    (! $sub->start_date || $sub->start_date->toDateString() <= $today) &&
+                    (! $sub->end_date || $sub->end_date->toDateString() >= $today)
+                ))
                 ->isNotEmpty();
 
             return [
@@ -184,6 +187,7 @@ class SubscriptionController extends Controller
 
     public function students(Request $request)
     {
+        $today = now()->toDateString();
         $students = Student::whereNull('school_id')
             ->with([
                 'subscriptions' => function ($query) {
@@ -191,12 +195,14 @@ class SubscriptionController extends Controller
                 }
             ])->get();
 
-        $studentsData = $students->map(function ($student) {
+        $studentsData = $students->map(function ($student) use ($today) {
             $latestSubscription = $student->subscriptions->first();
             $currentlyActive = $student->subscriptions
                 ->where('active', true)
-                ->where('start_date', '<=', now())
-                ->where('end_date', '>=', now())
+                ->filter(fn ($sub) => (
+                    (! $sub->start_date || $sub->start_date->toDateString() <= $today) &&
+                    (! $sub->end_date || $sub->end_date->toDateString() >= $today)
+                ))
                 ->isNotEmpty();
 
             return [
@@ -215,10 +221,11 @@ class SubscriptionController extends Controller
 
     public function active()
     {
+        $today = now()->toDateString();
         $subscriptions = Subscription::with(['school', 'student'])
             ->where('active', true)
-            ->where('start_date', '<=', now())
-            ->where('end_date', '>=', now())
+            ->where('start_date', '<=', $today)
+            ->where('end_date', '>=', $today)
             ->orderBy('end_date', 'desc')
             ->get();
 

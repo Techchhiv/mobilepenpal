@@ -20,6 +20,10 @@ class SystemSettingSeeder extends Seeder
                 'value' => json_encode([
                     'price' => 5.0,
                     'discount' => 50,
+                    'monthly_price' => 5.0,
+                    'monthly_discount' => 50,
+                    'yearly_price' => 50.0,
+                    'yearly_discount' => 60,
                     'tax_rate' => 0,
                     'billing_cycle' => 'month',
                     'contact_phone' => '+855 935 248 60',

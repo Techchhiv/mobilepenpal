@@ -27,14 +27,21 @@ class SubscriptionBillingService
         $setting = SystemSetting::find('subscription');
         $data = $setting && is_array($setting->value) ? $setting->value : [];
 
-        // Fallback defaults matching SystemSettingSeeder ($5 with 50% discount = $2.50/month, 0% tax)
+        $legacyPrice = (float) ($data['price'] ?? 5.0);
+        $legacyDiscount = (float) ($data['discount'] ?? 50);
+
+        // Fallback defaults matching SystemSettingSeeder ($5 with 50% discount = $2.50/month, $50 with 60% discount = $20.00/year, 0% tax)
         return array_merge([
-            'price'         => 5.0,
-            'discount'      => 50,
-            'tax_rate'      => 0,
-            'billing_cycle' => 'month',
-            'contact_phone' => '+855 935 248 60',
-            'contact_email' => 'info@khmerpenpal.com',
+            'price'            => $legacyPrice,
+            'discount'         => $legacyDiscount,
+            'monthly_price'    => (float) ($data['monthly_price'] ?? $legacyPrice),
+            'monthly_discount' => (float) ($data['monthly_discount'] ?? $legacyDiscount),
+            'yearly_price'     => (float) ($data['yearly_price'] ?? 50.0),
+            'yearly_discount'  => (float) ($data['yearly_discount'] ?? 60.0),
+            'tax_rate'         => 0,
+            'billing_cycle'    => 'month',
+            'contact_phone'    => '+855 935 248 60',
+            'contact_email'    => 'info@khmerpenpal.com',
         ], $data);
     }
 
@@ -44,20 +51,16 @@ class SubscriptionBillingService
     public function getPlanPricingDetails(string $plan): array
     {
         $settings = $this->getSubscriptionSettings();
-        $baseUnit = (float) ($settings['price'] ?? 5.0);
-        $discountPercent = (float) ($settings['discount'] ?? 0);
         $taxPercent = (float) ($settings['tax_rate'] ?? 0);
-        $cycle = $settings['billing_cycle'] ?? 'month';
 
-        if ($cycle === 'year') {
-            $baseMonthly = $baseUnit / 12;
-            $baseYearly  = $baseUnit;
+        if ($plan === 'yearly') {
+            $subtotal = (float) ($settings['yearly_price'] ?? 50.0);
+            $discountPercent = (float) ($settings['yearly_discount'] ?? 60.0);
         } else {
-            $baseMonthly = $baseUnit;
-            $baseYearly  = $baseUnit * 12;
+            $subtotal = (float) ($settings['monthly_price'] ?? ($settings['price'] ?? 5.0));
+            $discountPercent = (float) ($settings['monthly_discount'] ?? ($settings['discount'] ?? 50.0));
         }
 
-        $subtotal = $plan === 'yearly' ? $baseYearly : $baseMonthly;
         $discountAmount = $discountPercent > 0 ? ($subtotal * ($discountPercent / 100)) : 0.0;
         $netAmount = max(0, $subtotal - $discountAmount);
         $taxAmount = $taxPercent > 0 ? ($netAmount * ($taxPercent / 100)) : 0.0;
@@ -167,10 +170,11 @@ class SubscriptionBillingService
         }
 
         return DB::transaction(function () use ($school, $data) {
+            $today = now()->toDateString();
             // Check for existing active subscription
             if (Subscription::where('school_id', $school->id)
                 ->where('active', true)
-                ->where('end_date', '>=', now())
+                ->where('end_date', '>=', $today)
                 ->exists()
             ) {
                 throw new \RuntimeException('School already has an active subscription. Please renew instead.');
@@ -238,9 +242,10 @@ class SubscriptionBillingService
         }
 
         return DB::transaction(function () use ($student, $data) {
+            $today = now()->toDateString();
             if (Subscription::where('student_id', $student->id)
                 ->where('active', true)
-                ->where('end_date', '>=', now())
+                ->where('end_date', '>=', $today)
                 ->exists()
             ) {
                 throw new \RuntimeException('Student already has an active subscription. Please renew instead.');
@@ -307,13 +312,14 @@ class SubscriptionBillingService
         }
 
         return DB::transaction(function () use ($school, $data) {
+            $today = now()->toDateString();
             $latest = Subscription::where('school_id', $school->id)
                 ->where('active', true)
                 ->orderBy('end_date', 'desc')
                 ->first();
 
-            // Chain from existing end date if still in the future
-            $start = ($latest && $latest->end_date > now())
+            // Chain from existing end date if still active today or in the future
+            $start = ($latest && $latest->end_date && $latest->end_date->toDateString() >= $today)
                 ? Carbon::parse($latest->end_date)
                 : now();
 
@@ -375,12 +381,13 @@ class SubscriptionBillingService
         }
 
         return DB::transaction(function () use ($student, $data) {
+            $today = now()->toDateString();
             $latest = Subscription::where('student_id', $student->id)
                 ->where('active', true)
                 ->orderBy('end_date', 'desc')
                 ->first();
 
-            $start = ($latest && $latest->end_date > now())
+            $start = ($latest && $latest->end_date && $latest->end_date->toDateString() >= $today)
                 ? Carbon::parse($latest->end_date)
                 : now();
 

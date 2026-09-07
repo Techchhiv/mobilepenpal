@@ -77,13 +77,33 @@ class KhqrService
         // Tag 01: Point of Initiation Method ("12" = Dynamic QR, "11" = Static)
         $payload .= self::formatTlv('01', $isDynamic ? '12' : '11');
 
-        // Tag 29: Merchant Account Information for Individual Account
-        // Subtag 00: Bakong Account Identifier (e.g. 'name@abab')
-        $tag29Value = self::formatTlv('00', trim($accountId));
-        $payload .= self::formatTlv('29', $tag29Value);
+        // Tag 29 & Tag 40: Merchant Account Information
+        $cleanAccountId = trim($accountId);
+        $isAbaBank = str_ends_with(strtolower($cleanAccountId), '@abab') || str_ends_with(strtolower($cleanAccountId), '@aba');
 
-        // Tag 52: Merchant Category Code ("5999" = Miscellaneous / General)
-        $payload .= self::formatTlv('52', '5999');
+        if ($isAbaBank) {
+            $abaAccountNumber = preg_replace('/[^0-9]/', '', explode('@', $cleanAccountId)[0]);
+
+            // Tag 29: NBC Interbank Clearing for ABA Bank
+            $tag29Value = self::formatTlv('00', 'abaakhppxxx@abaa')
+                        . self::formatTlv('01', $abaAccountNumber)
+                        . self::formatTlv('02', 'ABA Bank');
+            $payload .= self::formatTlv('29', $tag29Value);
+
+            // Tag 40: ABA Mobile P2P Internal Routing (Required for ABA Mobile App)
+            $tag40Value = self::formatTlv('00', 'abaP2P')
+                        . self::formatTlv('01', 'CE6001D9D988')
+                        . self::formatTlv('02', $abaAccountNumber)
+                        . self::formatTlv('04', 'dual');
+            $payload .= self::formatTlv('40', $tag40Value);
+        } else {
+            // Native Bakong Wallet Account (e.g. 'techchhiv_lim@bkrt')
+            $tag29Value = self::formatTlv('00', $cleanAccountId);
+            $payload .= self::formatTlv('29', $tag29Value);
+        }
+
+        // Tag 52: Merchant Category Code ("0000" for ABA P2P, "5999" for General)
+        $payload .= self::formatTlv('52', $isAbaBank ? '0000' : '5999');
 
         // Tag 53: Transaction Currency (840 = USD, 116 = KHR)
         $payload .= self::formatTlv('53', $currencyCode);
@@ -97,7 +117,7 @@ class KhqrService
         $payload .= self::formatTlv('58', 'KH');
 
         // Tag 59: Merchant / Payee Name (max 25 chars)
-        $cleanName = substr(preg_replace('/[^A-Za-z0-9 _.-]/', '', $merchantName), 0, 25);
+        $cleanName = substr(preg_replace('/[^A-Za-z0-9 _.\-&]/', '', $merchantName), 0, 25);
         if (empty($cleanName)) {
             $cleanName = 'Khmer PenPal';
         }

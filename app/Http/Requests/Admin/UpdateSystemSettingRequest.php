@@ -13,10 +13,14 @@ class UpdateSystemSettingRequest extends FormRequest
         ];
 
         if ($this->route('key') === 'subscription') {
-            $rules['value.price'] = ['required', 'numeric', 'min:0'];
-            $rules['value.discount'] = ['required', 'numeric', 'between:0,100'];
+            $rules['value.price'] = ['nullable', 'numeric', 'min:0'];
+            $rules['value.discount'] = ['nullable', 'numeric', 'between:0,100'];
+            $rules['value.monthly_price'] = ['nullable', 'numeric', 'min:0'];
+            $rules['value.monthly_discount'] = ['nullable', 'numeric', 'between:0,100'];
+            $rules['value.yearly_price'] = ['nullable', 'numeric', 'min:0'];
+            $rules['value.yearly_discount'] = ['nullable', 'numeric', 'between:0,100'];
             $rules['value.tax_rate'] = ['nullable', 'numeric', 'between:0,100'];
-            $rules['value.billing_cycle'] = ['required', 'in:month,year'];
+            $rules['value.billing_cycle'] = ['nullable', 'in:month,year'];
             $rules['value.contact_phone'] = ['required', 'string'];
             $rules['value.contact_email'] = ['required', 'email'];
         }

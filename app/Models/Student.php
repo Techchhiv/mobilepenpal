@@ -52,18 +52,20 @@ class Student extends Authenticatable
 
     public function getActiveSubscription()
     {
+        $today = now()->toDateString();
+
         if ($this->school_id) {
             return Subscription::where('school_id', $this->school_id)
                 ->where('active', true)
-                ->where('start_date', '<=', now())
-                ->where('end_date', '>=', now())
+                ->where('start_date', '<=', $today)
+                ->where('end_date', '>=', $today)
                 ->first();
         }
 
         return $this->subscriptions()
             ->where('active', true)
-            ->where('start_date', '<=', now())
-            ->where('end_date', '>=', now())
+            ->where('start_date', '<=', $today)
+            ->where('end_date', '>=', $today)
             ->first();
     }
 

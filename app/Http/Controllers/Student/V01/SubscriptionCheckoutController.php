@@ -61,7 +61,7 @@ class SubscriptionCheckoutController extends Controller
                     'md5'                => $pendingTx->md5,
                     'bill_number'        => sprintf('STU-%d-%s', $student->id, substr($pendingTx->md5, 0, 6)),
                     'merchant_name'      => config('bakong.merchant_name', 'Khmer PenPal'),
-                    'account_id'         => config('bakong.account_id', '003106384@abab'),
+                    'account_id'         => config('bakong.account_id'),
                     'expires_at'         => $pendingTx->expires_at->toIso8601String(),
                     'expires_in_seconds' => max(0, now()->diffInSeconds($pendingTx->expires_at, false)),
                     'simulation_mode'    => $this->bakongService->isSimulationMode(),
@@ -73,7 +73,7 @@ class SubscriptionCheckoutController extends Controller
             'monthly'          => $monthly,
             'yearly'           => $yearly,
             'merchant_name'    => config('bakong.merchant_name', 'Khmer PenPal'),
-            'account_id'       => config('bakong.account_id', '003106384@abab'),
+            'account_id'       => config('bakong.account_id'),
             'currency'         => config('bakong.currency', 'USD'),
             'simulation_mode'  => $this->bakongService->isSimulationMode(),
             'pending_checkout' => $pendingCheckout,
@@ -101,11 +101,10 @@ class SubscriptionCheckoutController extends Controller
 
         $plan = $request->input('plan', 'monthly');
         $pricing = $this->billingService->getPlanPricingDetails($plan);
-        // $amount = (float) $pricing['final_price'];
-        $amount = 0.1;
+        $amount = (float) $pricing['final_price'];
         $currency = $pricing['currency'] ?? 'USD';
 
-        // If student already has an active unexpired pending transaction for this plan, reuse it
+        // If student already has an active unexpired pending transaction for this plan with matching amount, reuse it
         $forceNew = $request->boolean('force_new');
         if (! $forceNew) {
             $existingTransaction = BakongTransaction::where('student_id', $student->id)
@@ -115,7 +114,7 @@ class SubscriptionCheckoutController extends Controller
                 ->latest()
                 ->first();
 
-            if ($existingTransaction) {
+            if ($existingTransaction && (float) $existingTransaction->amount === (float) $amount) {
                 $remainingSeconds = max(0, now()->diffInSeconds($existingTransaction->expires_at, false));
                 $this->setResult('checkout', [
                     'transaction_id'     => $existingTransaction->id,
@@ -126,7 +125,7 @@ class SubscriptionCheckoutController extends Controller
                     'md5'                => $existingTransaction->md5,
                     'bill_number'        => sprintf('STU-%d-%s', $student->id, substr($existingTransaction->md5, 0, 6)),
                     'merchant_name'      => config('bakong.merchant_name', 'Khmer PenPal'),
-                    'account_id'         => config('bakong.account_id', '003106384@abab'),
+                    'account_id'         => config('bakong.account_id'),
                     'expires_at'         => $existingTransaction->expires_at->toIso8601String(),
                     'expires_in_seconds' => $remainingSeconds,
                     'simulation_mode'    => $this->bakongService->isSimulationMode(),
@@ -137,7 +136,7 @@ class SubscriptionCheckoutController extends Controller
         }
 
         $billNumber = sprintf('STU-%d-%s', $student->id, strtoupper(substr(uniqid(), -6)));
-        $accountId = config('bakong.account_id', '003106384@abab');
+        $accountId = config('bakong.account_id');
         $merchantName = config('bakong.merchant_name', 'Khmer PenPal');
         $merchantCity = config('bakong.merchant_city', 'Phnom Penh');
         $expirationSeconds = (int) config('bakong.qr_expiration_seconds', 600);

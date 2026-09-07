@@ -11,11 +11,12 @@ class SystemSettingController extends Controller
 {
     public function show(string $key): JsonResponse
     {
-        $setting = SystemSetting::find($key);
-
-        $value = $setting
-            ? $setting->value
-            : [];
+        if ($key === 'subscription') {
+            $value = app(\App\Services\SubscriptionBillingService::class)->getSubscriptionSettings();
+        } else {
+            $setting = SystemSetting::find($key);
+            $value = $setting ? $setting->value : [];
+        }
 
         return $this->returnSuccess('OK', [
             'key' => $key,
@@ -27,10 +28,24 @@ class SystemSettingController extends Controller
     {
         $existing = SystemSetting::find($key);
         $oldValue = $existing ? $existing->value : null;
+        $payload = $request->input('value');
+
+        if ($key === 'subscription' && is_array($payload)) {
+            if (isset($payload['monthly_price']) && !isset($payload['price'])) {
+                $payload['price'] = $payload['monthly_price'];
+            } elseif (isset($payload['price']) && !isset($payload['monthly_price'])) {
+                $payload['monthly_price'] = $payload['price'];
+            }
+            if (isset($payload['monthly_discount']) && !isset($payload['discount'])) {
+                $payload['discount'] = $payload['monthly_discount'];
+            } elseif (isset($payload['discount']) && !isset($payload['monthly_discount'])) {
+                $payload['monthly_discount'] = $payload['discount'];
+            }
+        }
 
         $setting = SystemSetting::updateOrCreate(
             ['key' => $key],
-            ['value' => $request->input('value')],
+            ['value' => $payload],
         );
 
         AuditService::record(

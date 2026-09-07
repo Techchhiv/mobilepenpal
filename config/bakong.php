@@ -18,7 +18,7 @@ return [
     'api_token' => env('BAKONG_API_TOKEN', ''),
 
     // Individual Bakong Account ID (e.g., 'your_name@aclb' or mobile number '855xxxxxxxxx')
-    'account_id' => env('BAKONG_ACCOUNT_ID', 'khmerpenpal@aclb'),
+    'account_id' => env('BAKONG_ACCOUNT_ID', '019165576@abab'),
 
     // Payee / Merchant Display Name
     'merchant_name' => env('BAKONG_MERCHANT_NAME', 'Khmer PenPal'),
