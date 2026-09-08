@@ -5,6 +5,8 @@ import Chart from "react-apexcharts";
 
 import SchoolLayout from "../masterLayout/SchoolLayout";
 import SchoolDashboardHeader from "../../../components/school/SchoolDashboardHeader";
+import SchoolSubscriptionReminder from "../../../components/school/SchoolSubscriptionReminder";
+import { calculateRemainingDays, formatPlanName, getExpirationLevel } from "../../../utils/subscriptionUtils";
 import API from "../../../helper/api";
 import API_BASE_URL from "../../../helper/Base_urls";
 import { useAuth } from "../../../context/AuthContext";
@@ -19,6 +21,7 @@ function SchoolDashboard() {
     const { hasPermission, isSchoolAdmin } = useAuth();
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [dashboardError, setDashboardError] = useState(null);
     const [copiedCode, setCopiedCode] = useState("");
 
     // Granular permission checks
@@ -36,9 +39,14 @@ function SchoolDashboard() {
                 const res = await API.get("/school/dashboard");
                 if (res.data?.success) {
                     setData(res.data.data);
+                } else {
+                    setDashboardError(res.data?.message || "Failed to load dashboard data");
                 }
             } catch (err) {
                 console.error("Error fetching school dashboard:", err);
+                setDashboardError(
+                    err?.response?.data?.message || "Unable to load subscription information. Please try again later."
+                );
             } finally {
                 setLoading(false);
             }
@@ -55,6 +63,9 @@ function SchoolDashboard() {
 
     const isTeacher = Boolean(data?.is_teacher_view);
     const sub = data?.subscription;
+    const subHas = Boolean(sub?.has_subscription ?? (sub?.plan || sub?.end_date));
+    const subDays = sub?.end_date ? calculateRemainingDays(sub.end_date) : (sub?.days_left ?? 0);
+    const subLevel = getExpirationLevel(subDays, sub?.is_expired, subHas);
 
     // Trend chart config
     const trendCategories = (data?.daily_trend || []).map((t) => t.label);
@@ -109,11 +120,22 @@ function SchoolDashboard() {
             <SchoolDashboardHeader />
 
             {loading ? (
-                <div className="d-flex justify-content-center align-items-center" style={{ minHeight: "300px" }}>
-                    <div className="spinner-border text-primary" role="status">
-                        <span className="visually-hidden">Loading dashboard...</span>
+                isSchoolAdmin ? (
+                    <div className="d-flex flex-column gap-4">
+                        <SchoolSubscriptionReminder loading={true} />
+                        <div className="d-flex justify-content-center align-items-center" style={{ minHeight: "240px" }}>
+                            <div className="spinner-border text-primary" role="status">
+                                <span className="visually-hidden">Loading dashboard...</span>
+                            </div>
+                        </div>
                     </div>
-                </div>
+                ) : (
+                    <div className="d-flex justify-content-center align-items-center" style={{ minHeight: "300px" }}>
+                        <div className="spinner-border text-primary" role="status">
+                            <span className="visually-hidden">Loading dashboard...</span>
+                        </div>
+                    </div>
+                )
             ) : isTeacher ? (
                 /* ==========================================================
                    👨‍🏫 TEACHER DASHBOARD VIEW
@@ -408,6 +430,14 @@ function SchoolDashboard() {
                    🏢 SCHOOL ADMIN DASHBOARD VIEW
                    ========================================================== */
                 <div className="d-flex flex-column gap-4">
+                    {/* Subscription Expiry Reminder Section */}
+                    <SchoolSubscriptionReminder
+                        subscription={sub}
+                        loading={loading}
+                        error={dashboardError}
+                        targetRoute="/school/subscription"
+                    />
+
                     {/* Quick Action Bar */}
                     {showQuickActions && (
                         <div className="card border-0 shadow-sm p-3 bg-white radius-12">
@@ -522,29 +552,53 @@ function SchoolDashboard() {
                         </div>
 
                         <div className="col">
-                            <div className="card shadow-none border bg-white h-100 radius-12">
-                                <div className="card-body p-3">
-                                    <div className="d-flex align-items-center justify-content-between mb-2">
-                                        <span className="text-muted text-sm fw-medium">Subscription</span>
-                                        <div className={`w-36-px h-36-px ${sub?.is_active ? "bg-success-50 text-success" : "bg-danger-50 text-danger"} rounded-circle d-flex align-items-center justify-content-center`}>
-                                            <Icon icon="fa-solid:award" className="text-lg" />
+                            <Link to="/school/subscription" className="text-decoration-none d-block h-100">
+                                <div className="card shadow-none border bg-white h-100 radius-12 hover-card">
+                                    <div className="card-body p-3">
+                                        <div className="d-flex align-items-center justify-content-between mb-2">
+                                            <span className="text-muted text-sm fw-medium">Subscription</span>
+                                            <div className={`w-36-px h-36-px ${
+                                                subLevel === "normal"
+                                                    ? "bg-success-50 text-success"
+                                                    : subLevel === "warning" || subLevel === "critical"
+                                                    ? "bg-warning-50 text-warning-main"
+                                                    : "bg-danger-50 text-danger"
+                                            } rounded-circle d-flex align-items-center justify-content-center`}>
+                                                <Icon icon="fa-solid:award" className="text-lg" />
+                                            </div>
                                         </div>
+                                        {subLevel === "normal" ? (
+                                            <>
+                                                <h6 className="mb-0 text-capitalize text-truncate text-dark">{formatPlanName(sub?.plan)}</h6>
+                                                <span className="badge bg-success-focus text-success-main text-xs mt-1">
+                                                    {subDays} Days Remaining
+                                                </span>
+                                            </>
+                                        ) : subLevel === "warning" || subLevel === "critical" ? (
+                                            <>
+                                                <h6 className="mb-0 text-capitalize text-truncate text-dark">{formatPlanName(sub?.plan)}</h6>
+                                                <span className={`badge ${subLevel === "critical" ? "bg-danger-focus text-danger-main" : "bg-warning-focus text-warning-main"} text-xs mt-1`}>
+                                                    {subDays} Days Left
+                                                </span>
+                                            </>
+                                        ) : subLevel === "expired" ? (
+                                            <>
+                                                <h6 className="mb-0 text-danger text-capitalize text-truncate">{sub?.plan ? formatPlanName(sub.plan) : "Expired"}</h6>
+                                                <span className="badge bg-danger-focus text-danger-main text-xs mt-1">
+                                                    Expired
+                                                </span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <h6 className="mb-0 text-muted">No Plan</h6>
+                                                <span className="badge bg-secondary-focus text-secondary-main text-xs mt-1">
+                                                    Inactive
+                                                </span>
+                                            </>
+                                        )}
                                     </div>
-                                    {sub?.is_active ? (
-                                        <>
-                                            <h6 className="mb-0 text-capitalize text-truncate">{sub.plan}</h6>
-                                            <span className="badge bg-success-subtle text-success text-xs mt-1">
-                                                {sub.days_left} Days Remaining
-                                            </span>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <h6 className="mb-0 text-danger">Inactive</h6>
-                                            <span className="text-muted text-xs mt-1">Contact Admin</span>
-                                        </>
-                                    )}
                                 </div>
-                            </div>
+                            </Link>
                         </div>
                     </div>
 

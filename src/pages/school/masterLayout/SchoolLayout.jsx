@@ -25,6 +25,7 @@ const SchoolLayout = ({ children }) => {
   const showClassRooms = hasPermission("classrooms.view");
   const showStudents = hasPermission("children.view") || hasPermission("student.view");
   const showWorldManage = isSchoolAdmin || hasPermission("worlds.view") || hasPermission("world.view");
+  const showSubscription = isSchoolAdmin || hasPermission("subscription.view") || hasPermission("billing.view");
 
   useEffect(() => {
     const p = location.pathname;
@@ -100,11 +101,24 @@ const SchoolLayout = ({ children }) => {
             <li>
               <NavLink
                 to="/school"
+                end
+                className={({ isActive }) => (isActive ? "active-page" : "")}
               >
                 <Icon icon="mdi:chart-timeline-variant" className="menu-icon" />
                 <span>Dashboard</span>
               </NavLink>
             </li>
+            {showSubscription && (
+              <li>
+                <NavLink
+                  to="/school/subscription"
+                  className={({ isActive }) => (isActive ? "active-page" : "")}
+                >
+                  <Icon icon="mdi:credit-card-outline" className="menu-icon" />
+                  <span>Subscription & Billing</span>
+                </NavLink>
+              </li>
+            )}
             {showTeacher && (
               <li>
                 <NavLink

@@ -29,6 +29,7 @@ import AdminExpensesPage from "./pages/admin/AdminExpensesPage";
 import SchoolSignInLayer from "./pages/school/page/SchoolSignin";
 import SchoolDashboard from "./pages/school/page/SchoolDashboard";
 import SchoolProfilePage from "./pages/school/page/SchoolProfilePage";
+import SchoolSubscriptionBillingPage from "./pages/school/page/SchoolSubscriptionBillingPage";
 import SchoolUsersPage from "./pages/school/page/SchoolUsersPage";
 import SchoolRolesPage from "./pages/school/page/SchoolRolesPage";
 import SchoolPermissionsPage from "./pages/school/page/SchoolPermissionsPage";
@@ -269,7 +270,14 @@ export default function App() {
             </Gate>
           }
         />
-        <Route path="/school/profile" element={<SchoolProfilePage />} />
+        <Route
+          path="/school/subscription"
+          element={
+            <Gate>
+              <SchoolSubscriptionBillingPage />
+            </Gate>
+          }
+        />
 
         {/* ---------- School Routes ---------- */}
         <Route
