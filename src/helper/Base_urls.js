@@ -1,5 +1,4 @@
 // baseUrl.js
-import API from './api'
 
 const rawApiUrl =
   (typeof import.meta !== "undefined" && import.meta.env?.VITE_API_BASE) ||

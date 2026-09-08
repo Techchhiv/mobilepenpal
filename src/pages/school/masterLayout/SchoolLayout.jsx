@@ -4,7 +4,6 @@ import { Link, NavLink, useNavigate, useLocation } from "react-router-dom";
 import ThemeToggleButton from "../../../helper/ThemeToggleButton";
 import API from "../../../helper/api";
 import { useAuth } from "../../../context/AuthContext";
-import penLogo from "../../../assets/images/pen_logo.png";
 import "../../../assets/css/Layout.css";
 
 
@@ -267,21 +266,33 @@ const SchoolLayout = ({ children }) => {
                     data-bs-toggle="dropdown"
                     title={user?.name || "Profile"}
                   >
-                    <div
-                      className="w-40-px h-40-px rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-sm"
-                      style={{
-                        background: "linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)",
-                        fontSize: "14px",
-                        letterSpacing: "0.5px",
-                      }}
-                    >
-                      {(() => {
-                        const name = user?.name || "User";
-                        const parts = name.trim().split(/\s+/).filter(Boolean);
-                        if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
-                        return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-                      })()}
-                    </div>
+                    {user?.photo ? (
+                      <img
+                        src={
+                          String(user.photo).startsWith("http")
+                            ? user.photo
+                            : `${process.env.REACT_APP_API_URL ? process.env.REACT_APP_API_URL.replace(/\/api\/?$/, "") : "http://127.0.0.1:8000"}/${String(user.photo).replace(/^\/+/, "")}`
+                        }
+                        alt="user"
+                        className="w-40-px h-40-px object-fit-cover rounded-circle border"
+                      />
+                    ) : (
+                      <div
+                        className="w-40-px h-40-px rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-sm"
+                        style={{
+                          background: "linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)",
+                          fontSize: "14px",
+                          letterSpacing: "0.5px",
+                        }}
+                      >
+                        {(() => {
+                          const name = user?.name || "User";
+                          const parts = name.trim().split(/\s+/).filter(Boolean);
+                          if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+                          return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+                        })()}
+                      </div>
+                    )}
                   </button>
 
                   <div className="dropdown-menu to-top dropdown-menu-sm">
@@ -306,7 +317,7 @@ const SchoolLayout = ({ children }) => {
                           className="dropdown-item text-black px-0 py-8 hover-bg-transparent hover-text-primary d-flex align-items-center gap-3"
                         >
                           <Icon icon="solar:user-linear" className="icon text-xl" />
-                          My Profile
+                          Profile & Settings
                         </Link>
                       </li>
                       <li>

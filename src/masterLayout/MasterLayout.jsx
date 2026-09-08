@@ -417,11 +417,23 @@ const MasterLayout = ({ children }) => {
                     type="button"
                     data-bs-toggle="dropdown"
                   >
-                    <img
-                      src={penLogo}
-                      alt="user"
-                      className="w-40-px h-40-px object-fit-cover rounded-circle"
-                    />
+                    {user?.photo ? (
+                      <img
+                        src={
+                          String(user.photo).startsWith("http")
+                            ? user.photo
+                            : `${process.env.REACT_APP_API_URL ? process.env.REACT_APP_API_URL.replace(/\/api\/?$/, "") : "http://127.0.0.1:8000"}/${String(user.photo).replace(/^\/+/, "")}`
+                        }
+                        alt="user"
+                        className="w-40-px h-40-px object-fit-cover rounded-circle border"
+                      />
+                    ) : (
+                      <img
+                        src={penLogo}
+                        alt="user"
+                        className="w-40-px h-40-px object-fit-cover rounded-circle"
+                      />
+                    )}
                   </button>
                   <div className="dropdown-menu to-top dropdown-menu-sm">
                     <div className="py-12 px-16 radius-8 bg-primary-50 mb-16 d-flex align-items-center justify-content-between gap-2">
@@ -441,19 +453,10 @@ const MasterLayout = ({ children }) => {
                       <li>
                         <Link
                           className="dropdown-item text-black px-0 py-8 hover-bg-transparent hover-text-primary d-flex align-items-center gap-3"
-                          to="/view-profile"
+                          to="/admin/profile"
                         >
                           <Icon icon="solar:user-linear" className="icon text-xl" />
-                          My Profile
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          className="dropdown-item text-black px-0 py-8 hover-bg-transparent hover-text-primary d-flex align-items-center gap-3"
-                          to="/company"
-                        >
-                          <Icon icon="icon-park-outline:setting-two" className="icon text-xl" />
-                          Setting
+                          Profile & Settings
                         </Link>
                       </li>
                       <li>

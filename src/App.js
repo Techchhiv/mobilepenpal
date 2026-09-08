@@ -24,6 +24,8 @@ import AdminStudentCreate from "./pages/admin/Student/StudentCreate";
 import AdminStudentEdit from "./pages/admin/Student/StudentEdit";
 import AdminStudentView from "./pages/admin/Student/StudentView";
 import AdminExpensesPage from "./pages/admin/AdminExpensesPage";
+import AdminProfilePage from "./pages/admin/AdminProfilePage";
+import ProfileRedirect from "./pages/ProfileRedirect";
 
 // ---------- School Pages ----------
 import SchoolSignInLayer from "./pages/school/page/SchoolSignin";
@@ -94,6 +96,14 @@ export default function App() {
           element={
             <Gate>
               <AdminDashboardPage />
+            </Gate>
+          }
+        />
+        <Route
+          path="/admin/profile"
+          element={
+            <Gate>
+              <AdminProfilePage />
             </Gate>
           }
         />
@@ -269,7 +279,23 @@ export default function App() {
             </Gate>
           }
         />
-        <Route path="/school/profile" element={<SchoolProfilePage />} />
+        <Route
+          path="/school/profile"
+          element={
+            <Gate>
+              <SchoolProfilePage />
+            </Gate>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <Gate>
+              <ProfileRedirect />
+            </Gate>
+          }
+        />
+        <Route path="/view-profile" element={<Navigate to="/profile" replace />} />
 
         {/* ---------- School Routes ---------- */}
         <Route
