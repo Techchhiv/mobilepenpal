@@ -293,24 +293,77 @@ class DashboardController extends Controller
                 ];
             });
 
+        $today = Carbon::today();
+        $todayStr = $today->toDateString();
+
         $activeSubscription = Subscription::where('school_id', $schoolId)
             ->where('active', true)
-            ->where('start_date', '<=', $now)
-            ->where('end_date', '>=', $now)
+            ->where('start_date', '<=', $todayStr)
+            ->where('end_date', '>=', $todayStr)
             ->orderBy('end_date', 'desc')
             ->first();
 
-        $subscriptionData = $activeSubscription ? [
-            'is_active' => true,
-            'plan' => $activeSubscription->plan,
-            'end_date' => $activeSubscription->end_date->toDateString(),
-            'days_left' => (int) $now->diffInDays($activeSubscription->end_date, false),
-        ] : [
-            'is_active' => false,
-            'plan' => null,
-            'end_date' => null,
-            'days_left' => 0,
-        ];
+        if (!$activeSubscription) {
+            $activeSubscription = Subscription::where('school_id', $schoolId)
+                ->where('active', true)
+                ->where('end_date', '>=', $todayStr)
+                ->orderBy('end_date', 'desc')
+                ->first();
+        }
+
+        $latestSubscription = Subscription::where('school_id', $schoolId)
+            ->orderBy('end_date', 'desc')
+            ->first();
+
+        if ($activeSubscription) {
+            $endDate = Carbon::parse($activeSubscription->end_date)->startOfDay();
+            $daysLeft = max(0, (int) $today->diffInDays($endDate, false));
+            if ($daysLeft <= 7) {
+                $status = 'critical';
+            } elseif ($daysLeft <= 30) {
+                $status = 'expiring_soon';
+            } else {
+                $status = 'active';
+            }
+
+            $subscriptionData = [
+                'has_subscription' => true,
+                'is_active' => true,
+                'is_expired' => false,
+                'status' => $status,
+                'plan' => $activeSubscription->plan,
+                'start_date' => $activeSubscription->start_date ? $activeSubscription->start_date->toDateString() : null,
+                'end_date' => $activeSubscription->end_date ? $activeSubscription->end_date->toDateString() : null,
+                'days_left' => $daysLeft,
+                'amount' => $activeSubscription->amount,
+            ];
+        } elseif ($latestSubscription) {
+            $endDate = Carbon::parse($latestSubscription->end_date)->startOfDay();
+            $isExpired = ($endDate < $today) || !$latestSubscription->active;
+            $subscriptionData = [
+                'has_subscription' => true,
+                'is_active' => false,
+                'is_expired' => $isExpired,
+                'status' => $isExpired ? 'expired' : 'inactive',
+                'plan' => $latestSubscription->plan,
+                'start_date' => $latestSubscription->start_date ? $latestSubscription->start_date->toDateString() : null,
+                'end_date' => $latestSubscription->end_date ? $latestSubscription->end_date->toDateString() : null,
+                'days_left' => 0,
+                'amount' => $latestSubscription->amount,
+            ];
+        } else {
+            $subscriptionData = [
+                'has_subscription' => false,
+                'is_active' => false,
+                'is_expired' => false,
+                'status' => 'none',
+                'plan' => null,
+                'start_date' => null,
+                'end_date' => null,
+                'days_left' => 0,
+                'amount' => null,
+            ];
+        }
 
         return response()->json([
             'success' => true,
