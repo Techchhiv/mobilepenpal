@@ -5,9 +5,9 @@ import { Icon } from "@iconify/react";
 const AdminDashboardTopSchools = ({ schools = [] }) => {
     return (
         <div className="card border shadow-sm h-100" style={{ borderRadius: "12px" }}>
-            <div className="card-header bg-white py-16 px-24 border-bottom d-flex align-items-center justify-content-between">
+            <div className="card-header bg-base py-16 px-24 border-bottom d-flex align-items-center justify-content-between">
                 <div>
-                    <h6 className="mb-0 fw-bold">Top Partner Schools Overview</h6>
+                    <h6 className="mb-0 fw-bold text-dark">Top Partner Schools Overview</h6>
                     <span className="text-xs text-secondary-light">Ranked by total enrolled student capacity</span>
                 </div>
                 <Link to="/admin/schools" className="btn btn-sm btn-outline-primary text-xs font-semibold rounded-pill px-12">
@@ -19,13 +19,13 @@ const AdminDashboardTopSchools = ({ schools = [] }) => {
                     <table className="table bordered-table mb-0 align-middle">
                         <thead>
                             <tr>
-                                <th scope="col" className="bg-neutral-50 py-12 px-24">School Name</th>
-                                <th scope="col" className="bg-neutral-50 py-12 px-24">Admin Email</th>
-                                <th scope="col" className="bg-neutral-50 py-12 px-24 text-center">Status</th>
-                                <th scope="col" className="bg-neutral-50 py-12 px-24 text-center">Classrooms</th>
-                                <th scope="col" className="bg-neutral-50 py-12 px-24 text-center">Teachers</th>
-                                <th scope="col" className="bg-neutral-50 py-12 px-24 text-center">Students</th>
-                                <th scope="col" className="bg-neutral-50 py-12 px-24 text-end">Action</th>
+                                <th scope="col" className="py-12 px-24">School Name</th>
+                                <th scope="col" className="py-12 px-24">Admin Email</th>
+                                <th scope="col" className="py-12 px-24 text-center">Status</th>
+                                <th scope="col" className="py-12 px-24 text-center">Classrooms</th>
+                                <th scope="col" className="py-12 px-24 text-center">Teachers</th>
+                                <th scope="col" className="py-12 px-24 text-center">Students</th>
+                                <th scope="col" className="py-12 px-24 text-end">Action</th>
                             </tr>
                         </thead>
                         <tbody>

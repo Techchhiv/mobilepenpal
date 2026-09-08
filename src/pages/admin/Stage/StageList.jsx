@@ -1,17 +1,19 @@
-import React, { useEffect, useRef, useState } from "react";
-import $ from "jquery";
-import "datatables.net-dt/js/dataTables.dataTables.js";
+import React, { useEffect, useState, useMemo } from "react";
 import { Icon } from "@iconify/react";
 import { Link, useSearchParams } from "react-router-dom";
 
 import API from "../../../helper/api";
 import { useAuth } from "../../../context/AuthContext";
 import MasterLayout from "../../../masterLayout/MasterLayout";
+import AdminPageHeader from "../../../components/admin/common/AdminPageHeader";
+import AdminErrorState from "../../../components/admin/common/AdminErrorState";
+import ConfirmModal from "../../../components/admin/common/ConfirmModal";
+import AdminPagination from "../../../components/admin/common/AdminPagination";
 
 const Trunc = ({ value, maxWidth = 240 }) => {
   const v = value ?? "—";
   return (
-    <div className="text-truncate" style={{ maxWidth }} title={String(v)}>
+    <div className="text-truncate text-secondary-light" style={{ maxWidth }} title={String(v)}>
       {v}
     </div>
   );
@@ -31,11 +33,22 @@ const normalizeStage = (s) => ({
 const StageList = () => {
   const { hasPermission, hasAnyPermission } = useAuth();
   const [stages, setStages] = useState([]);
-  const dtRef = useRef(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   const [searchParams] = useSearchParams();
   const worldId = searchParams.get("world_id");
   const levelId = searchParams.get("level_id");
+
+  // Search & Pagination
+  const [searchVal, setSearchVal] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  // Toggle Confirm Modal
+  const [toggleTarget, setToggleTarget] = useState(null);
+  const [toggling, setToggling] = useState(false);
 
   const canAnyAction = hasAnyPermission([
     "stages.view",
@@ -44,6 +57,8 @@ const StageList = () => {
   ]);
 
   const fetchStages = async () => {
+    setLoading(true);
+    setError("");
     try {
       const qs = new URLSearchParams();
       qs.set("include_inactive", "1");
@@ -56,6 +71,9 @@ const StageList = () => {
       setStages(rows.map(normalizeStage));
     } catch (err) {
       console.error("Fetch stages failed:", err);
+      setError(err?.response?.data?.message || "Failed to load stages list.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -64,206 +82,287 @@ const StageList = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [worldId, levelId]);
 
-  useEffect(() => {
-    if (dtRef.current) {
-      dtRef.current.destroy();
-      dtRef.current = null;
-    }
+  const filteredStages = useMemo(() => {
+    return stages.filter((s) => {
+      const matchesSearch =
+        searchVal.trim() === "" ||
+        (s.name || "").toLowerCase().includes(searchVal.toLowerCase()) ||
+        (s.level_name || "").toLowerCase().includes(searchVal.toLowerCase()) ||
+        (s.world_name || "").toLowerCase().includes(searchVal.toLowerCase()) ||
+        (s.description || "").toLowerCase().includes(searchVal.toLowerCase());
 
-    if (stages.length > 0) {
-      const t = setTimeout(() => {
-        dtRef.current = $("#stageTable").DataTable({
-          destroy: true,
-          pageLength: 10,
-          scrollX: true,
-          scrollCollapse: true,
-          autoWidth: true,
-          order: [[1, "asc"]],
-          columnDefs: [
-            { targets: 0, width: "60px" },  // #
-            { targets: 1, width: "80px" },  // order
-            { targets: 2, width: "160px" }, // world
-            { targets: 3, width: "180px" }, // level
-            { targets: 4, width: "220px" }, // name
-            { targets: 5, width: "260px" }, // desc
-            { targets: 6, width: "170px" }, // content
-            { targets: 7, width: "110px" }, // max stars
-            { targets: 8, width: "140px" }, // status
-            ...(canAnyAction ? [{ targets: 9, width: "180px" }] : []),
-          ],
-        });
-      }, 0);
+      const matchesStatus =
+        statusFilter === "all" ||
+        (statusFilter === "active" && s.is_active) ||
+        (statusFilter === "inactive" && !s.is_active);
 
-      return () => clearTimeout(t);
-    }
+      return matchesSearch && matchesStatus;
+    });
+  }, [stages, searchVal, statusFilter]);
 
-    return () => {
-      if (dtRef.current) {
-        dtRef.current.destroy();
-        dtRef.current = null;
-      }
-    };
-  }, [stages, canAnyAction]);
+  const totalPages = Math.ceil(filteredStages.length / pageSize) || 1;
+  const paginatedStages = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredStages.slice(start, start + pageSize);
+  }, [filteredStages, currentPage, pageSize]);
 
-  const toggleStage = async (id) => {
+  const handleToggleConfirm = async () => {
+    if (!toggleTarget) return;
+    setToggling(true);
     try {
-      await API.put(`/admin/stages/${id}/toggle`);
-      await fetchStages();
+      await API.put(`/admin/stages/${toggleTarget.id}/toggle`);
+      setStages((prev) =>
+        prev.map((s) =>
+          s.id === toggleTarget.id ? { ...s, is_active: !s.is_active } : s
+        )
+      );
+      setToggleTarget(null);
     } catch (err) {
-      console.error(err);
+      console.error("Toggle stage failed:", err);
+    } finally {
+      setToggling(false);
     }
   };
 
   return (
     <MasterLayout>
-      <div className="card basic-data-table">
-        <div className="card-header d-flex justify-content-between align-items-center">
-          <div>
-            <h5 className="mb-0">Stages</h5>
-            {(worldId || levelId) && (
-              <div className="text-muted small">
-                Filter:
-                {worldId ? ` world_id=${worldId}` : ""}
-                {levelId ? ` level_id=${levelId}` : ""}
+      <div className="py-12">
+        <AdminPageHeader
+          title="Stage Management"
+          subtitle="Manage stage exercises, max stars, and learning progress items"
+          primaryAction={
+            hasPermission("stages.create")
+              ? {
+                  label: "Create Stage",
+                  to: "/admin/stages/create",
+                  icon: "mdi:plus",
+                }
+              : null
+          }
+        />
+
+        {/* Filter and Search Bar */}
+        <div className="card border radius-12 shadow-none mb-20">
+          <div className="card-body p-16 d-flex flex-wrap align-items-center justify-content-between gap-16">
+            <div className="d-flex flex-wrap align-items-center gap-12 flex-grow-1">
+              <div className="input-group" style={{ maxWidth: "320px" }}>
+                <span className="input-group-text bg-base text-secondary-light border-end-0 radius-8-left">
+                  <Icon icon="mdi:magnify" width="18" />
+                </span>
+                <input
+                  type="text"
+                  className="form-control border-start-0 ps-0 radius-8-right"
+                  placeholder="Search stage, level, world, or description..."
+                  value={searchVal}
+                  onChange={(e) => {
+                    setSearchVal(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                />
               </div>
-            )}
-          </div>
 
-          {hasPermission("stages.create") && (
-            <Link to="/admin/stages/create">
-              <button
-                type="button"
-                className="d-flex align-items-center btn btn-primary-600 radius-3 px-20 py-11"
+              <select
+                className="form-select w-auto radius-8"
+                value={statusFilter}
+                onChange={(e) => {
+                  setStatusFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
               >
-                <Icon icon="mdi:plus" className="me-8" />
-                Create
-              </button>
-            </Link>
-          )}
-        </div>
+                <option value="all">All Status</option>
+                <option value="active">Active Only</option>
+                <option value="inactive">Disabled Only</option>
+              </select>
 
-        <div className="card-body">
-          <table
-            className="table bordered-table mb-0"
-            id="stageTable"
-            data-page-length={10}
-          >
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Order</th>
-                <th>World</th>
-                <th>Level</th>
-                <th>Name</th>
-                <th>Description</th>
-                <th className="text-center align-middle">Content</th>
-                <th className="text-center align-middle">Max Stars</th>
-                <th className="text-center align-middle">Status</th>
-                {canAnyAction && (
-                  <th className="text-center align-middle">Action</th>
-                )}
-              </tr>
-            </thead>
-
-            <tbody>
-              {stages.length === 0 ? (
-                <tr>
-                  <td colSpan={canAnyAction ? 10 : 9} className="text-center">
-                    No stages found
-                  </td>
-                </tr>
-              ) : (
-                stages.map((s, idx) => (
-                  <tr key={s.id} className={!s.is_active ? "table-light" : ""}>
-                    <td>{idx + 1}</td>
-                    <td>{s.order_index ?? "—"}</td>
-
-                    <td>
-                      <Trunc value={s.world_name} maxWidth={220} />
-                    </td>
-
-                    <td>
-                      <Trunc value={s.level_name} maxWidth={240} />
-                    </td>
-
-                    <td>
-                      <Trunc value={s.name} maxWidth={280} />
-                    </td>
-
-                    <td>
-                      <Trunc value={s.description || "—"} maxWidth={320} />
-                    </td>
-
-                    <td>
-                      <div className="small text-center">
-                        Exercises: {s.active_exercises_count}/{s.exercises_count}
-                      </div>
-                    </td>
-
-                    <td className="text-center">{s.max_stars ?? "—"}</td>
-
-                    <td className="text-center align-middle">
-                      <span
-                        className={`px-24 py-4 rounded-pill fw-medium text-sm ${
-                          s.is_active
-                            ? "bg-success-focus text-success-main"
-                            : "bg-warning-focus text-warning-main"
-                        }`}
-                      >
-                        {s.is_active ? "Active" : "Disabled"}
-                      </span>
-                    </td>
-
-                    {canAnyAction && (
-                      <td className="text-center align-middle">
-                        {hasPermission("stages.view") && (
-                          <Link
-                            to={`/admin/stages/${s.id}`}
-                            className="w-32-px h-32-px me-8 bg-primary-light text-primary-600 rounded-circle d-inline-flex align-items-center justify-content-center"
-                            title="View"
-                          >
-                            <Icon icon="iconamoon:eye-light" />
-                          </Link>
-                        )}
-
-                        {hasPermission("stages.update") && (
-                          <Link
-                            to={`/admin/stages/${s.id}/edit`}
-                            className="w-32-px h-32-px me-8 bg-success-focus text-success-main rounded-circle d-inline-flex align-items-center justify-content-center"
-                            title="Edit"
-                          >
-                            <Icon icon="lucide:edit" />
-                          </Link>
-                        )}
-
-                        {hasPermission("stages.enable_disable") && (
-                          <button
-                            type="button"
-                            onClick={() => toggleStage(s.id)}
-                            className="w-32-px h-32-px me-8 bg-warning-focus text-warning-main rounded-circle d-inline-flex align-items-center justify-content-center border-0"
-                            title="Toggle"
-                          >
-                            <Icon icon="mdi:toggle-switch" />
-                          </button>
-                        )}
-                      </td>
-                    )}
-                  </tr>
-                ))
+              {(searchVal || statusFilter !== "all") && (
+                <button
+                  type="button"
+                  className="btn btn-outline-secondary btn-sm radius-8 d-inline-flex align-items-center gap-6"
+                  onClick={() => {
+                    setSearchVal("");
+                    setStatusFilter("all");
+                    setCurrentPage(1);
+                  }}
+                >
+                  <Icon icon="mdi:filter-off-outline" />
+                  <span>Clear Filters</span>
+                </button>
               )}
-            </tbody>
-          </table>
-
-          {/* Optional helper link when filtered */}
-          {(worldId || levelId) && (
-            <div className="mt-12">
-              <Link to="/admin/stages" className="text-decoration-underline small">
-                Clear filters
-              </Link>
             </div>
-          )}
+
+            <div className="text-secondary-light text-sm">
+              Total: <strong>{filteredStages.length}</strong> stages
+            </div>
+          </div>
         </div>
+
+        {error ? (
+          <AdminErrorState message={error} onRetry={fetchStages} />
+        ) : (
+          <div className="card border radius-12 shadow-none">
+            <div className="card-body p-0">
+              <div className="table-responsive">
+                <table className="table bordered-table mb-0 align-middle">
+                  <thead>
+                    <tr>
+                      <th scope="col" className="text-xs text-uppercase fw-semibold py-12 px-16">#</th>
+                      <th scope="col" className="text-xs text-uppercase fw-semibold py-12 px-16">Order</th>
+                      <th scope="col" className="text-xs text-uppercase fw-semibold py-12 px-16">World</th>
+                      <th scope="col" className="text-xs text-uppercase fw-semibold py-12 px-16">Level</th>
+                      <th scope="col" className="text-xs text-uppercase fw-semibold py-12 px-16">Name</th>
+                      <th scope="col" className="text-xs text-uppercase fw-semibold py-12 px-16">Description</th>
+                      <th scope="col" className="text-xs text-uppercase fw-semibold py-12 px-16 text-center">Content</th>
+                      <th scope="col" className="text-xs text-uppercase fw-semibold py-12 px-16 text-center">Max Stars</th>
+                      <th scope="col" className="text-xs text-uppercase fw-semibold py-12 px-16 text-center">Status</th>
+                      {canAnyAction && (
+                        <th scope="col" className="text-xs text-uppercase fw-semibold py-12 px-16 text-center">Action</th>
+                      )}
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {loading ? (
+                      Array.from({ length: 5 }).map((_, idx) => (
+                        <tr key={idx}>
+                          <td className="py-16 px-16"><div className="skeleton-loader py-10 w-100"></div></td>
+                          <td className="py-16 px-16"><div className="skeleton-loader py-10 w-100"></div></td>
+                          <td className="py-16 px-16"><div className="skeleton-loader py-10 w-100"></div></td>
+                          <td className="py-16 px-16"><div className="skeleton-loader py-10 w-100"></div></td>
+                          <td className="py-16 px-16"><div className="skeleton-loader py-10 w-100"></div></td>
+                          <td className="py-16 px-16"><div className="skeleton-loader py-10 w-100"></div></td>
+                          <td className="py-16 px-16"><div className="skeleton-loader py-10 w-100"></div></td>
+                          <td className="py-16 px-16"><div className="skeleton-loader py-10 w-100"></div></td>
+                          <td className="py-16 px-16"><div className="skeleton-loader py-10 w-100"></div></td>
+                          {canAnyAction && <td className="py-16 px-16"><div className="skeleton-loader py-10 w-100"></div></td>}
+                        </tr>
+                      ))
+                    ) : paginatedStages.length === 0 ? (
+                      <tr>
+                        <td colSpan={canAnyAction ? 10 : 9} className="text-center text-secondary-light py-40">
+                          <Icon icon="mdi:flag-off-outline" width="48" className="mb-12 opacity-50" />
+                          <h6>No stages found</h6>
+                          <p className="text-xs text-secondary-light mb-0">Try adjusting your search query or filter options.</p>
+                        </td>
+                      </tr>
+                    ) : (
+                      paginatedStages.map((s, idx) => {
+                        const rowNum = (currentPage - 1) * pageSize + idx + 1;
+                        return (
+                          <tr key={s.id} className={`hover-bg-neutral-50 transition-1 ${!s.is_active ? "opacity-75" : ""}`}>
+                            <td className="py-12 px-16 text-sm font-monospace text-secondary-light">{rowNum}</td>
+                            <td className="py-12 px-16 text-sm text-secondary-light">{s.order_index ?? "—"}</td>
+                            <td className="py-12 px-16 text-sm text-secondary-light">
+                              <Trunc value={s.world_name} maxWidth={180} />
+                            </td>
+                            <td className="py-12 px-16 text-sm fw-bold text-dark">
+                              <Trunc value={s.level_name} maxWidth={200} />
+                            </td>
+                            <td className="py-12 px-16 text-sm fw-semibold text-dark">
+                              <Trunc value={s.name} maxWidth={220} />
+                            </td>
+                            <td className="py-12 px-16 text-sm text-secondary-light">
+                              <Trunc value={s.description || "—"} maxWidth={260} />
+                            </td>
+
+                            <td className="py-12 px-16 text-center text-xs text-secondary-light">
+                              Exercises: <strong className="text-dark">{s.active_exercises_count}/{s.exercises_count}</strong>
+                            </td>
+
+                            <td className="py-12 px-16 text-center text-sm fw-semibold text-dark me-4">
+                              <Icon icon="mdi:star" className="text-warning-main me-4" />
+                              {s.max_stars ?? "—"}
+                            </td>
+
+                            <td className="py-12 px-16 text-center align-middle">
+                              <span
+                                className={`status-badge d-inline-flex align-items-center gap-6 px-10 py-4 radius-6 text-xs fw-semibold ${
+                                  s.is_active ? "status-badge-active" : "status-badge-inactive"
+                                }`}
+                              >
+                                <Icon icon={s.is_active ? "mdi:check-circle" : "mdi:close-circle"} />
+                                <span>{s.is_active ? "Active" : "Disabled"}</span>
+                              </span>
+                            </td>
+
+                            {canAnyAction && (
+                              <td className="py-12 px-16 text-center align-middle">
+                                <div className="d-inline-flex align-items-center gap-6">
+                                  {hasPermission("stages.view") && (
+                                    <Link
+                                      to={`/admin/stages/${s.id}`}
+                                      className="w-32-px h-32-px radius-8 bg-primary-50 text-primary-600 d-inline-flex align-items-center justify-content-center"
+                                      title="View Stage"
+                                    >
+                                      <Icon icon="iconamoon:eye-light" />
+                                    </Link>
+                                  )}
+
+                                  {hasPermission("stages.update") && (
+                                    <Link
+                                      to={`/admin/stages/${s.id}/edit`}
+                                      className="w-32-px h-32-px radius-8 bg-success-50 text-success-600 d-inline-flex align-items-center justify-content-center"
+                                      title="Edit Stage"
+                                    >
+                                      <Icon icon="lucide:edit" />
+                                    </Link>
+                                  )}
+
+                                  {hasPermission("stages.enable_disable") && (
+                                    <button
+                                      type="button"
+                                      onClick={() => setToggleTarget(s)}
+                                      className={`w-32-px h-32-px radius-8 border-0 d-inline-flex align-items-center justify-content-center ${
+                                        s.is_active ? "bg-warning-50 text-warning-600" : "bg-info-50 text-info-600"
+                                      }`}
+                                      title={s.is_active ? "Disable Stage" : "Enable Stage"}
+                                    >
+                                      <Icon icon={s.is_active ? "mdi:toggle-switch-off-outline" : "mdi:toggle-switch-outline"} />
+                                    </button>
+                                  )}
+                                </div>
+                              </td>
+                            )}
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {!loading && filteredStages.length > 0 && (
+                <div className="card-footer py-14 px-24 border-top d-flex align-items-center justify-content-between flex-wrap gap-12">
+                  <div className="text-secondary-light text-xs font-semibold">
+                    Showing {(currentPage - 1) * pageSize + 1}–
+                    {Math.min(currentPage * pageSize, filteredStages.length)} of {filteredStages.length} entries
+                  </div>
+                  {totalPages > 1 && (
+                    <div className="ms-auto">
+                      <AdminPagination
+                        page={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={setCurrentPage}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
+
+      <ConfirmModal
+        open={Boolean(toggleTarget)}
+        title={toggleTarget?.is_active ? "Disable Stage?" : "Enable Stage?"}
+        message={`Are you sure you want to ${toggleTarget?.is_active ? "disable" : "enable"} the stage "${toggleTarget?.name}"?`}
+        confirmLabel={toggleTarget?.is_active ? "Disable Stage" : "Enable Stage"}
+        cancelLabel="Cancel"
+        variant={toggleTarget?.is_active ? "warning" : "primary"}
+        loading={toggling}
+        onConfirm={handleToggleConfirm}
+        onCancel={() => setToggleTarget(null)}
+      />
     </MasterLayout>
   );
 };

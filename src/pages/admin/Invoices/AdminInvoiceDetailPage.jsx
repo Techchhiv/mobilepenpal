@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import MasterLayout from "../../../masterLayout/MasterLayout";
 import invoiceService from "../../../services/invoiceService";
+import AdminPageHeader from "../../../components/admin/common/AdminPageHeader";
+import AdminErrorState from "../../../components/admin/common/AdminErrorState";
 
 const STATUS_BADGE = {
-  paid: "bg-success-focus text-success-main px-12 py-4 radius-4 fw-medium text-xs",
-  issued: "bg-warning-focus text-warning-main px-12 py-4 radius-4 fw-medium text-xs",
-  void: "bg-danger-focus text-danger-main px-12 py-4 radius-4 fw-medium text-xs",
+  paid: "status-badge status-active px-10 py-4 radius-6 text-xs fw-semibold",
+  issued: "status-badge status-scheduled px-10 py-4 radius-6 text-xs fw-semibold",
+  void: "status-badge status-expired px-10 py-4 radius-6 text-xs fw-semibold",
 };
 
 export default function AdminInvoiceDetailPage() {
@@ -27,10 +29,11 @@ export default function AdminInvoiceDetailPage() {
 
   useEffect(() => {
     setLoading(true);
+    setErr("");
     invoiceService
       .get(id)
       .then((res) => setInvoice(res.data.data?.invoice || null))
-      .catch((e) => setErr(e?.response?.data?.message || "Failed to load invoice"))
+      .catch((e) => setErr(e?.response?.data?.message || "Failed to load invoice details from server."))
       .finally(() => setLoading(false));
   }, [id]);
 
@@ -50,7 +53,7 @@ export default function AdminInvoiceDetailPage() {
       a.click();
       URL.revokeObjectURL(url);
     } catch {
-      flash("Failed to download PDF", true);
+      flash("Failed to download PDF document", true);
     } finally {
       setPdfLoading(false);
     }
@@ -73,15 +76,17 @@ export default function AdminInvoiceDetailPage() {
     }
   };
 
-  const fmt = (d) => (d ? new Date(d).toLocaleDateString() : "—");
-  const fmtDT = (d) => (d ? new Date(d).toLocaleString() : "—");
+  const fmt = (d) => (d ? new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : "—");
+  const fmtDT = (d) => (d ? new Date(d).toLocaleString('en-US') : "—");
 
   if (loading) {
     return (
       <MasterLayout>
-        <div className="text-center py-5">
-          <div className="spinner-border text-primary" role="status" />
-          <p className="mt-2 text-muted">Loading invoice…</p>
+        <div className="py-12">
+          <div className="placeholder-glow d-flex flex-column gap-16">
+            <span className="placeholder col-4 radius-8" style={{ height: "32px" }}></span>
+            <span className="placeholder col-12 radius-8" style={{ height: "300px" }}></span>
+          </div>
         </div>
       </MasterLayout>
     );
@@ -90,39 +95,46 @@ export default function AdminInvoiceDetailPage() {
   if (!invoice) {
     return (
       <MasterLayout>
-        <div className="alert alert-danger">{err || "Invoice not found."}</div>
-        <button className="btn btn-outline-secondary" onClick={() => navigate(-1)}>
-          <Icon icon="mdi:arrow-left" className="me-1" />Back
-        </button>
+        <div className="py-12">
+          <div className="mb-16">
+            <Link to="/admin/invoices" className="btn btn-outline-primary btn-sm radius-8 d-inline-flex align-items-center gap-6">
+              <Icon icon="mdi:arrow-left" />
+              <span>Back to Invoices</span>
+            </Link>
+          </div>
+          <AdminErrorState
+            title="Invoice Not Found"
+            message={err || "The requested invoice document could not be found."}
+          />
+        </div>
       </MasterLayout>
     );
   }
 
   return (
     <MasterLayout>
-      <div className="row gy-4">
-        {/* ── Header ── */}
-        <div className="col-12">
-          <div className="d-flex align-items-center justify-content-between flex-wrap gap-2">
-            <div className="d-flex align-items-center gap-3">
-              <button
-                type="button"
-                className="w-36-px h-36-px bg-neutral-100 text-neutral-600 rounded-circle d-inline-flex align-items-center justify-content-center border-0"
-                onClick={() => navigate(-1)}
-                title="Go Back"
-              >
-                <Icon icon="mdi:arrow-left" className="text-lg" />
-              </button>
-              <div>
-                <h5 className="mb-1 d-flex align-items-center gap-2">
-                  <Icon icon="mdi:file-document-outline" className="text-primary-600 fs-4" />
-                  {invoice.invoice_number}
-                </h5>
-                <span className={`badge ${STATUS_BADGE[invoice.status] || ""} text-capitalize`}>
-                  {invoice.status}
-                </span>
-              </div>
-            </div>
+      <div className="py-12">
+        <div className="mb-16">
+          <button
+            type="button"
+            className="btn btn-outline-primary btn-sm radius-8 d-inline-flex align-items-center gap-6"
+            onClick={() => navigate(-1)}
+          >
+            <Icon icon="mdi:arrow-left" />
+            <span>Back to Invoices</span>
+          </button>
+        </div>
+
+        <div className="d-flex align-items-center justify-content-between flex-wrap gap-12 mb-24">
+          <AdminPageHeader
+            title={`Invoice ${invoice.invoice_number}`}
+            subtitle={`Issued for ${invoice.customer_name || 'Client'} (${invoice.customer_type || 'Account'})`}
+            className="mb-0"
+          />
+          <span className={STATUS_BADGE[invoice.status] || "status-badge status-active px-10 py-4 radius-6 text-xs fw-semibold"}>
+            {invoice.status ? invoice.status.toUpperCase() : 'UNKNOWN'}
+          </span>
+        </div>
             <div className="d-flex align-items-center gap-2 flex-wrap">
               <button
                 type="button"
@@ -147,8 +159,6 @@ export default function AdminInvoiceDetailPage() {
                 </button>
               )}
             </div>
-          </div>
-        </div>
 
         {/* ── Alerts ── */}
         {msg && <div className="col-12"><div className="alert alert-success py-2">{msg}</div></div>}

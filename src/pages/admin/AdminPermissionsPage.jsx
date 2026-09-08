@@ -3,6 +3,11 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Icon } from "@iconify/react";
 import API from "../../helper/api";
 import MasterLayout from "../../masterLayout/MasterLayout";
+import AdminPageHeader from "../../components/admin/common/AdminPageHeader";
+import AdminEmptyState from "../../components/admin/common/AdminEmptyState";
+import AdminErrorState from "../../components/admin/common/AdminErrorState";
+import AdminPagination from "../../components/admin/common/AdminPagination";
+import ConfirmModal from "../../components/admin/common/ConfirmModal";
 
 // Reusable modal
 function PermissionModal({ open, onClose, onSubmit, initial, saving }) {
@@ -57,7 +62,7 @@ function PermissionModal({ open, onClose, onSubmit, initial, saving }) {
                   required
                   minLength={2}
                 />
-                <small className="text-muted d-block mt-1">
+                <small className="text-xs text-secondary-light d-block mt-6">
                   Use a consistent naming pattern like{" "}
                   <code>resource.action</code>.
                 </small>
@@ -106,11 +111,25 @@ export default function AdminPermissionsPage() {
   // search
   const [q, setQ] = useState("");
 
+  const [page, setPage] = useState(1);
+  const perPage = 10;
+
   const filtered = useMemo(() => {
-    const s = q.trim().toLowerCase();
-    if (!s) return perms;
-    return perms.filter((p) => p.name.toLowerCase().includes(s));
-  }, [q, perms]);
+    const t = q.trim().toLowerCase();
+    if (!t) return perms;
+    return perms.filter((p) => p.name.toLowerCase().includes(t));
+  }, [perms, q]);
+
+  const totalPages = Math.ceil(filtered.length / perPage) || 1;
+
+  const paginated = useMemo(() => {
+    const start = (page - 1) * perPage;
+    return filtered.slice(start, start + perPage);
+  }, [filtered, page, perPage]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [q]);
 
   const showFlash = (txt) => {
     setFlash(txt);
@@ -162,116 +181,162 @@ export default function AdminPermissionsPage() {
     }
   };
 
-  const deletePerm = async (p) => {
-    if (!window.confirm(`Delete permission "${p.name}"?`)) return;
+  const [deleteModal, setDeleteModal] = useState(null); // permission to delete
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  const handleDeleteClick = (p) => {
+    setDeleteModal(p);
+  };
+
+  const confirmDeletePerm = async () => {
+    if (!deleteModal) return;
     try {
-      await API.delete(`admin/permissions/${p.id}`);
-      setPerms((prev) => prev.filter((x) => x.id !== p.id));
+      setDeleteLoading(true);
+      await API.delete(`admin/permissions/${deleteModal.id}`);
+      setPerms((prev) => prev.filter((x) => x.id !== deleteModal.id));
       showFlash("Permission deleted");
+      setDeleteModal(null);
     } catch (e) {
       showErr(e?.response?.data?.message || "Delete failed");
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
-  if (loading) return <div>Loading permissions…</div>;
-
   return (
     <MasterLayout>
-      <div className="card p-3">
-        <div className="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-3">
-          <div className="d-flex align-items-center gap-2">
-            <h5 className="mb-0">Permissions</h5>
-            <span className="badge bg-neutral-200 text-dark">{perms.length}</span>
-          </div>
+      <div className="py-12">
+        <AdminPageHeader
+          title="Permissions Management"
+          subtitle="System access control permissions and security scope definitions"
+          actionLabel="Add Permission"
+          actionIcon="lucide:plus"
+          onAction={openCreate}
+        />
 
-          <div className="d-flex gap-2">
-            <div className="input-group">
-              <span className="input-group-text">
-                <Icon icon="ion:search-outline" />
-              </span>
-              <input
-                className="form-control"
-                placeholder="Search permissions…"
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-              />
+        {flash && <div className="alert alert-success py-12 px-16 radius-8 text-sm mb-16">{flash}</div>}
+
+        {err && !perms.length && !loading ? (
+          <AdminErrorState
+            title="Failed to Load Permissions"
+            message={err}
+            onRetry={load}
+          />
+        ) : (
+          <div className="card border radius-12 shadow-none">
+            <div className="card-header border-bottom py-16 px-24 bg-base d-flex align-items-center justify-content-between flex-wrap gap-12">
+              <h6 className="fw-bold mb-0 text-dark">System Permissions</h6>
+              <div className="d-flex align-items-center gap-12">
+                <input
+                  className="form-control form-control-sm radius-8 min-w-200-px"
+                  placeholder="Search permissions..."
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                />
+                <span className="badge bg-neutral-200 text-secondary-light px-10 py-6 radius-6 text-xs">
+                  {filtered.length} / {perms.length}
+                </span>
+              </div>
             </div>
 
-            <button className="btn btn-primary" onClick={openCreate}>
-              <Icon icon="lucide:plus" className="me-1" />
-              Add
-            </button>
-          </div>
-        </div>
+            <div className="card-body p-0">
+              {loading ? (
+                <div className="placeholder-glow d-flex flex-column gap-12 p-24">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <span key={i} className="placeholder col-12 radius-8" style={{ height: "48px" }}></span>
+                  ))}
+                </div>
+              ) : filtered.length === 0 ? (
+                <AdminEmptyState
+                  icon="mdi:key-outline"
+                  title="No permissions found"
+                  message="No permission scope matches the current search query."
+                />
+              ) : (
+                <div className="table-responsive">
+                  <table className="table bordered-table mb-0 align-middle">
+                    <thead>
+                      <tr>
+                        <th style={{ width: 80 }} className="px-16">ID</th>
+                        <th className="px-16">Permission Key</th>
+                        <th style={{ width: 120 }} className="text-end pe-16">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {paginated.map((p) => (
+                        <tr key={p.id}>
+                          <td className="px-16 font-monospace text-secondary-light">{p.id}</td>
+                          <td className="px-16">
+                            <span className="badge bg-primary-light text-primary-600 px-12 py-6 radius-6 text-xs fw-semibold font-monospace">
+                              {p.name}
+                            </span>
+                          </td>
+                          <td className="text-end pe-16">
+                            <div className="d-inline-flex align-items-center gap-2">
+                              <button
+                                type="button"
+                                className="w-32-px h-32-px bg-success-focus text-success-main rounded-circle d-inline-flex align-items-center justify-content-center border-0"
+                                title="Edit Permission"
+                                onClick={() => openEdit(p)}
+                              >
+                                <Icon icon="lucide:edit" />
+                              </button>
+                              <button
+                                type="button"
+                                className="w-32-px h-32-px bg-danger-focus text-danger-main rounded-circle d-inline-flex align-items-center justify-content-center border-0"
+                                title="Delete Permission"
+                                onClick={() => handleDeleteClick(p)}
+                              >
+                                <Icon icon="mingcute:delete-2-line" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
 
-        {(flash || err) && (
-          <div className="mb-3">
-            {flash && <div className="alert alert-success py-2 mb-2">{flash}</div>}
-            {err && <div className="alert alert-danger py-2">{err}</div>}
+            {/* ── Card Footer Pagination ── */}
+            <div className="card-footer py-14 px-24 border-top d-flex align-items-center justify-content-between flex-wrap gap-12">
+              <div className="text-secondary-light text-xs font-semibold">
+                Showing {filtered.length > 0 ? (page - 1) * perPage + 1 : 0}–
+                {Math.min(page * perPage, filtered.length)} of {filtered.length} entries
+              </div>
+              {totalPages > 1 && (
+                <div className="ms-auto">
+                  <AdminPagination
+                    page={page}
+                    totalPages={totalPages}
+                    onPageChange={setPage}
+                  />
+                </div>
+              )}
+            </div>
           </div>
         )}
 
-        <div className="table-responsive">
-          <table className="table align-middle">
-            <thead>
-              <tr>
-                <th style={{ width: 90 }}>ID</th>
-                <th>Name</th>
-                <th style={{ width: 140 }}>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((p) => (
-                <tr key={p.id}>
-                  <td>{p.id}</td>
-                  <td>
-                    <span className="badge bg-primary-light text-primary-600 rounded-pill px-3 py-2">
-                      {p.name}
-                    </span>
-                  </td>
-                  <td>
-                    <div className="d-flex align-items-center gap-2">
-                      <button
-                        type="button"
-                        className="w-32-px h-32-px bg-success-focus text-success-main rounded-circle d-inline-flex align-items-center justify-content-center border-0"
-                        title="Edit"
-                        onClick={() => openEdit(p)}
-                      >
-                        <Icon icon="lucide:edit" />
-                      </button>
-                      <button
-                        type="button"
-                        className="w-32-px h-32-px bg-danger-focus text-danger-main rounded-circle d-inline-flex align-items-center justify-content-center border-0"
-                        title="Delete"
-                        onClick={() => deletePerm(p)}
-                      >
-                        <Icon icon="mingcute:delete-2-line" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+        <PermissionModal
+          open={modalOpen}
+          onClose={() => setModalOpen(false)}
+          onSubmit={handleSubmit}
+          initial={editing}
+          saving={saving}
+        />
 
-              {!filtered.length && (
-                <tr>
-                  <td colSpan={3} className="text-center text-muted py-4">
-                    No permissions found.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        <ConfirmModal
+          open={!!deleteModal}
+          title="Delete Permission Scope"
+          message={deleteModal ? `Are you sure you want to delete permission "${deleteModal.name}"? Roles assigned to this permission will lose this capability.` : ""}
+          confirmLabel="Delete Permission"
+          variant="danger"
+          loading={deleteLoading}
+          onConfirm={confirmDeletePerm}
+          onCancel={() => setDeleteModal(null)}
+        />
       </div>
-
-      {/* Create / Edit modal */}
-      <PermissionModal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onSubmit={handleSubmit}
-        initial={editing}
-        saving={saving}
-      />
     </MasterLayout>
   );
 }

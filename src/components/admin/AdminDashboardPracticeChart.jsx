@@ -63,9 +63,9 @@ const AdminDashboardPracticeChart = ({ practiceTrend = [] }) => {
 
     return (
         <div className="card border shadow-sm h-100" style={{ borderRadius: "12px" }}>
-            <div className="card-header bg-white py-16 px-24 border-bottom d-flex align-items-center justify-content-between">
+            <div className="card-header bg-base py-16 px-24 border-bottom d-flex align-items-center justify-content-between">
                 <div>
-                    <h6 className="mb-0 fw-bold">Platform-Wide Practice Volume (14 Days)</h6>
+                    <h6 className="mb-0 fw-bold text-dark">Platform-Wide Practice Volume (14 Days)</h6>
                     <span className="text-xs text-secondary-light">Daily student exercise attempts & accuracy trends across all schools</span>
                 </div>
                 <div className="d-flex align-items-center gap-2">

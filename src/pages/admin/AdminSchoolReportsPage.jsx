@@ -5,6 +5,8 @@ import ReportFilters from '../../components/schoolReport/ReportFilters';
 import ReportSummaryCards from '../../components/schoolReport/ReportSummaryCards';
 import SchoolReportTable from '../../components/schoolReport/SchoolReportTable';
 import ExportCSVButton from '../../components/schoolReport/ExportCSVButton';
+import AdminPageHeader from '../../components/admin/common/AdminPageHeader';
+import AdminErrorState from '../../components/admin/common/AdminErrorState';
 import { syncFiltersToURL } from '../../utils/schoolReportUtils';
 import '../../assets/css/adminReport.css';
 
@@ -27,6 +29,7 @@ export default function AdminSchoolReportsPage() {
     totalItems,
     loading,
     error,
+    refetch,
   } = useSchoolReports(filters);
 
   const handleFilterChange = (partial) => {
@@ -40,9 +43,13 @@ export default function AdminSchoolReportsPage() {
 
   return (
     <MasterLayout>
-      <div className="school-report-page">
-        <div className="d-flex justify-content-between align-items-center mb-3">
-          <h5 className="fw-semibold mb-0">School Reports</h5>
+      <div className="school-report-page py-12">
+        <div className="d-flex align-items-center justify-content-between flex-wrap gap-16 mb-20">
+          <AdminPageHeader
+            title="School Reports"
+            subtitle="Overview of registered institutions, enrollment capacity, and active subscription plans"
+            className="mb-0"
+          />
           <ExportCSVButton
             filters={filters}
             totalItems={totalItems}
@@ -54,12 +61,14 @@ export default function AdminSchoolReportsPage() {
         <ReportFilters filters={filters} onChange={handleFilterChange} />
 
         {error && (
-          <div className="alert alert-danger mt-3 mb-0" role="alert">
-            {error}
-          </div>
+          <AdminErrorState
+            title="Failed to Load School Reports"
+            message={error}
+            onRetry={refetch}
+          />
         )}
 
-        <div className="mt-3">
+        <div className="mt-20">
           <SchoolReportTable
             schools={pagedList}
             page={filters.page}

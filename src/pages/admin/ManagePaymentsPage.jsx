@@ -1,104 +1,128 @@
 import React, { useEffect, useState } from "react";
-import $ from "jquery";
-import "datatables.net-dt/js/dataTables.dataTables.js";
 import { Icon } from "@iconify/react";
 import { Link } from "react-router-dom";
 import API from "../../helper/api";
 import MasterLayout from "../../masterLayout/MasterLayout";
+import AdminPageHeader from "../../components/admin/common/AdminPageHeader";
+import AdminEmptyState from "../../components/admin/common/AdminEmptyState";
+import AdminErrorState from "../../components/admin/common/AdminErrorState";
 
 export default function ManagePaymentsPage() {
   const [schools, setSchools] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     loadSchools();
   }, []);
 
   const loadSchools = async () => {
+    setLoading(true);
+    setError("");
     try {
       const { data } = await API.get("/admin/schools");
-      setSchools(data.data ?? []); // Laravel paginate returns { data: [...] }
-    } catch (error) {
-      console.error("Failed to load schools:", error);
+      setSchools(data.data ?? (Array.isArray(data) ? data : []));
+    } catch (err) {
+      console.error("Failed to load schools:", err);
+      setError(err?.response?.data?.message || "Failed to load school accounts from server.");
     } finally {
       setLoading(false);
     }
   };
 
-  // Initialize DataTable after schools load
-  useEffect(() => {
-    if (schools.length > 0) {
-      const table = $("#schoolsTable").DataTable({ destroy: true, pageLength: 10 });
-      return () => table.destroy(true);
-    }
-  }, [schools]);
-
   return (
     <MasterLayout>
-      <div className="card basic-data-table">
-        <div className="card-header d-flex justify-content-between align-items-center">
-          <h5 className="mb-0 fw-semibold">🏫 Payments – Schools</h5>
-        </div>
+      <div className="py-12">
+        <AdminPageHeader
+          title="Manage Payments"
+          subtitle="Select a school client to review payment history and active billing subscriptions"
+        />
 
-        <div className="card-body">
-          {loading ? (
-            <p>Loading schools...</p>
-          ) : schools.length === 0 ? (
-            <p className="text-muted">No schools found.</p>
-          ) : (
-            <table
-              className="table bordered-table mb-0"
-              id="schoolsTable"
-              data-page-length={10}
-            >
-              <thead>
-                <tr>
-                  <th>S.L</th>
-                  <th>School</th>
-                  <th>Admin Email</th>
-                  <th>Status</th>
-                  <th className="text-end">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {schools.map((s, index) => (
-                  <tr key={s.id}>
-                    <td>
-                      <div className="form-check style-check d-flex align-items-center">
-                        <input className="form-check-input" type="checkbox" />
-                        <label className="form-check-label">{index + 1}</label>
-                      </div>
-                    </td>
+        {error ? (
+          <AdminErrorState
+            title="Failed to Load Payment Accounts"
+            message={error}
+            onRetry={loadSchools}
+          />
+        ) : (
+          <div className="card border radius-12 shadow-none">
+            <div className="card-header border-bottom py-16 px-24 bg-base d-flex align-items-center justify-content-between">
+              <h6 className="fw-bold mb-0 text-dark">School Accounts</h6>
+              <span className="badge bg-neutral-200 text-secondary-light radius-6 text-xs px-10 py-6">
+                Total: {schools.length}
+              </span>
+            </div>
 
-                    <td className="fw-medium">{s.name}</td>
-                    <td>{s.admin_email}</td>
-                    <td>
-                      <span
-                        className={`px-24 py-4 rounded-pill fw-medium text-sm ${
-                          s.is_active
-                            ? "bg-success-focus text-success-main"
-                            : "bg-danger-focus text-danger-main"
-                        }`}
-                      >
-                        {s.is_active ? "Active" : "Inactive"}
-                      </span>
-                    </td>
+            <div className="card-body p-0">
+              {loading ? (
+                <div className="placeholder-glow d-flex flex-column gap-12 p-24">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <span key={i} className="placeholder col-12 radius-8" style={{ height: "48px" }}></span>
+                  ))}
+                </div>
+              ) : schools.length === 0 ? (
+                <AdminEmptyState
+                  icon="mdi:credit-card-off-outline"
+                  title="No school accounts found"
+                  message="There are currently no school clients registered in the system."
+                />
+              ) : (
+                <div className="table-responsive">
+                  <table className="table bordered-table mb-0 align-middle">
+                    <thead>
+                      <tr>
+                        <th scope="col" className="text-xs text-uppercase fw-semibold py-12 px-16" style={{ width: 60 }}>#</th>
+                        <th scope="col" className="text-xs text-uppercase fw-semibold py-12 px-16">School Name</th>
+                        <th scope="col" className="text-xs text-uppercase fw-semibold py-12 px-16">Admin Email</th>
+                        <th scope="col" className="text-xs text-uppercase fw-semibold py-12 px-16">Account Status</th>
+                        <th scope="col" className="text-xs text-uppercase fw-semibold py-12 px-16 text-end" style={{ width: 120 }}>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {schools.map((s, index) => {
+                        const isActive = Boolean(s.is_active ?? true);
+                        return (
+                          <tr key={s.id} className="hover-bg-neutral-50 transition-1">
+                            <td className="py-12 px-16 text-sm font-monospace text-secondary-light">{index + 1}</td>
+                            <td className="py-12 px-16 text-sm fw-bold text-dark">{s.name}</td>
+                            <td className="py-12 px-16 text-sm text-secondary-light">{s.admin_email || '-'}</td>
+                            <td className="py-12 px-16">
+                              <span
+                                className={`status-badge d-inline-flex align-items-center gap-6 px-10 py-4 radius-6 text-xs fw-semibold ${
+                                  isActive ? 'status-active' : 'status-inactive'
+                                }`}
+                              >
+                                <Icon icon={isActive ? 'mdi:check-circle' : 'mdi:close-circle'} />
+                                <span>{isActive ? 'Active' : 'Inactive'}</span>
+                              </span>
+                            </td>
+                            <td className="py-12 px-16 text-end">
+                              <Link
+                                to={`/admin/schools/${s.id}/payments`}
+                                className="btn btn-outline-primary btn-sm radius-8 d-inline-flex align-items-center gap-6"
+                                title="Manage Subscription & Payments"
+                              >
+                                <Icon icon="mdi:credit-card-outline" className="text-base" />
+                                <span>Payments</span>
+                              </Link>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
 
-                    <td className="text-end">
-                      <Link
-                        to={`/admin/schools/${s.id}/payments`}
-                        className="w-32-px h-32-px me-8 bg-primary-light text-primary-600 rounded-circle d-inline-flex align-items-center justify-content-center"
-                        title="Manage Subscription"
-                      >
-                        <Icon icon="mdi:credit-card-outline" />
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
+            {/* Card Footer */}
+            <div className="card-footer py-14 px-24 border-top d-flex align-items-center justify-content-between">
+              <div className="text-secondary-light text-xs font-semibold">
+                Showing {schools.length > 0 ? 1 : 0}–{schools.length} of {schools.length} entries
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </MasterLayout>
   );

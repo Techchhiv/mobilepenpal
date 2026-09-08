@@ -3,6 +3,7 @@ import { Icon } from "@iconify/react";
 import { Link, useNavigate } from "react-router-dom";
 import MasterLayout from "../../../masterLayout/MasterLayout";
 import API from "../../../helper/api";
+import AdminPageHeader from "../../../components/admin/common/AdminPageHeader";
 
 const Required = () => <span className="text-danger ms-1">*</span>;
 
@@ -179,19 +180,19 @@ export default function AdminStudentCreate() {
 
   return (
     <MasterLayout>
-      <div className="col-lg-12">
-        <div className="card">
-          <div className="card-header d-flex justify-content-between align-items-center">
-            <h3 className="card-title mb-0">Create New Student</h3>
-            <Link to="/admin/students" className="d-flex align-items-center btn btn-secondary">
-              <Icon icon="mdi:arrow-left" className="me-3" />
-              Back to Students
-            </Link>
-          </div>
+      <div className="py-12">
+        <AdminPageHeader
+          title="Create New Student"
+          subtitle="Add a new student profile, assign school affiliation, and configure account credentials"
+          actionLabel="Back to Students"
+          actionIcon="mdi:arrow-left"
+          onAction={() => navigate("/admin/students")}
+        />
 
-          <div className="card-body">
+        <div className="card border radius-12 shadow-none">
+          <div className="card-body p-24">
             {error && (
-              <div className="alert alert-danger d-flex align-items-center gap-2 mb-4">
+              <div className="alert alert-danger d-flex align-items-center gap-2 mb-24 radius-8">
                 <Icon icon="mdi:alert-circle" className="text-xl flex-shrink-0" />
                 <div>{error}</div>
               </div>
@@ -200,9 +201,9 @@ export default function AdminStudentCreate() {
             <form className="row gy-4" onSubmit={handleSubmit}>
               {/* Avatar */}
               <div className="col-md-4">
-                <div className="card">
-                  <div className="card-header bg-light">
-                    <h6 className="mb-0">Profile Picture</h6>
+                <div className="card border radius-12 shadow-none h-100">
+                  <div className="card-header border-bottom py-16 px-24 bg-base">
+                    <h6 className="fw-bold mb-0 text-dark">Profile Picture</h6>
                   </div>
                   <div className="card-body text-center d-flex flex-column align-items-center gap-2">
                     <div className="mb-3">
@@ -211,41 +212,41 @@ export default function AdminStudentCreate() {
                           <button
                             type="button"
                             onClick={removeImage}
-                            className="position-absolute top-0 end-0 z-1 text-danger btn btn-sm btn-light"
+                            className="position-absolute top-0 end-0 z-1 text-danger-main btn btn-sm btn-neutral-200"
                             style={{ margin: '5px' }}
                           >
                             <Icon icon="radix-icons:cross-2" />
                           </button>
                           <img
-                            className="w-100 h-100 object-fit-cover rounded-circle border"
+                            className="w-100 h-100 object-fit-cover rounded-circle border border-neutral-200"
                             src={uploadedImage.src}
                             alt="Preview"
                           />
                         </div>
                       ) : (
                         <div
-                          className="mx-auto rounded-circle border d-flex align-items-center justify-content-center bg-light overflow-hidden"
+                          className="mx-auto rounded-circle border border-neutral-200 d-flex align-items-center justify-content-center bg-neutral-100 overflow-hidden"
                           style={{ width: '150px', height: '150px' }}
                         >
-                          <Icon icon="mdi:account-circle" className="text-secondary" width="100%" height="100%" />
+                          <Icon icon="mdi:account-circle" className="text-secondary-light" width="100%" height="100%" />
                         </div>
                       )}
                     </div>
-                    <label className="d-flex align-items-center justify-content-center btn btn-outline-primary w-100">
+                    <label className="d-flex align-items-center justify-content-center btn btn-outline-primary radius-8 w-100">
                       <Icon icon="solar:camera-outline" className="me-3" />
                       Upload Photo
                       <input type="file" hidden onChange={handleFileChange} accept="image/*" />
                     </label>
-                    <small className="text-muted d-block">JPG or PNG, max 5MB</small>
+                    <small className="text-secondary-light text-xs d-block mt-4">JPG or PNG, max 5MB</small>
                   </div>
                 </div>
               </div>
 
               {/* Student Info */}
               <div className="col-md-8">
-                <div className="card mb-4">
-                  <div className="card-header bg-light">
-                    <h6 className="d-flex align-content-center mb-0">
+                <div className="card border radius-12 shadow-none mb-4">
+                  <div className="card-header border-bottom py-16 px-24 bg-base">
+                    <h6 className="d-flex align-items-center mb-0 text-dark fw-bold">
                       <Icon icon="mdi:account-school" className="me-3" />
                       Student Information
                     </h6>
@@ -282,7 +283,7 @@ export default function AdminStudentCreate() {
                       <div className="col-md-6">
                         <label className="form-label">Email <Required /></label>
                         <input type="email" className="form-control" placeholder="student@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
-                        <small className="text-muted">Used for login and must be unique</small>
+                        <small className="text-secondary-light text-xs">Used for login and must be unique</small>
                       </div>
                       <div className="col-md-6">
                         <label className="form-label">Enrollment Year</label>
@@ -295,9 +296,9 @@ export default function AdminStudentCreate() {
 
               {/* School Assignment */}
               <div className="col-12">
-                <div className="card mb-4">
-                  <div className="card-header bg-light">
-                    <h6 className="d-flex align-content-center mb-0">
+                <div className="card border radius-12 shadow-none mb-4">
+                  <div className="card-header border-bottom py-16 px-24 bg-base">
+                    <h6 className="d-flex align-items-center mb-0 text-dark fw-bold">
                       <Icon icon="mdi:school" className="me-3" />
                       School Assignment
                     </h6>
@@ -312,7 +313,7 @@ export default function AdminStudentCreate() {
                             <option key={s.id} value={s.id}>{s.name}</option>
                           ))}
                         </select>
-                        <small className="text-muted">Leave empty to create a public student account</small>
+                        <small className="text-secondary-light text-xs">Leave empty to create a public student account</small>
                       </div>
                     </div>
                   </div>
@@ -321,9 +322,9 @@ export default function AdminStudentCreate() {
 
               {/* Parent Info */}
               <div className="col-12">
-                <div className="card mb-4">
-                  <div className="card-header bg-light">
-                    <h6 className="d-flex align-content-center mb-0">
+                <div className="card border radius-12 shadow-none mb-4">
+                  <div className="card-header border-bottom py-16 px-24 bg-base">
+                    <h6 className="d-flex align-items-center mb-0 text-dark fw-bold">
                       <Icon icon="mdi:account-group" className="me-3" />
                       Parent Information
                     </h6>
@@ -341,7 +342,7 @@ export default function AdminStudentCreate() {
                       <div className="col-md-4">
                         <label className="form-label">Phone Number</label>
                         <input type="tel" className="form-control" placeholder="e.g., 0123456789" value={phone} onChange={(e) => setPhone(e.target.value)} />
-                        <small className="text-muted">Optional contact number</small>
+                        <small className="text-secondary-light text-xs">Optional contact number</small>
                       </div>
                       <div className="col-12">
                         <label className="form-label">Address</label>
@@ -354,9 +355,9 @@ export default function AdminStudentCreate() {
 
               {/* Credentials */}
               <div className="col-12">
-                <div className="card mb-4">
-                  <div className="card-header bg-light">
-                    <h6 className="d-flex align-content-center mb-0">
+                <div className="card border radius-12 shadow-none mb-4">
+                  <div className="card-header border-bottom py-16 px-24 bg-base">
+                    <h6 className="d-flex align-items-center mb-0 text-dark fw-bold">
                       <Icon icon="mdi:lock" className="me-3" />
                       Account Credentials
                     </h6>
@@ -366,12 +367,12 @@ export default function AdminStudentCreate() {
                       <div className="col-md-6">
                         <label className="form-label">Password <Required /></label>
                         <input type="password" className="form-control" placeholder="Minimum 6 characters" value={password} onChange={(e) => setPassword(e.target.value)} required />
-                        <small className="text-muted">For student login</small>
+                        <small className="text-secondary-light text-xs">For student login</small>
                       </div>
                       <div className="col-md-6">
                         <label className="form-label">Confirm Password <Required /></label>
                         <input type="password" className="form-control" placeholder="Re-enter password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required />
-                        <small className="text-muted">Must match the password above</small>
+                        <small className="text-secondary-light text-xs">Must match the password above</small>
                       </div>
                     </div>
                   </div>

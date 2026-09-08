@@ -34,6 +34,23 @@ const MasterLayout = ({ children }) => {
   const showAccessManagement = showManageUsers || showRoles || showPermissions;
   const showBilling          = showInvoices || showSchoolSubs || showUserSubs || showExpenses;
 
+  const isBillingActive =
+    location.pathname.startsWith("/admin/invoices") ||
+    location.pathname.startsWith("/admin/subscriptions") ||
+    location.pathname.startsWith("/admin/expenses");
+
+  const isWorldActive =
+    location.pathname.startsWith("/admin/worlds") ||
+    location.pathname.startsWith("/admin/levels") ||
+    location.pathname.startsWith("/admin/stages") ||
+    location.pathname.startsWith("/admin/exercises") ||
+    location.pathname.startsWith("/admin/question-templates");
+
+  const isAccessActive =
+    location.pathname.startsWith("/admin/users") ||
+    location.pathname.startsWith("/admin/roles") ||
+    location.pathname.startsWith("/admin/permissions");
+
   useEffect(() => {
     const p = location.pathname;
     if (p.startsWith("/admin/users") || p.startsWith("/admin/roles") || p.startsWith("/admin/permissions")) {
@@ -94,9 +111,10 @@ const MasterLayout = ({ children }) => {
           <Icon icon="radix-icons:cross-2" />
         </button>
 
-        <div>
+        <div className="sidebar-header">
           <Link to="/admin" className="sidebar-logo">
-            <h6>Khmer Penpal</h6>
+            <img src={penLogo} alt="Khmer Penpal" className="logo-icon" />
+            <span className="logo-text">Khmer Penpal</span>
           </Link>
         </div>
 
@@ -105,7 +123,11 @@ const MasterLayout = ({ children }) => {
             {/* <li className="sidebar-menu-group-title">Application</li> */}
 
             <li>
-              <NavLink to="/admin" end>
+              <NavLink
+                to="/admin"
+                end
+                className={({ isActive }) => (isActive ? "active-page" : "")}
+              >
                 <Icon icon="mdi:view-dashboard" className="menu-icon" />
                 <span>Dashboard</span>
               </NavLink>
@@ -113,7 +135,10 @@ const MasterLayout = ({ children }) => {
 
             {showManageClients && (
               <li>
-                <NavLink to="/admin/schools">
+                <NavLink
+                  to="/admin/schools"
+                  className={({ isActive }) => (isActive ? "active-page" : "")}
+                >
                   <Icon icon="mdi:account-multiple" className="menu-icon" />
                   <span>Manage Clients</span>
                 </NavLink>
@@ -122,7 +147,10 @@ const MasterLayout = ({ children }) => {
 
             {showStudents && (
               <li>
-                <NavLink to="/admin/students">
+                <NavLink
+                  to="/admin/students"
+                  className={({ isActive }) => (isActive ? "active-page" : "")}
+                >
                   <Icon icon="mdi:account-school" className="menu-icon" />
                   <span>Manage Students</span>
                 </NavLink>
@@ -133,7 +161,7 @@ const MasterLayout = ({ children }) => {
               <li className={`dropdown ${openDropdownKey === "billing" ? "open" : ""}`}>
                 <a
                   href="#billing"
-                  className={`menu-trigger ${openDropdownKey === "billing" ? "active-page" : ""}`}
+                  className={`menu-trigger ${isBillingActive ? "active-page" : ""}`}
                   onClick={(e) => {
                     e.preventDefault();
                     setOpenDropdownKey((prev) => (prev === "billing" ? null : "billing"));
@@ -205,7 +233,10 @@ const MasterLayout = ({ children }) => {
 
             {showReports && (
               <li>
-                <NavLink to="/admin/reports">
+                <NavLink
+                  to="/admin/reports"
+                  className={({ isActive }) => (isActive ? "active-page" : "")}
+                >
                   <Icon icon="mdi:file-chart" className="menu-icon" />
                   <span>Reports</span>
                 </NavLink>
@@ -217,7 +248,7 @@ const MasterLayout = ({ children }) => {
               <li className={`dropdown ${openDropdownKey === "world" ? "open" : ""}`}>
                 <a
                   href="#world"
-                  className={`menu-trigger ${openDropdownKey === "world" ? "active-page" : ""}`}
+                  className={`menu-trigger ${isWorldActive ? "active-page" : ""}`}
                   onClick={(e) => {
                     e.preventDefault();
                     setOpenDropdownKey((prev) => (prev === "world" ? null : "world"));
@@ -299,8 +330,7 @@ const MasterLayout = ({ children }) => {
               >
                 <a
                   href="#access"
-                  className={`menu-trigger ${openDropdownKey === "access" ? "active-page" : ""
-                    }`}
+                  className={`menu-trigger ${isAccessActive ? "active-page" : ""}`}
                   onClick={(e) => {
                     e.preventDefault();
                     setOpenDropdownKey((prev) =>
@@ -367,7 +397,10 @@ const MasterLayout = ({ children }) => {
             {/* ── Super Admin Only: System Audit Logs ── */}
             {isSuperAdmin && (
               <li>
-                <NavLink to="/admin/audit-logs">
+                <NavLink
+                  to="/admin/audit-logs"
+                  className={({ isActive }) => (isActive ? "active-page" : "")}
+                >
                   <Icon icon="mdi:shield-lock-outline" className="menu-icon" />
                   <span>System Audit Logs</span>
                 </NavLink>

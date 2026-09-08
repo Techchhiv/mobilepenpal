@@ -1,4 +1,6 @@
+import React from 'react';
 import SchoolReportRow from './SchoolReportRow';
+import AdminPagination from '../admin/common/AdminPagination';
 
 export default function SchoolReportTable({
   schools = [],
@@ -8,10 +10,8 @@ export default function SchoolReportTable({
   onPageChange,
   loading,
 }) {
-  const pageNumbers = buildPageNumbers(page, totalPages);
-
   return (
-    <div className="school-report-table overflow-hidden ">
+    <div className="school-report-table overflow-hidden">
       <div className="card-header border-bottom bg-base py-16 px-24 d-flex align-items-center justify-content-between">
         <h6 className="fw-semibold mb-0">School List</h6>
         {!loading && (
@@ -70,76 +70,22 @@ export default function SchoolReportTable({
         </div>
       </div>
 
-      {!loading && totalPages > 1 && (
-        <div className="card-footer border-top bg-base py-16 px-24">
-          <nav aria-label="School report pagination">
-            <ul className="pagination pagination-sm justify-content-center mb-0">
-              <li className={`page-item${page <= 1 ? ' disabled' : ''}`}>
-                <button
-                  className="page-link"
-                  onClick={() => onPageChange(page - 1)}
-                  disabled={page <= 1}
-                  aria-label="Previous page"
-                >
-                  &laquo;
-                </button>
-              </li>
-
-              {pageNumbers.map((num, idx) =>
-                num === '...' ? (
-                  <li key={`ellipsis-${idx}`} className="page-item disabled">
-                    <span className="page-link">...</span>
-                  </li>
-                ) : (
-                  <li
-                    key={num}
-                    className={`page-item${num === page ? ' active' : ''}`}
-                  >
-                    <button
-                      className="page-link"
-                      onClick={() => num !== page && onPageChange(num)}
-                      aria-current={num === page ? 'page' : undefined}
-                    >
-                      {num}
-                    </button>
-                  </li>
-                )
-              )}
-
-              <li className={`page-item${page >= totalPages ? ' disabled' : ''}`}>
-                <button
-                  className="page-link"
-                  onClick={() => onPageChange(page + 1)}
-                  disabled={page >= totalPages}
-                  aria-label="Next page"
-                >
-                  &raquo;
-                </button>
-              </li>
-            </ul>
-          </nav>
+      {!loading && totalItems > 0 && (
+        <div className="card-footer border-top bg-base py-14 px-24 d-flex align-items-center justify-content-between flex-wrap gap-12">
+          <div className="text-secondary-light text-xs font-semibold">
+            Showing {(page - 1) * 10 + 1}–{Math.min(page * 10, totalItems)} of {totalItems} entries
+          </div>
+          {totalPages > 1 && (
+            <div className="ms-auto">
+              <AdminPagination
+                page={page}
+                totalPages={totalPages}
+                onPageChange={onPageChange}
+              />
+            </div>
+          )}
         </div>
       )}
     </div>
   );
-}
-
-function buildPageNumbers(current, total) {
-  if (total <= 7) {
-    return Array.from({ length: total }, (_, i) => i + 1);
-  }
-
-  const pages = new Set([1, total, current, current - 1, current + 1]);
-  const sorted = [...pages]
-    .filter((p) => p >= 1 && p <= total)
-    .sort((a, b) => a - b);
-
-  const result = [];
-  for (let i = 0; i < sorted.length; i++) {
-    if (i > 0 && sorted[i] - sorted[i - 1] > 1) {
-      result.push('...');
-    }
-    result.push(sorted[i]);
-  }
-  return result;
 }

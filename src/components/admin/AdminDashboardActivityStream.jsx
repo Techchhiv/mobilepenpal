@@ -4,9 +4,9 @@ import { Icon } from "@iconify/react";
 const AdminDashboardActivityStream = ({ activities = [] }) => {
     return (
         <div className="card border shadow-sm h-100" style={{ borderRadius: "12px" }}>
-            <div className="card-header bg-white py-16 px-24 border-bottom d-flex align-items-center justify-content-between">
+            <div className="card-header bg-base py-16 px-24 border-bottom d-flex align-items-center justify-content-between">
                 <div>
-                    <h6 className="mb-0 fw-bold">Recent Platform Activity</h6>
+                    <h6 className="mb-0 fw-bold text-dark">Recent Platform Activity</h6>
                     <span className="text-xs text-secondary-light">Live stream of student attempts across partner schools</span>
                 </div>
                 <Icon icon="solar:history-bold-duotone" className="text-primary-600 text-xl" />
@@ -15,7 +15,7 @@ const AdminDashboardActivityStream = ({ activities = [] }) => {
                 {activities.length > 0 ? (
                     <div className="d-flex flex-column gap-3">
                         {activities.map((act) => (
-                            <div key={act.id} className="d-flex align-items-center justify-content-between p-12 rounded-3 border bg-neutral-50">
+                            <div key={act.id} className="d-flex align-items-center justify-content-between p-12 rounded-3 border bg-base border-neutral-200">
                                 <div className="d-flex align-items-center gap-3">
                                     <div className={`w-32-px h-32-px rounded-circle d-flex align-items-center justify-content-center ${act.is_correct ? "bg-success-100 text-success-600" : "bg-danger-100 text-danger-600"}`}>
                                         <Icon icon={act.is_correct ? "solar:check-circle-bold" : "solar:close-circle-bold"} className="text-lg" />

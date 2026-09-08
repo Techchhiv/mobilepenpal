@@ -16,89 +16,528 @@
   pointer-events: auto !important;
 }
 
+/* ─────────────────────────────────────────────────────────────
+   Common Base Sidebar Layout
+   ───────────────────────────────────────────────────────────── */
 .sidebar {
   position: fixed !important;
+  inset-block-start: 0 !important;
+  height: 100vh !important;
+  z-index: 100 !important;
+  transition: width 0.32s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.32s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.32s ease !important;
+  will-change: width, transform;
+  overflow: hidden !important;
 }
 
+.sidebar-header {
+  overflow: hidden !important;
+}
+
+.sidebar-logo {
+  height: 4.5rem !important;
+  padding: 0.875rem 1.25rem !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.75rem !important;
+  text-decoration: none !important;
+  overflow: hidden !important;
+  white-space: nowrap !important;
+}
+
+.sidebar-logo .logo-icon {
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  object-fit: contain !important;
+  flex-shrink: 0 !important;
+  transition: transform 0.3s ease !important;
+}
+
+.sidebar-logo .logo-text {
+  font-weight: 700 !important;
+  font-size: 1.125rem !important;
+  white-space: nowrap !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: inline-block !important;
+  transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.25s ease !important;
+}
+
+.sidebar-menu li a,
+.sidebar-menu li .menu-trigger {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  padding: 0.625rem 0.75rem !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  border-radius: 8px !important;
+  text-decoration: none !important;
+  transition: background-color 0.2s ease, color 0.2s ease !important;
+}
+
+.sidebar-menu li a .menu-icon,
+.sidebar-menu li .menu-trigger .menu-icon {
+  font-size: 1.25rem !important;
+  flex-shrink: 0 !important;
+  margin-inline-end: 0.5rem !important;
+  transition: margin 0.25s ease !important;
+}
+
+.sidebar-menu li a span,
+.sidebar-menu li .menu-trigger span,
+.sidebar-menu-group-title {
+  white-space: nowrap !important;
+  transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.25s ease !important;
+}
+
+.sidebar-menu .menu-trigger .caret {
+  margin-inline-start: auto !important;
+  transition: transform 0.3s ease !important;
+}
+
+.sidebar-close-btn {
+  position: absolute !important;
+  top: 0.875rem !important;
+  right: 0.875rem !important;
+  width: 2rem !important;
+  height: 2rem !important;
+  border-radius: 50% !important;
+  background: transparent !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 10 !important;
+  cursor: pointer !important;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Light Mode Sidebar Theme Token System
+   ───────────────────────────────────────────────────────────── */
+.sidebar {
+  background-color: #ffffff !important;
+  border-right: 1px solid #e2e8f0 !important;
+}
+
+.sidebar-logo {
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+.sidebar-logo .logo-text {
+  color: #2563eb !important;
+}
+
+.sidebar-menu li a,
+.sidebar-menu li .menu-trigger {
+  color: #475569 !important;
+}
+
+.sidebar-menu li a:hover,
+.sidebar-menu li .menu-trigger:hover {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+.sidebar-menu li>a.active-page,
+.sidebar-menu li .menu-trigger.active-page {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+}
+
+.sidebar-menu li>a.active-page .menu-icon,
+.sidebar-menu li .menu-trigger.active-page .menu-icon,
+.sidebar-menu li>a.active-page span,
+.sidebar-menu li .menu-trigger.active-page span,
+.sidebar-menu li>a.active-page .caret,
+.sidebar-menu li .menu-trigger.active-page .caret {
+  color: #ffffff !important;
+}
+
+/* Override template style.css where li.dropdown.open > a gets solid brand background */
+.sidebar-menu li.dropdown.open > a:not(.active-page),
+.sidebar-menu li.dropdown.dropdown-open > a:not(.active-page),
+.sidebar-menu li.dropdown.open > .menu-trigger:not(.active-page),
+.sidebar-menu li.dropdown.dropdown-open > .menu-trigger:not(.active-page) {
+  background-color: transparent !important;
+  color: #475569 !important;
+}
+
+.sidebar-menu li.dropdown.open > a:not(.active-page) .menu-icon,
+.sidebar-menu li.dropdown.open > a:not(.active-page) span,
+.sidebar-menu li.dropdown.open > a:not(.active-page) .caret,
+.sidebar-menu li.dropdown.open > .menu-trigger:not(.active-page) .menu-icon,
+.sidebar-menu li.dropdown.open > .menu-trigger:not(.active-page) span,
+.sidebar-menu li.dropdown.open > .menu-trigger:not(.active-page) .caret {
+  color: #475569 !important;
+}
+
+.sidebar-menu li.dropdown.open > a:not(.active-page):hover,
+.sidebar-menu li.dropdown.dropdown-open > a:not(.active-page):hover,
+.sidebar-menu li.dropdown.open > .menu-trigger:not(.active-page):hover,
+.sidebar-menu li.dropdown.dropdown-open > .menu-trigger:not(.active-page):hover {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+.sidebar-menu .sidebar-submenu li a {
+  color: #64748b !important;
+}
+
+.sidebar-menu .sidebar-submenu li a:hover {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+.sidebar-menu .sidebar-submenu li a.active-page,
+.sidebar-menu .sidebar-submenu li.active-page a {
+  background-color: #eff6ff !important;
+  color: #2563eb !important;
+  font-weight: 600 !important;
+}
+
+.sidebar-menu .sidebar-menu-group-title {
+  color: #94a3b8 !important;
+}
+
+.sidebar-close-btn {
+  border: 1px solid #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Dark Mode Sidebar Theme Token System ([data-theme='dark'])
+   ───────────────────────────────────────────────────────────── */
+[data-theme='dark'] .sidebar {
+  background-color: #111827 !important;
+  border-right: 1px solid #1f2937 !important;
+}
+
+[data-theme='dark'] .sidebar-logo {
+  border-bottom: 1px solid #1f2937 !important;
+}
+
+[data-theme='dark'] .sidebar-logo .logo-text {
+  color: #60a5fa !important;
+}
+
+[data-theme='dark'] .sidebar-menu li a,
+[data-theme='dark'] .sidebar-menu li .menu-trigger {
+  color: #94a3b8 !important;
+}
+
+[data-theme='dark'] .sidebar-menu li a:hover,
+[data-theme='dark'] .sidebar-menu li .menu-trigger:hover {
+  background-color: #1f2937 !important;
+  color: #f8fafc !important;
+}
+
+[data-theme='dark'] .sidebar-menu li>a.active-page,
+[data-theme='dark'] .sidebar-menu li .menu-trigger.active-page {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+}
+
+[data-theme='dark'] .sidebar-menu li>a.active-page .menu-icon,
+[data-theme='dark'] .sidebar-menu li .menu-trigger.active-page .menu-icon,
+[data-theme='dark'] .sidebar-menu li>a.active-page span,
+[data-theme='dark'] .sidebar-menu li .menu-trigger.active-page span,
+[data-theme='dark'] .sidebar-menu li>a.active-page .caret,
+[data-theme='dark'] .sidebar-menu li .menu-trigger.active-page .caret {
+  color: #ffffff !important;
+}
+
+[data-theme='dark'] .sidebar-menu li.dropdown.open > a:not(.active-page),
+[data-theme='dark'] .sidebar-menu li.dropdown.dropdown-open > a:not(.active-page),
+[data-theme='dark'] .sidebar-menu li.dropdown.open > .menu-trigger:not(.active-page),
+[data-theme='dark'] .sidebar-menu li.dropdown.dropdown-open > .menu-trigger:not(.active-page) {
+  background-color: transparent !important;
+  color: #94a3b8 !important;
+}
+
+[data-theme='dark'] .sidebar-menu li.dropdown.open > a:not(.active-page) .menu-icon,
+[data-theme='dark'] .sidebar-menu li.dropdown.open > a:not(.active-page) span,
+[data-theme='dark'] .sidebar-menu li.dropdown.open > a:not(.active-page) .caret,
+[data-theme='dark'] .sidebar-menu li.dropdown.open > .menu-trigger:not(.active-page) .menu-icon,
+[data-theme='dark'] .sidebar-menu li.dropdown.open > .menu-trigger:not(.active-page) span,
+[data-theme='dark'] .sidebar-menu li.dropdown.open > .menu-trigger:not(.active-page) .caret {
+  color: #94a3b8 !important;
+}
+
+[data-theme='dark'] .sidebar-menu li.dropdown.open > a:not(.active-page):hover,
+[data-theme='dark'] .sidebar-menu li.dropdown.dropdown-open > a:not(.active-page):hover,
+[data-theme='dark'] .sidebar-menu li.dropdown.open > .menu-trigger:not(.active-page):hover,
+[data-theme='dark'] .sidebar-menu li.dropdown.dropdown-open > .menu-trigger:not(.active-page):hover {
+  background-color: #1f2937 !important;
+  color: #f8fafc !important;
+}
+
+[data-theme='dark'] .sidebar-menu .sidebar-submenu li a {
+  color: #94a3b8 !important;
+}
+
+[data-theme='dark'] .sidebar-menu .sidebar-submenu li a:hover {
+  background-color: #1f2937 !important;
+  color: #f8fafc !important;
+}
+
+[data-theme='dark'] .sidebar-menu .sidebar-submenu li a.active-page,
+[data-theme='dark'] .sidebar-menu .sidebar-submenu li.active-page a {
+  background-color: rgba(59, 130, 246, 0.18) !important;
+  color: #60a5fa !important;
+  font-weight: 600 !important;
+}
+
+[data-theme='dark'] .sidebar-menu .sidebar-menu-group-title {
+  color: #64748b !important;
+}
+
+[data-theme='dark'] .sidebar-close-btn {
+  border: 1px solid #374151 !important;
+  color: #f8fafc !important;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Responsive Padding System for Sidebar Menu & Submenu Items
+   ───────────────────────────────────────────────────────────── */
+/* Base / Laptop (< 1650px) */
+.sidebar-menu li a,
+.sidebar-menu li .menu-trigger {
+  padding: 0.5rem 0.625rem !important;
+}
+
+.sidebar-menu .sidebar-submenu {
+  padding-inline-start: 1.125rem !important;
+  padding-block-start: 0.375rem !important;
+}
+
+.sidebar-menu .sidebar-submenu li a {
+  padding: 0.375rem 0.625rem !important;
+}
+
+/* Large Desktop Screens (>= 1650px) */
+@media (min-width: 1650px) {
+  .sidebar-menu li a,
+  .sidebar-menu li .menu-trigger {
+    padding: 0.625rem 0.75rem !important;
+  }
+
+  .sidebar-menu .sidebar-submenu {
+    padding-inline-start: 1.5rem !important;
+    padding-block-start: 0.5rem !important;
+  }
+
+  .sidebar-menu .sidebar-submenu li a {
+    padding: 0.4375rem 0.75rem !important;
+  }
+}
+
+/* Mobile & Small Tablet (< 992px) */
 @media (max-width: 991.98px) {
+  .sidebar-menu li a,
+  .sidebar-menu li .menu-trigger {
+    padding: 0.4375rem 0.5rem !important;
+  }
+
+  .sidebar-menu .sidebar-submenu {
+    padding-inline-start: 0.875rem !important;
+    padding-block-start: 0.25rem !important;
+  }
+
+  .sidebar-menu .sidebar-submenu li a {
+    padding: 0.3125rem 0.5rem !important;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Desktop Sidebar (min-width: 992px)
+   ───────────────────────────────────────────────────────────── */
+@media (min-width: 992px) {
+  .sidebar-close-btn {
+    display: none !important;
+  }
+
+  /* Default Expanded Desktop Sidebar */
+  .sidebar {
+    left: 0 !important;
+    width: 260px !important;
+    transform: none !important;
+  }
+
+  @media (min-width: 1400px) {
+    .sidebar {
+      width: 17.1875rem !important;
+    }
+  }
+
+  @media (min-width: 1650px) {
+    .sidebar {
+      width: 19.5rem !important;
+    }
+  }
+
+  /* Collapsed Desktop Sidebar (.sidebar.active) */
+  .sidebar.active {
+    width: 86px !important;
+  }
+
+  .sidebar.active .sidebar-logo {
+    padding: 0.875rem 1.5rem !important;
+    justify-content: flex-start !important;
+  }
+
+  .sidebar.active .sidebar-logo .logo-text {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    width: 0 !important;
+    margin: 0 !important;
+    display: none !important;
+  }
+
+  .sidebar.active .sidebar-menu li a .menu-icon,
+  .sidebar.active .sidebar-menu li .menu-trigger .menu-icon {
+    margin-inline-end: 0 !important;
+  }
+
+  .sidebar.active .sidebar-menu li a span,
+  .sidebar.active .sidebar-menu li .menu-trigger span,
+  .sidebar.active .sidebar-menu-group-title,
+  .sidebar.active .sidebar-menu .menu-trigger .caret {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    display: none !important;
+  }
+
+  /* Hover Expansion for Collapsed Sidebar on Desktop */
+  .sidebar.active:hover {
+    width: 260px !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18) !important;
+  }
+
+  @media (min-width: 1400px) {
+    .sidebar.active:hover {
+      width: 17.1875rem !important;
+    }
+  }
+
+  @media (min-width: 1650px) {
+    .sidebar.active:hover {
+      width: 19.5rem !important;
+    }
+  }
+
+  .sidebar.active:hover .sidebar-logo .logo-text {
+    opacity: 1 !important;
+    visibility: visible !important;
+    width: auto !important;
+    display: inline-block !important;
+  }
+
+  .sidebar.active:hover .sidebar-menu li a .menu-icon,
+  .sidebar.active:hover .sidebar-menu li .menu-trigger .menu-icon {
+    margin-inline-end: 0.5rem !important;
+  }
+
+  .sidebar.active:hover .sidebar-menu li a span,
+  .sidebar.active:hover .sidebar-menu li .menu-trigger span,
+  .sidebar.active:hover .sidebar-menu-group-title {
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: inline-block !important;
+  }
+
+  .sidebar.active:hover .sidebar-menu .menu-trigger .caret {
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: block !important;
+  }
+
+  .sidebar.active:hover .sidebar-menu li.dropdown.open .sidebar-submenu {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Mobile / Tablet Responsive Drawer (< 992px)
+   NO HOVER EXPANSION EFFECTS ON MOBILE / TABLET!
+   ───────────────────────────────────────────────────────────── */
+@media (max-width: 991.98px) {
+  .sidebar-close-btn {
+    display: flex !important;
+  }
+
   .sidebar {
     left: 0 !important;
     top: 0 !important;
     height: 100vh !important;
-    display: block !important;
-    visibility: visible !important;
-
     width: 260px !important;
     max-width: 85vw !important;
-
+    z-index: 1050 !important;
     transform: translateX(-100%) !important;
+    visibility: hidden !important;
+    box-shadow: none !important;
   }
 
-  .sidebar.active {
+  /* When drawer is OPEN (mobileMenu or sidebarActive) */
+  .sidebar.active,
+  .sidebar.sidebar-open {
     transform: translateX(0) !important;
-  }
-
-  .sidebar:hover {
+    visibility: visible !important;
     width: 260px !important;
+    max-width: 85vw !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25) !important;
   }
-}
 
-@media (max-width: 991.98px) {
-  .sidebar.active .sidebar-menu li a span {
-    display: inline !important;
+  /* Disable hover width change on mobile/tablet */
+  .sidebar:hover,
+  .sidebar.active:hover {
+    width: 260px !important;
+    max-width: 85vw !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25) !important;
+  }
+
+  /* All logo text, menu icons, spans, and group titles are ALWAYS visible when drawer is open */
+  .sidebar.active .sidebar-logo .logo-text,
+  .sidebar.sidebar-open .sidebar-logo .logo-text {
     opacity: 1 !important;
     visibility: visible !important;
     width: auto !important;
-    max-width: none !important;
-    transform: none !important;
+    display: inline-block !important;
   }
 
-  .sidebar.active .sidebar-menu-group-title {
-    display: block !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-  }
-}
-
-@media (max-width: 991.98px) {
-  .sidebar.active {
-    width: 260px !important;
-    max-width: 85vw !important;
-  }
-
-  .sidebar.active .sidebar-menu>li>a,
-  .sidebar.active .sidebar-menu>li>.menu-trigger {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: flex-start !important;
-    gap: 12px !important;
-    padding: 10px 14px !important;
-    white-space: nowrap !important;
-  }
-
-  /* Ensure icons don't squash text */
-  .sidebar.active .sidebar-menu .menu-icon {
-    margin-right: 0 !important;
-    /* gap handles spacing */
-    flex: 0 0 auto !important;
+  .sidebar.active .sidebar-menu li a .menu-icon,
+  .sidebar.sidebar-open .sidebar-menu li a .menu-icon,
+  .sidebar.active .sidebar-menu li .menu-trigger .menu-icon,
+  .sidebar.sidebar-open .sidebar-menu li .menu-trigger .menu-icon {
+    margin-inline-end: 0.5rem !important;
   }
 
   .sidebar.active .sidebar-menu li a span,
-  .sidebar.active .sidebar-menu li .menu-trigger span {
-    display: inline !important;
+  .sidebar.sidebar-open .sidebar-menu li a span,
+  .sidebar.active .sidebar-menu li .menu-trigger span,
+  .sidebar.sidebar-open .sidebar-menu li .menu-trigger span,
+  .sidebar.active .sidebar-menu-group-title,
+  .sidebar.sidebar-open .sidebar-menu-group-title {
     opacity: 1 !important;
     visibility: visible !important;
-    width: auto !important;
-    max-width: none !important;
-    transform: none !important;
+    display: inline-block !important;
   }
 
-  .sidebar.active .sidebar-submenu {
-    padding-left: 34px !important;
+  .sidebar.active .sidebar-menu li.dropdown.open .sidebar-submenu,
+  .sidebar.sidebar-open .sidebar-menu li.dropdown.open .sidebar-submenu {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
   }
 
-  .sidebar:hover {
-    width: 260px !important;
+  .sidebar.active .sidebar-menu .menu-trigger .caret,
+  .sidebar.sidebar-open .sidebar-menu .menu-trigger .caret {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
   }
 }
 
@@ -114,4 +553,319 @@
 
 .sidebar-menu .menu-trigger::after {
   display: none !important;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Auth Page Layout & Responsive Centered System (No Card Box)
+   ───────────────────────────────────────────────────────────── */
+.auth-page-section {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--white, #ffffff);
+  padding: 1rem 0.5rem;
+}
+
+[data-theme='dark'] .auth-page-section {
+  background-color: #0f172a !important;
+}
+
+.auth-form-wrapper {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem 0.5rem;
+}
+
+.auth-form-container {
+  width: 100%;
+  max-width: 440px;
+  margin: 0 auto;
+}
+
+.auth-logo-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.auth-logo-img {
+  max-width: 140px;
+  height: auto;
+  object-fit: contain;
+}
+
+/* Mobile & Small Screen Responsive Optimization (< 576px) */
+@media (max-width: 575.98px) {
+  .auth-page-section {
+    padding: 0.5rem 0.25rem;
+  }
+
+  .auth-form-wrapper {
+    padding: 0.5rem 0.25rem;
+  }
+
+  .auth-form-container {
+    max-width: 100%;
+  }
+
+  .auth-logo-img {
+    max-width: 110px;
+  }
+
+  .auth-logo-wrapper {
+    margin-bottom: 0.75rem;
+  }
+
+  .account-selector-btn {
+    padding: 8px 10px !important;
+    font-size: 0.8125rem !important;
+  }
+
+  .auth-input-control {
+    height: 46px !important;
+    font-size: 0.875rem !important;
+  }
+}
+
+.account-selector-container {
+  display: flex;
+  background-color: var(--neutral-100, #f1f5f9);
+  padding: 4px;
+  border-radius: 12px;
+  gap: 4px;
+}
+
+[data-theme='dark'] .account-selector-container {
+  background-color: #1e293b !important;
+}
+
+.account-selector-btn {
+  flex: 1;
+  border: none;
+  padding: 10px 16px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border-radius: 8px;
+  color: var(--text-secondary-light, #64748b);
+  background: transparent;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+[data-theme='dark'] .account-selector-btn {
+  color: #94a3b8;
+}
+
+.account-selector-btn:hover {
+  color: var(--primary-600, #2563eb);
+}
+
+.account-selector-btn.active {
+  background-color: #ffffff !important;
+  color: #2563eb !important;
+  box-shadow: none !important;
+}
+
+[data-theme='dark'] .account-selector-btn.active {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
+}
+
+.auth-input-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.auth-input-field .input-icon {
+  position: absolute;
+  left: 16px;
+  font-size: 1.25rem;
+  color: #94a3b8;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.auth-input-control {
+  height: 52px !important;
+  padding-left: 48px !important;
+  padding-right: 44px !important;
+  font-size: 0.9375rem !important;
+  border-radius: 10px !important;
+  border: 1px solid #e2e8f0 !important;
+  background-color: #f8fafc !important;
+  transition: all 0.2s ease !important;
+}
+
+.auth-input-control:focus {
+  background-color: #ffffff !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12) !important;
+}
+
+[data-theme='dark'] .auth-input-control {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+  color: #f8fafc !important;
+}
+
+[data-theme='dark'] .auth-input-control:focus {
+  background-color: #0f172a !important;
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 12px;
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: color 0.2s ease;
+  z-index: 3;
+}
+
+.password-toggle-btn:hover {
+  color: #2563eb;
+}
+
+[data-theme='dark'] .password-toggle-btn:hover {
+  color: #60a5fa;
+}
+
+.auth-submit-btn {
+  height: 52px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  border-radius: 10px;
+  background-color: #2563eb;
+  color: #ffffff;
+  border: none;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.auth-submit-btn:hover:not(:disabled) {
+  background-color: #1d4ed8;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+}
+
+.auth-submit-btn:disabled {
+  opacity: 0.75;
+  cursor: not-allowed;
+}
+
+/* Responsive Breakpoints */
+@media (max-width: 991.98px) {
+  .auth-cover-wrapper {
+    display: none !important;
+  }
+
+  .auth-form-wrapper {
+    padding: 2.5rem 1.5rem;
+  }
+}
+
+@media (max-height: 750px) and (min-width: 992px) {
+  .auth-form-wrapper {
+    padding: 1.5rem;
+  }
+
+  .auth-cover-img {
+    max-height: 60vh;
+  }
+}
+
+/* ==========================================================================
+   GLOBAL SKELETON / PLACEHOLDER APP THEME SUPPORT (LIGHT & DARK MODE)
+   ========================================================================== */
+
+.placeholder {
+  background-color: #e2e8f0;
+  border-radius: 6px;
+  transition: background-color 0.2s ease, opacity 0.2s ease;
+}
+
+[data-theme='dark'] .placeholder {
+  background-color: #334155 !important;
+  opacity: 0.65;
+}
+
+[data-theme='dark'] .placeholder-glow .placeholder {
+  animation: placeholder-glow-dark 1.8s ease-in-out infinite;
+}
+
+@keyframes placeholder-glow-dark {
+  50% {
+    opacity: 0.25;
+    background-color: #475569 !important;
+  }
+}
+
+/* ==========================================================================
+   GLOBAL COLOR SCHEME & NATIVE SELECT / OPTION APP THEME ENFORCEMENT
+   ========================================================================== */
+
+html[data-theme='dark'],
+:root[data-theme='dark'],
+[data-theme='dark'] {
+  color-scheme: dark !important;
+}
+
+html[data-theme='light'],
+:root[data-theme='light'],
+[data-theme='light'] {
+  color-scheme: light !important;
+}
+
+/* Explicit Select & Option Dropdown Popup Theme Styling */
+select,
+.form-select {
+  color-scheme: inherit;
+}
+
+[data-theme='dark'] select,
+[data-theme='dark'] .form-select {
+  background-color: #111827 !important;
+  color: #f8fafc !important;
+  border-color: #374151 !important;
+  color-scheme: dark !important;
+}
+
+[data-theme='dark'] select option,
+[data-theme='dark'] .form-select option {
+  background-color: #111827 !important;
+  color: #f8fafc !important;
+}
+
+[data-theme='light'] select option,
+[data-theme='light'] .form-select option {
+  background-color: #ffffff !important;
+  color: #111827 !important;
+}
+
+[data-theme='dark'] input[type='date'],
+[data-theme='dark'] input[type='time'],
+[data-theme='dark'] input[type='datetime-local'] {
+  color-scheme: dark !important;
+  background-color: #111827 !important;
+  color: #f8fafc !important;
+  border-color: #374151 !important;
 }

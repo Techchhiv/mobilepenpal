@@ -60,10 +60,10 @@ const AdminDashboardQuickActions = () => {
 
     return (
         <div className="card border shadow-sm mb-24" style={{ borderRadius: "12px" }}>
-            <div className="card-header bg-white py-16 px-24 border-bottom d-flex align-items-center justify-content-between">
+            <div className="card-header bg-base py-16 px-24 border-bottom d-flex align-items-center justify-content-between">
                 <div className="d-flex align-items-center gap-2">
                     <Icon icon="solar:bolt-bold-duotone" className="text-primary-600 text-xl" />
-                    <h6 className="mb-0 fw-bold">Quick Actions</h6>
+                    <h6 className="mb-0 fw-bold text-dark">Quick Actions</h6>
                 </div>
                 {/* Feature Locks shortcut — destination requires menu.payments */}
                 {(isSuperAdmin || hasPermission("menu.payments")) && (
@@ -84,13 +84,13 @@ const AdminDashboardQuickActions = () => {
                         <div className="col-12 col-sm-6 col-lg-3" key={idx}>
                             <Link
                                 to={act.to}
-                                className="d-flex align-items-center gap-3 p-16 rounded-3 border bg-hover-neutral-50 transition-all text-decoration-none h-100"
+                                className="d-flex align-items-center gap-3 p-16 rounded-3 border bg-base border-neutral-200 bg-hover-neutral-100 transition-all text-decoration-none h-100"
                             >
                                 <div className="w-40-px h-40-px rounded-circle bg-primary-50 text-primary-600 d-flex align-items-center justify-content-center flex-shrink-0">
                                     <Icon icon={act.icon} className="text-xl" />
                                 </div>
                                 <div className="overflow-hidden">
-                                    <h6 className="text-sm fw-bold text-primary-light mb-1 text-truncate">
+                                    <h6 className="text-sm fw-bold text-dark mb-1 text-truncate">
                                         {act.title}
                                     </h6>
                                     <p className="text-xs text-secondary-light mb-0 text-truncate">

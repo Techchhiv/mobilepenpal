@@ -1,8 +1,11 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { Link } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import MasterLayout from "../../masterLayout/MasterLayout";
 import API from "../../helper/api";
+import AdminPageHeader from "../../components/admin/common/AdminPageHeader";
+import AdminEmptyState from "../../components/admin/common/AdminEmptyState";
+import ConfirmModal from "../../components/admin/common/ConfirmModal";
+import AdminPagination from "../../components/admin/common/AdminPagination";
 import "../../assets/css/adminExpenses.css";
 
 const getPresetDates = (periodKey) => {
@@ -246,19 +249,27 @@ export default function AdminExpensesPage() {
         }
     };
 
-    const handleDeleteExpense = async (id) => {
-        if (!window.confirm("Are you sure you want to delete this expense record?")) {
-            return;
-        }
+    const [deleteModal, setDeleteModal] = useState(null); // expense item to delete
+    const [deleteLoading, setDeleteLoading] = useState(false);
 
+    const handleDeleteExpense = async (item) => {
+        setDeleteModal(item);
+    };
+
+    const confirmDeleteExpense = async () => {
+        if (!deleteModal) return;
         try {
-            await API.delete(`/admin/expenses/${id}`);
+            setDeleteLoading(true);
+            await API.delete(`/admin/expenses/${deleteModal.id}`);
             setToastMessage("Expense deleted successfully!");
             setTimeout(() => setToastMessage(null), 4000);
+            setDeleteModal(null);
             loadData(pagination.currentPage, financialPeriod, category, search, fromDate, toDate);
         } catch (error) {
             console.error("Error deleting expense:", error);
             alert("Failed to delete expense.");
+        } finally {
+            setDeleteLoading(false);
         }
     };
 
@@ -352,21 +363,14 @@ export default function AdminExpensesPage() {
 
     return (
         <MasterLayout>
-            <div className="expenses-page">
-                {/* Standard Page Breadcrumb matching other pages */}
-                <div className="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-24">
-                    <h6 className="fw-semibold mb-0 text-primary-light">Operating Expenses</h6>
-                    <ul className="d-flex align-items-center gap-2 mb-0 list-unstyled">
-                        <li className="fw-medium text-sm">
-                            <Link to="/admin" className="d-flex align-items-center gap-1 hover-text-primary text-secondary-light">
-                                <Icon icon="solar:home-smile-angle-outline" className="icon text-lg" />
-                                Dashboard
-                            </Link>
-                        </li>
-                        <li className="text-secondary-light">-</li>
-                        <li className="fw-medium text-sm text-primary-light">Expenses</li>
-                    </ul>
-                </div>
+            <div className="expenses-page py-12">
+                <AdminPageHeader
+                    title="Operating Expenses"
+                    subtitle="Track company expenditure, revenue reports, net profit analysis, and operational costs"
+                    actionLabel="Record Expense"
+                    actionIcon="ph:plus-circle-bold"
+                    onAction={handleOpenCreateModal}
+                />
 
                 {/* 3 Metric Cards row matching project grid */}
                 <div className="row row-cols-xxxl-3 row-cols-lg-3 row-cols-md-2 row-cols-1 gy-4 mb-24">
@@ -645,21 +649,11 @@ export default function AdminExpensesPage() {
                                 <p className="mt-2 text-muted text-sm">Loading expenses…</p>
                             </div>
                         ) : expenses.length === 0 ? (
-                            <div className="text-center py-5">
-                                <Icon icon="ph:receipt-bold" className="text-secondary-light text-5xl mb-2" />
-                                <p className="text-secondary mb-1 fw-semibold">No expense records found.</p>
-                                <span className="text-xs text-secondary-light mb-3 d-block">
-                                    Click &ldquo;Record Expense&rdquo; to add your first operating cost.
-                                </span>
-                                <button
-                                    type="button"
-                                    onClick={handleOpenCreateModal}
-                                    className="btn btn-sm btn-primary-600 rounded-pill px-16 py-6 d-inline-flex align-items-center gap-1 shadow-sm"
-                                >
-                                    <Icon icon="ph:plus-circle-bold" className="text-sm" />
-                                    <span>Record Expense</span>
-                                </button>
-                            </div>
+                            <AdminEmptyState
+                                icon="ph:receipt-bold"
+                                title="No expense records found"
+                                message="No operating expense records match the selected filters. Click 'Record Expense' to add a new record."
+                            />
                         ) : (
                             <div className="table-responsive">
                                 <table className="table bordered-table mb-0 align-middle">
@@ -725,7 +719,7 @@ export default function AdminExpensesPage() {
                                                     </button>
                                                     <button
                                                         type="button"
-                                                        onClick={() => handleDeleteExpense(item.id)}
+                                                        onClick={() => handleDeleteExpense(item)}
                                                         className="w-32-px h-32-px bg-danger-focus text-danger-main rounded-circle d-inline-flex align-items-center justify-content-center border-0"
                                                         title="Delete"
                                                     >
@@ -740,32 +734,22 @@ export default function AdminExpensesPage() {
                         )}
                     </div>
 
-                    {/* Pagination */}
-                    {pagination.lastPage > 1 && (
-                        <div className="card-footer py-14 px-24 border-top d-flex justify-content-between align-items-center">
-                            <span className="text-xs text-secondary">
-                                Showing page <strong>{pagination.currentPage}</strong> of <strong>{pagination.lastPage}</strong> (Total: {pagination.total} records)
-                            </span>
-                            <div className="d-flex gap-2">
-                                <button
-                                    type="button"
-                                    className="btn btn-outline-secondary btn-sm px-14 py-6 radius-6"
-                                    disabled={pagination.currentPage <= 1}
-                                    onClick={() => loadData(pagination.currentPage - 1, financialPeriod, category, search, fromDate, toDate)}
-                                >
-                                    Previous
-                                </button>
-                                <button
-                                    type="button"
-                                    className="btn btn-outline-secondary btn-sm px-14 py-6 radius-6"
-                                    disabled={pagination.currentPage >= pagination.lastPage}
-                                    onClick={() => loadData(pagination.currentPage + 1, financialPeriod, category, search, fromDate, toDate)}
-                                >
-                                    Next
-                                </button>
-                            </div>
+                    {/* Card Footer Pagination */}
+                    <div className="card-footer py-14 px-24 border-top d-flex align-items-center justify-content-between flex-wrap gap-12">
+                        <div className="text-secondary-light text-xs font-semibold">
+                            Showing {pagination.total > 0 ? (pagination.currentPage - 1) * pagination.perPage + 1 : 0}–
+                            {Math.min(pagination.currentPage * pagination.perPage, pagination.total)} of {pagination.total} entries
                         </div>
-                    )}
+                        {pagination.lastPage > 1 && (
+                            <div className="ms-auto">
+                                <AdminPagination
+                                    page={pagination.currentPage}
+                                    totalPages={pagination.lastPage}
+                                    onPageChange={(p) => loadData(p, financialPeriod, category, search, fromDate, toDate)}
+                                />
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* Create / Edit Modal */}
@@ -914,6 +898,17 @@ export default function AdminExpensesPage() {
                         </div>
                     </div>
                 )}
+
+                <ConfirmModal
+                    open={!!deleteModal}
+                    title="Delete Expense Record"
+                    message={deleteModal ? `Are you sure you want to delete "${deleteModal.title}" ($${Number(deleteModal.amount).toFixed(2)})? This action cannot be undone.` : ""}
+                    confirmLabel="Delete Expense"
+                    variant="danger"
+                    loading={deleteLoading}
+                    onConfirm={confirmDeleteExpense}
+                    onCancel={() => setDeleteModal(null)}
+                />
             </div>
         </MasterLayout>
     );

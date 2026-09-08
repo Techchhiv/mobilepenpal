@@ -4,11 +4,11 @@ import { Link, useNavigate } from "react-router-dom";
 import API, { setAuthToken } from "../helper/api";
 import { useAuth } from "../context/AuthContext";
 import penLogo from "../assets/images/pen_logo.png";
-import coverPen from "../assets/images/coverPen.png";
 
 const AdminSignInLayer = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -18,7 +18,14 @@ const AdminSignInLayer = () => {
   // Redirect if already logged in
   useEffect(() => {
     if (isAuthenticated) {
-      if (user?.school_id || user?.roles?.some(r => r.name.toLowerCase().includes("manager") || r.name.toLowerCase().includes("school"))) {
+      if (
+        user?.school_id ||
+        user?.roles?.some(
+          (r) =>
+            r.name.toLowerCase().includes("manager") ||
+            r.name.toLowerCase().includes("school")
+        )
+      ) {
         navigate("/school", { replace: true });
       } else {
         navigate("/admin", { replace: true });
@@ -28,6 +35,7 @@ const AdminSignInLayer = () => {
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    if (submitting) return;
     setError("");
     setSubmitting(true);
 
@@ -35,25 +43,28 @@ const AdminSignInLayer = () => {
       const payload = { email: email.trim(), password };
       const { data } = await API.post("/login", payload);
 
-      // Set token for subsequent requests
       setAuthToken(data.token);
-
-      // Save user + token in AuthContext
       login(data.user, data.token);
 
-      // Determine redirect dynamically based on role/permissions
       const hasSchoolId = Boolean(data.user?.school_id);
-      const roles = (data.user.roles || []).map(r => r.name.toLowerCase());
+      const roles = (data.user?.roles || []).map((r) => r.name.toLowerCase());
 
-      if (hasSchoolId || roles.includes("school-admin") || roles.includes("teacher") || roles.some(r => r.includes("manager"))) {
+      if (
+        hasSchoolId ||
+        roles.includes("school-admin") ||
+        roles.includes("teacher") ||
+        roles.some((r) => r.includes("manager"))
+      ) {
         navigate("/school", { replace: true });
       } else {
         navigate("/admin", { replace: true });
       }
-
     } catch (err) {
       const status = err?.response?.status;
-      let msg = err?.response?.data?.message || err?.message || "Login failed. Please try again.";
+      let msg =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Login failed. Please try again.";
       if (status === 422) msg = "Invalid credentials.";
       setError(msg);
       console.error("Login error:", err);
@@ -61,72 +72,102 @@ const AdminSignInLayer = () => {
       setSubmitting(false);
     }
   };
-  return (
-    <section className="auth bg-base d-flex flex-wrap">
-      <div className="auth-left d-lg-block d-none">
-        <div className="d-flex align-items-center flex-column h-100 justify-content-center">
-          <img src={coverPen} alt="auth" />
-        </div>
-      </div>
 
-      <div className="auth-right py-32 px-24 d-flex flex-column justify-content-center">
-        <div className="max-w-464-px mx-auto w-100">
-          <Link to="/" className="mb-40 max-w-290-px d-block">
-            <img src={penLogo} alt="logo" />
-          </Link>
-          <h4 className="mb-12">Sign In to your Account</h4>
-          <p className="mb-32 text-secondary-light text-lg">
+  return (
+    <section className="auth-page-section">
+      {/* Centered Login Card */}
+      <div className="auth-form-wrapper">
+        <div className="auth-form-container">
+          <div className="auth-logo-wrapper text-center">
+            <Link to="/" className="d-inline-block">
+              <img src={penLogo} alt="Khmer Penpal Logo" className="auth-logo-img" />
+            </Link>
+          </div>
+
+          <h4 className="fw-bold mb-4 text-dark fs-4 text-center">Sign In to your Admin Account</h4>
+          <p className="mb-16 text-secondary-light text-sm text-center">
             Welcome back! Please enter your details.
           </p>
 
           <form onSubmit={handleLogin}>
-            <div className="icon-field mb-16">
-              <span className="icon top-50 translate-middle-y">
-                <Icon icon="mage:email" />
-              </span>
-              <input
-                type="email"
-                className="form-control h-56-px bg-neutral-50 radius-12"
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                autoComplete="username"
-                required
-              />
-            </div>
-
-            <div className="position-relative mb-20">
-              <div className="icon-field">
-                <span className="icon top-50 translate-middle-y">
-                  <Icon icon="solar:lock-password-outline" />
-                </span>
+            {/* Email Field */}
+            <div className="mb-14">
+              <label className="form-label text-sm fw-semibold text-dark mb-4">
+                Email Address
+              </label>
+              <div className="auth-input-field">
+                <Icon icon="mage:email" className="input-icon" />
                 <input
-                  type="password"
-                  className="form-control h-56-px bg-neutral-50 radius-12"
-                  placeholder="Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  autoComplete="current-password"
+                  type="email"
+                  className="form-control auth-input-control w-100"
+                  placeholder="Enter your admin email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  autoComplete="username"
                   required
                 />
               </div>
             </div>
 
+            {/* Password Field with Show/Hide Toggle */}
+            <div className="mb-16">
+              <label className="form-label text-sm fw-semibold text-dark mb-4">
+                Password
+              </label>
+              <div className="auth-input-field">
+                <Icon icon="solar:lock-password-outline" className="input-icon" />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  className="form-control auth-input-control w-100"
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="current-password"
+                  required
+                />
+                <button
+                  type="button"
+                  className="password-toggle-btn"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  tabIndex={-1}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  <Icon
+                    icon={showPassword ? "solar:eye-outline" : "solar:eye-closed-outline"}
+                  />
+                </button>
+              </div>
+            </div>
+
+            {/* Error Message Banner */}
+            {error && (
+              <div className="alert alert-danger d-flex align-items-center gap-8 py-10 px-16 radius-8 text-sm mb-14">
+                <Icon icon="mdi:alert-circle" className="text-lg flex-shrink-0" />
+                <div>{error}</div>
+              </div>
+            )}
+
+            {/* Submit Button */}
             <button
               type="submit"
               disabled={submitting}
-              className="btn btn-primary text-sm btn-sm px-12 py-16 w-100 radius-12 mt-32"
+              className="auth-submit-btn w-100"
             >
-              {submitting ? "Signing in..." : "Sign In"}
+              {submitting ? (
+                <>
+                  <Icon icon="svg-spinners:180-ring-with-bg" className="text-xl me-2" />
+                  <span>Signing In...</span>
+                </>
+              ) : (
+                "Sign In"
+              )}
             </button>
-
-            {error && <p className="mt-12 text-danger">{error}</p>}
           </form>
 
-          <div className="mt-4 text-center">
-            <p>
-              <span>School Login?</span>{" "}
-              <Link to="/sign-in-school" className="text-primary">
+          <div className="mt-16 text-center">
+            <p className="text-sm text-secondary-light mb-0">
+              School Login?{" "}
+              <Link to="/sign-in-school" className="text-primary-600 fw-semibold">
                 Click here
               </Link>
             </p>
