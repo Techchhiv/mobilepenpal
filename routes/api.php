@@ -25,7 +25,8 @@ use App\Http\Controllers\{
     SchoolRoleController,
     SchoolUserController,
     SubscriptionController,
-    TeacherController
+    TeacherController,
+    UserProfileController
 };
 use App\Http\Controllers\Admin\V01\ExerciseController;
 use App\Http\Controllers\Admin\V01\StageController;
@@ -57,6 +58,11 @@ Route::middleware('auth:api')->group(function () {
     // Authenticated user info (all users)
     Route::get('/me', [AuthController::class, 'me']);
     Route::post('/logout', [AuthController::class, 'logout']);
+
+    // User Profile & Settings (all users)
+    Route::get('/profile', [UserProfileController::class, 'show']);
+    Route::put('/profile', [UserProfileController::class, 'update']);
+    Route::put('/profile/password', [UserProfileController::class, 'updatePassword']);
 
     /* -------------------------------
        Admin Routes
