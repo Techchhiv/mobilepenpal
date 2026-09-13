@@ -9,7 +9,7 @@ import "../../../assets/css/Layout.css";
 
 
 const SchoolLayout = ({ children }) => {
-  const { user, loading, logout, hasPermission, isSchoolAdmin } = useAuth();
+  const { user, loading, logout, hasPermission, isSchoolAdmin, isSuperAdmin } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -150,6 +150,19 @@ const SchoolLayout = ({ children }) => {
                 >
                   <Icon icon="mdi:earth" className="menu-icon" />
                   <span>Manage Worlds</span>
+                </NavLink>
+              </li>
+            )}
+
+            {/* Subscription & Billing (School Admin only) */}
+            {(isSchoolAdmin || isSuperAdmin) && (
+              <li>
+                <NavLink
+                  to="/school/subscription-billing"
+                  className={({ isActive }) => (isActive ? "active-page" : "")}
+                >
+                  <Icon icon="mdi:credit-card-outline" className="menu-icon" />
+                  <span>Subscription & Billing</span>
                 </NavLink>
               </li>
             )}
