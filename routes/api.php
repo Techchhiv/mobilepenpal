@@ -245,10 +245,10 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/profile', [\App\Http\Controllers\School\V01\SchoolProfileController::class, 'show']);
         Route::put('/profile', [\App\Http\Controllers\School\V01\SchoolProfileController::class, 'update']);
 
-        // Subscription & Billing History (School Admin only - strictly read-only)
-        Route::get('/billing', [SchoolBillingController::class, 'index']);
-        Route::get('/billing/invoices/{invoice}', [SchoolBillingController::class, 'showInvoice']);
-        Route::get('/billing/invoices/{invoice}/pdf', [SchoolBillingController::class, 'downloadInvoicePdf']);
+        // School Subscription & Invoices (school-admin)
+        Route::get('/subscription', [\App\Http\Controllers\School\V01\SchoolSubscriptionController::class, 'index']);
+        Route::get('/invoices/{id}', [\App\Http\Controllers\School\V01\SchoolSubscriptionController::class, 'showInvoice']);
+        Route::get('/invoices/{id}/pdf', [\App\Http\Controllers\School\V01\SchoolSubscriptionController::class, 'downloadInvoicePdf']);
 
         // Manage teachers (school-admin only)
         Route::middleware('permission:teachers.view|teachers.create|teachers.update|teachers.delete')->group(function () {

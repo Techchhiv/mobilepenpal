@@ -24,6 +24,7 @@ class DatabaseSeeder extends Seeder
             StudentSeeder::class,
             MiniGameSeeder::class,
             // SubscriptionSeeder::class,
+            SchoolSubscriptionSeeder::class,
             // TeacherRolesSeeder::class
             StudentExerciseAttemptSeeder::class,
             SystemSettingSeeder::class,
