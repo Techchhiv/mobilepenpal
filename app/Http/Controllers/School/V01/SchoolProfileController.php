@@ -60,7 +60,8 @@ class SchoolProfileController extends Controller
 
         $validated = $request->validate([
             'name'             => 'required|string|max:255',
-            'email'            => 'required|email|max:255|unique:users,email,' . $user->id,
+            'email'            => 'nullable|email|max:255|unique:users,email,' . $user->id,
+            'photo'            => 'nullable',
             'phone'            => 'nullable|string|max:30',
             'current_password' => 'nullable|string',
             'password'         => ['nullable', 'confirmed', Password::min(8)],
@@ -75,11 +76,34 @@ class SchoolProfileController extends Controller
             }
         }
 
-        $user->name  = $validated['name'];
-        $user->email = $validated['email'];
+        $user->name = $validated['name'];
 
-        if (array_key_exists('phone', $validated)) {
-            $user->phone = $validated['phone'];
+        if (!empty($validated['email'])) {
+            $user->email = $validated['email'];
+        }
+
+        // Handle photo upload / removal
+        if ($request->hasFile('photo')) {
+            if (!empty($user->photo) && file_exists(public_path(ltrim($user->photo, '/')))) {
+                @unlink(public_path(ltrim($user->photo, '/')));
+            }
+            $user->photo = \App\Helpers\UploadMedia::uploadImageFile($request->file('photo'));
+        } elseif ($request->has('photo')) {
+            $photoInput = $request->input('photo');
+            if (empty($photoInput)) {
+                if (!empty($user->photo) && file_exists(public_path(ltrim($user->photo, '/')))) {
+                    @unlink(public_path(ltrim($user->photo, '/')));
+                }
+                $user->photo = null;
+            } elseif (is_string($photoInput) && preg_match('/^data:image\/(png|jpe?g|webp);base64,/i', $photoInput)) {
+                if (!empty($user->photo) && file_exists(public_path(ltrim($user->photo, '/')))) {
+                    @unlink(public_path(ltrim($user->photo, '/')));
+                }
+                $path = \App\Helpers\UploadMedia::uploadImageBase64($photoInput);
+                if ($path) {
+                    $user->photo = $path;
+                }
+            }
         }
 
         if (!empty($validated['password'])) {
