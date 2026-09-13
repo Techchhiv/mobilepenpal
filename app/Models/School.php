@@ -71,6 +71,11 @@ class School extends Model
         return $this->hasMany(Subscription::class);
     }
 
+    public function invoices()
+    {
+        return $this->hasMany(Invoice::class);
+    }
+
     public function branches(){
         return $this->hasMany(Branch::class);
     }
