@@ -1,393 +1,302 @@
 // src/pages/admin/ManageClientsPage.jsx
-import React, { useEffect, useState, useMemo } from "react";
-import { Icon } from "@iconify/react";
-import MasterLayout from "../../masterLayout/MasterLayout";
-import API from "../../helper/api";
+import React, { useCallback, useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { Icon } from '@iconify/react';
+import MasterLayout from '../../masterLayout/MasterLayout';
+import API from '../../helper/api';
+import { useAuth } from '../../context/AuthContext';
+import { syncFiltersToURL } from '../../utils/clientUtils';
+import ClientSummaryCards from '../../components/admin/clients/ClientSummaryCards';
+import ClientFilters from '../../components/admin/clients/ClientFilters';
+import ClientTable from '../../components/admin/clients/ClientTable';
+import CreateSchoolModal from '../../components/admin/clients/CreateSchoolModal';
+import EditSchoolModal from '../../components/admin/clients/EditSchoolModal';
+import StatusConfirmModal from '../../components/admin/clients/StatusConfirmModal';
+import '../../assets/css/manageClients.css';
 import AdminPageHeader from "../../components/admin/common/AdminPageHeader";
 import AdminErrorState from "../../components/admin/common/AdminErrorState";
 import ConfirmModal from "../../components/admin/common/ConfirmModal";
 import AdminPagination from "../../components/admin/common/AdminPagination";
 
 export default function ManageClientsPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { isSuperAdmin, hasPermission } = useAuth();
+  const canManageClients = isSuperAdmin || hasPermission('menu.manage_clients');
+
+  // Read current filters from URL
+  const search = searchParams.get('search') ?? '';
+  const schoolStatus = searchParams.get('school_status') ?? '';
+  const subscriptionStatus = searchParams.get('subscription_status') ?? '';
+  const plan = searchParams.get('plan') ?? '';
+  const pageParam = Number(searchParams.get('page') ?? '1');
+  const currentPage = Number.isFinite(pageParam) && pageParam > 0 ? pageParam : 1;
+
+  const filters = {
+    search,
+    schoolStatus,
+    subscriptionStatus,
+    plan,
+    page: currentPage,
+  };
+
+  // State
   const [schools, setSchools] = useState([]);
+  const [summary, setSummary] = useState({ total: 0, active: 0, inactive: 0 });
+  const [pagination, setPagination] = useState({
+    current_page: 1,
+    last_page: 1,
+    total: 0,
+    per_page: 10,
+    from: 0,
+    to: 0,
+  });
   const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState("");
-  const [msg, setMsg] = useState("");
+  const [error, setError] = useState('');
+  const [flashMsg, setFlashMsg] = useState({ text: '', isError: false });
 
-  // create form
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [schoolKey, setSchoolKey] = useState("");
+  // Modals state
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [editingSchool, setEditingSchool] = useState(null);
+  const [statusModalSchool, setStatusModalSchool] = useState(null);
+  const [statusSubmitting, setStatusSubmitting] = useState(false);
 
-  // editing & confirmation modal
-  const [editing, setEditing] = useState(null);
-  const [search, setSearch] = useState("");
-  const [deleteTarget, setDeleteTarget] = useState(null);
-  const [deleting, setDeleting] = useState(false);
+  const flash = (text, isError = false) => {
+    setFlashMsg({ text, isError });
+    setTimeout(() => {
+      setFlashMsg({ text: '', isError: false });
+    }, 3500);
+  };
 
-  const load = async () => {
+  // Fetch clients from backend
+  const loadSchools = useCallback(async () => {
     setLoading(true);
-    setErr("");
+    setError('');
     try {
-      const res = await API.get("admin/schools");
-      setSchools(Array.isArray(res.data) ? res.data : res.data.data || []);
+      const res = await API.get('admin/schools', {
+        params: {
+          search: filters.search || undefined,
+          school_status: filters.schoolStatus || undefined,
+          subscription_status: filters.subscriptionStatus || undefined,
+          plan: filters.plan || undefined,
+          page: filters.page,
+          per_page: 10,
+        },
+      });
+
+      const payload = res.data ?? {};
+      const rows = Array.isArray(payload.data) ? payload.data : [];
+      setSchools(rows);
+
+      if (payload.summary) {
+        setSummary(payload.summary);
+      } else {
+        // Fallback summary if backend didn't return summary object
+        setSummary({
+          total: payload.total ?? rows.length,
+          active: rows.filter((s) => s.is_active).length,
+          inactive: rows.filter((s) => !s.is_active).length,
+        });
+      }
+
+      setPagination({
+        current_page: Number(payload.current_page || filters.page),
+        last_page: Number(payload.last_page || 1),
+        total: Number(payload.total || rows.length),
+        per_page: Number(payload.per_page || 10),
+        from: Number(payload.from || (rows.length > 0 ? 1 : 0)),
+        to: Number(payload.to || rows.length),
+      });
     } catch (e) {
-      setErr(e?.response?.data?.message || "Failed to load school clients from server.");
+      setError(
+        e?.response?.data?.message || 'Unable to load clients. Please try again.'
+      );
+      setSchools([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [
+    filters.search,
+    filters.schoolStatus,
+    filters.subscriptionStatus,
+    filters.plan,
+    filters.page,
+  ]);
 
   useEffect(() => {
-    load();
-  }, []);
+    loadSchools();
+  }, [loadSchools]);
 
-  const flash = (text, isError = false) => {
-    (isError ? setErr : setMsg)(text);
-    setTimeout(() => (isError ? setErr("") : setMsg("")), 3500);
+  // Handlers for search & filters
+  const handleFilterChange = (partial) => {
+    const next = { ...filters, ...partial, page: 1 };
+    syncFiltersToURL(next, setSearchParams);
   };
 
-  const generateKey = async () => {
-    try {
-      const res = await API.get("admin/schools/generate-key");
-      setSchoolKey(res.data.key);
-    } catch (e) {
-      flash("Failed to generate school key", true);
-    }
+  const handleClearFilters = () => {
+    const next = {
+      search: '',
+      schoolStatus: '',
+      subscriptionStatus: '',
+      plan: '',
+      page: 1,
+    };
+    syncFiltersToURL(next, setSearchParams);
   };
 
-  const createSchool = async (e) => {
-    e.preventDefault();
-    try {
-      await API.post("admin/schools", { name, email, password, school_key: schoolKey });
-      setName("");
-      setEmail("");
-      setPassword("");
-      setSchoolKey("");
-      await load();
-      flash("School client registered successfully");
-    } catch (e) {
-      flash(e?.response?.data?.message || "Failed to register school client", true);
-    }
+  const handlePageChange = (newPage) => {
+    syncFiltersToURL({ ...filters, page: newPage }, setSearchParams);
   };
 
-  const saveEdit = async (e) => {
-    e.preventDefault();
-    if (!editing) return;
+  // Status toggle handler
+  const handleToggleStatusConfirm = async (school, newStatus) => {
+    setStatusSubmitting(true);
     try {
-      await API.put(`admin/schools/${editing.id}`, editing);
-      setEditing(null);
-      await load();
-      flash("School details updated successfully");
-    } catch (e) {
-      flash(e?.response?.data?.message || "Failed to update school details", true);
-    }
-  };
-
-  const handleConfirmDelete = async () => {
-    if (!deleteTarget) return;
-    setDeleting(true);
-    try {
-      await API.delete(`admin/schools/${deleteTarget.id}`);
-      setSchools((prev) => prev.filter((s) => s.id !== deleteTarget.id));
-      flash("School client deleted successfully");
-      setDeleteTarget(null);
-    } catch (e) {
-      flash(e?.response?.data?.message || "Failed to delete school client", true);
+      await API.put(`admin/schools/${school.id}`, {
+        is_active: newStatus,
+      });
+      flash(
+        `School "${school.name}" has been ${newStatus ? 'activated' : 'deactivated'}.`
+      );
+      setStatusModalSchool(null);
+      await loadSchools();
+    } catch (err) {
+      flash(
+        err?.response?.data?.message || 'Failed to update school status.',
+        true
+      );
     } finally {
-      setDeleting(false);
+      setStatusSubmitting(false);
+    }
+  };
+
+  // Delete handler
+  const handleDeleteSchool = async (school) => {
+    if (!window.confirm(`Are you sure you want to delete school "${school.name}"? This action cannot be undone.`)) {
+      return;
+    }
+    try {
+      await API.delete(`admin/schools/${school.id}`);
+      flash(`School "${school.name}" deleted successfully.`);
+      await loadSchools();
+    } catch (err) {
+      flash(err?.response?.data?.message || 'Failed to delete school.', true);
     }
   };
 
   const [page, setPage] = useState(1);
   const perPage = 10;
 
-  const filteredSchools = useMemo(() => {
-    const t = search.trim().toLowerCase();
-    if (!t) return schools;
-    return schools.filter(
-      (s) =>
-        (s.name || "").toLowerCase().includes(t) ||
-        (s.school_key || "").toLowerCase().includes(t) ||
-        (s.admin_email || "").toLowerCase().includes(t)
-    );
-  }, [schools, search]);
-
-  const totalPages = Math.ceil(filteredSchools.length / perPage) || 1;
-
-  const paginatedSchools = useMemo(() => {
-    const start = (page - 1) * perPage;
-    return filteredSchools.slice(start, start + perPage);
-  }, [filteredSchools, page, perPage]);
-
-  // Reset to page 1 on search
-  useEffect(() => {
-    setPage(1);
-  }, [search]);
+  const isFiltered = Boolean(
+    (filters.search && filters.search.trim()) ||
+    filters.schoolStatus ||
+    filters.subscriptionStatus ||
+    filters.plan
+  );
 
   return (
     <MasterLayout>
-      <div className="py-12">
-        <AdminPageHeader
-          title="Manage Clients"
-          subtitle="Register, update, and manage institutional client accounts"
-        />
-
-        {err && !schools.length && !loading ? (
-          <AdminErrorState
-            title="Failed to Load Clients"
-            message={err}
-            onRetry={load}
-          />
-        ) : (
-          <div className="row g-20">
-            {/* Create School Form Card */}
-            <div className="col-12 col-xl-4">
-              <div className="card border radius-12 shadow-none h-100">
-                <div className="card-header border-bottom py-16 px-24 bg-base">
-                  <h6 className="fw-bold mb-0 text-dark">Create New School</h6>
-                </div>
-                <div className="card-body p-24">
-                  <form onSubmit={createSchool} className="d-flex flex-column gap-16">
-                    <div>
-                      <label className="form-label text-sm fw-medium text-dark">School Name</label>
-                      <input
-                        className="form-control radius-8"
-                        placeholder="e.g. Angkor High School"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label className="form-label text-sm fw-medium text-dark">Admin Email</label>
-                      <input
-                        type="email"
-                        className="form-control radius-8"
-                        placeholder="admin@school.edu.kh"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label className="form-label text-sm fw-medium text-dark">Admin Password</label>
-                      <input
-                        type="password"
-                        className="form-control radius-8"
-                        placeholder="At least 8 characters"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                        minLength={8}
-                      />
-                    </div>
-
-                    <div>
-                      <label className="form-label text-sm fw-medium text-dark">School Key</label>
-                      <div className="d-flex align-items-center gap-8">
-                        <input
-                          className="form-control radius-8 font-monospace"
-                          placeholder="e.g. PENPAL001"
-                          value={schoolKey}
-                          onChange={(e) => setSchoolKey(e.target.value)}
-                          required
-                        />
-                        <button
-                          type="button"
-                          className="btn btn-outline-secondary radius-8 text-nowrap"
-                          onClick={generateKey}
-                        >
-                          Generate
-                        </button>
-                      </div>
-                    </div>
-
-                    <button type="submit" className="btn btn-primary radius-8 d-inline-flex align-items-center justify-content-center gap-8 mt-8">
-                      <Icon icon="lucide:plus" className="text-lg" />
-                      <span>Create School</span>
-                    </button>
-
-                    {msg && <div className="alert alert-success py-8 px-12 radius-8 text-xs mb-0">{msg}</div>}
-                    {err && <div className="alert alert-danger py-8 px-12 radius-8 text-xs mb-0">{err}</div>}
-                  </form>
-                </div>
-              </div>
+      <div className="manage-clients-page">
+        {/* Flash Notifications */}
+        {flashMsg.text && (
+          <div
+            className={`alert ${flashMsg.isError ? 'alert-danger' : 'alert-success'
+              } alert-dismissible fade show radius-8 mb-20 d-flex align-items-center justify-content-between`}
+            role="alert"
+          >
+            <div className="d-flex align-items-center gap-8">
+              <Icon
+                icon={
+                  flashMsg.isError
+                    ? 'mdi:alert-circle-outline'
+                    : 'mdi:check-circle-outline'
+                }
+                className="text-lg"
+              />
+              <span className="text-sm fw-medium">{flashMsg.text}</span>
             </div>
-
-            {/* Schools List Card */}
-            <div className="col-12 col-xl-8">
-              <div className="card border radius-12 shadow-none h-100">
-                <div className="card-header border-bottom py-16 px-24 bg-base d-flex align-items-center justify-content-between flex-wrap gap-12">
-                  <h6 className="fw-bold mb-0 text-dark">Registered Schools</h6>
-                  <div className="d-flex align-items-center gap-12">
-                    <input
-                      className="form-control form-control-sm radius-8 min-w-200-px"
-                      placeholder="Search schools..."
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                    />
-                    <span className="badge bg-neutral-200 text-secondary-light radius-6 text-xs px-10 py-6">
-                      {filteredSchools.length} / {schools.length}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="card-body p-0">
-                  {loading ? (
-                    <div className="placeholder-glow d-flex flex-column gap-12 p-24">
-                      {[1, 2, 3, 4, 5].map((i) => (
-                        <span key={i} className="placeholder col-12 radius-8" style={{ height: "48px" }}></span>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="table-responsive">
-                      <table className="table bordered-table mb-0 align-middle">
-                        <thead>
-                          <tr>
-                            <th scope="col" className="text-xs text-uppercase fw-semibold py-12 px-16" style={{ width: 60 }}>ID</th>
-                            <th scope="col" className="text-xs text-uppercase fw-semibold py-12 px-16">School Name</th>
-                            <th scope="col" className="text-xs text-uppercase fw-semibold py-12 px-16">School Key</th>
-                            <th scope="col" className="text-xs text-uppercase fw-semibold py-12 px-16">Admin Email</th>
-                            <th scope="col" className="text-xs text-uppercase fw-semibold py-12 px-16 text-end" style={{ width: 100 }}>Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {paginatedSchools.map((s) => (
-                            <tr key={s.id} className="hover-bg-neutral-50 transition-1">
-                              <td className="py-12 px-16 text-sm font-monospace text-secondary-light">{s.id}</td>
-                              <td className="py-12 px-16 text-sm fw-bold text-dark">{s.name}</td>
-                              <td className="py-12 px-16">
-                                <span className="fw-bold font-monospace text-primary-600 bg-primary-light px-10 py-4 radius-6 text-xs">
-                                  {s.school_key || '-'}
-                                </span>
-                              </td>
-                              <td className="py-12 px-16 text-sm text-secondary-light">{s.admin_email || '-'}</td>
-                              <td className="py-12 px-16 text-end">
-                                <div className="d-inline-flex align-items-center gap-6">
-                                  <button
-                                    type="button"
-                                    className="w-32-px h-32-px radius-6 bg-primary-light text-primary-600 border-0 d-inline-flex align-items-center justify-content-center"
-                                    title="Edit"
-                                    onClick={() => setEditing(s)}
-                                  >
-                                    <Icon icon="lucide:edit" />
-                                  </button>
-                                  <button
-                                    type="button"
-                                    className="w-32-px h-32-px radius-6 bg-danger-focus text-danger-main border-0 d-inline-flex align-items-center justify-content-center"
-                                    title="Delete"
-                                    onClick={() => setDeleteTarget(s)}
-                                  >
-                                    <Icon icon="mingcute:delete-2-line" />
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                          {!filteredSchools.length && (
-                            <tr>
-                              <td colSpan={5} className="text-center text-secondary-light py-32">
-                                No schools match your search query.
-                              </td>
-                            </tr>
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-
-                  {/* Inline Edit Card */}
-                  {editing && (
-                    <div className="m-20 border radius-12 p-20 bg-base">
-                      <div className="d-flex align-items-center justify-content-between mb-16 pb-8 border-bottom">
-                        <h6 className="fw-bold text-dark mb-0">Edit School: {editing.name}</h6>
-                        <button
-                          className="btn-close"
-                          type="button"
-                          onClick={() => setEditing(null)}
-                        />
-                      </div>
-
-                      <form onSubmit={saveEdit} className="d-flex flex-column gap-12">
-                        <div>
-                          <label className="form-label text-xs fw-medium text-secondary-light">School Name</label>
-                          <input
-                            className="form-control radius-8"
-                            value={editing.name || ""}
-                            onChange={(e) => setEditing((o) => ({ ...o, name: e.target.value }))}
-                            required
-                          />
-                        </div>
-                        <div>
-                          <label className="form-label text-xs fw-medium text-secondary-light">Admin Email</label>
-                          <input
-                            className="form-control radius-8"
-                            value={editing.admin_email || ""}
-                            onChange={(e) => setEditing((o) => ({ ...o, admin_email: e.target.value }))}
-                            required
-                          />
-                        </div>
-                        <div>
-                          <label className="form-label text-xs fw-medium text-secondary-light">School Key</label>
-                          <input
-                            className="form-control radius-8 font-monospace"
-                            value={editing.school_key || ""}
-                            onChange={(e) => setEditing((o) => ({ ...o, school_key: e.target.value }))}
-                            required
-                          />
-                        </div>
-                        <div className="d-flex gap-8 mt-8">
-                          <button className="btn btn-primary btn-sm radius-8" type="submit">
-                            Save Changes
-                          </button>
-                          <button
-                            className="btn btn-outline-secondary btn-sm radius-8"
-                            type="button"
-                            onClick={() => setEditing(null)}
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      </form>
-                    </div>
-                  )}
-                </div>
-
-                {/* ── Card Footer Pagination ── */}
-                <div className="card-footer py-14 px-24 border-top d-flex align-items-center justify-content-between flex-wrap gap-12">
-                  <div className="text-secondary-light text-xs font-semibold">
-                    Showing {filteredSchools.length > 0 ? (page - 1) * perPage + 1 : 0}–
-                    {Math.min(page * perPage, filteredSchools.length)} of {filteredSchools.length} entries
-                  </div>
-                  {totalPages > 1 && (
-                    <div className="ms-auto">
-                      <AdminPagination
-                        page={page}
-                        totalPages={totalPages}
-                        onPageChange={setPage}
-                      />
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
+            <button
+              type="button"
+              className="btn-close"
+              aria-label="Close"
+              onClick={() => setFlashMsg({ text: '', isError: false })}
+            />
           </div>
         )}
 
-        {/* Destructive Action Modal */}
-        <ConfirmModal
-          open={Boolean(deleteTarget)}
-          title="Delete School Account"
-          message={`Are you sure you want to delete "${deleteTarget?.name}"? This action cannot be undone.`}
-          confirmLabel="Delete School"
-          variant="danger"
-          loading={deleting}
-          onConfirm={handleConfirmDelete}
-          onCancel={() => setDeleteTarget(null)}
+        {/* Page Header */}
+        <div className="manage-clients-header d-flex align-items-center justify-content-between flex-wrap gap-16 mb-24">
+          <div>
+            <h5 className="fw-bold mb-4">Manage Clients</h5>
+            <p className="text-secondary-light text-sm mb-0">
+              Manage school clients, account status, and subscriptions.
+            </p>
+          </div>
+
+          {canManageClients && (
+            <button
+              type="button"
+              className="btn btn-primary radius-8 px-16 py-9 d-inline-flex align-items-center gap-8"
+              onClick={() => setIsCreateOpen(true)}
+            >
+              <Icon icon="lucide:plus" className="text-md" />
+              <span>Create School</span>
+            </button>
+          )}
+        </div>
+
+        {/* Client Summary Cards */}
+        <ClientSummaryCards summary={summary} loading={loading} />
+
+        {/* Filters */}
+        <ClientFilters
+          filters={filters}
+          onChange={handleFilterChange}
+          onClear={handleClearFilters}
+        />
+
+        {/* Client Table with Pagination, Loading, Empty, and Error states */}
+        <ClientTable
+          schools={schools}
+          loading={loading}
+          error={error}
+          isFiltered={isFiltered}
+          pagination={pagination}
+          onPageChange={handlePageChange}
+          onClearFilters={handleClearFilters}
+          onRetry={loadSchools}
+          onToggleStatus={(s) => setStatusModalSchool(s)}
+          onEditSchool={(s) => setEditingSchool(s)}
+          onDeleteSchool={handleDeleteSchool}
+        />
+
+        {/* Create School Modal */}
+        <CreateSchoolModal
+          isOpen={isCreateOpen}
+          onClose={() => setIsCreateOpen(false)}
+          onSuccess={(msg) => {
+            flash(msg);
+            loadSchools();
+          }}
+        />
+
+        {/* Edit School Modal */}
+        <EditSchoolModal
+          isOpen={Boolean(editingSchool)}
+          school={editingSchool}
+          onClose={() => setEditingSchool(null)}
+          onSuccess={(msg) => {
+            flash(msg);
+            loadSchools();
+          }}
+        />
+
+        {/* Status Confirmation Modal */}
+        <StatusConfirmModal
+          isOpen={Boolean(statusModalSchool)}
+          school={statusModalSchool}
+          submitting={statusSubmitting}
+          onConfirm={handleToggleStatusConfirm}
+          onClose={() => setStatusModalSchool(null)}
         />
       </div>
     </MasterLayout>
