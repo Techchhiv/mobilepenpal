@@ -166,10 +166,10 @@ const StudentView = () => {
                         {canEdit && (
                             <Link
                                 to={`/school/students/${id}/edit`}
-                                className="d-flex align-items-center btn btn-success radius-3 px-20 py-11"
+                                className="d-inline-flex align-items-center justify-content-center gap-6 btn btn-success radius-8 px-16 py-8"
                             >
-                                <Icon icon="lucide:edit" className="me-6" />
-                                Edit
+                                <Icon icon="lucide:edit" className="font-18" />
+                                <span>Edit</span>
                             </Link>
                         )}
 
@@ -177,10 +177,10 @@ const StudentView = () => {
                             <button
                                 type="button"
                                 onClick={deleteStudent}
-                                className="btn btn-danger radius-3 px-20 py-11"
+                                className="d-inline-flex align-items-center justify-content-center gap-6 btn btn-danger radius-8 px-16 py-8"
                             >
-                                <Icon icon="mingcute:delete-2-line" className="me-6" />
-                                Delete
+                                <Icon icon="mingcute:delete-2-line" className="font-18" />
+                                <span>Delete</span>
                             </button>
                         )}
                     </div>

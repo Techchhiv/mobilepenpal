@@ -5,6 +5,10 @@ import { Icon } from "@iconify/react";
 import API from "../../../helper/api";
 import API_BASE_URL from "../../../helper/Base_urls";
 import MasterLayout from "../../../masterLayout/MasterLayout";
+import AdminPageHeader from "../../../components/admin/common/AdminPageHeader";
+import AdminEmptyState from "../../../components/admin/common/AdminEmptyState";
+import AdminErrorState from "../../../components/admin/common/AdminErrorState";
+import ConfirmModal from "../../../components/admin/common/ConfirmModal";
 
 const ONLINE_GRACE_MS = 2 * 60 * 1000;
 
@@ -47,6 +51,8 @@ export default function AdminStudentView() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const fullName = (s) =>
     [s?.first_name, s?.last_name].filter(Boolean).join(" ").trim() || "—";
@@ -110,193 +116,211 @@ export default function AdminStudentView() {
       : `${API_BASE_URL}/${String(normalized.avatar).replace(/^\/+/, "")}`;
   }, [normalized]);
 
-  const deleteStudent = async () => {
-    if (!window.confirm("Delete this student?")) return;
+  const handleDelete = async () => {
+    setDeleting(true);
     setError("");
     setMessage("");
     try {
       await API.delete(`/admin/students/${id}`);
-      setMessage("Student deleted successfully");
-      navigate("/admin/students");
+      setShowDeleteModal(false);
+      navigate("/admin/students", { state: { success: "Student deleted successfully" } });
     } catch (err) {
       console.error("Delete failed:", err);
       setError(err?.response?.data?.message || "Delete failed");
+    } finally {
+      setDeleting(false);
     }
   };
 
   return (
     <MasterLayout>
-      <div className="card">
-        <div className="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-          <div>
-            <h5 className="mb-0">Student Details</h5>
-            <small className="text-muted">ID: {id}</small>
+      <div className="py-12">
+        <AdminPageHeader
+          title={normalized ? `Student Details — ${normalized.name}` : "Student Details"}
+          subtitle={normalized ? `Profile, contact information, and activity details for ID: #${id}` : `Student ID: #${id}`}
+          actionLabel="Back to Students"
+          actionIcon="mdi:arrow-left"
+          onAction={() => navigate("/admin/students")}
+        />
+
+        {message && (
+          <div className="alert alert-success d-flex align-items-center gap-2 mb-24 radius-8">
+            <Icon icon="mdi:check-circle" className="text-xl flex-shrink-0" />
+            <div>{message}</div>
           </div>
+        )}
 
-          <div className="d-flex gap-2 flex-wrap">
-            <Link
-              to="/admin/students"
-              className="d-flex align-items-center btn btn-secondary radius-3 px-20 py-11"
-            >
-              <Icon icon="mdi:arrow-left" className="me-6" />
-              Back
-            </Link>
-            <Link
-              to={`/admin/students/${id}/edit`}
-              className="d-flex align-items-center btn btn-success radius-3 px-20 py-11"
-            >
-              <Icon icon="lucide:edit" className="me-6" />
-              Edit
-            </Link>
-            <button
-              type="button"
-              onClick={deleteStudent}
-              className="btn btn-danger radius-3 px-20 py-11"
-            >
-              <Icon icon="mingcute:delete-2-line" className="me-6" />
-              Delete
-            </button>
+        {error && (
+          <AdminErrorState
+            title="Failed to Load Student"
+            message={error}
+            onRetry={fetchStudent}
+          />
+        )}
+
+        {loading ? (
+          <div className="card border radius-12 shadow-none p-40 text-center">
+            <div className="spinner-border text-primary mx-auto mb-16" role="status" />
+            <div className="text-secondary-light">Loading student profile...</div>
           </div>
-        </div>
-
-        <div className="card-body">
-          {message && <div className="alert alert-success">{message}</div>}
-          {error && <div className="alert alert-danger">{error}</div>}
-
-          {loading ? (
-            <div className="text-center py-40">
-              <div className="spinner-border" role="status" />
-              <div className="mt-12 text-muted">Loading student...</div>
-            </div>
-          ) : !normalized ? (
-            <div className="text-center py-40 text-muted">Student not found.</div>
-          ) : (
-            <div className="row g-3">
-              {/* Left Column */}
-              <div className="col-12 col-md-4 col-lg-3">
-                <div className="card border">
-                  <div className="card-body text-center">
-                    {avatarUrl ? (
-                      <img
-                        src={avatarUrl}
-                        alt={normalized.name}
-                        style={{
-                          width: 120,
-                          height: 120,
-                          objectFit: "cover",
-                          borderRadius: "50%",
-                        }}
-                      />
-                    ) : (
-                      <div
-                        className="d-inline-flex align-items-center justify-content-center bg-light"
-                        style={{ width: 120, height: 120, borderRadius: "50%" }}
-                      >
-                        <Icon icon="mdi:account" width={48} />
-                      </div>
-                    )}
-
-                    <h6 className="mt-16 mb-4">{normalized.name}</h6>
-
-                    <div className="d-flex justify-content-center gap-8 flex-wrap">
-                      <span className={`badge ${normalized.active ? "bg-success" : "bg-secondary"}`}>
-                        {normalized.active ? "Active" : "Inactive"}
-                      </span>
-                      <span
-                        className={`badge ${normalized.online ? "bg-primary" : "bg-light text-dark"}`}
-                        title={normalized.last_seen_at ? `Last seen: ${normalized.last_seen_at}` : ""}
-                      >
-                        {normalized.online ? "Online" : "Offline"}
-                      </span>
-                    </div>
-
-                    <div className="mt-10 text-muted">
-                      Nickname: <span className="text-dark">{normalized.nickname || "—"}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="card border mt-3">
-                  <div className="card-header">
-                    <h6 className="mb-0">School</h6>
-                  </div>
-                  <div className="card-body">
-                    <MiniRow label="School ID" value={normalized.school_id ?? "—"} />
-                    <MiniRow label="School Key" value={normalized.school_key ?? "—"} />
-                    <MiniRow
-                      label="Affiliation"
-                      value={
-                        normalized.school_id ? (
-                          <span className="badge bg-primary-100 text-primary-600">School</span>
-                        ) : (
-                          <span className="badge bg-warning-100 text-warning-600">Public</span>
-                        )
-                      }
+        ) : !normalized ? (
+          <AdminEmptyState
+            title="Student Not Found"
+            message="The requested student profile could not be retrieved or has been removed."
+            actionLabel="Return to Student Directory"
+            onAction={() => navigate("/admin/students")}
+          />
+        ) : (
+          <div className="row g-4">
+            {/* Left Column */}
+            <div className="col-12 col-md-4 col-lg-3">
+              <div className="card border radius-12 shadow-none text-center p-20">
+                <div className="card-body p-0">
+                  {avatarUrl ? (
+                    <img
+                      src={avatarUrl}
+                      alt={normalized.name}
+                      className="mx-auto rounded-circle border border-neutral-200 object-fit-cover mb-16"
+                      style={{ width: 120, height: 120 }}
                     />
-                  </div>
-                </div>
+                  ) : (
+                    <div
+                      className="d-inline-flex align-items-center justify-content-center bg-neutral-100 border border-neutral-200 rounded-circle mb-16"
+                      style={{ width: 120, height: 120 }}
+                    >
+                      <Icon icon="mdi:account" width={48} className="text-secondary-light" />
+                    </div>
+                  )}
 
-                <div className="card border mt-3">
-                  <div className="card-header">
-                    <h6 className="mb-0">Stats</h6>
+                  <h6 className="fw-bold text-dark mb-4">{normalized.name}</h6>
+
+                  <div className="d-flex justify-content-center gap-2 mb-12 flex-wrap">
+                    <span className={`badge ${normalized.active ? "bg-success-100 text-success-600" : "bg-neutral-200 text-secondary-light"}`}>
+                      {normalized.active ? "Active" : "Inactive"}
+                    </span>
+                    <span
+                      className={`badge ${normalized.online ? "bg-primary-100 text-primary-600" : "bg-neutral-200 text-secondary-light"}`}
+                      title={normalized.last_seen_at ? `Last seen: ${normalized.last_seen_at}` : ""}
+                    >
+                      {normalized.online ? "Online" : "Offline"}
+                    </span>
                   </div>
-                  <div className="card-body">
-                    <MiniRow label="Coins" value={normalized.coins ?? "—"} />
-                    <MiniRow label="Streak" value={normalized.streak ?? "—"} />
+
+                  <div className="text-secondary-light text-sm mb-16">
+                    Nickname: <span className="text-dark fw-semibold">{normalized.nickname || "—"}</span>
+                  </div>
+
+                  <div className="d-flex gap-2 justify-content-center flex-wrap">
+                    <Link
+                      to={`/admin/students/${id}/edit`}
+                      className="btn btn-outline-primary btn-sm radius-8 px-16 py-8 d-inline-flex align-items-center justify-content-center gap-6"
+                    >
+                      <Icon icon="lucide:edit" className="font-18" />
+                      <span>Edit</span>
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => setShowDeleteModal(true)}
+                      className="btn btn-outline-danger btn-sm radius-8 px-16 py-8 d-inline-flex align-items-center justify-content-center gap-6"
+                    >
+                      <Icon icon="mingcute:delete-2-line" className="font-18" />
+                      <span>Delete</span>
+                    </button>
                   </div>
                 </div>
               </div>
 
-              {/* Right Column */}
-              <div className="col-12 col-md-8 col-lg-9">
-                {/* Student Information */}
-                <div className="card border mb-3">
-                  <div className="card-header">
-                    <h6 className="mb-0">Student Information</h6>
-                  </div>
-                  <div className="card-body">
-                    <div className="row g-3">
-                      <InfoItem label="First Name" value={normalized.first_name} />
-                      <InfoItem label="Last Name" value={normalized.last_name} />
-                      <InfoItem label="Gender" value={normalized.gender} />
-                      <InfoItem label="Date of Birth" value={prettyDate(normalized.date_of_birth)} />
-                      <InfoItem label="Age" value={normalized.computedAge} />
-                      <InfoItem label="Enrollment Year" value={formatEnrollmentYear(normalized.enrollment_year)} />
-                      <InfoItem label="Address" value={normalized.address} colClass="col-12" />
-                    </div>
+              <div className="card border radius-12 shadow-none mt-3">
+                <div className="card-header border-bottom py-16 px-24 bg-base">
+                  <h6 className="fw-bold text-dark mb-0">School</h6>
+                </div>
+                <div className="card-body p-20">
+                  <MiniRow label="School ID" value={normalized.school_id ?? "—"} />
+                  <MiniRow label="School Key" value={normalized.school_key ?? "—"} />
+                  <MiniRow
+                    label="Affiliation"
+                    value={
+                      normalized.school_id ? (
+                        <span className="badge bg-primary-100 text-primary-600">School</span>
+                      ) : (
+                        <span className="badge bg-warning-100 text-warning-600">Public</span>
+                      )
+                    }
+                  />
+                </div>
+              </div>
+
+              <div className="card border radius-12 shadow-none mt-3">
+                <div className="card-header border-bottom py-16 px-24 bg-base">
+                  <h6 className="fw-bold text-dark mb-0">Stats</h6>
+                </div>
+                <div className="card-body p-20">
+                  <MiniRow label="Coins" value={normalized.coins ?? "—"} />
+                  <MiniRow label="Streak" value={normalized.streak ?? "—"} />
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column */}
+            <div className="col-12 col-md-8 col-lg-9">
+              {/* Student Information */}
+              <div className="card border radius-12 shadow-none mb-4">
+                <div className="card-header border-bottom py-16 px-24 bg-base">
+                  <h6 className="fw-bold text-dark mb-0">Student Information</h6>
+                </div>
+                <div className="card-body p-24">
+                  <div className="row g-3">
+                    <InfoItem label="First Name" value={normalized.first_name} />
+                    <InfoItem label="Last Name" value={normalized.last_name} />
+                    <InfoItem label="Gender" value={normalized.gender} />
+                    <InfoItem label="Date of Birth" value={prettyDate(normalized.date_of_birth)} />
+                    <InfoItem label="Age" value={normalized.computedAge} />
+                    <InfoItem label="Enrollment Year" value={formatEnrollmentYear(normalized.enrollment_year)} />
+                    <InfoItem label="Address" value={normalized.address} colClass="col-12" />
                   </div>
                 </div>
+              </div>
 
-                {/* Contact & Parent */}
-                <div className="card border mb-3">
-                  <div className="card-header">
-                    <h6 className="mb-0">Contact & Parent</h6>
-                  </div>
-                  <div className="card-body">
-                    <div className="row g-3">
-                      <InfoItem label="Phone" value={normalized.phone} />
-                      <InfoItem label="Email" value={normalized.email} />
-                      <InfoItem label="Parent Name" value={normalized.parentName} colClass="col-12" />
-                    </div>
+              {/* Contact & Parent */}
+              <div className="card border radius-12 shadow-none mb-4">
+                <div className="card-header border-bottom py-16 px-24 bg-base">
+                  <h6 className="fw-bold text-dark mb-0">Contact & Parent</h6>
+                </div>
+                <div className="card-body p-24">
+                  <div className="row g-3">
+                    <InfoItem label="Phone" value={normalized.phone} />
+                    <InfoItem label="Email" value={normalized.email} />
+                    <InfoItem label="Parent Name" value={normalized.parentName} colClass="col-12" />
                   </div>
                 </div>
+              </div>
 
-                {/* System */}
-                <div className="card border">
-                  <div className="card-header">
-                    <h6 className="mb-0">System</h6>
-                  </div>
-                  <div className="card-body">
-                    <div className="row g-3">
-                      <InfoItem label="Created At" value={prettyDate(normalized.created_at)} />
-                      <InfoItem label="Updated At" value={prettyDate(normalized.updated_at)} />
-                    </div>
+              {/* System */}
+              <div className="card border radius-12 shadow-none">
+                <div className="card-header border-bottom py-16 px-24 bg-base">
+                  <h6 className="fw-bold text-dark mb-0">System</h6>
+                </div>
+                <div className="card-body p-24">
+                  <div className="row g-3">
+                    <InfoItem label="Created At" value={prettyDate(normalized.created_at)} />
+                    <InfoItem label="Updated At" value={prettyDate(normalized.updated_at)} />
                   </div>
                 </div>
               </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
+
+        <ConfirmModal
+          open={showDeleteModal}
+          title="Delete Student Account"
+          message={`Are you sure you want to permanently delete student profile "${normalized?.name}"? This action cannot be undone.`}
+          confirmLabel="Delete Student"
+          variant="danger"
+          loading={deleting}
+          onConfirm={handleDelete}
+          onCancel={() => setShowDeleteModal(false)}
+        />
       </div>
     </MasterLayout>
   );
@@ -306,9 +330,9 @@ const InfoItem = ({ label, value, colClass = "col-12 col-md-6 col-lg-4" }) => {
   const v = value === null || value === undefined || value === "" ? "—" : value;
   return (
     <div className={colClass}>
-      <div className="p-12 border radius-8 h-100">
-        <div className="text-muted small">{label}</div>
-        <div className="fw-medium" style={{ wordBreak: "break-word" }}>
+      <div className="p-16 border border-neutral-200 radius-8 h-100 bg-base">
+        <div className="text-secondary-light text-xs mb-4">{label}</div>
+        <div className="fw-semibold text-dark" style={{ wordBreak: "break-word" }}>
           {v}
         </div>
       </div>
@@ -319,9 +343,9 @@ const InfoItem = ({ label, value, colClass = "col-12 col-md-6 col-lg-4" }) => {
 const MiniRow = ({ label, value }) => {
   const v = value === null || value === undefined || value === "" ? "—" : value;
   return (
-    <div className="d-flex justify-content-between gap-2 py-6 border-bottom">
-      <div className="text-muted small">{label}</div>
-      <div className="fw-medium">{v}</div>
+    <div className="d-flex justify-content-between align-items-center gap-2 py-8 border-bottom border-neutral-200">
+      <div className="text-secondary-light text-xs">{label}</div>
+      <div className="fw-semibold text-dark text-sm">{v}</div>
     </div>
   );
 };

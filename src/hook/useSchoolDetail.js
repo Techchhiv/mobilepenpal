@@ -64,6 +64,9 @@ export function useSchoolDetail(schoolId) {
   const [school, setSchool] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [refreshIndex, setRefreshIndex] = useState(0);
+
+  const refetch = () => setRefreshIndex(prev => prev + 1);
 
   useEffect(() => {
     if (!schoolId) {
@@ -75,7 +78,6 @@ export function useSchoolDetail(schoolId) {
     let cancelled = false;
     setLoading(true);
     setError('');
-    setSchool(null);
 
     async function load() {
       try {
@@ -100,9 +102,9 @@ export function useSchoolDetail(schoolId) {
     return () => {
       cancelled = true;
     };
-  }, [schoolId]);
+  }, [schoolId, refreshIndex]);
 
-  return { school, loading, error };
+  return { school, loading, error, refetch };
 }
 
 export default useSchoolDetail;

@@ -4,6 +4,10 @@ import { useNavigate } from "react-router-dom";
 import MasterLayout from "../../../masterLayout/MasterLayout";
 import API from "../../../helper/api";
 import invoiceService from "../../../services/invoiceService";
+import AdminPageHeader from "../../../components/admin/common/AdminPageHeader";
+import AdminEmptyState from "../../../components/admin/common/AdminEmptyState";
+import AdminErrorState from "../../../components/admin/common/AdminErrorState";
+import AdminPagination from "../../../components/admin/common/AdminPagination";
 
 // Generate a UUID v4 for idempotency
 const uuid = () =>
@@ -31,10 +35,6 @@ const defaultForm = (initialAmount = "", initialTaxRate = 0) => ({
 const SETTINGS_DEFAULTS = {
   price: 5.0,
   discount: 50,
-  monthly_price: 5.0,
-  monthly_discount: 50,
-  yearly_price: 50.0,
-  yearly_discount: 60,
   tax_rate: 0,
   billing_cycle: "month",
   contact_phone: "+855 935 248 60",
@@ -253,6 +253,9 @@ export default function SchoolSubscriptionsPage() {
     }
   };
 
+  const [page, setPage] = useState(1);
+  const perPage = 10;
+
   const filteredSchools = useMemo(() => {
     const list = Array.isArray(schools) ? schools : [];
     const t = search.trim().toLowerCase();
@@ -260,67 +263,94 @@ export default function SchoolSubscriptionsPage() {
     return list.filter((s) => (s.name || "").toLowerCase().includes(t));
   }, [schools, search]);
 
+  const totalPages = Math.ceil(filteredSchools.length / perPage) || 1;
+
+  const paginatedSchools = useMemo(() => {
+    const start = (page - 1) * perPage;
+    return filteredSchools.slice(start, start + perPage);
+  }, [filteredSchools, page, perPage]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search]);
+
   return (
     <MasterLayout>
-      <div className="row gy-4">
-        <div className="col-12">
-          <div className="card">
-            <div className="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
-              <h6 className="mb-0">
-                <Icon icon="mdi:school" className="me-2 text-primary" />
-                School Subscriptions
-              </h6>
-              <div className="d-flex align-items-center gap-2">
+      <div className="py-12">
+        <div className="d-flex align-items-center justify-content-between flex-wrap gap-16 mb-20">
+          <AdminPageHeader
+            title="School Subscriptions"
+            subtitle="Manage institutional subscription plans, billing cycles, and pricing settings"
+            className="mb-0"
+          />
+          <button
+            type="button"
+            className="btn btn-outline-secondary radius-8 d-inline-flex align-items-center gap-8 text-nowrap"
+            onClick={openSettings}
+            title="Configure Subscription & Tax Settings"
+          >
+            <Icon icon="mdi:cog" className="text-lg" />
+            <span>Subscription Settings</span>
+          </button>
+        </div>
+
+        {msg && <div className="alert alert-success py-12 px-16 radius-8 text-sm mb-16">{msg}</div>}
+
+        {err && !schools.length && !loading ? (
+          <AdminErrorState
+            title="Failed to Load School Subscriptions"
+            message={err}
+            onRetry={load}
+          />
+        ) : (
+          <div className="card border radius-12 shadow-none">
+            <div className="card-header border-bottom py-16 px-24 bg-base d-flex align-items-center justify-content-between flex-wrap gap-12">
+              <h6 className="fw-bold mb-0 text-dark">Institutional Accounts</h6>
+              <div className="d-flex align-items-center gap-12">
                 <input
-                  className="form-control form-control-sm"
-                  placeholder="Search schools…"
+                  className="form-control form-control-sm radius-8 min-w-200-px"
+                  placeholder="Search schools..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  style={{ maxWidth: 220 }}
                 />
-                <button
-                  type="button"
-                  className="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1 text-nowrap"
-                  onClick={openSettings}
-                  title="Configure Subscription & Tax Settings"
-                >
-                  <Icon icon="mdi:cog" />
-                  <span>Settings</span>
-                </button>
-                <span className="badge bg-neutral-200 text-neutral-800">
+                <span className="badge bg-neutral-200 text-secondary-light radius-6 text-xs px-10 py-6">
                   {filteredSchools.length} / {schools.length}
                 </span>
               </div>
             </div>
 
-            <div className="card-body">
-              {msg && <div className="alert alert-success py-2">{msg}</div>}
-              {err && <div className="alert alert-danger py-2">{err}</div>}
-
+            <div className="card-body p-0">
               {loading ? (
-                <div className="text-center py-5">
-                  <div className="spinner-border text-primary" role="status" />
-                  <p className="mt-2 text-muted">Loading schools…</p>
+                <div className="placeholder-glow d-flex flex-column gap-12 p-24">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <span key={i} className="placeholder col-12 radius-8" style={{ height: "48px" }}></span>
+                  ))}
                 </div>
+              ) : filteredSchools.length === 0 ? (
+                <AdminEmptyState
+                  icon="mdi:school-outline"
+                  title="No school subscriptions found"
+                  message="No school accounts match the current search query."
+                />
               ) : (
                 <div className="table-responsive">
-                  <table className="table bordered-table mb-0">
+                  <table className="table bordered-table mb-0 align-middle">
                     <thead>
                       <tr>
-                        <th style={{ width: 60 }}>ID</th>
-                        <th>School Name</th>
-                        <th>Status</th>
-                        <th>Current Plan</th>
-                        <th>End Date</th>
-                        <th style={{ width: 200 }}>Actions</th>
+                        <th style={{ width: 60 }} className="px-16">ID</th>
+                        <th className="px-16">School Name</th>
+                        <th className="px-16">Status</th>
+                        <th className="px-16">Current Plan</th>
+                        <th className="px-16">End Date</th>
+                        <th style={{ width: 200 }} className="pe-16 text-end">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredSchools.map((s) => (
+                      {paginatedSchools.map((s) => (
                         <tr key={s.id}>
-                          <td>{s.id}</td>
-                          <td className="fw-semibold">{s.name}</td>
-                          <td>
+                          <td className="px-16 font-monospace text-secondary-light">{s.id}</td>
+                          <td className="fw-semibold px-16 text-dark">{s.name}</td>
+                          <td className="px-16">
                             {s.has_active_subscription ? (
                               <span className="badge bg-success-focus text-success-main px-16 py-6 radius-4">
                                 <Icon icon="mdi:check-circle" className="me-1" />
@@ -333,7 +363,7 @@ export default function SchoolSubscriptionsPage() {
                               </span>
                             )}
                           </td>
-                          <td>
+                          <td className="px-16">
                             {s.current_plan ? (
                               <span className="badge bg-primary-light text-primary-600 text-capitalize">
                                 {s.current_plan}
@@ -342,14 +372,14 @@ export default function SchoolSubscriptionsPage() {
                               <span className="text-muted">—</span>
                             )}
                           </td>
-                          <td>
+                          <td className="px-16 text-sm text-secondary-light">
                             {s.subscription_end_date
                               ? new Date(s.subscription_end_date).toLocaleDateString()
                               : "—"}
                           </td>
-                          <td>
+                          <td className="pe-16 text-end">
                             {s.has_active_subscription ? (
-                              <div className="d-flex align-items-center gap-2">
+                              <div className="d-inline-flex align-items-center justify-content-end gap-2">
                                 <button
                                   type="button"
                                   className="btn btn-sm btn-primary-600 d-inline-flex align-items-center gap-1"
@@ -384,20 +414,30 @@ export default function SchoolSubscriptionsPage() {
                           </td>
                         </tr>
                       ))}
-                      {!filteredSchools.length && (
-                        <tr>
-                          <td colSpan={6} className="text-center text-muted py-4">
-                            No schools found.
-                          </td>
-                        </tr>
-                      )}
                     </tbody>
                   </table>
                 </div>
               )}
             </div>
+
+            {/* ── Card Footer Pagination ── */}
+            <div className="card-footer py-14 px-24 border-top d-flex align-items-center justify-content-between flex-wrap gap-12">
+              <div className="text-secondary-light text-xs font-semibold">
+                Showing {filteredSchools.length > 0 ? (page - 1) * perPage + 1 : 0}–
+                {Math.min(page * perPage, filteredSchools.length)} of {filteredSchools.length} entries
+              </div>
+              {totalPages > 1 && (
+                <div className="ms-auto">
+                  <AdminPagination
+                    page={page}
+                    totalPages={totalPages}
+                    onPageChange={setPage}
+                  />
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* ── Activation / Renewal Modal ── */}
@@ -443,30 +483,27 @@ export default function SchoolSubscriptionsPage() {
                     <h6 className="text-success mb-1">
                       Subscription {modal.type === "activate" ? "activated" : "renewed"} successfully!
                     </h6>
-                    <p className="text-muted mb-3" style={{ fontSize: 13 }}>
-                      Invoice <strong>{invoiceResult.invoice_number}</strong> has been created.
+                    <p className="text-secondary-light mb-3" style={{ fontSize: 13 }}>
+                      Invoice <strong className="text-dark">{invoiceResult.invoice_number}</strong> has been created.
                     </p>
 
-                    <div
-                      className="p-3 mb-3 rounded"
-                      style={{ background: "#f7fafc", border: "1px solid #e2e8f0" }}
-                    >
+                    <div className="p-3 mb-3 radius-8 border border-neutral-200 bg-base">
                       <div className="d-flex justify-content-between mb-1">
-                        <span className="text-muted" style={{ fontSize: 12 }}>Invoice No</span>
-                        <strong style={{ fontSize: 12 }}>{invoiceResult.invoice_number}</strong>
+                        <span className="text-secondary-light" style={{ fontSize: 12 }}>Invoice No</span>
+                        <strong className="text-dark" style={{ fontSize: 12 }}>{invoiceResult.invoice_number}</strong>
                       </div>
                       <div className="d-flex justify-content-between mb-1">
-                        <span className="text-muted" style={{ fontSize: 12 }}>Plan</span>
-                        <span className="text-capitalize" style={{ fontSize: 12 }}>{invoiceResult.plan}</span>
+                        <span className="text-secondary-light" style={{ fontSize: 12 }}>Plan</span>
+                        <span className="text-capitalize text-dark" style={{ fontSize: 12 }}>{invoiceResult.plan}</span>
                       </div>
                       <div className="d-flex justify-content-between mb-1">
-                        <span className="text-muted" style={{ fontSize: 12 }}>Total</span>
+                        <span className="text-secondary-light" style={{ fontSize: 12 }}>Total</span>
                         <strong style={{ fontSize: 12, color: "#e94560" }}>
                           {invoiceResult.currency} {Number(invoiceResult.total).toFixed(2)}
                         </strong>
                       </div>
                       <div className="d-flex justify-content-between">
-                        <span className="text-muted" style={{ fontSize: 12 }}>Status</span>
+                        <span className="text-secondary-light" style={{ fontSize: 12 }}>Status</span>
                         <span className="badge bg-success-focus text-success-main" style={{ fontSize: 11 }}>
                           {invoiceResult.status?.toUpperCase()}
                         </span>
@@ -496,12 +533,9 @@ export default function SchoolSubscriptionsPage() {
                   <div className="modal-body row g-3">
                     {/* Customer info */}
                     <div className="col-12">
-                      <div
-                        className="p-2 rounded"
-                        style={{ background: "#f7fafc", border: "1px solid #e2e8f0" }}
-                      >
-                        <small className="text-muted d-block mb-1">School</small>
-                        <strong>{modal.schoolName}</strong>
+                      <div className="p-12 radius-8 border border-neutral-200 bg-base">
+                        <small className="text-secondary-light d-block mb-1">School</small>
+                        <strong className="text-dark">{modal.schoolName}</strong>
                       </div>
                     </div>
 
@@ -658,11 +692,11 @@ export default function SchoolSubscriptionsPage() {
 
                       return (
                         <div className="col-12">
-                          <div className="p-3 rounded border bg-light">
-                            <small className="fw-semibold text-muted d-block mb-2">Estimated Invoice Breakdown</small>
+                          <div className="p-3 rounded border bg-base">
+                            <small className="fw-semibold text-secondary-light d-block mb-2">Estimated Invoice Breakdown</small>
                             <div className="d-flex justify-content-between py-1 text-sm border-bottom">
-                              <span className="text-muted">Subtotal</span>
-                              <span>${subtotal.toFixed(2)}</span>
+                              <span className="text-secondary-light">Subtotal</span>
+                              <span className="text-dark fw-medium">${subtotal.toFixed(2)}</span>
                             </div>
                             {discount > 0 && (
                               <div className="d-flex justify-content-between py-1 text-sm border-bottom text-success">
@@ -672,8 +706,8 @@ export default function SchoolSubscriptionsPage() {
                             )}
                             {taxRate > 0 && (
                               <div className="d-flex justify-content-between py-1 text-sm border-bottom">
-                                <span className="text-muted">Tax ({taxRate}%)</span>
-                                <span>+${tax.toFixed(2)}</span>
+                                <span className="text-secondary-light">Tax ({taxRate}%)</span>
+                                <span className="text-dark fw-medium">+${tax.toFixed(2)}</span>
                               </div>
                             )}
                             <div className="d-flex justify-content-between pt-2 fw-bold text-dark">
@@ -686,8 +720,8 @@ export default function SchoolSubscriptionsPage() {
                     })()}
                   </div>
 
-                  <div className="modal-footer">
-                    <button type="button" className="btn btn-light" onClick={closeModal}>
+                  <div className="modal-footer border-top bg-base">
+                    <button type="button" className="btn btn-outline-secondary" onClick={closeModal}>
                       Cancel
                     </button>
                     <button
@@ -712,8 +746,8 @@ export default function SchoolSubscriptionsPage() {
               )}
 
               {invoiceResult && (
-                <div className="modal-footer">
-                  <button type="button" className="btn btn-light" onClick={closeModal}>
+                <div className="modal-footer border-top bg-base">
+                  <button type="button" className="btn btn-outline-secondary" onClick={closeModal}>
                     Close
                   </button>
                 </div>
@@ -751,113 +785,49 @@ export default function SchoolSubscriptionsPage() {
                 {settingsLoading ? (
                   <div className="modal-body text-center py-5">
                     <div className="spinner-border text-primary" role="status" />
-                    <p className="mt-2 text-muted">Loading settings…</p>
+                    <p className="mt-2 text-secondary-light">Loading settings…</p>
                   </div>
                 ) : (
                   <form onSubmit={saveSettings}>
                     <div className="modal-body row g-3">
-                      {/* Monthly Plan Settings */}
-                      <div className="col-12">
-                        <div className="fw-bold text-dark border-bottom pb-1 mb-2 d-flex align-items-center gap-1">
-                          <Icon icon="mdi:calendar-month" className="text-primary" />
-                          <span>Monthly Plan Settings</span>
-                        </div>
-                      </div>
                       <div className="col-12 col-sm-6">
-                        <label className="form-label">Monthly Price ($)</label>
+                        <label className="form-label">Price ($)</label>
                         <input
                           type="number"
                           min="0"
                           step="0.01"
                           className="form-control"
-                          value={settings.monthly_price ?? settings.price}
-                          onChange={(e) => {
-                            const val = parseFloat(e.target.value) || 0;
+                          value={settings.price}
+                          onChange={(e) =>
                             setSettings((s) => ({
                               ...s,
-                              monthly_price: val,
-                              price: val,
-                            }));
-                          }}
+                              price: parseFloat(e.target.value) || 0,
+                            }))
+                          }
                           required
                         />
-                        <div className="form-text">Base price per month</div>
+                        <div className="form-text text-secondary-light">Original price before discount</div>
                       </div>
                       <div className="col-12 col-sm-6">
-                        <label className="form-label">Monthly Discount (%)</label>
+                        <label className="form-label">Discount (%)</label>
                         <input
                           type="number"
                           min="0"
                           max="100"
                           step="1"
                           className="form-control"
-                          value={settings.monthly_discount ?? settings.discount}
-                          onChange={(e) => {
-                            const val = parseInt(e.target.value) || 0;
-                            setSettings((s) => ({
-                              ...s,
-                              monthly_discount: val,
-                              discount: val,
-                            }));
-                          }}
-                          required
-                        />
-                        <div className="form-text">e.g. 50 for 50% OFF</div>
-                      </div>
-
-                      {/* Yearly Plan Settings */}
-                      <div className="col-12 pt-2">
-                        <div className="fw-bold text-dark border-bottom pb-1 mb-2 d-flex align-items-center gap-1">
-                          <Icon icon="mdi:star-circle" className="text-warning" />
-                          <span>Yearly Plan Settings</span>
-                        </div>
-                      </div>
-                      <div className="col-12 col-sm-6">
-                        <label className="form-label">Yearly Base Price ($)</label>
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          className="form-control"
-                          value={settings.yearly_price ?? 50.0}
+                          value={settings.discount}
                           onChange={(e) =>
                             setSettings((s) => ({
                               ...s,
-                              yearly_price: parseFloat(e.target.value) || 0,
+                              discount: parseInt(e.target.value) || 0,
                             }))
                           }
                           required
                         />
-                        <div className="form-text">Original price before discount</div>
+                        <div className="form-text text-secondary-light">Set 0 for no discount</div>
                       </div>
                       <div className="col-12 col-sm-6">
-                        <label className="form-label">Yearly Discount (%)</label>
-                        <input
-                          type="number"
-                          min="0"
-                          max="100"
-                          step="1"
-                          className="form-control"
-                          value={settings.yearly_discount ?? 60}
-                          onChange={(e) =>
-                            setSettings((s) => ({
-                              ...s,
-                              yearly_discount: parseInt(e.target.value) || 0,
-                            }))
-                          }
-                          required
-                        />
-                        <div className="form-text">e.g. 60 for 60% OFF ($50 → $20)</div>
-                      </div>
-
-                      {/* Contact and Tax Details */}
-                      <div className="col-12 pt-2">
-                        <div className="fw-bold text-dark border-bottom pb-1 mb-2 d-flex align-items-center gap-1">
-                          <Icon icon="mdi:information-outline" className="text-secondary" />
-                          <span>Contact & Tax Details</span>
-                        </div>
-                      </div>
-                      <div className="col-12 col-sm-4">
                         <label className="form-label">Tax Rate (%)</label>
                         <input
                           type="number"
@@ -874,7 +844,23 @@ export default function SchoolSubscriptionsPage() {
                           }
                         />
                       </div>
-                      <div className="col-12 col-sm-4">
+                      <div className="col-12 col-sm-6">
+                        <label className="form-label">Billing Cycle</label>
+                        <select
+                          className="form-select"
+                          value={settings.billing_cycle}
+                          onChange={(e) =>
+                            setSettings((s) => ({
+                              ...s,
+                              billing_cycle: e.target.value,
+                            }))
+                          }
+                        >
+                          <option value="month">Monthly</option>
+                          <option value="year">Yearly</option>
+                        </select>
+                      </div>
+                      <div className="col-12 col-sm-6">
                         <label className="form-label">Contact Phone</label>
                         <input
                           type="text"
@@ -889,7 +875,7 @@ export default function SchoolSubscriptionsPage() {
                           required
                         />
                       </div>
-                      <div className="col-12 col-sm-4">
+                      <div className="col-12 col-sm-6">
                         <label className="form-label">Contact Email</label>
                         <input
                           type="email"
@@ -907,87 +893,36 @@ export default function SchoolSubscriptionsPage() {
 
                       {/* Live Preview */}
                       <div className="col-12">
-                        <div className="alert alert-light border mb-0">
+                        <div className="p-16 radius-8 border border-neutral-200 bg-base mb-0">
                           {(() => {
-                            const mBase = Number(settings.monthly_price ?? settings.price) || 0;
-                            const mDisc = Number(settings.monthly_discount ?? settings.discount) || 0;
-                            const mFinal = Math.max(0, mBase * (1 - mDisc / 100));
-
-                            const yBase = Number(settings.yearly_price ?? 50.0) || 0;
-                            const yDisc = Number(settings.yearly_discount ?? 60) || 0;
-                            const yFinal = Math.max(0, yBase * (1 - yDisc / 100));
-
+                            const base = Number(settings.price) || 0;
+                            const discPct = Number(settings.discount) || 0;
+                            const discAmt = discPct > 0 ? (base * (discPct / 100)) : 0;
+                            const net = Math.max(0, base - discAmt);
+                            const taxPct = Number(settings.tax_rate) || 0;
+                            const taxAmt = taxPct > 0 ? (net * (taxPct / 100)) : 0;
+                            const finalP = net + taxAmt;
                             return (
-                              <div className="d-flex flex-column gap-3">
-                                {/* Monthly Plan Summary Card */}
-                                <div className="p-3 bg-white rounded-3 border shadow-xs">
-                                  <div className="d-flex align-items-center justify-content-between mb-2">
-                                    <span className="fw-bold text-primary d-flex align-items-center gap-1">
-                                      <Icon icon="mdi:calendar-month" /> Monthly Plan Summary
-                                    </span>
-                                    {mDisc > 0 ? (
-                                      <span className="badge bg-danger text-white px-2 py-1">
-                                        {mDisc}% OFF
-                                      </span>
-                                    ) : (
-                                      <span className="badge bg-light text-secondary border px-2 py-1">
-                                        Standard
-                                      </span>
-                                    )}
-                                  </div>
-                                  <div className="d-flex justify-content-between text-muted text-sm mb-1">
-                                    <span>Base Price:</span>
-                                    <span>${mBase.toFixed(2)}</span>
-                                  </div>
-                                  {mDisc > 0 && (
-                                    <div className="d-flex justify-content-between text-success text-sm mb-1">
-                                      <span>Discount ({mDisc}%):</span>
-                                      <span>-${(mBase * (mDisc / 100)).toFixed(2)}</span>
-                                    </div>
-                                  )}
-                                  <div className="d-flex justify-content-between align-items-center fw-bold text-dark border-top pt-2 mt-1">
-                                    <span>Student Pays:</span>
-                                    <span className="text-primary fs-6">${mFinal.toFixed(2)} / month</span>
-                                  </div>
+                              <div className="d-flex flex-column gap-1 text-sm">
+                                <div className="d-flex justify-content-between">
+                                  <span className="text-secondary-light">Base Price:</span>
+                                  <span className="text-dark fw-medium">${base.toFixed(2)}</span>
                                 </div>
-
-                                {/* Yearly Plan Summary Card */}
-                                <div className="p-3 bg-white rounded-3 border shadow-xs">
-                                  <div className="d-flex align-items-center justify-content-between mb-2">
-                                    <span className="fw-bold text-dark d-flex align-items-center gap-1">
-                                      <Icon icon="mdi:star-circle" className="text-warning" /> Yearly Plan Summary
-                                    </span>
-                                    {yDisc > 0 ? (
-                                      <span className="badge bg-danger text-white px-2 py-1">
-                                        {yDisc}% OFF
-                                      </span>
-                                    ) : (
-                                      <span className="badge bg-light text-secondary border px-2 py-1">
-                                        Standard
-                                      </span>
-                                    )}
+                                {discPct > 0 && (
+                                  <div className="d-flex justify-content-between text-success">
+                                    <span>Discount ({discPct}%):</span>
+                                    <span>-${discAmt.toFixed(2)}</span>
                                   </div>
-                                  <div className="d-flex justify-content-between text-muted text-sm mb-1">
-                                    <span>Base Price:</span>
-                                    <span>${yBase.toFixed(2)}</span>
+                                )}
+                                {taxPct > 0 && (
+                                  <div className="d-flex justify-content-between text-secondary-light">
+                                    <span>Tax / VAT ({taxPct}%):</span>
+                                    <span className="text-dark fw-medium">+${taxAmt.toFixed(2)}</span>
                                   </div>
-                                  {yDisc > 0 && (
-                                    <div className="d-flex justify-content-between text-success text-sm mb-1">
-                                      <span>Discount ({yDisc}%):</span>
-                                      <span>-${(yBase * (yDisc / 100)).toFixed(2)}</span>
-                                    </div>
-                                  )}
-                                  <div className="d-flex justify-content-between align-items-center fw-bold text-dark border-top pt-2 mt-1">
-                                    <div>
-                                      <span>Student Pays:</span>
-                                      {yDisc > 0 && (
-                                        <div className="text-muted text-xs fw-normal mt-0.5">
-                                          (Equivalent to ~${(yFinal / 12).toFixed(2)} / month)
-                                        </div>
-                                      )}
-                                    </div>
-                                    <span className="text-success fs-6">${yFinal.toFixed(2)} / year</span>
-                                  </div>
+                                )}
+                                <div className="d-flex justify-content-between fw-bold text-primary border-top pt-2 mt-1 fs-6">
+                                  <span>Total Payable:</span>
+                                  <span>${finalP.toFixed(2)} / {settings.billing_cycle === "year" ? "year" : "month"}</span>
                                 </div>
                               </div>
                             );
@@ -996,10 +931,10 @@ export default function SchoolSubscriptionsPage() {
                       </div>
                     </div>
 
-                    <div className="modal-footer">
+                    <div className="modal-footer border-top bg-base">
                       <button
                         type="button"
-                        className="btn btn-light"
+                        className="btn btn-outline-secondary"
                         onClick={() => setShowSettings(false)}
                       >
                         Cancel
@@ -1074,7 +1009,7 @@ export default function SchoolSubscriptionsPage() {
                       />
                     </div>
 
-                    <div className="form-check p-3 rounded bg-light border">
+                    <div className="form-check p-3 rounded bg-base border">
                       <input
                         className="form-check-input ms-0 me-2"
                         type="checkbox"
@@ -1085,15 +1020,15 @@ export default function SchoolSubscriptionsPage() {
                       <label className="form-check-label fw-semibold text-dark cursor-pointer" htmlFor="voidInvoiceCheckSchool">
                         Also void linked active invoice
                       </label>
-                      <div className="text-muted text-xs mt-1 ps-4">
+                      <div className="text-secondary-light text-xs mt-1 ps-4">
                         Check this if a refund or invoice cancellation was processed. The invoice status will be updated to VOID.
                       </div>
                     </div>
                   </div>
-                  <div className="modal-footer bg-light">
+                  <div className="modal-footer border-top bg-base">
                     <button
                       type="button"
-                      className="btn btn-light"
+                      className="btn btn-outline-secondary"
                       onClick={closeDeactivateModal}
                       disabled={deactivateLoading}
                     >

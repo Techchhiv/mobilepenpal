@@ -5,6 +5,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import API from "../../../helper/api";
 import { useAuth } from "../../../context/AuthContext";
 import MasterLayout from "../../../masterLayout/MasterLayout";
+import AdminPageHeader from "../../../components/admin/common/AdminPageHeader";
 
 const WorldCreate = () => {
   const navigate = useNavigate();
@@ -164,58 +165,61 @@ const WorldCreate = () => {
 
   return (
     <MasterLayout>
-      <div className="col-lg-12">
-        <div className="card">
-          <div className="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-            <h3 className="card-title mb-0">Create New World</h3>
+      <div className="py-12">
+        <AdminPageHeader
+          title="Create New World"
+          subtitle="Configure new learning world settings, audience scope, and content defaults"
+        />
 
-            <Link to={from} className="d-flex align-items-center btn btn-secondary">
-              <Icon icon="mdi:arrow-left" className="me-3" />
-              Back to Worlds
+        <div className="card border radius-12 shadow-none">
+          <div className="card-header border-bottom py-16 px-24 bg-base d-flex justify-content-between align-items-center flex-wrap gap-12">
+            <h6 className="fw-bold mb-0 text-dark">Create World Form</h6>
+
+            <Link to={from} className="btn btn-outline-secondary btn-sm radius-8 d-inline-flex align-items-center gap-6">
+              <Icon icon="mdi:arrow-left" />
+              <span>Back to Worlds</span>
             </Link>
           </div>
 
-          <div className="card-body">
+          <div className="card-body p-24">
             {error && (
-              <div className="alert alert-danger">
-                <Icon icon="mdi:alert-circle" className="me-2" />
-                {error}
+              <div className="alert alert-danger d-flex align-items-center gap-2 mb-20 radius-8">
+                <Icon icon="mdi:alert-circle" className="text-xl flex-shrink-0" />
+                <div>{error}</div>
               </div>
             )}
 
             <form className="row gy-4 align-items-start" onSubmit={submit}>
               {/* Left: Preview */}
               <div className="col-md-4">
-                <div className="card h-100">
-                  <div className="card-header bg-light">
-                    <h6 className="mb-0">Preview</h6>
+                <div className="card border radius-12 shadow-none h-100">
+                  <div className="card-header border-bottom py-12 px-16 bg-base">
+                    <h6 className="mb-0 fw-bold text-dark text-sm">Preview</h6>
                   </div>
 
-                  <div className="card-body text-center d-flex flex-column justify-content-center gap-2">
+                  <div className="card-body text-center d-flex flex-column justify-content-center gap-2 p-20">
                     <div
-                      className="mx-auto d-flex align-items-center justify-content-center border overflow-hidden"
+                      className="mx-auto d-flex align-items-center justify-content-center border radius-16 bg-neutral-100 text-secondary-light"
                       style={{
-                        width: 150,
-                        height: 150,
-                        borderRadius: 16,
-                        background: "#f1f5f9",
+                        width: 130,
+                        height: 130,
                       }}
                     >
-                      <Icon icon="mdi:map" width={72} />
+                      <Icon icon="mdi:map" width={64} />
                     </div>
 
-                    <h6 className="mt-2 mb-1">{form.name?.trim() || "—"}</h6>
+                    <h6 className="mt-2 mb-1 fw-bold text-dark">{form.name?.trim() || "—"}</h6>
                     {form.name_en?.trim() ? (
-                      <div className="text-muted small">{form.name_en.trim()}</div>
+                      <div className="text-secondary-light small">{form.name_en.trim()}</div>
                     ) : null}
 
-                    <div className="d-flex justify-content-center gap-8 flex-wrap">
-                      <span className={`badge ${previewActive ? "bg-success" : "bg-secondary"}`}>
+                    <div className="d-flex justify-content-center gap-8 flex-wrap mt-2">
+                      <span className={`status-badge px-10 py-4 radius-6 text-xs fw-semibold ${previewActive ? "status-badge-active" : "status-badge-inactive"}`}>
                         {previewActive ? "Active" : "Disabled"}
                       </span>
 
                       <span
-                        className={`badge ${form.is_unlocked_by_default ? "bg-primary" : "bg-light text-dark"
+                        className={`badge px-10 py-4 radius-6 text-xs fw-semibold ${form.is_unlocked_by_default ? "bg-primary-50 text-primary-600" : "bg-neutral-100 text-secondary-light border border-neutral-200"
                           }`}
                       >
                         {form.is_unlocked_by_default ? "Default Unlock" : "Not Default"}
@@ -227,24 +231,24 @@ const WorldCreate = () => {
 
               {/* Right: Form */}
               <div className="col-md-8">
-                <div className="card mb-4">
-                  <div className="card-header bg-light">
-                    <h6 className="d-flex align-content-center mb-0">
-                      <Icon icon="mdi:earth" className="me-3" />
-                      World Information
+                <div className="card border radius-12 shadow-none mb-4">
+                  <div className="card-header border-bottom py-12 px-16 bg-base">
+                    <h6 className="d-flex align-items-center mb-0 fw-bold text-dark text-sm gap-2">
+                      <Icon icon="mdi:earth" className="text-primary-600 text-lg" />
+                      <span>World Information</span>
                     </h6>
                   </div>
 
-                  <div className="card-body">
-                    <div className="col-md-12">
-                      <label className="form-label">Audience</label>
-                      <select className="form-select" value={form.audience} onChange={onChange("audience")}>
+                  <div className="card-body p-20">
+                    <div className="col-md-12 mb-20">
+                      <label className="form-label text-sm fw-semibold text-dark">Audience</label>
+                      <select className="form-select form-select-sm radius-8" value={form.audience} onChange={onChange("audience")}>
                         <option value="public">Public (no-school users)</option>
                         <option value="schools">Schools (all registered schools)</option>
                         <option value="assigned">Assigned (selected schools only)</option>
                       </select>
 
-                      <small className="text-muted d-block mt-1">
+                      <small className="text-secondary-light d-block mt-6">
                         • Public: students without school_id<br />
                         • Schools: any school student<br />
                         • Assigned: only selected schools via school_worlds
@@ -252,11 +256,11 @@ const WorldCreate = () => {
                     </div>
 
                     {form.audience === "assigned" && (
-                      <div className="col-12">
-                        <label className="form-label">Assign to Schools</label>
+                      <div className="col-12 mb-20">
+                        <label className="form-label text-sm fw-semibold text-dark">Assign to Schools</label>
 
                         <input
-                          className="form-control mb-2"
+                          className="form-control form-control-sm radius-8 mb-2"
                           placeholder="Search school by name..."
                           value={schoolSearch}
                           onChange={(e) => setSchoolSearch(e.target.value)}
@@ -264,11 +268,11 @@ const WorldCreate = () => {
 
                         {schoolsError && <div className="alert alert-danger py-2">{schoolsError}</div>}
 
-                        <div className="border radius-8 p-2" style={{ maxHeight: 240, overflow: "auto" }}>
+                        <div className="border radius-8 p-12 bg-base" style={{ maxHeight: 240, overflow: "auto" }}>
                           {schoolsLoading ? (
-                            <div className="text-muted">Loading schools...</div>
+                            <div className="text-secondary-light text-sm">Loading schools...</div>
                           ) : (filteredSchools?.length ?? 0) === 0 ? (
-                            <div className="text-muted">No schools found.</div>
+                            <div className="text-secondary-light text-sm">No schools found.</div>
                           ) : (
                             filteredSchools.map((s) => {
                               const checked = form.school_ids.includes(s.id);
@@ -288,8 +292,8 @@ const WorldCreate = () => {
                                       });
                                     }}
                                   />
-                                  <label className="form-check-label" htmlFor={`school-${s.id}`}>
-                                    {s.name} <span className="text-muted">#{s.id}</span>
+                                  <label className="form-check-label text-sm text-dark" htmlFor={`school-${s.id}`}>
+                                    {s.name} <span className="text-secondary-light">#{s.id}</span>
                                   </label>
                                 </div>
                               );
@@ -297,7 +301,7 @@ const WorldCreate = () => {
                           )}
                         </div>
 
-                        <small className="text-muted d-block mt-2">
+                        <small className="text-secondary-light d-block mt-2">
                           Selected: {form.school_ids.length}
                         </small>
                       </div>
@@ -306,11 +310,11 @@ const WorldCreate = () => {
 
                     <div className="row g-3">
                       <div className="col-md-12">
-                        <label className="form-label">
+                        <label className="form-label text-sm fw-semibold text-dark">
                           Name (KH) <Required />
                         </label>
                         <input
-                          className="form-control"
+                          className="form-control radius-8"
                           placeholder="Enter world name (Khmer)"
                           value={form.name}
                           onChange={onChange("name")}
@@ -320,9 +324,9 @@ const WorldCreate = () => {
                       </div>
 
                       <div className="col-md-12">
-                        <label className="form-label">Name (EN)</label>
+                        <label className="form-label text-sm fw-semibold text-dark">Name (EN)</label>
                         <input
-                          className="form-control"
+                          className="form-control radius-8"
                           placeholder="Enter world name (English)"
                           value={form.name_en}
                           onChange={onChange("name_en")}
@@ -331,9 +335,9 @@ const WorldCreate = () => {
                       </div>
 
                       <div className="col-12">
-                        <label className="form-label">Description (KH)</label>
+                        <label className="form-label text-sm fw-semibold text-dark">Description (KH)</label>
                         <textarea
-                          className="form-control"
+                          className="form-control radius-8"
                           placeholder="Optional description (Khmer)"
                           rows={3}
                           value={form.description}
@@ -342,9 +346,9 @@ const WorldCreate = () => {
                       </div>
 
                       <div className="col-12">
-                        <label className="form-label">Description (EN)</label>
+                        <label className="form-label text-sm fw-semibold text-dark">Description (EN)</label>
                         <textarea
-                          className="form-control"
+                          className="form-control radius-8"
                           placeholder="Optional description (English)"
                           rows={3}
                           value={form.description_en}
@@ -352,8 +356,8 @@ const WorldCreate = () => {
                         />
                       </div>
 
-                      <div className="col-md-6 d-flex align-items-end">
-                        <div className="form-check d-flex align-items-center">
+                      <div className="col-md-6 d-flex align-items-center">
+                        <div className="form-check d-flex align-items-center gap-2">
                           <input
                             className="form-check-input"
                             type="checkbox"
@@ -361,16 +365,14 @@ const WorldCreate = () => {
                             checked={!!form.is_active}
                             onChange={onChange("is_active")}
                           />
-                          <label className="form-check-label" htmlFor="isActive">
+                          <label className="form-check-label text-sm fw-semibold text-dark mb-0" htmlFor="isActive">
                             Active
                           </label>
                         </div>
                       </div>
 
-
-
-                      <div className="col-md-6 d-flex align-items-end">
-                        <div className="form-check d-flex align-items-center">
+                      <div className="col-md-6 d-flex align-items-center">
+                        <div className="form-check d-flex align-items-center gap-2">
                           <input
                             className="form-check-input"
                             type="checkbox"
@@ -378,7 +380,7 @@ const WorldCreate = () => {
                             checked={!!form.is_unlocked_by_default}
                             onChange={onChange("is_unlocked_by_default")}
                           />
-                          <label className="form-check-label" htmlFor="unlockedByDefault">
+                          <label className="form-check-label text-sm fw-semibold text-dark mb-0" htmlFor="unlockedByDefault">
                             Unlocked by default
                           </label>
                         </div>
@@ -387,24 +389,33 @@ const WorldCreate = () => {
                   </div>
                 </div>
 
-                <div className="d-flex justify-content-end align-items-end gap-2">
-                  <button
-                    className="d-flex align-items-center btn btn-primary"
-                    type="submit"
-                    disabled={saving}
-                  >
-                    <Icon icon="mdi:plus" className="me-3" />
-                    <div>{saving ? "Creating..." : "Create World"}</div>
-                  </button>
-
+                <div className="d-flex justify-content-end align-items-center gap-12">
                   <button
                     type="button"
-                    className="d-flex align-items-center btn btn-secondary"
+                    className="btn btn-outline-secondary btn-sm radius-8 px-20 d-inline-flex align-items-center gap-6"
                     onClick={resetForm}
                     disabled={saving}
                   >
-                    <Icon icon="mdi:refresh" className="me-3" />
-                    Reset Form
+                    <Icon icon="mdi:refresh" />
+                    <span>Reset Form</span>
+                  </button>
+
+                  <button
+                    className="btn btn-primary btn-sm radius-8 px-20 d-inline-flex align-items-center gap-6"
+                    type="submit"
+                    disabled={saving}
+                  >
+                    {saving ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm" />
+                        <span>Creating…</span>
+                      </>
+                    ) : (
+                      <>
+                        <Icon icon="mdi:plus" />
+                        <span>Create World</span>
+                      </>
+                    )}
                   </button>
                 </div>
               </div>

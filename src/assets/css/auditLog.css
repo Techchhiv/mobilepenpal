@@ -1,0 +1,514 @@
+/* System Audit Log Page & Detail Modal Styles with full Light / Dark App Theme Support */
+
+/* ── Filter Bar ── */
+.audit-filter-card {
+  background-color: #ffffff;
+  border-radius: 10px;
+  padding: 18px 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e5e7eb;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: flex-end;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.audit-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.audit-filter-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #6b7280;
+  letter-spacing: 0.5px;
+}
+
+/* ── Base Input Styles (centered text, height: 36px) ── */
+.audit-filter-input,
+.audit-filter-select,
+.audit-filter-date {
+  height: 36px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  padding: 0 10px;
+  font-size: 13px;
+  outline: none;
+  background-color: #ffffff;
+  color: #374151;
+  box-sizing: border-box;
+  line-height: 34px;
+  vertical-align: middle;
+  font-family: inherit;
+  transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+}
+
+.audit-filter-input:focus,
+.audit-filter-select:focus,
+.audit-filter-date:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+/* Custom dropdown chevron for select */
+.audit-filter-select {
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  padding-right: 28px;
+}
+
+.audit-filter-date {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* ── Filter Buttons ── */
+.audit-btn {
+  height: 36px;
+  border-radius: 6px;
+  border: none;
+  padding: 0 16px;
+  font-size: 13px;
+  cursor: pointer;
+  font-weight: 600;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  vertical-align: middle;
+  transition: all 0.2s ease;
+}
+
+.audit-btn-primary {
+  background-color: #4f46e5;
+  color: #ffffff;
+}
+
+.audit-btn-primary:hover {
+  background-color: #4338ca;
+}
+
+.audit-btn-secondary {
+  background-color: #f3f4f6;
+  color: #374151;
+}
+
+.audit-btn-secondary:hover {
+  background-color: #e5e7eb;
+}
+
+/* ── Records Counter ── */
+.audit-counter {
+  font-size: 13px;
+  color: #6b7280;
+  margin-bottom: 8px;
+}
+
+/* ── Audit Logs Table Container & Table ── */
+.audit-table-card {
+  background-color: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.audit-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.audit-table th {
+  padding: 12px 14px;
+  text-align: left;
+  font-weight: 700;
+  font-size: 12px;
+  color: #6b7280;
+  border-bottom: 1px solid #e5e7eb;
+  white-space: nowrap;
+  background-color: #f9fafb;
+}
+
+.audit-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid #f3f4f6;
+  vertical-align: top;
+  color: #374151;
+}
+
+.audit-table tbody tr {
+  transition: background-color 0.15s ease;
+}
+
+.audit-table tbody tr.row-even {
+  background-color: #ffffff;
+}
+
+.audit-table tbody tr.row-odd {
+  background-color: #f9fafb;
+}
+
+.audit-table tbody tr:hover {
+  background-color: #f1f5f9;
+}
+
+.audit-code-badge {
+  background-color: #f3f4f6;
+  color: #374151;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+}
+
+.audit-actor-name {
+  font-weight: 600;
+  color: #111827;
+}
+
+.audit-actor-email {
+  color: #9ca3af;
+  font-size: 11px;
+}
+
+.audit-view-btn {
+  background-color: #eef2ff;
+  color: #4f46e5;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 12px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.audit-view-btn:hover {
+  background-color: #e0e7ff;
+}
+
+/* ── Pagination & Card Footer ── */
+.audit-card-footer {
+  padding: 14px 20px;
+  background-color: #ffffff;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.audit-pagination-container {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* ── Modal Component ── */
+.audit-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 16px;
+  backdrop-filter: blur(2px);
+}
+
+.audit-modal-content {
+  background-color: #ffffff;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 780px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  border: 1px solid #e5e7eb;
+  color: #111827;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.audit-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e7eb;
+  position: sticky;
+  top: 0;
+  background-color: #ffffff;
+  z-index: 1;
+}
+
+.audit-modal-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.audit-modal-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 22px;
+  color: #9ca3af;
+  line-height: 1;
+  padding: 4px;
+  border-radius: 4px;
+  transition: color 0.15s ease;
+}
+
+.audit-modal-close:hover {
+  color: #4b5563;
+}
+
+.audit-modal-body {
+  padding: 24px;
+}
+
+.audit-section-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin: 0 0 10px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.audit-info-row {
+  display: flex;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid #f3f4f6;
+  align-items: flex-start;
+}
+
+.audit-info-label {
+  min-width: 140px;
+  font-weight: 600;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.audit-info-value {
+  color: #111827;
+  font-size: 13px;
+  word-break: break-all;
+}
+
+.audit-snapshot-pre {
+  background-color: #f9fafb;
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 12px;
+  overflow-x: auto;
+  margin-top: 4px;
+  color: #111827;
+  border: 1px solid #e5e7eb;
+}
+
+.audit-diff-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.audit-diff-th {
+  padding: 6px 10px;
+  background-color: #f3f4f6;
+  text-align: left;
+  font-weight: 600;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 12px;
+  color: #374151;
+}
+
+.audit-diff-td {
+  padding: 5px 10px;
+  border-bottom: 1px solid #f3f4f6;
+  word-break: break-all;
+  color: #374151;
+}
+
+/* ==========================================================================
+   DARK MODE OVERRIDES ([data-theme='dark'])
+   ========================================================================== */
+
+[data-theme='dark'] .audit-filter-card {
+  background-color: #1b2431 !important;
+  border-color: #2e3a4e !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+[data-theme='dark'] .audit-filter-label {
+  color: #94a3b8 !important;
+}
+
+[data-theme='dark'] .audit-filter-input,
+[data-theme='dark'] .audit-filter-select,
+[data-theme='dark'] .audit-filter-date {
+  background-color: #111827 !important;
+  border-color: #374151 !important;
+  color: #f8fafc !important;
+  color-scheme: dark;
+}
+
+[data-theme='dark'] .audit-filter-select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+}
+
+[data-theme='dark'] .audit-filter-select option {
+  background-color: #111827 !important;
+  color: #f8fafc !important;
+}
+
+[data-theme='dark'] .audit-btn-secondary {
+  background-color: #2d3748 !important;
+  color: #e2e8f0 !important;
+}
+
+[data-theme='dark'] .audit-btn-secondary:hover {
+  background-color: #3a475d !important;
+}
+
+[data-theme='dark'] .audit-counter {
+  color: #94a3b8 !important;
+}
+
+[data-theme='dark'] .audit-card-footer {
+  background-color: #1b2431 !important;
+  border-top-color: #2e3a4e !important;
+}
+
+[data-theme='dark'] .audit-table-card {
+  background-color: #1b2431 !important;
+  border-color: #2e3a4e !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+[data-theme='dark'] .audit-table th {
+  background-color: #111827 !important;
+  color: #94a3b8 !important;
+  border-bottom-color: #2e3a4e !important;
+}
+
+[data-theme='dark'] .audit-table td {
+  border-bottom-color: #2e3a4e !important;
+  color: #e2e8f0 !important;
+}
+
+[data-theme='dark'] .audit-table tbody tr.row-even {
+  background-color: #1b2431 !important;
+}
+
+[data-theme='dark'] .audit-table tbody tr.row-odd {
+  background-color: #161e2e !important;
+}
+
+[data-theme='dark'] .audit-table tbody tr:hover {
+  background-color: #243044 !important;
+}
+
+[data-theme='dark'] .audit-code-badge {
+  background-color: #2d3748 !important;
+  color: #e2e8f0 !important;
+}
+
+[data-theme='dark'] .audit-actor-name {
+  color: #f8fafc !important;
+}
+
+[data-theme='dark'] .audit-actor-email {
+  color: #94a3b8 !important;
+}
+
+[data-theme='dark'] .audit-view-btn {
+  background-color: rgba(79, 70, 229, 0.2) !important;
+  color: #818cf8 !important;
+}
+
+[data-theme='dark'] .audit-view-btn:hover {
+  background-color: rgba(79, 70, 229, 0.35) !important;
+}
+
+/* ── Modal Dark Mode ── */
+[data-theme='dark'] .audit-modal-content {
+  background-color: #1b2431 !important;
+  border-color: #2e3a4e !important;
+  color: #f8fafc !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7) !important;
+}
+
+[data-theme='dark'] .audit-modal-header {
+  background-color: #1b2431 !important;
+  border-bottom-color: #2e3a4e !important;
+}
+
+[data-theme='dark'] .audit-modal-title {
+  color: #f8fafc !important;
+}
+
+[data-theme='dark'] .audit-modal-close {
+  color: #94a3b8 !important;
+}
+
+[data-theme='dark'] .audit-modal-close:hover {
+  color: #f8fafc !important;
+}
+
+[data-theme='dark'] .audit-section-title {
+  color: #94a3b8 !important;
+  border-bottom-color: #2e3a4e !important;
+}
+
+[data-theme='dark'] .audit-info-row {
+  border-bottom-color: #2e3a4e !important;
+}
+
+[data-theme='dark'] .audit-info-label {
+  color: #94a3b8 !important;
+}
+
+[data-theme='dark'] .audit-info-value {
+  color: #f8fafc !important;
+}
+
+[data-theme='dark'] .audit-snapshot-pre {
+  background-color: #111827 !important;
+  border-color: #2e3a4e !important;
+  color: #f8fafc !important;
+}
+
+[data-theme='dark'] .audit-diff-th {
+  background-color: #111827 !important;
+  border-bottom-color: #2e3a4e !important;
+  color: #94a3b8 !important;
+}
+
+[data-theme='dark'] .audit-diff-td {
+  border-bottom-color: #2e3a4e !important;
+  color: #e2e8f0 !important;
+}
+
+[data-theme='dark'] .audit-diff-row-changed {
+  background-color: rgba(180, 83, 9, 0.15) !important;
+}

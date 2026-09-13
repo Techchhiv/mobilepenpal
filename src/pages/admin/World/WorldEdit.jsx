@@ -1,10 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link, useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
 
 import API from "../../../helper/api";
 import { useAuth } from "../../../context/AuthContext";
 import MasterLayout from "../../../masterLayout/MasterLayout";
+import AdminPageHeader from "../../../components/admin/common/AdminPageHeader";
 
 const WorldEdit = () => {
   const { id } = useParams();
@@ -205,272 +206,276 @@ const WorldEdit = () => {
 
   return (
     <MasterLayout>
-      <div className="card">
-        <div className="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-          <div>
-            <h5 className="mb-0">Edit World</h5>
-            <small className="text-muted">ID: {id}</small>
-          </div>
+      <div className="py-12">
+        <AdminPageHeader
+          title={`Edit World — ${form.name || `#${id}`}`}
+          subtitle="Update world title, audience scope, and status"
+        />
 
-          <div className="d-flex gap-2 flex-wrap">
-            <Link
-              onClick={() =>
-                window.history.length > 1
-                  ? navigate(-1)
-                  : navigate("/admin/worlds")
-              }
-              className="d-flex align-items-center btn btn-secondary radius-3 px-20 py-11"
-            >
-              <Icon icon="mdi:arrow-left" className="me-6" />
-              Back
-            </Link>
+        <div className="card border radius-12 shadow-none">
+          <div className="card-header border-bottom py-16 px-24 bg-base d-flex justify-content-between align-items-center flex-wrap gap-12">
+            <div>
+              <h6 className="fw-bold mb-0 text-dark">Edit World <span className="text-secondary-light text-xs font-normal">#{id}</span></h6>
+            </div>
 
-            {canToggle && (
+            <div className="d-flex gap-8 flex-wrap">
               <button
                 type="button"
-                onClick={toggleWorld}
-                className={`btn radius-3 px-20 py-11 d-flex align-items-center ${active ? "btn-warning" : "btn-primary"
-                  }`}
-                title="Toggle Active"
+                onClick={() =>
+                  window.history.length > 1
+                    ? navigate(-1)
+                    : navigate("/admin/worlds")
+                }
+                className="btn btn-outline-secondary btn-sm radius-8 d-inline-flex align-items-center gap-6"
               >
-                <Icon icon="mdi:toggle-switch" className="me-6" />
-                {active ? "Disable" : "Enable"}
+                <Icon icon="mdi:arrow-left" />
+                <span>Back</span>
               </button>
-            )}
-          </div>
-        </div>
 
-        <div className="card-body">
-          {message && <div className="alert alert-success">{message}</div>}
-          {error && <div className="alert alert-danger">{error}</div>}
-
-          {loading ? (
-            <div className="text-center py-40">
-              <div className="spinner-border" role="status" />
-              <div className="mt-12 text-muted">Loading world...</div>
+              {canToggle && (
+                <button
+                  type="button"
+                  onClick={toggleWorld}
+                  className={`btn btn-sm radius-8 d-inline-flex align-items-center gap-6 ${active ? "btn-outline-warning" : "btn-primary"
+                    }`}
+                  title="Toggle Active"
+                >
+                  <Icon icon="mdi:toggle-switch" />
+                  <span>{active ? "Disable" : "Enable"}</span>
+                </button>
+              )}
             </div>
-          ) : !world ? (
-            <div className="text-center py-40 text-muted">World not found.</div>
-          ) : (
-            <form id="worldEditForm" onSubmit={save}>
-              <div className="row g-3">
-                {/* Left preview */}
-                <div className="col-12 col-md-4 col-lg-3">
-                  <div className="card border">
-                    <div className="card-body text-center">
-                      <div
-                        className="d-inline-flex align-items-center justify-content-center"
-                        style={{
-                          width: 120,
-                          height: 120,
-                          borderRadius: 16,
-                          background: "#e5e7eb",
-                          border: "1px solid rgba(0,0,0,0.08)",
-                        }}
-                      >
-                        <Icon icon="mdi:map" width={54} />
+          </div>
+
+          <div className="card-body p-24">
+            {message && <div className="alert alert-success mb-20 radius-8">{message}</div>}
+            {error && <div className="alert alert-danger mb-20 radius-8">{error}</div>}
+
+            {loading ? (
+              <div className="text-center py-40 text-secondary-light">
+                <div className="spinner-border spinner-border-sm me-2" role="status" />
+                <span>Loading world...</span>
+              </div>
+            ) : !world ? (
+              <div className="text-center py-40 text-secondary-light">World not found.</div>
+            ) : (
+              <form id="worldEditForm" onSubmit={save}>
+                <div className="row g-3">
+                  {/* Left preview */}
+                  <div className="col-12 col-md-4 col-lg-3">
+                    <div className="card border radius-12 shadow-none">
+                      <div className="card-body text-center p-20">
+                        <div
+                          className="d-inline-flex align-items-center justify-content-center border radius-16 bg-neutral-100 text-secondary-light"
+                          style={{
+                            width: 110,
+                            height: 110,
+                          }}
+                        >
+                          <Icon icon="mdi:map" width={48} />
+                        </div>
+
+                        <h6 className="mt-3 mb-1 fw-bold text-dark">{form.name?.trim() || "—"}</h6>
+                        <div className="text-secondary-light small mb-3">{form.name_en?.trim() || "—"}</div>
+
+                        <div className="d-flex justify-content-center gap-8 flex-wrap">
+                          <span
+                            className={`status-badge px-10 py-4 radius-6 text-xs fw-semibold ${active ? "status-active" : "status-inactive"
+                              }`}
+                          >
+                            {active ? "Active" : "Disabled"}
+                          </span>
+
+                          <span
+                            className={`badge px-10 py-4 radius-6 text-xs fw-semibold ${form.is_unlocked_by_default
+                              ? "bg-primary-50 text-primary-600"
+                              : "bg-neutral-100 text-secondary-light border border-neutral-200"
+                              }`}
+                          >
+                            {form.is_unlocked_by_default
+                              ? "Default Unlock"
+                              : "Not Default"}
+                          </span>
+                        </div>
                       </div>
+                    </div>
 
-                      <h6 className="mt-3 mb-1">{form.name?.trim() || "—"}</h6>
-                      <div className="text-muted small mb-3">{form.name_en?.trim() || "—"}</div>
-
-                      <div className="d-flex justify-content-center gap-8 flex-wrap">
-                        <span
-                          className={`badge ${active ? "bg-success" : "bg-secondary"
-                            }`}
-                        >
-                          {active ? "Active" : "Disabled"}
-                        </span>
-
-                        <span
-                          className={`badge ${form.is_unlocked_by_default
-                            ? "bg-primary"
-                            : "bg-light text-dark"
-                            }`}
-                        >
-                          {form.is_unlocked_by_default
-                            ? "Default Unlock"
-                            : "Not Default"}
-                        </span>
+                    <div className="card border radius-12 shadow-none mt-3">
+                      <div className="card-header border-bottom py-12 px-16 bg-base">
+                        <h6 className="mb-0 fw-bold text-dark text-sm">System Info</h6>
+                      </div>
+                      <div className="card-body p-16">
+                        <MiniRow
+                          label="Created At"
+                          value={prettyDateTime(world?.created_at)}
+                        />
+                        <MiniRow
+                          label="Updated At"
+                          value={prettyDateTime(world?.updated_at)}
+                        />
                       </div>
                     </div>
                   </div>
 
-                  <div className="card border mt-3">
-                    <div className="card-header">
-                      <h6 className="mb-0">System</h6>
-                    </div>
-                    <div className="card-body">
-                      <MiniRow
-                        label="Created At"
-                        value={prettyDateTime(world?.created_at)}
-                      />
-                      <MiniRow
-                        label="Updated At"
-                        value={prettyDateTime(world?.updated_at)}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Right form */}
-                <div className="col-12 col-md-8 col-lg-9">
-                  <div className="card border mb-0">
-                    <div className="card-header">
-                      <h6 className="mb-0">World Information</h6>
-                    </div>
+                  {/* Right form */}
+                  <div className="col-12 col-md-8 col-lg-9">
+                    <div className="card border radius-12 shadow-none mb-4">
+                      <div className="card-header border-bottom py-12 px-16 bg-base">
+                        <h6 className="mb-0 fw-bold text-dark text-sm">World Information</h6>
+                      </div>
 
 
-                    <div className="card-body">
+                      <div className="card-body p-20">
 
-                      <div className="row g-3">
-                        <Field label="Audience" colClass="col-12 col-lg-6">
-                          <select className="form-select" value={form.audience} onChange={onChange("audience")}>
-                            <option value="public">Public</option>
-                            <option value="schools">Schools</option>
-                            <option value="assigned">Assigned</option>
-                          </select>
-                        </Field>
+                        <div className="row g-3">
+                          <Field label="Audience" colClass="col-12 col-lg-6">
+                            <select className="form-select form-select-sm radius-8" value={form.audience} onChange={onChange("audience")}>
+                              <option value="public">Public</option>
+                              <option value="schools">Schools</option>
+                              <option value="assigned">Assigned</option>
+                            </select>
+                          </Field>
 
-                        {form.audience === "assigned" && (
-                          <div className="col-12">
-                            <div className="p-12 border radius-8">
-                              <div className="text-muted small mb-2">Assigned Schools</div>
+                          {form.audience === "assigned" && (
+                            <div className="col-12">
+                              <div className="p-12 border radius-8 bg-base">
+                                <div className="text-secondary-light small mb-2">Assigned Schools</div>
 
-                              <input
-                                className="form-control mb-2"
-                                placeholder="Search school by name..."
-                                value={schoolSearch}
-                                onChange={(e) => setSchoolSearch(e.target.value)}
-                              />
+                                <input
+                                  className="form-control form-control-sm radius-8 mb-2"
+                                  placeholder="Search school by name..."
+                                  value={schoolSearch}
+                                  onChange={(e) => setSchoolSearch(e.target.value)}
+                                />
 
-                              {schoolsError && <div className="alert alert-danger py-2">{schoolsError}</div>}
+                                {schoolsError && <div className="alert alert-danger py-2">{schoolsError}</div>}
 
-                              <div style={{ maxHeight: 240, overflow: "auto" }} className="border radius-8 p-2">
-                                {schoolsLoading ? (
-                                  <div className="text-muted">Loading schools...</div>
-                                ) : (filteredSchools?.length ?? 0) === 0 ? (
-                                  <div className="text-muted">No schools found.</div>
-                                ) : (
-                                  filteredSchools.map((s) => {
-                                    const checked = form.school_ids.includes(s.id);
-                                    return (
-                                      <div key={s.id} className="form-check d-flex align-items-center gap-2 py-1">
-                                        <input
-                                          className="form-check-input m-0"
-                                          type="checkbox"
-                                          id={`school-${s.id}`}
-                                          checked={checked}
-                                          onChange={() => {
-                                            setForm((p) => {
-                                              const next = checked
-                                                ? p.school_ids.filter((x) => x !== s.id)
-                                                : [...p.school_ids, s.id];
-                                              return { ...p, school_ids: next };
-                                            });
-                                          }}
-                                        />
-                                        <label className="form-check-label" htmlFor={`school-${s.id}`}>
-                                          {s.name} <span className="text-muted">#{s.id}</span>
-                                        </label>
-                                      </div>
-                                    );
-                                  })
-                                )}
+                                <div style={{ maxHeight: 240, overflow: "auto" }} className="border radius-8 p-12 bg-base">
+                                  {schoolsLoading ? (
+                                    <div className="text-secondary-light text-sm">Loading schools...</div>
+                                  ) : (filteredSchools?.length ?? 0) === 0 ? (
+                                    <div className="text-secondary-light text-sm">No schools found.</div>
+                                  ) : (
+                                    filteredSchools.map((s) => {
+                                      const checked = form.school_ids.includes(s.id);
+                                      return (
+                                        <div key={s.id} className="form-check d-flex align-items-center gap-2 py-1">
+                                          <input
+                                            className="form-check-input m-0"
+                                            type="checkbox"
+                                            id={`school-${s.id}`}
+                                            checked={checked}
+                                            onChange={() => {
+                                              setForm((p) => {
+                                                const next = checked
+                                                  ? p.school_ids.filter((x) => x !== s.id)
+                                                  : [...p.school_ids, s.id];
+                                                return { ...p, school_ids: next };
+                                              });
+                                            }}
+                                          />
+                                          <label className="form-check-label text-sm text-dark" htmlFor={`school-${s.id}`}>
+                                            {s.name} <span className="text-secondary-light">#{s.id}</span>
+                                          </label>
+                                        </div>
+                                      );
+                                    })
+                                  )}
+                                </div>
+
+                                <small className="text-secondary-light d-block mt-2">Selected: {form.school_ids.length}</small>
                               </div>
-
-                              <small className="text-muted d-block mt-2">Selected: {form.school_ids.length}</small>
                             </div>
-                          </div>
-                        )}
+                          )}
 
-                        <Field label="Name (KH) *" colClass="col-12 col-lg-6">
-                          <input
-                            className="form-control"
-                            value={form.name}
-                            onChange={onChange("name")}
-                            required
-                            maxLength={255}
-                          />
-                        </Field>
+                          <Field label="Name (KH) *" colClass="col-12 col-lg-6">
+                            <input
+                              className="form-control form-control-sm radius-8"
+                              value={form.name}
+                              onChange={onChange("name")}
+                              required
+                              maxLength={255}
+                            />
+                          </Field>
 
-                        <Field label="Name (EN)" colClass="col-12 col-lg-6">
-                          <input
-                            className="form-control"
-                            value={form.name_en}
-                            onChange={onChange("name_en")}
-                            maxLength={255}
-                            placeholder="Optional"
-                          />
-                        </Field>
+                          <Field label="Name (EN)" colClass="col-12 col-lg-6">
+                            <input
+                              className="form-control form-control-sm radius-8"
+                              value={form.name_en}
+                              onChange={onChange("name_en")}
+                              maxLength={255}
+                              placeholder="Optional"
+                            />
+                          </Field>
 
-                        <Field label="Description (KH)" colClass="col-12">
-                          <textarea
-                            className="form-control"
-                            rows={4}
-                            value={form.description}
-                            onChange={onChange("description")}
-                            placeholder="Optional"
-                          />
-                        </Field>
+                          <Field label="Description (KH)" colClass="col-12">
+                            <textarea
+                              className="form-control radius-8"
+                              rows={4}
+                              value={form.description}
+                              onChange={onChange("description")}
+                              placeholder="Optional"
+                            />
+                          </Field>
 
-                        <Field label="Description (EN)" colClass="col-12">
-                          <textarea
-                            className="form-control"
-                            rows={4}
-                            value={form.description_en}
-                            onChange={onChange("description_en")}
-                            placeholder="Optional"
-                          />
-                        </Field>
+                          <Field label="Description (EN)" colClass="col-12">
+                            <textarea
+                              className="form-control radius-8"
+                              rows={4}
+                              value={form.description_en}
+                              onChange={onChange("description_en")}
+                              placeholder="Optional"
+                            />
+                          </Field>
 
-                        <div className="col-12">
-                          <div className="d-flex justify-content-end gap-4 flex-wrap">
+                          <div className="col-12">
+                            <div className="d-flex justify-content-end gap-4 flex-wrap">
 
-                            <div className="form-check d-flex align-content-center">
-                              <input
-                                className="form-check-input"
-                                type="checkbox"
-                                id="unlockedByDefault"
-                                checked={!!form.is_unlocked_by_default}
-                                onChange={onChange("is_unlocked_by_default")}
-                              />
-                              <label
-                                className="form-check-label"
-                                htmlFor="unlockedByDefault"
-                              >
-                                Unlocked by default
-                              </label>
+                              <div className="form-check d-flex align-items-center gap-2">
+                                <input
+                                  className="form-check-input"
+                                  type="checkbox"
+                                  id="unlockedByDefault"
+                                  checked={!!form.is_unlocked_by_default}
+                                  onChange={onChange("is_unlocked_by_default")}
+                                />
+                                <label
+                                  className="form-check-label text-sm fw-semibold text-dark mb-0"
+                                  htmlFor="unlockedByDefault"
+                                >
+                                  Unlocked by default
+                                </label>
+                              </div>
                             </div>
                           </div>
                         </div>
                       </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Actions */}
-                <div className="d-flex justify-content-end gap-2">
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    onClick={() => navigate("/admin/worlds")}
-                    disabled={saving}
-                  >
-                    Cancel
-                  </button>
+                  {/* Actions */}
+                  <div className="d-flex justify-content-end gap-12">
+                    <button
+                      type="button"
+                      className="btn btn-outline-secondary btn-sm radius-8 px-20"
+                      onClick={() => navigate("/admin/worlds")}
+                      disabled={saving}
+                    >
+                      Cancel
+                    </button>
 
-                  <button
-                    type="submit"
-                    className="btn btn-primary"
-                    disabled={saving}
-                  >
-                    {saving ? "Saving..." : "Save"}
-                  </button>
+                    <button
+                      type="submit"
+                      className="btn btn-primary btn-sm radius-8 px-20"
+                      disabled={saving}
+                    >
+                      {saving ? "Saving..." : "Save World"}
+                    </button>
+                  </div>
                 </div>
-              </div>
-            </form>
-          )}
+              </form>
+            )}
+          </div>
         </div>
       </div>
     </MasterLayout>
@@ -479,8 +484,8 @@ const WorldEdit = () => {
 
 const Field = ({ label, children, colClass = "col-12 col-md-6" }) => (
   <div className={colClass}>
-    <div className="p-12 border radius-8 h-100">
-      <div className="text-muted small mb-6">{label}</div>
+    <div className="p-12 border radius-8 h-100 bg-base">
+      <div className="text-secondary-light text-xs fw-semibold mb-6">{label}</div>
       {children}
     </div>
   </div>
@@ -490,8 +495,8 @@ const MiniRow = ({ label, value }) => {
   const v = value === null || value === undefined || value === "" ? "—" : value;
   return (
     <div className="d-flex justify-content-between gap-1 py-6 border-bottom">
-      <div className="text-muted small">{label}</div>
-      <div className="fw-medium">{v}</div>
+      <div className="text-secondary-light text-xs">{label}</div>
+      <div className="fw-semibold text-dark text-xs">{v}</div>
     </div>
   );
 };

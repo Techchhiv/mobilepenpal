@@ -1,9 +1,13 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { Icon } from "@iconify/react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import MasterLayout from "../../../masterLayout/MasterLayout";
 import API from "../../../helper/api";
 import API_BASE_URL from "../../../helper/Base_urls";
+import AdminPageHeader from "../../../components/admin/common/AdminPageHeader";
+import AdminEmptyState from "../../../components/admin/common/AdminEmptyState";
+import AdminPagination from "../../../components/admin/common/AdminPagination";
+import ConfirmModal from "../../../components/admin/common/ConfirmModal";
 
 const Trunc = ({ value, maxWidth = 200 }) => {
   const v = value ?? "—";
@@ -15,6 +19,7 @@ const Trunc = ({ value, maxWidth = 200 }) => {
 };
 
 export default function AdminStudentList() {
+  const navigate = useNavigate();
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
@@ -116,14 +121,25 @@ export default function AdminStudentList() {
     }
   };
 
-  const deleteStudent = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this student?")) return;
+  const [deleteModal, setDeleteModal] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  const handleDeleteClick = (student) => {
+    setDeleteModal(student);
+  };
+
+  const confirmDeleteStudent = async () => {
+    if (!deleteModal) return;
     try {
-      await API.delete(`/admin/students/${id}`);
-      setStudents((prev) => prev.filter((s) => s.id !== id));
+      setDeleteLoading(true);
+      await API.delete(`/admin/students/${deleteModal.id}`);
+      setStudents((prev) => prev.filter((s) => s.id !== deleteModal.id));
       flash("Student deleted successfully");
+      setDeleteModal(null);
     } catch (err) {
       flash(err?.response?.data?.message || "Delete failed", true);
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -135,242 +151,261 @@ export default function AdminStudentList() {
 
   return (
     <MasterLayout>
-      <div className="card basic-data-table">
-        <div className="card-header d-flex flex-wrap justify-content-between align-items-center gap-3">
-          <h5 className="mb-0">Manage Students</h5>
-          <Link to="/admin/students/create">
-            <button type="button" className="btn btn-primary-600 radius-3 px-20 py-11">
-              <Icon icon="ic:baseline-plus" className="me-1" width={18} />
-              Add Student
-            </button>
-          </Link>
+      <div className="py-12">
+        <AdminPageHeader
+          title="Manage Students"
+          subtitle="Manage student profiles, school affiliations, parent contacts, and account statuses"
+          actionLabel="Add Student"
+          actionIcon="lucide:plus"
+          onAction={() => navigate("/admin/students/create")}
+        />
+
+        {message && <div className="alert alert-success py-12 px-16 radius-8 text-sm mb-16">{message}</div>}
+
+        {/* Standalone Filter Card */}
+        <div className="card border radius-12 shadow-none mb-20">
+          <div className="card-body p-20">
+            <div className="d-flex flex-wrap align-items-center justify-content-between gap-3">
+              <div className="d-flex flex-wrap align-items-center gap-3 flex-grow-1">
+                {/* Search input with magnify icon */}
+                <div className="position-relative flex-grow-1" style={{ maxWidth: 320, minWidth: 200 }}>
+                  <input
+                    type="text"
+                    className="form-control h-40-px ps-40 radius-8 text-sm"
+                    placeholder="Search name, phone, email..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                  />
+                  <Icon
+                    icon="ion:search-outline"
+                    className="position-absolute top-50 translate-middle-y text-secondary-light"
+                    style={{ left: 14, fontSize: 20, pointerEvents: "none" }}
+                  />
+                </div>
+
+                {/* School Affiliation Filter */}
+                <select
+                  className="form-select h-40-px radius-8 text-sm w-auto"
+                  value={schoolAffiliation}
+                  onChange={(e) => {
+                    setSchoolAffiliation(e.target.value);
+                    if (e.target.value === "public") setSelectedSchoolId("");
+                  }}
+                >
+                  <option value="all">All Affiliations</option>
+                  <option value="school">School-Affiliated</option>
+                  <option value="public">Public (No School)</option>
+                </select>
+
+                {/* Active Status Filter */}
+                <select
+                  className="form-select h-40-px radius-8 text-sm w-auto"
+                  value={activeFilter}
+                  onChange={(e) => setActiveFilter(e.target.value)}
+                >
+                  <option value="all">All Status</option>
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+
+                {/* Specific School Filter */}
+                {schoolAffiliation !== "public" && (
+                  <select
+                    className="form-select h-40-px radius-8 text-sm w-auto"
+                    style={{ maxWidth: 220 }}
+                    value={selectedSchoolId}
+                    onChange={(e) => setSelectedSchoolId(e.target.value)}
+                  >
+                    <option value="">All Schools</option>
+                    {schools.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
+
+                {/* Clear filters button */}
+                {(search || schoolAffiliation !== "all" || activeFilter !== "all" || selectedSchoolId) && (
+                  <button
+                    type="button"
+                    className="btn btn-neutral-100 text-secondary-light h-40-px px-16 radius-8 text-sm d-inline-flex align-items-center gap-2"
+                    onClick={() => {
+                      setSearch("");
+                      setSchoolAffiliation("all");
+                      setActiveFilter("all");
+                      setSelectedSchoolId("");
+                    }}
+                  >
+                    <Icon icon="lucide:x" />
+                    Reset Filters
+                  </button>
+                )}
+              </div>
+
+              <div className="text-secondary-light text-sm font-medium">
+                Total: <span className="text-primary-600 fw-bold">{total}</span> Students
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Filters */}
-        <div className="card-body pb-0">
-          <div className="row g-3 mb-3">
-            <div className="col-md-3">
-              <input
-                type="text"
-                className="form-control"
-                placeholder="Search name, phone, email..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
+        {/* Table Card */}
+        <div className="card border radius-12 shadow-none overflow-hidden">
+          <div className="card-body p-0">
+            <div className="table-responsive">
+              <table className="table bordered-table mb-0 align-middle">
+                <thead>
+                  <tr>
+                    <th style={{ width: 50 }} className="px-16">#</th>
+                    <th style={{ width: 70 }} className="px-16">Avatar</th>
+                    <th className="px-16">Name</th>
+                    <th className="px-16">Phone</th>
+                    <th className="px-16">School</th>
+                    <th className="px-16">Parent</th>
+                    <th style={{ width: 100 }} className="px-16">Status</th>
+                    <th style={{ width: 150 }} className="pe-16 text-end">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    <tr>
+                      <td colSpan={8} className="text-center py-4 text-secondary-light">
+                        <div className="spinner-border spinner-border-sm text-primary me-2" role="status" />
+                        Loading students…
+                      </td>
+                    </tr>
+                  ) : students.length === 0 ? (
+                    <tr>
+                      <td colSpan={8} className="text-center py-4 text-secondary-light">
+                        <AdminEmptyState
+                          title="No Students Found"
+                          message="No student accounts match your filter criteria."
+                        />
+                      </td>
+                    </tr>
+                  ) : (
+                    students.map((s, idx) => {
+                      const url = avatarUrl(s.avatar);
+                      return (
+                        <tr key={s.id}>
+                          <td className="px-16 font-monospace text-secondary-light">{(page - 1) * perPage + idx + 1}</td>
+                          <td className="px-16">
+                            {url ? (
+                              <button
+                                type="button"
+                                className="p-0 border-0 bg-transparent"
+                                onClick={() => setPreviewSrc(url)}
+                                style={{ cursor: "zoom-in" }}
+                              >
+                                <img
+                                  src={url}
+                                  alt={fullName(s)}
+                                  style={{
+                                    width: 40,
+                                    height: 40,
+                                    objectFit: "cover",
+                                    borderRadius: "50%",
+                                  }}
+                                />
+                              </button>
+                            ) : (
+                              <div
+                                className="d-inline-flex align-items-center justify-content-center bg-neutral-100 text-secondary-light border border-neutral-200"
+                                style={{ width: 40, height: 40, borderRadius: "50%" }}
+                              >
+                                <Icon icon="mdi:account" width={22} />
+                              </div>
+                            )}
+                          </td>
+                          <td className="px-16"><Trunc value={fullName(s)} maxWidth={220} /></td>
+                          <td className="px-16"><Trunc value={s.phone || "—"} maxWidth={160} /></td>
+                          <td className="px-16">
+                            {s.school_id ? (
+                              <span className="badge bg-primary-100 text-primary-600">
+                                {s.school_key || `School #${s.school_id}`}
+                              </span>
+                            ) : (
+                              <span className="badge bg-warning-100 text-warning-600">Public</span>
+                            )}
+                          </td>
+                          <td className="px-16"><Trunc value={parentName(s)} maxWidth={180} /></td>
+                          <td className="px-16">
+                            <div className="form-switch switch-primary">
+                              <input
+                                className="form-check-input"
+                                type="checkbox"
+                                role="switch"
+                                checked={isActive(s)}
+                                onChange={() => toggleStudent(s.id)}
+                                title={isActive(s) ? "Deactivate Account" : "Activate Account"}
+                                style={{ cursor: "pointer" }}
+                              />
+                            </div>
+                          </td>
+                          <td className="pe-16 text-end">
+                            <div className="d-inline-flex align-items-center justify-end gap-2">
+                              <Link
+                                to={`/admin/students/${s.id}`}
+                                className="w-32-px h-32-px bg-primary-light text-primary-600 rounded-circle d-inline-flex align-items-center justify-content-center"
+                                title="View"
+                              >
+                                <Icon icon="iconamoon:eye-light" />
+                              </Link>
+                              <Link
+                                to={`/admin/students/${s.id}/edit`}
+                                className="w-32-px h-32-px bg-success-focus text-success-main rounded-circle d-inline-flex align-items-center justify-content-center"
+                                title="Edit"
+                              >
+                                <Icon icon="lucide:edit" />
+                              </Link>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteClick(s)}
+                                className="w-32-px h-32-px bg-danger-focus text-danger-main rounded-circle d-inline-flex align-items-center justify-content-center border-0"
+                                title="Delete Student"
+                              >
+                                <Icon icon="mingcute:delete-2-line" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
             </div>
-            <div className="col-md-2">
-              <select
-                className="form-control"
-                value={schoolAffiliation}
-                onChange={(e) => {
-                  setSchoolAffiliation(e.target.value);
-                  if (e.target.value === "public") setSelectedSchoolId("");
-                }}
-              >
-                <option value="all">All Students</option>
-                <option value="school">School-Affiliated</option>
-                <option value="public">Public (No School)</option>
-              </select>
+          </div>
+
+          {/* ── Card Footer Pagination Standard ── */}
+          <div className="card-footer py-14 px-24 border-top d-flex align-items-center justify-content-between flex-wrap gap-12">
+            <div className="text-secondary-light text-xs font-semibold">
+              Showing {total > 0 ? (page - 1) * perPage + 1 : 0}–
+              {Math.min(page * perPage, total)} of {total} entries
             </div>
-            <div className="col-md-2">
-              <select
-                className="form-control"
-                value={activeFilter}
-                onChange={(e) => setActiveFilter(e.target.value)}
-              >
-                <option value="all">All Status</option>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </select>
-            </div>
-            {schoolAffiliation !== "public" && (
-              <div className="col-md-3">
-                <select
-                  className="form-control"
-                  value={selectedSchoolId}
-                  onChange={(e) => setSelectedSchoolId(e.target.value)}
-                >
-                  <option value="">All Schools</option>
-                  {schools.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name}
-                    </option>
-                  ))}
-                </select>
+            {lastPage > 1 && (
+              <div className="ms-auto">
+                <AdminPagination
+                  page={page}
+                  totalPages={lastPage}
+                  onPageChange={(p) => setPage(p)}
+                />
               </div>
             )}
-            <div className="col-md-2 d-flex align-items-center text-muted">
-              <small>{total} student{total !== 1 ? "s" : ""} found</small>
-            </div>
           </div>
         </div>
 
-        {message && <div className="alert alert-success mx-3">{message}</div>}
-        {error && <div className="alert alert-danger mx-3">{error}</div>}
-
-        <div className="card-body pt-0">
-          <div className="table-responsive">
-            <table className="table bordered-table mb-0">
-              <thead>
-                <tr>
-                  <th style={{ width: 50 }}>#</th>
-                  <th style={{ width: 70 }}>Avatar</th>
-                  <th>Name</th>
-                  <th>Phone</th>
-                  <th>School</th>
-                  <th>Parent</th>
-                  <th style={{ width: 100 }}>Status</th>
-                  <th style={{ width: 150 }}>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr>
-                    <td colSpan={8} className="text-center py-4">
-                      <div className="spinner-border spinner-border-sm" role="status" />
-                      <div className="mt-2 text-muted">Loading students…</div>
-                    </td>
-                  </tr>
-                ) : students.length === 0 ? (
-                  <tr>
-                    <td colSpan={8} className="text-center py-4 text-muted">
-                      No students found
-                    </td>
-                  </tr>
-                ) : (
-                  students.map((s, idx) => {
-                    const url = avatarUrl(s.avatar);
-                    return (
-                      <tr key={s.id}>
-                        <td>{(page - 1) * perPage + idx + 1}</td>
-                        <td>
-                          {url ? (
-                            <button
-                              type="button"
-                              className="p-0 border-0 bg-transparent"
-                              onClick={() => setPreviewSrc(url)}
-                              style={{ cursor: "zoom-in" }}
-                            >
-                              <img
-                                src={url}
-                                alt={fullName(s)}
-                                style={{
-                                  width: 40,
-                                  height: 40,
-                                  objectFit: "cover",
-                                  borderRadius: "50%",
-                                }}
-                              />
-                            </button>
-                          ) : (
-                            <div
-                              className="d-inline-flex align-items-center justify-content-center bg-light text-muted"
-                              style={{ width: 40, height: 40, borderRadius: "50%" }}
-                            >
-                              <Icon icon="mdi:account" width={22} />
-                            </div>
-                          )}
-                        </td>
-                        <td><Trunc value={fullName(s)} maxWidth={220} /></td>
-                        <td><Trunc value={s.phone || "—"} maxWidth={160} /></td>
-                        <td>
-                          {s.school_id ? (
-                            <span className="badge bg-primary-100 text-primary-600">
-                              {s.school_key || `School #${s.school_id}`}
-                            </span>
-                          ) : (
-                            <span className="badge bg-warning-100 text-warning-600">Public</span>
-                          )}
-                        </td>
-                        <td><Trunc value={parentName(s)} maxWidth={180} /></td>
-                        <td>
-                          <div className="form-switch switch-primary">
-                            <input
-                              className="form-check-input"
-                              type="checkbox"
-                              role="switch"
-                              checked={isActive(s)}
-                              onChange={() => toggleStudent(s.id)}
-                              title={isActive(s) ? "Deactivate Account" : "Activate Account"}
-                              style={{ cursor: "pointer" }}
-                            />
-                          </div>
-                        </td>
-                        <td>
-                          <div className="d-flex align-items-center gap-2">
-                            <Link
-                              to={`/admin/students/${s.id}`}
-                              className="w-32-px h-32-px bg-primary-light text-primary-600 rounded-circle d-inline-flex align-items-center justify-content-center"
-                              title="View"
-                            >
-                              <Icon icon="iconamoon:eye-light" />
-                            </Link>
-                            <Link
-                              to={`/admin/students/${s.id}/edit`}
-                              className="w-32-px h-32-px bg-success-focus text-success-main rounded-circle d-inline-flex align-items-center justify-content-center"
-                              title="Edit"
-                            >
-                              <Icon icon="lucide:edit" />
-                            </Link>
-                            <button
-                              type="button"
-                              onClick={() => deleteStudent(s.id)}
-                              className="w-32-px h-32-px bg-danger-focus text-danger-main rounded-circle d-inline-flex align-items-center justify-content-center border-0"
-                              title="Delete"
-                            >
-                              <Icon icon="mingcute:delete-2-line" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Pagination */}
-          {lastPage > 1 && (
-            <nav className="d-flex justify-content-between align-items-center mt-3">
-              <small className="text-muted">
-                Page {page} of {lastPage}
-              </small>
-              <ul className="pagination mb-0">
-                <li className={`page-item ${page <= 1 ? "disabled" : ""}`}>
-                  <button className="page-link" onClick={() => setPage((p) => Math.max(1, p - 1))}>
-                    Previous
-                  </button>
-                </li>
-                {Array.from({ length: Math.min(lastPage, 5) }, (_, i) => {
-                  let num;
-                  if (lastPage <= 5) {
-                    num = i + 1;
-                  } else if (page <= 3) {
-                    num = i + 1;
-                  } else if (page >= lastPage - 2) {
-                    num = lastPage - 4 + i;
-                  } else {
-                    num = page - 2 + i;
-                  }
-                  return (
-                    <li key={num} className={`page-item ${page === num ? "active" : ""}`}>
-                      <button className="page-link" onClick={() => setPage(num)}>
-                        {num}
-                      </button>
-                    </li>
-                  );
-                })}
-                <li className={`page-item ${page >= lastPage ? "disabled" : ""}`}>
-                  <button className="page-link" onClick={() => setPage((p) => Math.min(lastPage, p + 1))}>
-                    Next
-                  </button>
-                </li>
-              </ul>
-            </nav>
-          )}
-        </div>
-      </div>
+        <ConfirmModal
+          open={!!deleteModal}
+          title="Delete Student Account"
+          message={deleteModal ? `Are you sure you want to delete student "${fullName(deleteModal)}"? This action cannot be undone.` : ""}
+          confirmLabel="Delete Student"
+          variant="danger"
+          loading={deleteLoading}
+          onConfirm={confirmDeleteStudent}
+          onCancel={() => setDeleteModal(null)}
+        />
 
       {/* Image preview overlay */}
       {previewSrc && (
@@ -401,6 +436,7 @@ export default function AdminStudentList() {
           />
         </div>
       )}
+      </div>
     </MasterLayout>
   );
 }

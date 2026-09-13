@@ -2,15 +2,17 @@ import React, { useState, useEffect, useCallback } from "react";
 import MasterLayout from "../../masterLayout/MasterLayout";
 import AuditLogDetailModal from "../../components/admin/AuditLogDetailModal";
 import { getAuditLogs, getAuditLog, exportAuditLogs } from "../../services/auditLogService";
+import AdminPageHeader from "../../components/admin/common/AdminPageHeader";
+import "../../assets/css/auditLog.css";
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 
 const CATEGORIES = ["auth", "account", "school", "subscription", "system", "curriculum", "audit"];
-const SEVERITIES  = ["info", "warning", "critical"];
+const SEVERITIES = ["info", "warning", "critical"];
 
 const SEVERITY_STYLES = {
-  info:     { background: "#e0f2fe", color: "#0369a1" },
-  warning:  { background: "#fef9c3", color: "#92400e" },
+  info: { background: "#e0f2fe", color: "#0369a1" },
+  warning: { background: "#fef9c3", color: "#92400e" },
   critical: { background: "#fee2e2", color: "#b91c1c" },
 };
 
@@ -26,16 +28,6 @@ function SeverityBadge({ severity }) {
   );
 }
 
-const inputStyle = {
-  height: 36, borderRadius: 6, border: "1px solid #d1d5db", padding: "0 10px",
-  fontSize: 13, outline: "none", background: "#fff",
-};
-
-const btnStyle = {
-  height: 36, borderRadius: 6, border: "none", padding: "0 16px",
-  fontSize: 13, cursor: "pointer", fontWeight: 600,
-};
-
 // ─── Page Component ────────────────────────────────────────────────────────────
 
 export default function AuditLogPage() {
@@ -47,15 +39,15 @@ export default function AuditLogPage() {
   const [pending, setPending] = useState({ ...filters });
 
   // Data
-  const [logs,       setLogs]       = useState([]);
+  const [logs, setLogs] = useState([]);
   const [pagination, setPagination] = useState(null);
-  const [page,       setPage]       = useState(1);
-  const [loading,    setLoading]    = useState(false);
-  const [error,      setError]      = useState(null);
+  const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   // Detail modal
-  const [selectedLog,    setSelectedLog]    = useState(null);
-  const [detailLoading,  setDetailLoading]  = useState(false);
+  const [selectedLog, setSelectedLog] = useState(null);
+  const [detailLoading, setDetailLoading] = useState(false);
 
   // Export
   const [exporting, setExporting] = useState(false);
@@ -70,7 +62,7 @@ export default function AuditLogPage() {
       Object.keys(params).forEach(k => !params[k] && delete params[k]);
 
       const { data } = await getAuditLogs(params);
-      const result   = data?.data;
+      const result = data?.data;
       setLogs(result?.data || []);
       setPagination(result);
     } catch (err) {
@@ -119,9 +111,9 @@ export default function AuditLogPage() {
       Object.keys(params).forEach(k => !params[k] && delete params[k]);
       const response = await exportAuditLogs(params);
       const url = URL.createObjectURL(new Blob([response.data]));
-      const a   = document.createElement("a");
-      a.href     = url;
-      a.download = `audit_logs_${new Date().toISOString().slice(0,10)}.csv`;
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `audit_logs_${new Date().toISOString().slice(0, 10)}.csv`;
       a.click();
       URL.revokeObjectURL(url);
     } catch {
@@ -136,43 +128,23 @@ export default function AuditLogPage() {
 
   return (
     <MasterLayout>
-      <div style={{ padding: "24px 28px", maxWidth: 1400, margin: "0 auto" }}>
-
-        {/* Page Header */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
-          <div>
-            <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: "#111827" }}>
-              System Audit Logs
-            </h1>
-            <p style={{ margin: "4px 0 0", color: "#6b7280", fontSize: 14 }}>
-              Read-only record of all important system activities. Super Admin access only.
-            </p>
-          </div>
-          <button
-            onClick={handleExport}
-            disabled={exporting}
-            style={{
-              ...btnStyle,
-              background: exporting ? "#d1fae5" : "#059669",
-              color: "#fff",
-              display: "flex", alignItems: "center", gap: 6,
-            }}
-          >
-            {exporting ? "Exporting…" : "⬇ Export CSV"}
-          </button>
-        </div>
+      <div className="py-12 audit-log-page">
+        <AdminPageHeader
+          title="System Audit Logs"
+          subtitle="Read-only record of all important system activities, security events, and administrative operations"
+          actionLabel={exporting ? "Exporting..." : "Export CSV"}
+          actionIcon="lucide:download"
+          onAction={handleExport}
+        />
 
         {/* Filter Bar */}
-        <div style={{
-          background: "#fff", borderRadius: 10, padding: "18px 20px",
-          marginBottom: 20, boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
-          display: "flex", flexWrap: "wrap", gap: 10, alignItems: "flex-end",
-        }}>
+        <div className="audit-filter-card">
           {/* Search */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            <label style={{ fontSize: 11, fontWeight: 600, color: "#6b7280" }}>SEARCH</label>
+          <div className="audit-filter-group">
+            <label className="audit-filter-label">SEARCH</label>
             <input
-              style={{ ...inputStyle, width: 200 }}
+              className="audit-filter-input"
+              style={{ width: 200 }}
               placeholder="Actor, action, description…"
               value={pending.search}
               onChange={e => setPending(p => ({ ...p, search: e.target.value }))}
@@ -181,29 +153,38 @@ export default function AuditLogPage() {
           </div>
 
           {/* Category */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            <label style={{ fontSize: 11, fontWeight: 600, color: "#6b7280" }}>CATEGORY</label>
-            <select style={inputStyle} value={pending.category}
-              onChange={e => setPending(p => ({ ...p, category: e.target.value }))}>
+          <div className="audit-filter-group">
+            <label className="audit-filter-label">CATEGORY</label>
+            <select
+              className="audit-filter-select"
+              value={pending.category}
+              onChange={e => setPending(p => ({ ...p, category: e.target.value }))}
+            >
               <option value="">All</option>
               {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
 
           {/* Severity */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            <label style={{ fontSize: 11, fontWeight: 600, color: "#6b7280" }}>SEVERITY</label>
-            <select style={inputStyle} value={pending.severity}
-              onChange={e => setPending(p => ({ ...p, severity: e.target.value }))}>
+          <div className="audit-filter-group">
+            <label className="audit-filter-label">SEVERITY</label>
+            <select
+              className="audit-filter-select"
+              value={pending.severity}
+              onChange={e => setPending(p => ({ ...p, severity: e.target.value }))}
+            >
               <option value="">All</option>
               {SEVERITIES.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
           </div>
 
           {/* Actor */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            <label style={{ fontSize: 11, fontWeight: 600, color: "#6b7280" }}>ACTOR</label>
-            <input style={{ ...inputStyle, width: 150 }} placeholder="Name or email"
+          <div className="audit-filter-group">
+            <label className="audit-filter-label">ACTOR</label>
+            <input
+              className="audit-filter-input"
+              style={{ width: 150 }}
+              placeholder="Name or email"
               value={pending.actor}
               onChange={e => setPending(p => ({ ...p, actor: e.target.value }))}
               onKeyDown={e => e.key === "Enter" && handleSearch()}
@@ -211,25 +192,33 @@ export default function AuditLogPage() {
           </div>
 
           {/* Date From */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            <label style={{ fontSize: 11, fontWeight: 600, color: "#6b7280" }}>DATE FROM</label>
-            <input type="date" style={inputStyle} value={pending.date_from}
-              onChange={e => setPending(p => ({ ...p, date_from: e.target.value }))} />
+          <div className="audit-filter-group">
+            <label className="audit-filter-label">DATE FROM</label>
+            <input
+              type="date"
+              className="audit-filter-date"
+              value={pending.date_from}
+              onChange={e => setPending(p => ({ ...p, date_from: e.target.value }))}
+            />
           </div>
 
           {/* Date To */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            <label style={{ fontSize: 11, fontWeight: 600, color: "#6b7280" }}>DATE TO</label>
-            <input type="date" style={inputStyle} value={pending.date_to}
-              onChange={e => setPending(p => ({ ...p, date_to: e.target.value }))} />
+          <div className="audit-filter-group">
+            <label className="audit-filter-label">DATE TO</label>
+            <input
+              type="date"
+              className="audit-filter-date"
+              value={pending.date_to}
+              onChange={e => setPending(p => ({ ...p, date_to: e.target.value }))}
+            />
           </div>
 
           {/* Buttons */}
           <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
-            <button onClick={handleSearch} style={{ ...btnStyle, background: "#4f46e5", color: "#fff" }}>
+            <button onClick={handleSearch} className="audit-btn audit-btn-primary">
               Search
             </button>
-            <button onClick={handleReset} style={{ ...btnStyle, background: "#f3f4f6", color: "#374151" }}>
+            <button onClick={handleReset} className="audit-btn audit-btn-secondary">
               Reset
             </button>
           </div>
@@ -242,136 +231,124 @@ export default function AuditLogPage() {
           </div>
         )}
 
-        {pagination && (
-          <div style={{ fontSize: 13, color: "#6b7280", marginBottom: 8 }}>
-            Showing {pagination.from ?? 0}–{pagination.to ?? 0} of {pagination.total ?? 0} records
-          </div>
-        )}
-
-        {/* Table */}
-        <div style={{
-          background: "#fff", borderRadius: 10, boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
-          overflow: "hidden",
-        }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-            <thead>
-              <tr style={{ background: "#f9fafb" }}>
-                {["Date / Time", "Actor", "Category", "Action", "Target", "Description", "Severity", "Details"].map(col => (
-                  <th key={col} style={{
-                    padding: "12px 14px", textAlign: "left", fontWeight: 700, fontSize: 12,
-                    color: "#6b7280", borderBottom: "1px solid #e5e7eb", whiteSpace: "nowrap",
-                  }}>
-                    {col}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
+        {/* Table Card */}
+        <div className="audit-table-card">
+          <div style={{ overflowX: "auto" }}>
+            <table className="audit-table">
+              <thead>
                 <tr>
-                  <td colSpan={8} style={{ padding: 40, textAlign: "center", color: "#9ca3af" }}>
-                    Loading…
-                  </td>
+                  {["Date / Time", "Actor", "Category", "Action", "Target", "Description", "Severity", "Details"].map(col => (
+                    <th key={col}>{col}</th>
+                  ))}
                 </tr>
-              ) : logs.length === 0 ? (
-                <tr>
-                  <td colSpan={8} style={{ padding: 40, textAlign: "center", color: "#9ca3af" }}>
-                    No audit logs found.
-                  </td>
-                </tr>
-              ) : (
-                logs.map((log, i) => (
-                  <tr key={log.id} style={{ background: i % 2 === 0 ? "#fff" : "#f9fafb" }}>
-                    <td style={tdS}>
-                      <span style={{ whiteSpace: "nowrap", fontSize: 12 }}>
-                        {log.occurred_at ? new Date(log.occurred_at).toLocaleString() : "—"}
-                      </span>
-                    </td>
-                    <td style={tdS}>
-                      <div style={{ fontWeight: 600 }}>{log.actor_name || "System"}</div>
-                      <div style={{ color: "#9ca3af", fontSize: 11 }}>{log.actor_email || ""}</div>
-                    </td>
-                    <td style={tdS}>
-                      <code style={{ background: "#f3f4f6", padding: "1px 6px", borderRadius: 4, fontSize: 11 }}>
-                        {log.category}
-                      </code>
-                    </td>
-                    <td style={tdS}>
-                      <code style={{ color: "#4f46e5", fontSize: 11 }}>{log.action}</code>
-                    </td>
-                    <td style={tdS}>
-                      {log.target_type ? (
-                        <span>
-                          <span style={{ color: "#9ca3af" }}>{log.target_type.split("\\").pop()}</span>
-                          {log.target_id && <span style={{ color: "#6b7280" }}> #{log.target_id}</span>}
-                        </span>
-                      ) : "—"}
-                    </td>
-                    <td style={{ ...tdS, maxWidth: 240 }}>
-                      <span style={{ display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-                        {log.description || "—"}
-                      </span>
-                    </td>
-                    <td style={tdS}>
-                      <SeverityBadge severity={log.severity} />
-                    </td>
-                    <td style={tdS}>
-                      <button
-                        onClick={() => handleViewDetail(log.id)}
-                        disabled={detailLoading}
-                        style={{
-                          background: "#eef2ff", color: "#4f46e5", border: "none",
-                          borderRadius: 6, padding: "4px 12px", cursor: "pointer",
-                          fontSize: 12, fontWeight: 600,
-                        }}
-                      >
-                        View
-                      </button>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <tr>
+                    <td colSpan={8} style={{ padding: 40, textAlign: "center", color: "#9ca3af" }}>
+                      Loading…
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Pagination */}
-        {pagination && totalPages > 1 && (
-          <div style={{ display: "flex", justifyContent: "center", gap: 6, marginTop: 20, flexWrap: "wrap" }}>
-            <button
-              onClick={() => setPage(p => Math.max(1, p - 1))}
-              disabled={page === 1}
-              style={{ ...btnStyle, background: "#f3f4f6", color: "#374151" }}
-            >
-              ← Prev
-            </button>
-            {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
-              const pg = totalPages <= 7 ? i + 1 : Math.max(1, page - 3) + i;
-              if (pg > totalPages) return null;
-              return (
-                <button
-                  key={pg}
-                  onClick={() => setPage(pg)}
-                  style={{
-                    ...btnStyle,
-                    background: pg === page ? "#4f46e5" : "#f3f4f6",
-                    color: pg === page ? "#fff" : "#374151",
-                    minWidth: 36, padding: "0 10px",
-                  }}
-                >
-                  {pg}
-                </button>
-              );
-            })}
-            <button
-              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-              disabled={page === totalPages}
-              style={{ ...btnStyle, background: "#f3f4f6", color: "#374151" }}
-            >
-              Next →
-            </button>
+                ) : logs.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} style={{ padding: 40, textAlign: "center", color: "#9ca3af" }}>
+                      No audit logs found.
+                    </td>
+                  </tr>
+                ) : (
+                  logs.map((log, i) => (
+                    <tr key={log.id} className={i % 2 === 0 ? "row-even" : "row-odd"}>
+                      <td>
+                        <span style={{ whiteSpace: "nowrap", fontSize: 12 }}>
+                          {log.occurred_at ? new Date(log.occurred_at).toLocaleString() : "—"}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="audit-actor-name">{log.actor_name || "System"}</div>
+                        <div className="audit-actor-email">{log.actor_email || ""}</div>
+                      </td>
+                      <td>
+                        <code className="audit-code-badge">
+                          {log.category}
+                        </code>
+                      </td>
+                      <td>
+                        <code style={{ color: "#4f46e5", fontSize: 11 }}>{log.action}</code>
+                      </td>
+                      <td>
+                        {log.target_type ? (
+                          <span>
+                            <span>{log.target_type.split("\\").pop()}</span>
+                            {log.target_id && <span> #{log.target_id}</span>}
+                          </span>
+                        ) : "—"}
+                      </td>
+                      <td style={{ maxWidth: 240 }}>
+                        <span style={{ display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                          {log.description || "—"}
+                        </span>
+                      </td>
+                      <td>
+                        <SeverityBadge severity={log.severity} />
+                      </td>
+                      <td>
+                        <button
+                          onClick={() => handleViewDetail(log.id)}
+                          disabled={detailLoading}
+                          className="audit-view-btn"
+                        >
+                          View
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
-        )}
+
+          {/* Card Footer Pagination */}
+          {pagination && (
+            <div className="audit-card-footer">
+              <div className="audit-counter text-secondary mb-0">
+                Showing {pagination.from ?? 0}–{pagination.to ?? 0} of {pagination.total ?? 0} records
+              </div>
+
+              {totalPages > 1 && (
+                <div className="audit-pagination-container">
+                  <button
+                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                    className="audit-btn audit-btn-secondary"
+                  >
+                    ← Prev
+                  </button>
+                  {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
+                    const pg = totalPages <= 7 ? i + 1 : Math.max(1, page - 3) + i;
+                    if (pg > totalPages) return null;
+                    return (
+                      <button
+                        key={pg}
+                        onClick={() => setPage(pg)}
+                        className={`audit-btn ${pg === page ? "audit-btn-primary" : "audit-btn-secondary"}`}
+                        style={{ minWidth: 36, padding: "0 10px" }}
+                      >
+                        {pg}
+                      </button>
+                    );
+                  })}
+                  <button
+                    onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                    disabled={page === totalPages}
+                    className="audit-btn audit-btn-secondary"
+                  >
+                    Next →
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Detail Modal */}
@@ -381,7 +358,3 @@ export default function AuditLogPage() {
     </MasterLayout>
   );
 }
-
-const tdS = {
-  padding: "10px 14px", borderBottom: "1px solid #f3f4f6", verticalAlign: "top",
-};

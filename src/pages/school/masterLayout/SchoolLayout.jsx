@@ -87,9 +87,10 @@ const SchoolLayout = ({ children }) => {
           <Icon icon="radix-icons:cross-2" />
         </button>
 
-        <div>
+        <div className="sidebar-header">
           <Link to="/school" className="sidebar-logo">
-            <h6> {user?.name ?? "User"}</h6>
+            <img src={penLogo} alt="Khmer Penpal" className="logo-icon" />
+            <span className="logo-text">{user?.name ?? "School Admin"}</span>
           </Link>
         </div>
 

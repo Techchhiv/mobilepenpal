@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 
 import API from "../../../helper/api";
 import MasterLayout from "../../../masterLayout/MasterLayout";
+import AdminPageHeader from "../../../components/admin/common/AdminPageHeader";
 
 const QuestionTemplateCreate = () => {
   const navigate = useNavigate();
@@ -70,62 +71,70 @@ const QuestionTemplateCreate = () => {
 
   return (
     <MasterLayout>
-      <div className="col-lg-12 mt-24">
-        <div className="card">
-          <div className="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-            <h3 className="card-title mb-0">Create New Question Template</h3>
-            <Link to="/admin/question-templates" className="d-flex align-items-center btn btn-secondary">
-              <Icon icon="mdi:arrow-left" className="me-3" />
-              Back to Templates
+      <div className="py-12">
+        <AdminPageHeader
+          title="Create New Question Template"
+          subtitle="Configure new question template texts, placeholders, operation, and difficulty level"
+        />
+
+        <div className="card border radius-12 shadow-none">
+          <div className="card-header border-bottom py-16 px-24 bg-base d-flex justify-content-between align-items-center flex-wrap gap-12">
+            <h6 className="fw-bold mb-0 text-dark">Create Template Form</h6>
+            <Link
+              to="/admin/question-templates"
+              className="btn btn-outline-secondary btn-sm radius-8 d-inline-flex align-items-center gap-6"
+            >
+              <Icon icon="mdi:arrow-left" />
+              <span>Back to Templates</span>
             </Link>
           </div>
 
-          <div className="card-body">
+          <div className="card-body p-24">
             {error && (
-              <div className="alert alert-danger">
-                <Icon icon="mdi:alert-circle" className="me-2" />
-                {error}
+              <div className="alert alert-danger d-flex align-items-center gap-2 mb-20 radius-8">
+                <Icon icon="mdi:alert-circle" className="text-xl flex-shrink-0" />
+                <div>{error}</div>
               </div>
             )}
 
             <form className="row gy-4" onSubmit={submit}>
               <div className="col-md-6">
-                <label className="form-label">
+                <label className="form-label text-sm fw-semibold text-dark">
                   Question (EN) <Required />
                 </label>
                 <textarea
-                  className="form-control"
+                  className="form-control radius-8"
                   placeholder="I have {a} {fruit} and get {b} more. How many do I have now?"
                   rows={4}
                   value={form.question_en}
                   onChange={onChange("question_en")}
                   required
                 />
-                <small className="text-muted d-block mt-1">
+                <small className="text-xs text-secondary-light d-block mt-6">
                   Use placeholders: <code>{`{a}`}</code> (first value), <code>{`{b}`}</code> (second value), <code>{`{fruit}`}</code> (dynamic name).
                 </small>
               </div>
 
               <div className="col-md-6">
-                <label className="form-label">
+                <label className="form-label text-sm fw-semibold text-dark">
                   Question (KH) <Required />
                 </label>
                 <textarea
-                  className="form-control"
+                  className="form-control radius-8"
                   placeholder="ខ្ញុំមាន {fruit} {a} ហើយទទួលបាន {b} ទៀត។ តើឥឡូវខ្ញុំមានប៉ុន្មាន?"
                   rows={4}
                   value={form.question_kh}
                   onChange={onChange("question_kh")}
                   required
                 />
-                <small className="text-muted d-block mt-1">
+                <small className="text-xs text-secondary-light d-block mt-6">
                   Use placeholders: <code>{`{a}`}</code>, <code>{`{b}`}</code>, <code>{`{fruit}`}</code>.
                 </small>
               </div>
 
               <div className="col-md-4">
-                <label className="form-label">Operation</label>
-                <select className="form-select" value={form.operation} onChange={onChange("operation")}>
+                <label className="form-label text-sm fw-semibold text-dark">Operation</label>
+                <select className="form-select radius-8" value={form.operation} onChange={onChange("operation")}>
                   <option value="add">Addition (+)</option>
                   <option value="sub">Subtraction (-)</option>
                   <option value="mul">Multiplication (×)</option>
@@ -134,8 +143,8 @@ const QuestionTemplateCreate = () => {
               </div>
 
               <div className="col-md-4">
-                <label className="form-label">Difficulty</label>
-                <select className="form-select" value={form.difficulty} onChange={onChange("difficulty")}>
+                <label className="form-label text-sm fw-semibold text-dark">Difficulty</label>
+                <select className="form-select radius-8" value={form.difficulty} onChange={onChange("difficulty")}>
                   <option value="easy">Easy (Addition / Subtraction)</option>
                   <option value="medium">Medium (Multiplication / Division)</option>
                   <option value="hard">Hard (Multi-step)</option>
@@ -151,16 +160,26 @@ const QuestionTemplateCreate = () => {
                     checked={!!form.is_active}
                     onChange={onChange("is_active")}
                   />
-                  <label className="form-check-label ms-2" htmlFor="isActive">
+                  <label className="form-check-label ms-2 text-sm text-dark" htmlFor="isActive">
                     Active (Available in game pool)
                   </label>
                 </div>
               </div>
 
-              <div className="col-12 d-flex justify-content-end gap-2 mt-24">
-                <button className="d-flex align-items-center btn btn-primary" type="submit" disabled={saving}>
-                  <Icon icon="mdi:plus" className="me-3" />
-                  {saving ? "Creating..." : "Create Template"}
+              <div className="col-12 d-flex justify-content-end gap-12 mt-24">
+                <Link
+                  to="/admin/question-templates"
+                  className="btn btn-outline-secondary radius-8 px-20"
+                >
+                  Cancel
+                </Link>
+                <button
+                  className="btn btn-primary radius-8 d-inline-flex align-items-center gap-6 px-20"
+                  type="submit"
+                  disabled={saving}
+                >
+                  <Icon icon="mdi:plus" />
+                  <span>{saving ? "Creating..." : "Create Template"}</span>
                 </button>
               </div>
             </form>
