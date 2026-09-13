@@ -25,6 +25,7 @@ const SchoolLayout = ({ children }) => {
   const showClassRooms = hasPermission("classrooms.view");
   const showStudents = hasPermission("children.view") || hasPermission("student.view");
   const showWorldManage = isSchoolAdmin || hasPermission("worlds.view") || hasPermission("world.view");
+  const showSubscription = isSchoolAdmin || isSuperAdmin || hasPermission("subscription.view") || hasPermission("billing.view");
 
   useEffect(() => {
     const p = location.pathname;
@@ -101,11 +102,24 @@ const SchoolLayout = ({ children }) => {
             <li>
               <NavLink
                 to="/school"
+                end
+                className={({ isActive }) => (isActive ? "active-page" : "")}
               >
                 <Icon icon="mdi:chart-timeline-variant" className="menu-icon" />
                 <span>Dashboard</span>
               </NavLink>
             </li>
+            {showSubscription && (
+              <li>
+                <NavLink
+                  to="/school/subscription"
+                  className={({ isActive }) => (isActive ? "active-page" : "")}
+                >
+                  <Icon icon="mdi:credit-card-outline" className="menu-icon" />
+                  <span>Subscription & Billing</span>
+                </NavLink>
+              </li>
+            )}
             {showTeacher && (
               <li>
                 <NavLink
@@ -154,18 +168,6 @@ const SchoolLayout = ({ children }) => {
               </li>
             )}
 
-            {/* Subscription & Billing (School Admin only) */}
-            {(isSchoolAdmin || isSuperAdmin) && (
-              <li>
-                <NavLink
-                  to="/school/subscription-billing"
-                  className={({ isActive }) => (isActive ? "active-page" : "")}
-                >
-                  <Icon icon="mdi:credit-card-outline" className="menu-icon" />
-                  <span>Subscription & Billing</span>
-                </NavLink>
-              </li>
-            )}
 
             {/* Manage Users / Roles / Permissions */}
             {(showManageUsers || showRoles || showPermissions) && (

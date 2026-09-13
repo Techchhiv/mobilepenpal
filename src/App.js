@@ -298,14 +298,15 @@ export default function App() {
         />
         <Route path="/view-profile" element={<Navigate to="/profile" replace />} />
         <Route
-          path="/school/subscription-billing"
+          path="/school/subscription"
           element={
             <Gate>
               <SchoolSubscriptionBillingPage />
             </Gate>
           }
         />
-        <Route path="/school/billing" element={<Navigate to="/school/subscription-billing" replace />} />
+        <Route path="/school/subscription-billing" element={<Navigate to="/school/subscription" replace />} />
+        <Route path="/school/billing" element={<Navigate to="/school/subscription" replace />} />
 
         {/* ---------- School Routes ---------- */}
         <Route
