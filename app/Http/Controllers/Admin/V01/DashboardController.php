@@ -5,10 +5,12 @@ namespace App\Http\Controllers\Admin\V01;
 use App\Http\Controllers\Controller;
 use App\Models\Classroom;
 use App\Models\Expense;
+use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\School;
 use App\Models\Student;
 use App\Models\StudentExerciseAttempt;
+use App\Models\Subscription;
 use App\Models\Teacher;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -203,6 +205,34 @@ class DashboardController extends Controller
                 'expiring_subscriptions' => $expiringSubscriptions,
                 'recent_activities' => $recentActivities,
             ]
+        ]);
+    }
+
+    /**
+     * Get summary counts for Needs Attention section on Admin Dashboard
+     */
+    public function needsAttention(Request $request)
+    {
+        $now = Carbon::now();
+
+        // 1. Subscriptions expiring within the next 30 days
+        $expiringSubscriptions = Subscription::where('active', true)
+            ->whereBetween('end_date', [$now->copy()->startOfDay(), $now->copy()->addDays(30)->endOfDay()])
+            ->count();
+
+        // 2. Unpaid or pending invoices
+        $unpaidInvoices = Invoice::whereIn('status', ['unpaid', 'pending'])->count();
+
+        // 3. Failed payments
+        $failedPayments = Payment::where('status', 'failed')->count();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'expiring_subscriptions' => $expiringSubscriptions,
+                'unpaid_invoices'        => $unpaidInvoices,
+                'failed_payments'        => $failedPayments,
+            ],
         ]);
     }
 }

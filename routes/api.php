@@ -64,6 +64,7 @@ Route::middleware('auth:api')->group(function () {
     Route::prefix('admin')->name('admin.')->group(function () {
         // Admin Dashboard
         Route::get('/dashboard', [AdminDashboardController::class, 'index']);
+        Route::get('/dashboard/needs-attention', [AdminDashboardController::class, 'needsAttention']);
 
         // Expenses CRUD
         Route::middleware(['permission:billing.view|menu.payments'])->group(function () {
