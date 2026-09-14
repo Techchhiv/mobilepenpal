@@ -27,8 +27,8 @@ class SubscriptionBillingService
         $setting = SystemSetting::find('subscription');
         $data = $setting && is_array($setting->value) ? $setting->value : [];
 
-        $legacyPrice = (float) ($data['price'] ?? 5.0);
-        $legacyDiscount = (float) ($data['discount'] ?? 50);
+        $legacyPrice = (float) ($data['monthly_price'] ?? ($data['price'] ?? 5.0));
+        $legacyDiscount = (float) ($data['monthly_discount'] ?? ($data['discount'] ?? 50));
 
         // Fallback defaults matching SystemSettingSeeder ($5 with 50% discount = $2.50/month, $50 with 60% discount = $20.00/year, 0% tax)
         return array_merge([

@@ -31,14 +31,15 @@ class SystemSettingController extends Controller
         $payload = $request->input('value');
 
         if ($key === 'subscription' && is_array($payload)) {
-            if (isset($payload['monthly_price']) && !isset($payload['price'])) {
+            if (isset($payload['monthly_price'])) {
                 $payload['price'] = $payload['monthly_price'];
-            } elseif (isset($payload['price']) && !isset($payload['monthly_price'])) {
+            } elseif (isset($payload['price'])) {
                 $payload['monthly_price'] = $payload['price'];
             }
-            if (isset($payload['monthly_discount']) && !isset($payload['discount'])) {
+
+            if (isset($payload['monthly_discount'])) {
                 $payload['discount'] = $payload['monthly_discount'];
-            } elseif (isset($payload['discount']) && !isset($payload['monthly_discount'])) {
+            } elseif (isset($payload['discount'])) {
                 $payload['monthly_discount'] = $payload['discount'];
             }
         }
