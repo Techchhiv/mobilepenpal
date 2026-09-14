@@ -108,9 +108,9 @@ Route::middleware('auth:api')->group(function () {
             Route::get('/subscriptions/students', [AdminSubscriptionController::class, 'students']);
             Route::get('/subscriptions/active', [AdminSubscriptionController::class, 'active']);
 
-            // Legacy route — now proxied through billing service so it also creates invoices
-            Route::get('/schools/{school}/subscriptions', [SubscriptionController::class, 'index']);
-            Route::post('/schools/{school}/subscriptions', [SubscriptionController::class, 'store']);
+            // Legacy route (deprecated) — replaced by /admin/subscriptions/school/{schoolId}/*
+            // Route::get('/schools/{school}/subscriptions', [SubscriptionController::class, 'index']);
+            // Route::post('/schools/{school}/subscriptions', [SubscriptionController::class, 'store']);
         });
 
         // ── Invoice Routes (billing.view / billing.void_invoice) ──────────────

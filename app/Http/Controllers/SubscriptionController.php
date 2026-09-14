@@ -6,15 +6,21 @@ use App\Models\Subscription;
 use App\Models\School;
 use Illuminate\Http\Request;
 
+/**
+ * Class SubscriptionController
+ *
+ * @deprecated Deprecated legacy payment/subscription controller.
+ * All school and user subscription actions are now handled via:
+ * App\Http\Controllers\Admin\V01\SubscriptionController and SubscriptionBillingService.
+ */
 class SubscriptionController extends Controller
 {
- public function __construct()
-{
-    $this->middleware('auth:api');
-   
-}
+    public function __construct()
+    {
+        $this->middleware('auth:api');
+    }
 
-    
+    /*
     public function index(School $school)
     {
         return response()->json($school->subscriptions()->latest()->get());
@@ -45,4 +51,5 @@ class SubscriptionController extends Controller
             'subscription'  => $subscription,
         ], 201);
     }
+    */
 }
