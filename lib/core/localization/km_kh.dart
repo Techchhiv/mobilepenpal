@@ -172,6 +172,7 @@ final Map<String, String> kmKH = {
   'profile_updated_successfully': 'បានអាប់ដេតប្រវត្តិរូបដោយជោគជ័យ',
   'failed_to_update_profile': 'មិនអាចអាប់ដេតប្រវត្តិរូប',
   'an_error_occurred': 'មានកំហុសមួយបានកើតឡើង',
+  'something_went_wrong': 'មានបញ្ហាមួយបានកើតឡើង សូមព្យាយាមម្តងទៀត',
   'first_name_is_required': 'តម្រូវឲ្យមានគោត្តនាម',
   'first_name_cannot_exceed_100_characters': 'គោត្តនាមមិនអាចលើសពី ១០០ តួអក្សរ',
   'last_name_cannot_exceed_100_characters': 'នាមមិនអាចលើសពី ១០០ តួអក្សរ',

@@ -1,201 +1,252 @@
-// import 'package:flutter/material.dart';
-// import 'package:get/get.dart';
-// import 'package:get_storage/get_storage.dart';
-// import 'package:mobilepenpal/core/theme/app_colors.dart';
-// import 'package:mobilepenpal/data/services/firebase_service.dart';
-// import 'package:mobilepenpal/data/services/auth_service.dart';
-// import 'package:mobilepenpal/presentation/widgets/loading_model.dart';
+import 'dart:async';
+import 'dart:developer' as dev;
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
+import 'package:mobilepenpal/core/theme/app_colors.dart';
+import 'package:mobilepenpal/data/services/analytics_service.dart';
+import 'package:mobilepenpal/data/services/auth_service.dart';
+import 'package:mobilepenpal/data/services/firebase_service.dart';
+import 'package:mobilepenpal/presentation/routes/app_routes.dart';
+import 'package:mobilepenpal/presentation/widgets/app_snackbar.dart';
 
-// class OtpController extends GetxController {
-//   final FirebaseService _firebaseService = Get.find<FirebaseService>();
-//   final AuthService _authService = Get.find<AuthService>();
-//   final _box = GetStorage();
+class OtpController extends GetxController {
+  final FirebaseService _firebaseService = Get.find<FirebaseService>();
+  final AuthService _authService = AuthService();
 
-//   final RxString otpCode = ''.obs;
-//   final RxBool isLoading = false.obs;
-//   final RxBool hasError = false.obs;
-//   final RxInt countdown = 60.obs;
-//   final RxBool canResend = false.obs;
-//   final RxString countdownText = "".obs;
+  final RxString otpCode = ''.obs;
+  final RxBool isLoading = false.obs;
+  final RxBool hasError = false.obs;
+  final RxInt countdown = 60.obs;
+  final RxBool canResend = false.obs;
+  final RxString countdownText = "".obs;
 
-//   String get phoneNumber {
-//     final phone = _box.read('user_phone');
-//     return phone ?? '';
-//   }
+  final RxString verificationId = ''.obs;
+  final RxString phoneNumber = ''.obs;
+  Map<String, dynamic> registrationData = {};
 
-//   @override
-//   void onInit() {
-//     super.onInit();
-//     _updateCountdownText();
-//     startCountdown();
-//   }
+  Timer? _timer;
 
-//   void onOtpChanged(String code) {
-//     otpCode.value = code;
-//     hasError.value = false;
-//   }
+  @override
+  void onInit() {
+    super.onInit();
+    _loadArguments();
+    _updateCountdownText();
+    startCountdown();
+  }
 
-//   Future<void> verifyOtp() async {
-//     if (otpCode.value.length != 6) return;
+  void _loadArguments() {
+    final args = Get.arguments;
+    if (args is Map<String, dynamic>) {
+      registrationData = args;
+      verificationId.value = args['verificationId'] ?? '';
+      phoneNumber.value = args['phone'] ?? '';
+    } else if (args is Map) {
+      registrationData = Map<String, dynamic>.from(args);
+      verificationId.value = args['verificationId']?.toString() ?? '';
+      phoneNumber.value = args['phone']?.toString() ?? '';
+    }
 
-//     if (phoneNumber.isEmpty) {
-//       Get.snackbar(
-//         'error'.tr,
-//         'Phone number not found. Please login again.',
-//         backgroundColor: Colors.red,
-//         colorText: Colors.white,
-//       );
-//       return;
-//     }
+    if (verificationId.isEmpty) {
+      verificationId.value = _firebaseService.verificationId.value;
+    }
+  }
 
-//     try {
-//       isLoading.value = true;
-//       hasError.value = false;
+  void onOtpChanged(String code) {
+    otpCode.value = code;
+    hasError.value = false;
+  }
 
-//       Get.dialog(
-//         const LoadingModal(message: 'Verifying...'),
-//         barrierDismissible: false,
-//         barrierColor: Colors.transparent,
-//       );
+  Future<void> verifyOtp() async {
+    if (isLoading.value) return;
+    if (otpCode.value.trim().length != 6) {
+      hasError.value = true;
+      return;
+    }
 
-//       final user = await _firebaseService.verifyOtp(otpCode.value);
+    try {
+      isLoading.value = true;
+      hasError.value = false;
 
-//       if (user != null) {
-//         final idToken = await user.getIdToken();
+      // 1. Verify OTP with Firebase
+      final user = await _firebaseService.verifyOtp(
+        smsCode: otpCode.value.trim(),
+        customVerificationId: verificationId.value,
+      );
 
-//         final response = await _authService.verifyOtpAndGetToken(
-//           phone: phoneNumber,
-//           firebaseToken: idToken,
-//         );
+      if (user == null) {
+        throw Exception('invalid_otp_code'.tr);
+      }
 
-//         if (response.code == 200) {
-//           if (Get.isDialogOpen ?? false) {
-//             Get.back();
-//           }
+      dev.log('Firebase phone verification successful for user: ${user.uid}', name: 'OtpController');
 
-//           Get.dialog(
-//             const LoadingModal(message: 'Success!', isSuccess: true),
-//             barrierDismissible: false,
-//             barrierColor: Colors.transparent,
-//           );
+      // 2. Finalize account registration on backend
+      final studentFirstName = registrationData['studentFirstName'] as String? ?? '';
+      final studentLastName = registrationData['studentLastName'] as String?;
+      final parentFirstName = registrationData['parentFirstName'] as String? ?? '';
+      final parentLastName = registrationData['parentLastName'] as String? ?? '';
+      final phone = registrationData['phone'] as String? ?? phoneNumber.value;
+      final email = registrationData['email'] as String?;
+      final password = registrationData['password'] as String? ?? '';
 
-//           await Future.delayed(const Duration(seconds: 1));
+      final response = await _authService.registerParent(
+        studentFirstName: studentFirstName,
+        studentLastName: studentLastName,
+        parentFirstName: parentFirstName,
+        parentLastName: parentLastName,
+        phone: phone.isNotEmpty ? phone : null,
+        email: (email != null && email.isNotEmpty) ? email : null,
+        password: password,
+      );
 
-//           if (Get.isDialogOpen ?? false) {
-//             Get.back();
-//           }
+      if (response.code == 200) {
+        await GetStorage().write('is_logged_in', true);
+        await GetStorage().write('has_token', true);
 
-//           Get.offAllNamed('/home');
-//         } else {
-//           _handleError(response.message);
-//         }
-//       } else {
-//         _handleError('invalid_otp_code'.tr);
-//       }
-//     } catch (e) {
-//       _handleError('verification_failed'.tr);
-//     } finally {
-//       isLoading.value = false;
-//     }
-//   }
+        if (Get.isRegistered<AnalyticsService>()) {
+          Get.find<AnalyticsService>().logSignUp(signUpMethod: 'phone');
+        }
 
-//   void _handleError(String errorMessage) {
-//     hasError.value = true;
+        Get.offAllNamed(AppRoutes.home);
 
-//     if (Get.isDialogOpen ?? false) {
-//       Get.back();
-//     }
+        AppSnackbar.show(
+          'welcome'.tr,
+          title: 'success'.tr,
+          backgroundColor: Colors.green,
+        );
+      } else {
+        hasError.value = true;
+        String errorMessage = '';
 
-//     Get.snackbar(
-//       'error'.tr,
-//       errorMessage,
-//       backgroundColor: Colors.red,
-//       colorText: Colors.white,
-//     );
-//   }
+        if (response.fieldErrors != null && response.fieldErrors!.isNotEmpty) {
+          for (var list in response.fieldErrors!.values) {
+            if (list.isNotEmpty) {
+              errorMessage = list.first;
+              break;
+            }
+          }
+        }
+        if (errorMessage.isEmpty && response.errors != null && response.errors!.isNotEmpty) {
+          errorMessage = response.errors!.first;
+        }
+        if (errorMessage.isEmpty) {
+          errorMessage = response.message;
+        }
 
-//   Future<void> resendOtp() async {
-//     if (!canResend.value) return;
+        AppSnackbar.show(
+          errorMessage.isNotEmpty ? errorMessage : 'an_error_occurred'.tr,
+          title: 'error'.tr,
+          backgroundColor: Colors.red,
+        );
+      }
+    } catch (e) {
+      hasError.value = true;
+      final message = e.toString().replaceFirst('Exception: ', '');
+      AppSnackbar.show(
+        message.isNotEmpty ? message : 'verification_failed'.tr,
+        title: 'error'.tr,
+        backgroundColor: Colors.red,
+      );
+    } finally {
+      isLoading.value = false;
+    }
+  }
 
-//     if (phoneNumber.isEmpty) {
-//       Get.snackbar(
-//         'error'.tr,
-//         'Phone number not found. Please login again.',
-//         backgroundColor: Colors.red,
-//         colorText: Colors.white,
-//       );
-//       return;
-//     }
+  Future<void> resendOtp() async {
+    if (!canResend.value || isLoading.value) return;
 
-//     try {
-//       countdown.value = 60;
-//       canResend.value = false;
-//       _updateCountdownText();
+    final phone = phoneNumber.value;
+    if (phone.isEmpty) {
+      AppSnackbar.show(
+        'Phone number not found. Please register again.',
+        title: 'error'.tr,
+        backgroundColor: Colors.red,
+      );
+      return;
+    }
 
-//       final error = await _firebaseService.sendOtp(phoneNumber);
+    try {
+      canResend.value = false;
+      countdown.value = 60;
+      _updateCountdownText();
 
-//       if (error == null) {
-//         Get.snackbar(
-//           'info'.tr,
-//           'otp_resent_successfully'.tr,
-//           backgroundColor: Colors.blue[50],
-//           colorText: AppColors.primary,
-//         );
-//         startCountdown();
-//       } else {
-//         Get.snackbar(
-//           'error'.tr,
-//           error,
-//           backgroundColor: Colors.red,
-//           colorText: Colors.white,
-//         );
-//         canResend.value = true;
-//         _updateCountdownText();
-//       }
-//     } catch (e) {
-//       Get.snackbar(
-//         'error'.tr,
-//         'failed_to_resend_otp'.tr,
-//         backgroundColor: Colors.red,
-//         colorText: Colors.white,
-//       );
-//       canResend.value = true;
-//       _updateCountdownText();
-//     }
-//   }
+      await _firebaseService.sendOtp(
+        phoneNumber: phone,
+        onCodeSent: (newVerificationId) {
+          verificationId.value = newVerificationId;
+          startCountdown();
+          AppSnackbar.show(
+            'otp_resent_successfully'.tr,
+            title: 'success'.tr,
+            backgroundColor: AppColors.primary,
+          );
+        },
+        onError: (error) {
+          canResend.value = true;
+          _updateCountdownText();
+          AppSnackbar.show(
+            error,
+            title: 'error'.tr,
+            backgroundColor: Colors.red,
+          );
+        },
+        onAutoVerify: (credential) async {
+          dev.log('Auto verified during resend', name: 'OtpController');
+        },
+      );
+    } catch (e) {
+      canResend.value = true;
+      _updateCountdownText();
+      AppSnackbar.show(
+        'failed_to_resend_otp'.tr,
+        title: 'error'.tr,
+        backgroundColor: Colors.red,
+      );
+    }
+  }
 
-//   void startCountdown() {
-//     canResend.value = false;
-//     countdown.value = 60;
-//     _updateCountdownText();
+  void startCountdown() {
+    _timer?.cancel();
+    canResend.value = false;
+    countdown.value = 60;
+    _updateCountdownText();
 
-//     _runCountdown();
-//   }
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (countdown.value > 0) {
+        countdown.value--;
+        _updateCountdownText();
+      } else {
+        canResend.value = true;
+        _updateCountdownText();
+        timer.cancel();
+      }
+    });
+  }
 
-//   void _runCountdown() {
-//     if (countdown.value > 0) {
-//       Future.delayed(const Duration(seconds: 1), () {
-//         countdown.value--;
-//         _updateCountdownText();
-//         _runCountdown();
-//       });
-//     } else {
-//       canResend.value = true;
-//       _updateCountdownText();
-//     }
-//   }
+  void _updateCountdownText() {
+    if (canResend.value) {
+      countdownText.value = "resend".tr;
+    } else {
+      countdownText.value = "${'resend_in'.tr} ${countdown.value}s";
+    }
+  }
 
-//   void _updateCountdownText() {
-//     if (canResend.value) {
-//       countdownText.value = "resend".tr;
-//     } else {
-//       countdownText.value = "${'resend_in'.tr} ${countdown.value}s";
-//     }
-//   }
+  String get maskedPhoneNumber {
+    final raw = phoneNumber.value.trim();
+    if (raw.isEmpty) return '';
 
-//   String get maskedPhoneNumber {
-//     if (phoneNumber.isEmpty || phoneNumber.length < 4) return phoneNumber;
-//     final lastFour = phoneNumber.substring(phoneNumber.length - 3);
-//     return '+855 ••• ••• $lastFour';
-//   }
-// }
+    // If already international format or national format, show formatted masked
+    final digits = raw.replaceAll(RegExp(r'\D'), '');
+    if (digits.length >= 7) {
+      final lastFour = digits.substring(digits.length - 3);
+      return '+855 ••• ••• $lastFour';
+    }
+    return raw;
+  }
+
+  @override
+  void onClose() {
+    _timer?.cancel();
+    super.onClose();
+  }
+}

@@ -5,7 +5,7 @@ import 'package:mobilepenpal/core/network/api_client.dart';
 import 'package:mobilepenpal/data/controllers/auth/network_controller.dart';
 import 'package:mobilepenpal/data/controllers/world/world_controller.dart';
 import 'package:mobilepenpal/data/services/analytics_service.dart';
-// import 'package:mobilepenpal/data/services/firebase_service.dart';
+import 'package:mobilepenpal/data/services/firebase_service.dart';
 
 class AppBinding extends Bindings {
   @override
@@ -16,6 +16,6 @@ class AppBinding extends Bindings {
     Get.put(WorldController(), permanent: true);
     Get.lazyPut<ApiClient>(() => ApiClient(), fenix: true);
     //  Get.put<OnnxHandwritingEngine>(OnnxHandwritingEngine(), permanent: true);
-    // Get.lazyPut<FirebaseService>(() => FirebaseService(), fenix: true);
+    Get.lazyPut<FirebaseService>(() => FirebaseService(), fenix: true);
   }
 }

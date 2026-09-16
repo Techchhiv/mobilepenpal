@@ -13,6 +13,8 @@ import 'package:mobilepenpal/core/middleware/auth_middleware.dart';
 import 'package:mobilepenpal/presentation/screens/auth/login_page.dart';
 import 'package:mobilepenpal/presentation/screens/auth/offline_page.dart';
 import 'package:mobilepenpal/presentation/screens/auth/register_page.dart';
+import 'package:mobilepenpal/core/bindings/otp_binding.dart';
+import 'package:mobilepenpal/presentation/screens/auth/otp_verification_page.dart';
 import 'package:mobilepenpal/presentation/screens/auth/splash_page.dart';
 import 'package:mobilepenpal/presentation/screens/classroom/classroom_page.dart';
 import 'package:mobilepenpal/presentation/screens/home/home_page.dart';
@@ -52,11 +54,11 @@ class AppPages {
       page: () => const RegisterPage(),
       binding: RegisterBinding(),
     ),
-    // GetPage(
-    //   name: AppRoutes.otp,
-    //   page: () => OtpVerificationPage(),
-    //   binding: OtpBinding(),
-    // ),
+    GetPage(
+      name: AppRoutes.otp,
+      page: () => OtpVerificationPage(),
+      binding: OtpBinding(),
+    ),
     GetPage(name: AppRoutes.offline, page: () => const OfflinePage()),
 
     GetPage(

@@ -167,6 +167,7 @@ final Map<String, String> enUS = {
   'profile_updated_successfully': 'Profile updated successfully',
   'failed_to_update_profile': 'Failed to update profile',
   'an_error_occurred': 'An error occurred',
+  'something_went_wrong': 'Something went wrong. Please try again.',
   'first_name_is_required': 'First name is required',
   'first_name_cannot_exceed_100_characters':
       'First name cannot exceed 100 characters',

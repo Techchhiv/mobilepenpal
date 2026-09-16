@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:mobilepenpal/data/services/analytics_service.dart';
 import 'package:mobilepenpal/data/services/auth_service.dart';
+import 'package:mobilepenpal/data/services/firebase_service.dart';
 import 'package:mobilepenpal/presentation/routes/app_routes.dart';
 import 'package:mobilepenpal/presentation/widgets/app_snackbar.dart';
 
@@ -262,11 +263,51 @@ class RegisterController extends GetxController {
     }
 
     try {
-      isLoading.value = true;
-
       final registeredEmail = emailController.text.trim();
       final registeredPhone = phoneController.text.trim();
       final rawPassword = passwordController.text;
+
+      // When registering via phone, verify ownership using Firebase Phone OTP first
+      if (registerMethod.value == 'phone' && registeredPhone.isNotEmpty) {
+        isLoading.value = true;
+        final firebaseService = Get.find<FirebaseService>();
+
+        await firebaseService.sendOtp(
+          phoneNumber: registeredPhone,
+          onCodeSent: (verificationId) {
+            isLoading.value = false;
+            Get.toNamed(
+              AppRoutes.otp,
+              arguments: {
+                'verificationId': verificationId,
+                'phone': registeredPhone,
+                'studentFirstName': studentFirstNameController.text.trim(),
+                'studentLastName': studentLastNameController.text.trim().isEmpty
+                    ? null
+                    : studentLastNameController.text.trim(),
+                'parentFirstName': parentFirstNameController.text.trim(),
+                'parentLastName': parentLastNameController.text.trim(),
+                'email': registeredEmail.isEmpty ? null : registeredEmail,
+                'password': rawPassword,
+              },
+            );
+          },
+          onError: (error) {
+            isLoading.value = false;
+            AppSnackbar.show(
+              error,
+              title: 'error'.tr,
+              backgroundColor: Colors.red,
+            );
+          },
+          onAutoVerify: (credential) async {
+            dev.log('Auto verification detected in registration', name: 'RegisterController');
+          },
+        );
+        return;
+      }
+
+      isLoading.value = true;
 
       final response = await _authService.registerParent(
         studentFirstName: studentFirstNameController.text.trim(),
