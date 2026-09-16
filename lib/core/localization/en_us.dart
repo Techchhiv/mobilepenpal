@@ -91,6 +91,10 @@ final Map<String, String> enUS = {
   'phone_already_registered': 'This phone number is already registered. Please log in.',
   'email_already_registered': 'This email is already registered. Please log in.',
   'user_already_exists': 'This account already exists. Please log in.',
+  'incomplete_verification_title': 'Incomplete Phone Verification',
+  'incomplete_verification_message':
+      'You previously started registering with this phone number but have not completed SMS verification yet. Would you like to verify now?',
+  'verify_now': 'Verify Now',
   'too_many_requests': 'Too many attempts. Please wait a moment and try again.',
   'back_to_login': 'Back to Login',
   'firebase_warning': 'Firebase Warning',

@@ -18,7 +18,7 @@ class OtpController extends GetxController {
   final RxString otpCode = ''.obs;
   final RxBool isLoading = false.obs;
   final RxBool hasError = false.obs;
-  final RxInt countdown = 60.obs;
+  final RxInt countdown = 120.obs;
   final RxBool canResend = false.obs;
   final RxString countdownText = "".obs;
 
@@ -101,6 +101,7 @@ class OtpController extends GetxController {
       );
 
       if (response.code == 200) {
+        await GetStorage().remove('pending_registration');
         await GetStorage().write('is_logged_in', true);
         await GetStorage().write('has_token', true);
 
@@ -168,7 +169,7 @@ class OtpController extends GetxController {
 
     try {
       canResend.value = false;
-      countdown.value = 60;
+      countdown.value = 120;
       _updateCountdownText();
 
       await _firebaseService.sendOtp(
@@ -209,7 +210,7 @@ class OtpController extends GetxController {
   void startCountdown() {
     _timer?.cancel();
     canResend.value = false;
-    countdown.value = 60;
+    countdown.value = 120;
     _updateCountdownText();
 
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -228,7 +229,11 @@ class OtpController extends GetxController {
     if (canResend.value) {
       countdownText.value = "resend".tr;
     } else {
-      countdownText.value = "${'resend_in'.tr} ${countdown.value}s";
+      final minutes = countdown.value ~/ 60;
+      final seconds = countdown.value % 60;
+      final formattedTime =
+          '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+      countdownText.value = "${'resend_in'.tr} ($formattedTime)";
     }
   }
 

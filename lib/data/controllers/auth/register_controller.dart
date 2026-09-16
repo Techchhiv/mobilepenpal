@@ -343,20 +343,26 @@ class RegisterController extends GetxController {
           phoneNumber: registeredPhone,
           onCodeSent: (verificationId) {
             isLoading.value = false;
+
+            final regData = {
+              'verificationId': verificationId,
+              'phone': registeredPhone,
+              'studentFirstName': studentFirstNameController.text.trim(),
+              'studentLastName': studentLastNameController.text.trim().isEmpty
+                  ? null
+                  : studentLastNameController.text.trim(),
+              'parentFirstName': parentFirstNameController.text.trim(),
+              'parentLastName': parentLastNameController.text.trim(),
+              'email': registeredEmail.isEmpty ? null : registeredEmail,
+              'password': rawPassword,
+              'createdAt': DateTime.now().millisecondsSinceEpoch,
+            };
+
+            GetStorage().write('pending_registration', regData);
+
             Get.toNamed(
               AppRoutes.otp,
-              arguments: {
-                'verificationId': verificationId,
-                'phone': registeredPhone,
-                'studentFirstName': studentFirstNameController.text.trim(),
-                'studentLastName': studentLastNameController.text.trim().isEmpty
-                    ? null
-                    : studentLastNameController.text.trim(),
-                'parentFirstName': parentFirstNameController.text.trim(),
-                'parentLastName': parentLastNameController.text.trim(),
-                'email': registeredEmail.isEmpty ? null : registeredEmail,
-                'password': rawPassword,
-              },
+              arguments: regData,
             );
           },
           onError: (error) {
@@ -491,6 +497,7 @@ class RegisterController extends GetxController {
 
     isSubmitted.value = false;
     _clearFieldErrors();
+    GetStorage().remove('pending_registration');
   }
 
   @override

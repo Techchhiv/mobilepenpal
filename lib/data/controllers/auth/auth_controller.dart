@@ -5,10 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:mobilepenpal/core/network/api_client.dart';
+import 'package:mobilepenpal/core/theme/app_colors.dart';
 import 'package:mobilepenpal/data/models/country_code.dart';
 import 'package:mobilepenpal/data/models/student/student.dart';
 import 'package:mobilepenpal/data/services/analytics_service.dart';
 import 'package:mobilepenpal/data/services/auth_service.dart';
+import 'package:mobilepenpal/data/services/firebase_service.dart';
 import 'package:mobilepenpal/presentation/routes/app_routes.dart';
 import 'package:mobilepenpal/presentation/widgets/app_snackbar.dart';
 import 'package:mobilepenpal/presentation/widgets/auth/unverified_email_dialog.dart';
@@ -291,6 +293,75 @@ class AuthController extends GetxController {
           login(confirm: true);
         }
       } else {
+        // If login failed on phone tab, check if user has an incomplete registration for this phone
+        final pending = GetStorage().read('pending_registration');
+        if (isPhoneTab && pending is Map) {
+          final draftPhone = pending['phone']?.toString() ?? '';
+          final createdAt = pending['createdAt'] as int? ?? 0;
+          final isNotExpired =
+              DateTime.now().millisecondsSinceEpoch - createdAt < 24 * 60 * 60 * 1000;
+
+          if (draftPhone.isNotEmpty && draftPhone == input && isNotExpired) {
+            isLoading.value = false;
+            final proceed = await showConfirmModal<bool>(
+              dismissible: true,
+              modal: ConfirmModal<bool>(
+                icon: const Icon(
+                  Icons.phone_android_rounded,
+                  color: Colors.orange,
+                  size: 28,
+                ),
+                title: Text('incomplete_verification_title'.tr),
+                primaryText: 'verify_now'.tr,
+                secondaryText: 'cancel'.tr,
+                primaryColor: AppColors.primary,
+                primaryTextColor: Colors.white,
+                secondaryTextColor: const Color(0xFF111827),
+                showCloseButton: true,
+                primaryResult: true,
+                secondaryResult: false,
+                body: Text(
+                  'incomplete_verification_message'.tr,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFF4B5563),
+                    height: 1.5,
+                  ),
+                ),
+              ),
+            );
+
+            if (proceed == true) {
+              isLoading.value = true;
+              final firebaseService = Get.find<FirebaseService>();
+              await firebaseService.sendOtp(
+                phoneNumber: draftPhone,
+                onCodeSent: (newVerificationId) {
+                  isLoading.value = false;
+                  final regData = Map<String, dynamic>.from(pending);
+                  regData['verificationId'] = newVerificationId;
+                  GetStorage().write('pending_registration', regData);
+
+                  Get.toNamed(
+                    AppRoutes.otp,
+                    arguments: regData,
+                  );
+                },
+                onError: (error) {
+                  isLoading.value = false;
+                  AppSnackbar.show(
+                    error,
+                    title: 'error'.tr,
+                    backgroundColor: Colors.red,
+                  );
+                },
+              );
+              return;
+            }
+            return;
+          }
+        }
+
         AppSnackbar.show(
           response.message,
           title: "error".tr,
