@@ -28,12 +28,95 @@ class AuthController extends Controller
         //     ->createAuth();
     }
 
+    private function findStudentByPhone(string $phone): ?Student
+    {
+        $cleanPhone = preg_replace('/[^\d+]/', '', $phone);
+
+        return Student::where(function ($query) use ($phone, $cleanPhone) {
+            $query->where('phone', $phone)
+                  ->orWhere('phone', $cleanPhone);
+            try {
+                $phoneUtil = \libphonenumber\PhoneNumberUtil::getInstance();
+                $proto = $phoneUtil->parse($cleanPhone, 'KH');
+                if ($phoneUtil->isValidNumber($proto)) {
+                    $e164 = $phoneUtil->format($proto, \libphonenumber\PhoneNumberFormat::E164);
+                    $national = '0' . $proto->getNationalNumber();
+                    $nationalRaw = (string)$proto->getNationalNumber();
+                    $query->orWhere('phone', $e164)
+                          ->orWhere('phone', $national)
+                          ->orWhere('phone', $nationalRaw);
+                }
+            } catch (\Exception $e) {
+                // Ignore parsing errors
+            }
+        })->first();
+    }
+
+    public function checkExists(Request $request): JsonResponse
+    {
+        $phone = trim($request->input('phone') ?? '');
+        $email = trim($request->input('email') ?? '');
+
+        if (empty($phone) && empty($email)) {
+            return $this->returnError(__('messages.validation_error'), 422);
+        }
+
+        // 1. Check phone if provided
+        if (!empty($phone)) {
+            $existingStudent = $this->findStudentByPhone($phone);
+            if ($existingStudent) {
+                return response()->json([
+                    'code' => 409,
+                    'message' => __('messages.phone_already_registered'),
+                    'data' => null,
+                    'errors' => [
+                        'phone' => [__('messages.phone_already_registered')]
+                    ],
+                    'timestamp' => \Carbon\Carbon::now()->toDateTimeString(),
+                ], 409);
+            }
+        }
+
+        // 2. Check email if provided
+        if (!empty($email)) {
+            $emailExists = Student::where('email', strtolower($email))->exists();
+            if ($emailExists) {
+                return response()->json([
+                    'code' => 409,
+                    'message' => __('messages.email_already_registered'),
+                    'data' => null,
+                    'errors' => [
+                        'email' => [__('messages.email_already_registered')]
+                    ],
+                    'timestamp' => \Carbon\Carbon::now()->toDateTimeString(),
+                ], 409);
+            }
+        }
+
+        return $this->returnSuccess(__('messages.user_available'), ['exists' => false]);
+    }
+
     public function register(RegisterRequest $request): JsonResponse
     {
         $validated = $request->validated();
 
         if (!empty($validated['phone']) && !isValidPhone($validated['phone'])) {
             return $this->returnError(__('messages.valid_phone_number'), 422);
+        }
+
+        if (!empty($validated['phone'])) {
+            $existingStudent = $this->findStudentByPhone($validated['phone']);
+            if ($existingStudent) {
+                return response()->json([
+                    'code' => 422,
+                    'message' => __('messages.phone_already_registered'),
+                    'data' => null,
+                    'errors' => [
+                        'phone' => [__('messages.phone_already_registered')]
+                    ],
+                    'timestamp' => \Carbon\Carbon::now()->toDateTimeString(),
+                ], 422);
+            }
         }
 
         $validated['school_id'] = $validated['school_id'] ?? null;
@@ -74,22 +157,7 @@ class AuthController extends Controller
                 $student = Student::where('email', $email)->first();
             } else {
                 // Otherwise try phone lookup first
-                $phone = $loginInput;
-                $student = Student::where(function ($query) use ($phone) {
-                    $query->where('phone', $phone);
-                    try {
-                        $phoneUtil = \libphonenumber\PhoneNumberUtil::getInstance();
-                        $proto = $phoneUtil->parse($phone, 'KH');
-                        if ($phoneUtil->isValidNumber($proto)) {
-                            $e164 = $phoneUtil->format($proto, \libphonenumber\PhoneNumberFormat::E164);
-                            $national = '0' . $proto->getNationalNumber();
-                            $query->orWhere('phone', $e164)
-                                  ->orWhere('phone', $national);
-                        }
-                    } catch (\Exception $e) {
-                        // Ignore parsing errors
-                    }
-                })->first();
+                $student = $this->findStudentByPhone($loginInput);
             }
 
             // Fallback lookup across both columns if specific lookup yielded no student

@@ -32,4 +32,7 @@ return [
     'not_found' => 'Not Found',
     'an_error_occurred' => 'An Error Occurred',
     'student_inactive' => 'Your account has been deactivated. Please contact admin.',
+    'phone_already_registered' => 'This phone number is already registered. Please log in.',
+    'email_already_registered' => 'This email is already registered. Please log in.',
+    'user_available' => 'User available for registration.',
 ];
