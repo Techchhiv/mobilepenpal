@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:mobilepenpal/core/theme/app_colors.dart';
+import 'package:mobilepenpal/data/models/country_code.dart';
 import 'package:mobilepenpal/data/services/analytics_service.dart';
 import 'package:mobilepenpal/data/services/auth_service.dart';
 import 'package:mobilepenpal/data/services/firebase_service.dart';
@@ -235,11 +236,25 @@ class OtpController extends GetxController {
     final raw = phoneNumber.value.trim();
     if (raw.isEmpty) return '';
 
-    // If already international format or national format, show formatted masked
+    String prefix = '+855';
+    if (raw.startsWith('+')) {
+      final digits = raw.substring(1);
+      for (int len = 4; len >= 1; len--) {
+        if (digits.length >= len) {
+          final candidate = '+${digits.substring(0, len)}';
+          final match = CountryCode.allCountries.firstWhereOrNull((c) => c.dialCode == candidate);
+          if (match != null) {
+            prefix = match.dialCode;
+            break;
+          }
+        }
+      }
+    }
+
     final digits = raw.replaceAll(RegExp(r'\D'), '');
-    if (digits.length >= 7) {
-      final lastFour = digits.substring(digits.length - 3);
-      return '+855 ••• ••• $lastFour';
+    if (digits.length >= 6) {
+      final lastThree = digits.substring(digits.length - 3);
+      return '$prefix ••• ••• $lastThree';
     }
     return raw;
   }

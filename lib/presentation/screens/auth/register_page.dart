@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobilepenpal/data/controllers/auth/register_controller.dart';
 import 'package:mobilepenpal/presentation/routes/app_routes.dart';
+import 'package:mobilepenpal/presentation/widgets/country_code_picker.dart';
 
 class RegisterPage extends GetView<RegisterController> {
   const RegisterPage({super.key});
@@ -168,6 +169,10 @@ class RegisterPage extends GetView<RegisterController> {
                                     label: 'phone_number'.tr,
                                     hintText: 'enter_your_phone_number'.tr,
                                     textController: controller.phoneController,
+                                    prefixWidget: CountryCodePicker(
+                                      selectedCountry: controller.selectedCountry,
+                                      enabled: !controller.isLoading.value,
+                                    ),
                                     errorText: controller.isSubmitted.value
                                         ? controller.phoneError.value
                                         : null,
@@ -216,6 +221,10 @@ class RegisterPage extends GetView<RegisterController> {
                                       label: '${'phone_number'.tr} (${'optional'.tr})',
                                       hintText: 'enter_your_phone_number'.tr,
                                       textController: controller.phoneController,
+                                      prefixWidget: CountryCodePicker(
+                                        selectedCountry: controller.selectedCountry,
+                                        enabled: !controller.isLoading.value,
+                                      ),
                                       errorText: controller.isSubmitted.value
                                           ? controller.phoneError.value
                                           : null,

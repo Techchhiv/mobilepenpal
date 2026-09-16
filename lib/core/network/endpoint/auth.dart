@@ -4,6 +4,7 @@ class AuthEndpoints {
   // Authentication
   static const String login = '$_base/auth/login';
   static const String register = '$_base/auth/register';
+  static const String checkExists = '$_base/auth/check-exists';
   static const String logout = '$_base/auth/logout';
   static const String otp = '$_base/auth/verify-otp';
 

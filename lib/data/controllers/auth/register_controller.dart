@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:mobilepenpal/data/models/country_code.dart';
 import 'package:mobilepenpal/data/services/analytics_service.dart';
 import 'package:mobilepenpal/data/services/auth_service.dart';
 import 'package:mobilepenpal/data/services/firebase_service.dart';
@@ -30,6 +31,27 @@ class RegisterController extends GetxController {
 
   final registerMethod = 'phone'.obs; // 'phone' or 'email'
   final showSecondaryContact = false.obs;
+  final selectedCountry = CountryCode.defaultCountry.obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    _detectCountry();
+  }
+
+  Future<void> _detectCountry() async {
+    final detected = await CountryCode.detectUserCountry();
+    selectedCountry.value = detected;
+  }
+
+  String get fullPhoneNumber {
+    String raw = phoneController.text.trim().replaceAll(RegExp(r'[^\d]'), '');
+    if (raw.startsWith('0')) {
+      raw = raw.substring(1);
+    }
+    if (raw.isEmpty) return '';
+    return '${selectedCountry.value.dialCode}$raw';
+  }
 
   final studentFirstNameError = ''.obs;
   final studentLastNameError = ''.obs;
@@ -264,12 +286,57 @@ class RegisterController extends GetxController {
 
     try {
       final registeredEmail = emailController.text.trim();
-      final registeredPhone = phoneController.text.trim();
+      final registeredPhone = fullPhoneNumber;
       final rawPassword = passwordController.text;
 
-      // When registering via phone, verify ownership using Firebase Phone OTP first
+      isLoading.value = true;
+
+      // 1. Check if user (phone and/or email) already exists in backend database first
+      final checkResponse = await _authService.checkExists(
+        phone: registeredPhone.isNotEmpty ? registeredPhone : null,
+        email: registeredEmail.isNotEmpty ? registeredEmail : null,
+      );
+
+      if (checkResponse.code != 200) {
+        isLoading.value = false;
+        _clearFieldErrors();
+        _applyServerErrors(checkResponse.fieldErrors);
+
+        String errorMsg = '';
+        if (checkResponse.fieldErrors != null && checkResponse.fieldErrors!.isNotEmpty) {
+          for (var list in checkResponse.fieldErrors!.values) {
+            if (list.isNotEmpty) {
+              errorMsg = list.first;
+              break;
+            }
+          }
+        }
+        if (errorMsg.isEmpty && checkResponse.errors != null && checkResponse.errors!.isNotEmpty) {
+          errorMsg = checkResponse.errors!.first;
+        }
+        if (errorMsg.isEmpty) {
+          errorMsg = checkResponse.message;
+        }
+
+        // If field error wasn't mapped by key, set on appropriate field
+        if (phoneError.value.isEmpty && emailError.value.isEmpty) {
+          if (registerMethod.value == 'phone') {
+            phoneError.value = errorMsg;
+          } else {
+            emailError.value = errorMsg;
+          }
+        }
+
+        AppSnackbar.show(
+          errorMsg.isNotEmpty ? errorMsg : 'user_already_exists'.tr,
+          title: 'error'.tr,
+          backgroundColor: Colors.red,
+        );
+        return;
+      }
+
+      // 2. When registering via phone, verify ownership using Firebase Phone OTP first
       if (registerMethod.value == 'phone' && registeredPhone.isNotEmpty) {
-        isLoading.value = true;
         final firebaseService = Get.find<FirebaseService>();
 
         await firebaseService.sendOtp(

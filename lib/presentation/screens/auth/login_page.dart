@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:mobilepenpal/core/theme/app_colors.dart';
 import 'package:mobilepenpal/data/controllers/auth/auth_controller.dart';
 import 'package:mobilepenpal/presentation/routes/app_routes.dart';
+import 'package:mobilepenpal/presentation/widgets/country_code_picker.dart';
 // import 'package:mobilepenpal/core/utils/phone_number_utils.dart';
 
 class LoginPage extends StatelessWidget {
@@ -82,79 +83,185 @@ class LoginPage extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 48),
+              const SizedBox(height: 32),
 
-              Text(
-                'email_or_phone'.tr,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
-                ),
-              ),
-              const SizedBox(height: 8),
+              // Segmented Tab Selector (Phone / Email)
               Obx(
-                () => TextFormField(
-                  key: const Key('login_email'),
-                  controller: authController.emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  enabled: !authController.isLoading.value,
-                  decoration: InputDecoration(
-                    prefixIcon: const Icon(
-                      Icons.person_outline_rounded,
-                      color: AppColors.primary,
-                    ),
-                    filled: true,
-                    fillColor: authController.isLoading.value
-                        ? Colors.grey[300]
-                        : Colors.grey[100],
-                    hintText: 'enter_your_email_or_phone'.tr,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: AppColors.primary,
-                        width: 2,
-                      ),
-                    ),
-                    errorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Colors.red, width: 1),
-                    ),
-                    focusedErrorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Colors.red, width: 2),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 16,
-                    ),
-                    errorText: authController.emailError.value.isNotEmpty
-                        ? authController.emailError.value
-                        : null,
-                    hintStyle: TextStyle(
-                      color: authController.isLoading.value
-                          ? Colors.grey[500]
-                          : null,
-                    ),
+                () => Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF0F2F5),
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                  onChanged: (value) => authController.validateEmail(value),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: _buildSegmentTab(
+                          title: 'login_via_phone'.tr,
+                          icon: Icons.phone_android_rounded,
+                          isSelected: authController.loginMethod.value == 'phone',
+                          onTap: () => authController.setLoginMethod('phone'),
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: _buildSegmentTab(
+                          title: 'login_via_email'.tr,
+                          icon: Icons.email_outlined,
+                          isSelected: authController.loginMethod.value == 'email',
+                          onTap: () => authController.setLoginMethod('email'),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              /* Phone input field commented out for future switch back if needed:
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [ ... ]
-              )
-              */
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
+
+              // Dynamic Input: Phone or Email
+              Obx(() {
+                final isPhone = authController.loginMethod.value == 'phone';
+                if (isPhone) {
+                  return Column(
+                    key: const ValueKey('login_phone_column'),
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'phone_number'.tr,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      TextFormField(
+                        key: const Key('login_phone'),
+                        controller: authController.phoneController,
+                        keyboardType: TextInputType.phone,
+                        enabled: !authController.isLoading.value,
+                        decoration: InputDecoration(
+                          prefixIcon: CountryCodePicker(
+                            selectedCountry: authController.selectedCountry,
+                            enabled: !authController.isLoading.value,
+                          ),
+                          filled: true,
+                          fillColor: authController.isLoading.value
+                              ? Colors.grey[300]
+                              : Colors.grey[100],
+                          hintText: 'enter_your_phone_number'.tr,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: AppColors.primary,
+                              width: 2,
+                            ),
+                          ),
+                          errorBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: Colors.red, width: 1),
+                          ),
+                          focusedErrorBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: Colors.red, width: 2),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 16,
+                          ),
+                          errorText: authController.phoneError.value.isNotEmpty
+                              ? authController.phoneError.value
+                              : null,
+                          hintStyle: TextStyle(
+                            color: authController.isLoading.value
+                                ? Colors.grey[500]
+                                : null,
+                          ),
+                        ),
+                        onChanged: (value) => authController.validatePhone(value),
+                      ),
+                    ],
+                  );
+                } else {
+                  return Column(
+                    key: const ValueKey('login_email_column'),
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'email'.tr,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      TextFormField(
+                        key: const Key('login_email'),
+                        controller: authController.emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        enabled: !authController.isLoading.value,
+                        decoration: InputDecoration(
+                          prefixIcon: const Icon(
+                            Icons.email_outlined,
+                            color: AppColors.primary,
+                          ),
+                          filled: true,
+                          fillColor: authController.isLoading.value
+                              ? Colors.grey[300]
+                              : Colors.grey[100],
+                          hintText: 'enter_your_email'.tr,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: AppColors.primary,
+                              width: 2,
+                            ),
+                          ),
+                          errorBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: Colors.red, width: 1),
+                          ),
+                          focusedErrorBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: Colors.red, width: 2),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 16,
+                          ),
+                          errorText: authController.emailError.value.isNotEmpty
+                              ? authController.emailError.value
+                              : null,
+                          hintStyle: TextStyle(
+                            color: authController.isLoading.value
+                                ? Colors.grey[500]
+                                : null,
+                          ),
+                        ),
+                        onChanged: (value) => authController.validateEmail(value),
+                      ),
+                    ],
+                  );
+                }
+              }),
+              const SizedBox(height: 20),
 
               Text(
                 'password'.tr,
@@ -345,6 +452,55 @@ class LoginPage extends StatelessWidget {
               // ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSegmentTab({
+    required String title,
+    required IconData icon,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    final bool isKhmer = Get.locale?.languageCode == 'km';
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.white : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.06),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : [],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 18,
+              color: isSelected ? AppColors.primary : Colors.grey[600],
+            ),
+            const SizedBox(width: 6),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: isKhmer ? 13 : 12,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                color: isSelected ? AppColors.primary : Colors.grey[700],
+              ),
+            ),
+          ],
         ),
       ),
     );

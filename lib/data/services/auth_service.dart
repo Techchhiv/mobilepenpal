@@ -126,4 +126,24 @@ class AuthService {
 
     return result;
   }
+
+  Future<ApiResponse<Map<String, dynamic>>> checkExists({
+    String? phone,
+    String? email,
+  }) async {
+    final Map<String, dynamic> data = {};
+    if (phone != null && phone.trim().isNotEmpty) {
+      data['phone'] = phone.trim();
+    }
+    if (email != null && email.trim().isNotEmpty) {
+      data['email'] = email.trim();
+    }
+
+    return await _apiClient.request<Map<String, dynamic>>(
+      method: 'POST',
+      path: AuthEndpoints.checkExists,
+      data: data,
+      fromData: (data) => data is Map<String, dynamic> ? data : <String, dynamic>{},
+    );
+  }
 }

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:mobilepenpal/core/network/api_client.dart';
+import 'package:mobilepenpal/data/models/country_code.dart';
 import 'package:mobilepenpal/data/models/student/student.dart';
 import 'package:mobilepenpal/data/services/analytics_service.dart';
 import 'package:mobilepenpal/data/services/auth_service.dart';
@@ -16,51 +17,78 @@ import 'package:mobilepenpal/presentation/widgets/confirm_modal.dart';
 class AuthController extends GetxController {
   final AuthService _authService = AuthService();
 
-  final emailController = TextEditingController();
-  // final phoneController = TextEditingController();
-  // final schoolIdController = TextEditingController();
-  final passwordController = TextEditingController();
+  final loginMethod = 'phone'.obs; // 'phone' or 'email'
+  final selectedCountry = CountryCode.defaultCountry.obs;
+
+  TextEditingController emailController = TextEditingController();
+  TextEditingController phoneController = TextEditingController();
+  TextEditingController passwordController = TextEditingController();
 
   var isPasswordVisible = false.obs;
   var isLoading = false.obs;
 
   var emailError = ''.obs;
-  // var phoneError = ''.obs;
-  var schoolIdError = ''.obs;
+  var phoneError = ''.obs;
   var passwordError = ''.obs;
   var isSubmitted = false.obs;
 
-  // var selectedCountryCode = '+855'.obs;
-
-  /*
   String get fullPhoneNumber {
-    final number = phoneController.text.trim().replaceAll(' ', '');
-    if (number.isEmpty) return '';
-    if (number.startsWith('+')) {
-      return number;
+    String raw = phoneController.text.trim().replaceAll(RegExp(r'[^\d]'), '');
+    if (raw.startsWith('0')) {
+      raw = raw.substring(1);
     }
-    final sanitized = number.startsWith('0') ? number.substring(1) : number;
-    return '${selectedCountryCode.value}$sanitized';
+    if (raw.isEmpty) return '';
+    return '${selectedCountry.value.dialCode}$raw';
   }
-  */
+
+  void _ensureControllersActive() {
+    try {
+      emailController.text;
+    } catch (_) {
+      emailController = TextEditingController();
+    }
+    try {
+      phoneController.text;
+    } catch (_) {
+      phoneController = TextEditingController();
+    }
+    try {
+      passwordController.text;
+    } catch (_) {
+      passwordController = TextEditingController();
+    }
+  }
 
   @override
   void onInit() {
     super.onInit();
+    _ensureControllersActive();
+    _detectCountry();
     final args = Get.arguments;
     if (args is Map && args['email'] != null) {
+      loginMethod.value = 'email';
       emailController.text = args['email'].toString();
     } else if (kDebugMode) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        emailController.text = 'amara@gmail.com';
-        passwordController.text = 'password123';
+        // Pre-fill only if testing in debug mode
+        if (emailController.text.isEmpty && phoneController.text.isEmpty) {
+          phoneController.text = '81347800';
+          passwordController.text = 'password123';
+        }
       });
     }
   }
 
-  bool _isPhone(String value) {
-    final digitsOnly = value.replaceAll(RegExp(r'\D'), '');
-    return digitsOnly.length >= 7 && digitsOnly.length <= 15;
+  Future<void> _detectCountry() async {
+    final detected = await CountryCode.detectUserCountry();
+    selectedCountry.value = detected;
+  }
+
+  void setLoginMethod(String method) {
+    _ensureControllersActive();
+    loginMethod.value = method;
+    emailError.value = '';
+    phoneError.value = '';
   }
 
   void validateEmail(String value) {
@@ -71,50 +99,36 @@ class AuthController extends GetxController {
 
     final trimmed = value.trim();
     if (trimmed.isEmpty) {
-      emailError.value = 'email_or_phone_required'.tr;
+      emailError.value = 'email_required'.tr;
       return;
     }
 
-    final isEmail = GetUtils.isEmail(trimmed);
-    final isPhone = GetUtils.isPhoneNumber(trimmed) || _isPhone(trimmed);
-
-    if (!isEmail && !isPhone) {
-      emailError.value = 'invalid_email_or_phone'.tr;
+    if (!GetUtils.isEmail(trimmed)) {
+      emailError.value = 'invalid_email'.tr;
     } else {
       emailError.value = '';
     }
   }
 
-  /*
   void validatePhone(String value) {
     if (!isSubmitted.value) {
       phoneError.value = '';
       return;
     }
 
-    if (value.isEmpty) {
-      phoneError.value = "phone_required".tr;
+    final trimmed = value.trim().replaceAll(' ', '');
+    if (trimmed.isEmpty) {
+      phoneError.value = 'phone_required'.tr;
       return;
     }
-    final fullNumber = fullPhoneNumber;
-    final digitsOnly = fullNumber.replaceAll(RegExp(r'\D'), '');
-    if (!GetUtils.isPhoneNumber(fullNumber) || digitsOnly.length < 7 || digitsOnly.length > 15) {
+
+    final digitsOnly = trimmed.replaceAll(RegExp(r'\D'), '');
+    if (digitsOnly.length < 6 || digitsOnly.length > 15) {
       phoneError.value = 'invalid_phone'.tr;
     } else {
       phoneError.value = '';
     }
   }
-  */
-
-  // void validateSchoolId(String value) {
-  //   if (value.isEmpty) {
-  //     schoolIdError.value = "school_id_required".tr;
-  //   } else if (value.length < 2) {
-  //     schoolIdError.value = 'school_id_min_2_cha'.tr;
-  //   } else {
-  //     schoolIdError.value = '';
-  //   }
-  // }
 
   void validatePassword(String value) {
     if (!isSubmitted.value) {
@@ -134,7 +148,8 @@ class AuthController extends GetxController {
   }
 
   String? get firstLocalError {
-    if (emailError.value.isNotEmpty) return emailError.value;
+    if (loginMethod.value == 'phone' && phoneError.value.isNotEmpty) return phoneError.value;
+    if (loginMethod.value == 'email' && emailError.value.isNotEmpty) return emailError.value;
     if (passwordError.value.isNotEmpty) return passwordError.value;
     return null;
   }
@@ -143,12 +158,17 @@ class AuthController extends GetxController {
     if (!confirm && isLoading.value) return;
 
     isSubmitted.value = true;
-    validateEmail(emailController.text);
+    final isPhoneTab = loginMethod.value == 'phone';
+
+    if (isPhoneTab) {
+      validatePhone(phoneController.text);
+    } else {
+      validateEmail(emailController.text);
+    }
     validatePassword(passwordController.text);
 
-    if (emailError.value.isNotEmpty ||
-        // phoneError.value.isNotEmpty ||
-        // schoolIdError.value.isNotEmpty ||
+    if ((isPhoneTab && phoneError.value.isNotEmpty) ||
+        (!isPhoneTab && emailError.value.isNotEmpty) ||
         passwordError.value.isNotEmpty) {
       AppSnackbar.show(
         firstLocalError ?? "fill_all_fields_correctly".tr,
@@ -158,10 +178,9 @@ class AuthController extends GetxController {
       return;
     }
 
-    if (emailController.text.trim().isEmpty ||
-        // phoneController.text.isEmpty ||
-        // schoolIdController.text.isEmpty ||
-        passwordController.text.isEmpty) {
+    final input = isPhoneTab ? fullPhoneNumber : emailController.text.trim();
+
+    if (input.isEmpty || passwordController.text.isEmpty) {
       AppSnackbar.show(
         "fill_all_fields".tr,
         title: "error".tr,
@@ -173,8 +192,7 @@ class AuthController extends GetxController {
     try {
       isLoading.value = true;
 
-      final input = emailController.text.trim();
-      final isEmailInput = input.contains('@');
+      final isEmailInput = !isPhoneTab && input.contains('@');
 
       final response = await _authService.loginStudent(
         login: input,
@@ -232,7 +250,7 @@ class AuthController extends GetxController {
 
         if (Get.isRegistered<AnalyticsService>()) {
           final analytics = Get.find<AnalyticsService>();
-          analytics.logLogin(loginMethod: 'email');
+          analytics.logLogin(loginMethod: isPhoneTab ? 'phone' : 'email');
           if (student != null) {
             analytics.setUserId(student.id.toString());
           }
@@ -258,39 +276,51 @@ class AuthController extends GetxController {
             showCloseButton: false,
             primaryResult: true,
             secondaryResult: false,
+            body: Text(
+              'already_logged_in_message'.tr,
+              style: const TextStyle(
+                fontSize: 14,
+                color: Color(0xFF4B5563),
+                height: 1.5,
+              ),
+            ),
           ),
         );
 
         if (proceed == true) {
-          await login(confirm: true);
+          login(confirm: true);
         }
       } else {
-        String errorMsg = response.message;
-        if (response.fieldErrors != null && response.fieldErrors!.isNotEmpty) {
-          for (var list in response.fieldErrors!.values) {
-            if (list.isNotEmpty) {
-              errorMsg = list.first;
-              break;
-            }
-          }
-        } else if (response.errors != null && response.errors!.isNotEmpty) {
-          errorMsg = response.errors!.first;
-        }
-
         AppSnackbar.show(
-          errorMsg,
+          response.message,
           title: "error".tr,
           backgroundColor: Colors.red,
         );
       }
+    } catch (e) {
+      AppSnackbar.show(
+        'something_went_wrong'.tr,
+        title: "error".tr,
+        backgroundColor: Colors.red,
+      );
     } finally {
-      if (!confirm || isLoading.value) {
-        isLoading.value = false;
-      }
+      isLoading.value = false;
     }
   }
-  /// Resends the Firebase email verification link to [email].
-  /// Returns `true` if the email was sent successfully, `false` otherwise.
+
+  void showUnverifiedEmailDialog({
+    required String email,
+    required Future<bool> Function() onResend,
+  }) {
+    Get.dialog(
+      UnverifiedEmailDialog(
+        email: email,
+        onResend: onResend,
+      ),
+      barrierDismissible: false,
+    );
+  }
+
   Future<bool> resendVerificationEmail({
     required String email,
     required String password,
@@ -298,7 +328,6 @@ class AuthController extends GetxController {
     try {
       User? fbUser = FirebaseAuth.instance.currentUser;
 
-      // Sign in silently if no current user or different email
       if (fbUser == null || fbUser.email != email) {
         final cred = await FirebaseAuth.instance.signInWithEmailAndPassword(
           email: email,
@@ -309,7 +338,7 @@ class AuthController extends GetxController {
 
       if (fbUser == null) {
         AppSnackbar.show(
-          'an_error_occurred'.tr,
+          'something_went_wrong'.tr,
           title: 'error'.tr,
           backgroundColor: Colors.red,
         );
@@ -319,7 +348,6 @@ class AuthController extends GetxController {
       await fbUser.reload();
       fbUser = FirebaseAuth.instance.currentUser;
 
-      // Already verified — no need to resend
       if (fbUser != null && fbUser.emailVerified) {
         AppSnackbar.show(
           'email_already_verified'.tr,
@@ -347,7 +375,7 @@ class AuthController extends GetxController {
         );
       } else {
         AppSnackbar.show(
-          e.message ?? 'an_error_occurred'.tr,
+          'something_went_wrong'.tr,
           title: 'error'.tr,
           backgroundColor: Colors.red,
         );
@@ -356,7 +384,7 @@ class AuthController extends GetxController {
     } catch (e) {
       dev.log('Resend verification general error: $e', name: 'AuthController');
       AppSnackbar.show(
-        'an_error_occurred'.tr,
+        'something_went_wrong'.tr,
         title: 'error'.tr,
         backgroundColor: Colors.red,
       );
